@@ -22,3 +22,31 @@ test('dist works when served from a subpath', async ({ page }) => {
 
   expect(failedRequests).toEqual([]);
 });
+
+// Task 03: the manifest, its icons and the apple-touch-icon aren't fetched on page load, so
+// resolve them explicitly — they must stay inside the preview's subpath.
+test('manifest and icons resolve from a subpath', async ({ page }) => {
+  await page.goto(SUBPATH_URL);
+
+  const hrefs = await page
+    .locator('link[rel="manifest"], link[rel="apple-touch-icon"]')
+    .evaluateAll((links) => links.map((link) => (link as HTMLLinkElement).href));
+  expect(hrefs).toHaveLength(2);
+
+  const manifestUrl = hrefs.find((href) => href.endsWith('.webmanifest')) ?? '';
+  const manifest = (await (await page.request.get(manifestUrl)).json()) as {
+    start_url: string;
+    scope: string;
+    icons: { src: string }[];
+  };
+  const urls = [
+    ...hrefs,
+    new URL(manifest.start_url, manifestUrl).href,
+    ...manifest.icons.map((icon) => new URL(icon.src, manifestUrl).href),
+  ];
+  for (const url of urls) {
+    expect(url.startsWith(SUBPATH_URL), url).toBe(true);
+    expect((await page.request.get(url)).status(), url).toBe(200);
+  }
+  expect(new URL(manifest.scope, manifestUrl).href).toBe(SUBPATH_URL);
+});

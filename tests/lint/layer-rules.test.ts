@@ -40,6 +40,29 @@ describe('layer boundary lint rules', () => {
     expect(ruleIds(result)).toContain('no-restricted-imports');
   });
 
+  it('flags importing /game/board from /game/ui and /game/ui from /game/board', async () => {
+    const uiResult = await lint(
+      "import { GRID } from '../board/layout';\nexport const g = GRID;\n",
+      'game/ui/fixture.ts',
+    );
+    expect(ruleIds(uiResult)).toContain('no-restricted-imports');
+    const boardResult = await lint(
+      "import { App } from '../ui/App';\nexport const a = App;\n",
+      'game/board/fixture.ts',
+    );
+    expect(ruleIds(boardResult)).toContain('no-restricted-imports');
+  });
+
+  it('allows both /game/board and /game/ui to import shared design space from /game/state', async () => {
+    for (const filePath of ['game/board/fixture.ts', 'game/ui/fixture.ts']) {
+      const result = await lint(
+        "import { HUD_BAR } from '../state/designSpace';\nexport const h = HUD_BAR;\n",
+        filePath,
+      );
+      expect(ruleIds(result)).not.toContain('no-restricted-imports');
+    }
+  });
+
   it('flags Math.random() in /sim', async () => {
     const result = await lint(
       'export function f(): number {\n  return Math.random();\n}\n',
