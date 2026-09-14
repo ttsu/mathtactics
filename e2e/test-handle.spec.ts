@@ -22,13 +22,8 @@ test('window.__GAME__ exists and getDisplay() returns base HP 100', async ({ pag
   const dispatchResult = await page.evaluate(() => window.__GAME__!.dispatch({ type: 'endTurn' }));
   expect(dispatchResult).toEqual({ ok: false, error: 'wrong_phase' });
 
-  const notImplemented = await page.evaluate(() => {
-    try {
-      window.__GAME__!.endTurn();
-      return null;
-    } catch (error) {
-      return error instanceof Error ? error.message : String(error);
-    }
-  });
-  expect(notImplemented).toBe('not implemented yet (task 7)');
+  // No run exists yet (state is null), so the underlying dispatch fails with `wrong_phase` and
+  // `endTurn()` returns `[]` rather than throwing (task 07 ruling).
+  const endTurnEvents = await page.evaluate(() => window.__GAME__!.endTurn());
+  expect(endTurnEvents).toEqual([]);
 });

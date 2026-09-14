@@ -3,9 +3,9 @@
 // appear, in order, as a partial match of some event in `actual` — unrelated events before,
 // between, or after a match are allowed, so tests don't break when unrelated events are added.
 //
-// Pure and self-contained — no test-framework dependency — so task 08 can move this matching
-// core into `/sim/scenario` unchanged; test files add only the `expect(...)` call
-// (`expectEventSequence` below).
+// `matchEventSequence`/`partialMatches` below are the pure matching core — no test-framework
+// dependency — so task 08 can move just those two into `/sim/scenario` unchanged. Only
+// `expectEventSequence`, the thin `expect(...)` wrapper test files call, imports `vitest`.
 
 import { expect } from 'vitest';
 import type { GameEvent } from '../../sim/core/types';
