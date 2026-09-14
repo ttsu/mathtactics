@@ -1,11 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createTestHandle } from '../../game/state/testHandle';
-import { createAppStore, stubApplyCommand } from '../../game/state/store';
+import { createAppStore, displayFromRun, stubApplyCommand } from '../../game/state/store';
 import type { ApplyCommandFn } from '../../game/state/store';
 import type { StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
 import type { GameEvent, RunState } from '../../sim/core/types';
 import { fakeDragSettings } from '../helpers/dragSettings';
+import { fakePacingSettings, fakePlaybackSettings } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
   const map = new Map<string, string>();
@@ -37,7 +38,8 @@ function fakeGameData(): GameData {
     waves: { waves: [] },
     levels: { levels: [] },
     presentation: {
-      pacing: { ballCellDurationMs: 1, perTilePauseMs: 1, laneGapMs: 1, advanceDurationMs: 1 },
+      pacing: fakePacingSettings(),
+      playback: fakePlaybackSettings(),
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
       drag: fakeDragSettings(),
     },
@@ -206,6 +208,8 @@ describe('createTestHandle', () => {
     });
     const handle = createTestHandle(store, {
       cellToClient: (cell) => ({ x: cell.col * 10, y: cell.lane * 10 }),
+      skipAnimation: () => {},
+      isAnimating: () => false,
     });
     expect(handle.cellToClient({ lane: 2, col: 3 })).toEqual({ x: 30, y: 20 });
   });
@@ -215,8 +219,56 @@ describe('createTestHandle', () => {
     expect(() => handle.cellToClient({ lane: 0, col: 0 })).toThrow('no board mounted');
   });
 
-  it('skipAnimation throws "not implemented yet (task 10)"', () => {
-    const { handle } = buildHandle();
-    expect(() => handle.skipAnimation()).toThrow('not implemented yet (task 10)');
+  it('skipAnimation without a board finishes playback directly', () => {
+    const { store, handle } = buildHandle();
+    const run = fakeRunState({ coins: 12 });
+    handle.loadState(run);
+    store.setState({
+      display: { coins: 0, baseHp: 0, waveIndex: 0 },
+      playback: { status: 'playing', events: [], cursor: 0 },
+    });
+
+    handle.skipAnimation();
+
+    expect(handle.isIdle()).toBe(true);
+    expect(handle.getDisplay()).toEqual(displayFromRun(run));
+  });
+
+  it('skipAnimation asks the mounted board to finish its sequence', () => {
+    const { store } = buildHandle();
+    store.setState({ playback: { status: 'playing', events: [], cursor: 0 } });
+    const board = {
+      cellToClient: () => ({ x: 0, y: 0 }),
+      // The Director finishes by calling finishPlayback itself.
+      skipAnimation: vi.fn(() => store.getState().finishPlayback()),
+      isAnimating: () => false,
+    };
+    const handle = createTestHandle(store, board);
+
+    handle.skipAnimation();
+
+    expect(board.skipAnimation).toHaveBeenCalledTimes(1);
+    expect(handle.isIdle()).toBe(true);
+  });
+
+  it('isIdle is false while the board still has tweens or timers pending', () => {
+    const { store } = buildHandle();
+    let animating = true;
+    const handle = createTestHandle(store, {
+      cellToClient: () => ({ x: 0, y: 0 }),
+      skipAnimation: () => {},
+      isAnimating: () => animating,
+    });
+    expect(store.getState().playback.status).toBe('idle');
+    expect(handle.isIdle()).toBe(false);
+    animating = false;
+    expect(handle.isIdle()).toBe(true);
+  });
+
+  it('loadState drops any replay snapshot', () => {
+    const { store, handle } = buildHandle();
+    store.setState({ lastTurn: { before: fakeRunState(), events: [] } });
+    handle.loadState(fakeRunState());
+    expect(store.getState().lastTurn).toBeNull();
   });
 });

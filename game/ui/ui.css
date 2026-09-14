@@ -41,20 +41,27 @@
   font-size: 32px;
 }
 
-.hud-button-undo {
+.hud-button-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 96px;
   padding: 0;
+}
+
+.hud-button-undo {
   background: #4f86c6;
+}
+
+.hud-button-replay {
+  background: #3f9e8f;
 }
 
 .hud-button:disabled {
   opacity: 0.55;
 }
 
-.hud-button-undo:disabled {
+.hud-button-icon:disabled {
   background: #5b6b85;
 }
 

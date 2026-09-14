@@ -1,9 +1,77 @@
 {
   "pacing": {
-    "ballCellDurationMs": 220,
+    "ballCellDurationMs": 160,
+    "exitBallCellDurationMs": 60,
     "perTilePauseMs": 120,
     "laneGapMs": 300,
     "advanceDurationMs": 400
+  },
+  "playback": {
+    "beats": {
+      "laneStartMs": 150,
+      "ballFireMs": 150,
+      "impactMs": 380,
+      "blockedMs": 450,
+      "bounceBackMs": 650,
+      "defeatMs": 320,
+      "exactKillMs": 1000,
+      "coinsMs": 220,
+      "exitMs": 240,
+      "laneEndMs": 150
+    },
+    "lane": {
+      "dimAlpha": 0.28
+    },
+    "cannon": {
+      "thumpScale": 1.2
+    },
+    "ball": {
+      "fireFromScale": 0.3
+    },
+    "transform": {
+      "popScale": 1.3,
+      "popScalePerChain": 0.15,
+      "popScaleMax": 2,
+      "tilePopScale": 1.12,
+      "tileFlashAlpha": 0.75
+    },
+    "impact": {
+      "knockbackPt": 16,
+      "damageFloatPt": 40,
+      "doubledDamageScale": 1.35,
+      "shakeMs": 180,
+      "shakePerDamage": 0.0008,
+      "shakeMax": 0.008
+    },
+    "blocked": {
+      "bounceOffPt": 60,
+      "robotWobblePt": 8,
+      "robotWobbleRepeats": 2,
+      "shakeMs": 160,
+      "shake": 0.004
+    },
+    "bounceBack": {
+      "wobbleScale": 1.25
+    },
+    "defeat": {
+      "popScale": 1.25,
+      "puffScale": 1.6
+    },
+    "exactKill": {
+      "popScale": 1.7,
+      "starCount": 12,
+      "starBurstPt": 190,
+      "bigStarScale": 2.4,
+      "ringScale": 3.2,
+      "shakeMs": 320,
+      "shake": 0.014
+    },
+    "coins": {
+      "floatPt": 60
+    },
+    "exit": {
+      "rollPt": 160
+    }
   },
   "tileColors": {
     "green": "#4caf50",

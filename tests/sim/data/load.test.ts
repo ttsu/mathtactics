@@ -4,6 +4,7 @@ import { applyTile } from '../../../sim/core/tiles';
 import type { TileDef } from '../../../sim/core/types';
 import { loadRawGameData } from '../../helpers/loadDataFiles';
 import { fakeDragSettings } from '../../helpers/dragSettings';
+import { fakePacingSettings, fakePlaybackSettings } from '../../helpers/playbackSettings';
 
 function validTile(overrides: Record<string, unknown> = {}) {
   return {
@@ -34,12 +35,8 @@ function validRaw(overrides: Record<string, unknown> = {}) {
     waves: { waves: [] },
     levels: { levels: [] },
     presentation: {
-      pacing: {
-        ballCellDurationMs: 200,
-        perTilePauseMs: 100,
-        laneGapMs: 300,
-        advanceDurationMs: 400,
-      },
+      pacing: fakePacingSettings(),
+      playback: fakePlaybackSettings(),
       tileColors: { green: '#4caf50', blue: '#2196f3', orange: '#ff9800' },
       drag: fakeDragSettings(),
     },

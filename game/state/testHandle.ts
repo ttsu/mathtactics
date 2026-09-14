@@ -1,16 +1,13 @@
 // Browser test handle (TR §14, GDD §15.2). Installed on `window.__GAME__` only in dev and
 // preview builds — never production (TR §14 / GDD §15.2) — via a guarded dynamic `import()` at
 // the edge (game/main.tsx) so this module is tree-shaken out of a plain `npm run build`.
-//
-// Methods that depend on later tasks throw a clearly-labelled "not implemented yet" error
-// rather than silently doing nothing, so a Playwright test calling one too early fails loudly.
 
 import type { StoreApi } from 'zustand/vanilla';
 import type { Cell } from '../../sim/core/coords';
 import type { Command, CommandError, GameEvent, RunState } from '../../sim/core/types';
 import { buildScenarioState, parseScenario } from '../../sim/scenario';
 import type { AppStore, Display, Screen } from './store';
-import { displayFromRun, IDLE_PLAYBACK } from './store';
+import { displayFromRun, IDLE_PLAYBACK, isPlaybackActive } from './store';
 
 export interface TestHandle {
   getState(): RunState | null;
@@ -23,9 +20,9 @@ export interface TestHandle {
   loadState(state: RunState): void;
   loadScenario(yamlText: string): void;
   endTurn(): GameEvent[];
-  /** Finishes playback instantly. */
+  /** Finishes playback instantly: every remaining beat's final state and HUD commit applied. */
   skipAnimation(): void;
-  /** No playback, no tweens pending. */
+  /** No playback, and the playback Director has no tweens/timers pending. */
   isIdle(): boolean;
   cellToClient(cell: Cell): { x: number; y: number };
 }
@@ -37,10 +34,6 @@ declare global {
   }
 }
 
-function notImplemented(taskNumber: number): never {
-  throw new Error(`not implemented yet (task ${taskNumber})`);
-}
-
 /** Installs `state` directly, bypassing `dispatch`/playback entirely — shared by `loadState` and
  * `loadScenario`. Resets any in-flight playback too, otherwise `isIdle()` would stay false after
  * a fresh install (finding 8, final review). */
@@ -49,6 +42,7 @@ function installState(store: StoreApi<AppStore>, state: RunState): void {
     run: state,
     display: displayFromRun(state),
     playback: { ...IDLE_PLAYBACK },
+    lastTurn: null,
   });
 }
 
@@ -56,10 +50,15 @@ function installState(store: StoreApi<AppStore>, state: RunState): void {
  * since /game/state may not import /game/board (TR §2). */
 export interface TestHandleBoard {
   cellToClient(cell: Cell): { x: number; y: number };
+  /** Finishes the playback Director's sequence instantly (it then calls `finishPlayback`). */
+  skipAnimation(): void;
+  /** True while the playback Director has a sequence, tweens or timers pending. */
+  isAnimating(): boolean;
 }
 
 /** Builds the `__GAME__` object for `store` — pure, no `window` access, so it's unit-testable.
- * Without a `board` (unit tests), board-dependent methods throw. */
+ * Without a `board` (unit tests), `cellToClient` throws, and `skipAnimation`/`isIdle` fall back to
+ * the store's playback status alone. */
 export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBoard): TestHandle {
   return {
     getState: () => store.getState().run,
@@ -78,8 +77,12 @@ export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBo
       if (!result.ok) return [];
       return store.getState().run?.lastTurnEvents ?? [];
     },
-    skipAnimation: () => notImplemented(10),
-    isIdle: () => store.getState().playback.status === 'idle',
+    skipAnimation: () => {
+      if (board) board.skipAnimation();
+      // Nothing mounted to play it (or the board had no sequence): finish directly.
+      if (isPlaybackActive(store.getState())) store.getState().finishPlayback();
+    },
+    isIdle: () => !isPlaybackActive(store.getState()) && !(board?.isAnimating() ?? false),
     cellToClient: (cell) => {
       if (!board) throw new Error('cellToClient: no board mounted');
       return board.cellToClient(cell);

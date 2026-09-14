@@ -24,6 +24,7 @@ export {
   stubApplyCommand,
   displayFromRun,
   isPlaybackActive,
+  canReplay,
   IDLE_PLAYBACK,
 } from './store';
 export type {
@@ -36,6 +37,7 @@ export type {
   Display,
   Screen,
   Playback,
+  LastTurn,
 } from './store';
 // `createTestHandle`/`installTestHandle`/`TestHandle` are deliberately NOT re-exported here
 // (finding 9, final review) — barrel-exporting them would invite a static `import { ... } from

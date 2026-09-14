@@ -114,6 +114,29 @@ export const TILE_LABEL_FONT_SIZE = 40;
 export const ROBOT_HP_FONT_SIZE = 56;
 export const CANNON_VALUE_FONT_SIZE = 26;
 export const TILE_STAR_FONT_SIZE = 18;
+/** Robot HP bar, drawn just under the robot block (task 10: bounce-back refills it). */
+export const HP_BAR_WIDTH = ROBOT_SIZE - 8;
+export const HP_BAR_HEIGHT = 8;
+export const HP_BAR_GAP = 3;
+
+// --- Playback (task 10) ---
+
+/** The red ball. Its value is the second-largest number on the board, after robot HP. */
+export const BALL_RADIUS = 32;
+export const BALL_VALUE_FONT_SIZE = 44;
+/** Damage numbers flying off a robot, and coin rewards floating up. */
+export const DAMAGE_FONT_SIZE = 40;
+export const COIN_FONT_SIZE = 36;
+/** Where a ball stops when it hits a robot: this far left of the robot cell's centre. */
+export const BALL_IMPACT_OFFSET = CELL_SIZE / 2 - BALL_RADIUS / 2;
+/** Outline drawn around the active lane during playback. */
+export const LANE_HIGHLIGHT_WIDTH = 6;
+/** Ring outlines for kill puffs, the exact-kill shock ring and the blocked-hit shield. */
+export const PUFF_RING_WIDTH = 4;
+export const BURST_RING_WIDTH = 8;
+/** Exact-kill star sizes (outer radius). */
+export const BURST_STAR_RADIUS = 16;
+export const BIG_STAR_RADIUS = 44;
 
 export interface Point {
   readonly x: number;

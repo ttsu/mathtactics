@@ -112,12 +112,83 @@ const EconomyFileSchema = z.object({
 
 // --- presentation.json (GDD §12.2, TR §9) ---
 
+const ms = () => z.number().nonnegative();
+const scale = () => z.number().positive();
+/** Camera shake intensity, as a fraction of the camera size (Phaser `Camera.shake`). */
+const shakeIntensity = () => z.number().min(0).max(0.05);
+
 const PresentationFileSchema = z.object({
   pacing: z.object({
     ballCellDurationMs: z.number().positive(),
+    /** Per-cell travel for a lane whose ball exits without hitting a robot (task 10 req. 2). */
+    exitBallCellDurationMs: z.number().positive(),
     perTilePauseMs: z.number().nonnegative(),
     laneGapMs: z.number().nonnegative(),
     advanceDurationMs: z.number().positive(),
+  }),
+  /** Playback Director beats (task 10, GDD §12.2). Presentation only — never changes an outcome.
+   * Each `*Ms` is the time that beat holds the sequence before the next event plays. */
+  playback: z.object({
+    beats: z.object({
+      laneStartMs: ms(),
+      ballFireMs: ms(),
+      impactMs: ms(),
+      blockedMs: ms(),
+      bounceBackMs: ms(),
+      defeatMs: ms(),
+      exactKillMs: ms(),
+      coinsMs: ms(),
+      exitMs: ms(),
+      laneEndMs: ms(),
+    }),
+    lane: z.object({
+      /** Alpha of the dark wash over inactive lanes. */
+      dimAlpha: z.number().min(0).max(1),
+    }),
+    cannon: z.object({ thumpScale: scale() }),
+    ball: z.object({
+      /** The ball grows in from this scale when fired. */
+      fireFromScale: scale(),
+    }),
+    transform: z.object({
+      /** Ball scale pop on the first tile; each further tile in the chain adds `popScalePerChain`,
+       * up to `popScaleMax` (escalation, GDD §12.2). */
+      popScale: scale(),
+      popScalePerChain: z.number().nonnegative(),
+      popScaleMax: scale(),
+      tilePopScale: scale(),
+      tileFlashAlpha: z.number().min(0).max(1),
+    }),
+    impact: z.object({
+      knockbackPt: z.number().nonnegative(),
+      damageFloatPt: z.number().nonnegative(),
+      /** Scale of the flying damage number when Weakness doubled the damage. */
+      doubledDamageScale: scale(),
+      shakeMs: ms(),
+      shakePerDamage: z.number().nonnegative(),
+      shakeMax: shakeIntensity(),
+    }),
+    blocked: z.object({
+      bounceOffPt: z.number().nonnegative(),
+      robotWobblePt: z.number().nonnegative(),
+      /** Extra side-to-side shakes of the robot after the first. */
+      robotWobbleRepeats: z.number().int().nonnegative(),
+      shakeMs: ms(),
+      shake: shakeIntensity(),
+    }),
+    bounceBack: z.object({ wobbleScale: scale() }),
+    defeat: z.object({ popScale: scale(), puffScale: scale() }),
+    exactKill: z.object({
+      popScale: scale(),
+      starCount: z.number().int().nonnegative(),
+      starBurstPt: z.number().nonnegative(),
+      bigStarScale: scale(),
+      ringScale: scale(),
+      shakeMs: ms(),
+      shake: shakeIntensity(),
+    }),
+    coins: z.object({ floatPt: z.number().nonnegative() }),
+    exit: z.object({ rollPt: z.number().nonnegative() }),
   }),
   tileColors: z.record(TileColorSchema, z.string().min(1)),
   /** Board drag-and-drop feel (task 09). Presentation only — never changes an outcome. */

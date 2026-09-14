@@ -253,8 +253,12 @@ test('End Turn resolves the turn and the board re-syncs', async ({ page }) => {
   const state = await getState(page);
   expect(state.lastTurnEvents.length).toBeGreaterThan(0);
   expect(state.undo).toEqual([]);
+  // The turn plays back first (task 10); skip it, then planning resumes.
+  expect(await page.evaluate(() => window.__GAME__!.isIdle())).toBe(false);
+  await page.evaluate(() => window.__GAME__!.skipAnimation());
   expect(await page.evaluate(() => window.__GAME__!.isIdle())).toBe(true);
   await expect(page.getByTestId('undo')).toBeDisabled();
+  await expect(page.getByTestId('end-turn')).toBeEnabled();
 });
 
 test('legibility screenshot of a loaded board', async ({ page }, testInfo) => {

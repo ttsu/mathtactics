@@ -32,7 +32,17 @@ import { PLACEHOLDER } from './views/palette';
 import { RobotView } from './views/RobotView';
 import { TileView } from './views/TileView';
 
-const DEPTH = { dropFeedback: 1, piece: 2, robot: 3, trayMarkers: 4, held: 10 } as const;
+/** Draw order for everything on the board, including the playback Director's layers (task 10). */
+export const DEPTH = {
+  dropFeedback: 1,
+  piece: 2,
+  robot: 3,
+  trayMarkers: 4,
+  laneWash: 5,
+  ball: 6,
+  effects: 7,
+  held: 10,
+} as const;
 const TRAY_SCALE = TRAY_TILE_SIZE / PIECE_SIZE;
 const EASE = 'Cubic.easeOut';
 
@@ -76,6 +86,19 @@ export class BoardRenderer {
     this.syncRobots(run);
     this.syncCannons(run);
     this.drawTrayMarkers(run);
+  }
+
+  /** Views by id, for the playback Director (task 10). */
+  tileView(pieceId: string): TileView | undefined {
+    return this.tiles.get(pieceId);
+  }
+
+  robotView(robotId: string): RobotView | undefined {
+    return this.robots.get(robotId);
+  }
+
+  cannonView(lane: Lane): CannonView | undefined {
+    return this.cannons.get(lane);
   }
 
   /** The view a drag source refers to. */
@@ -191,7 +214,7 @@ export class BoardRenderer {
         view = new RobotView(this.scene).setDepth(DEPTH.robot);
         this.robots.set(robot.robotId, view);
       }
-      view.setHp(robot.hp);
+      view.setHp(robot.hp, robot.maxHp);
       this.place(view, cellCenter(robot.lane, robot.col!), 1, !created);
     }
   }

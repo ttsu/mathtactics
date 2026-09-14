@@ -295,7 +295,8 @@ interface AppState {
     baseHp: number;
     waveIndex: number;
   };
-  playback: { status: 'idle' | 'playing'; events: GameEvent[]; cursor: number };
+  playback: { status: 'idle' | 'playing' | 'replaying'; events: GameEvent[]; cursor: number };
+  lastTurn: { before: RunState; events: GameEvent[] } | null;  // Replay snapshot, memory only
   screen: 'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect';
   settings: { hints: boolean; sound: boolean };
 }
@@ -304,6 +305,7 @@ interface AppActions {
   dispatch(cmd: Command): { ok: boolean; error?: CommandError };
   commitEvent(e: GameEvent): void;   // playback → display slice only
   finishPlayback(): void;            // display := derived from run
+  startReplay(): boolean;            // playback = replaying lastTurn (planning + idle only)
   setSettings(patch: Partial<AppState['settings']>): void;
 }
 ```
@@ -370,7 +372,12 @@ React interactive elements set `pointer-events: auto`. Everything else passes th
 - Groups events by `group`; plays groups sequentially; highlights the active lane for `fire:lane:*`.
 - Tap during playback → finish the current group instantly; next tap skips the next group.
 - `skipAll()` (test handle) → apply all remaining events instantly.
-- Replay → re-run `lastTurnEvents` against a snapshot of the pre-turn board (visual only).
+- Replay → re-run `lastTurnEvents` against a snapshot of the pre-turn board (visual only):
+  the store keeps `lastTurn.before` when a dispatch yields events; `commitEvent` is ignored while
+  `playback.status === 'replaying'`. After a reload there is no snapshot, so Replay is disabled.
+- Beat timing is computed Phaser-free in `playback/timeline.ts` (from `presentation.json`
+  `pacing` + `playback`); `playback/SegmentPlayer.ts` draws one segment's beats and its final
+  state on skip.
 
 ---
 

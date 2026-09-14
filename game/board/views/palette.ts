@@ -18,6 +18,19 @@ export const PLACEHOLDER = {
   /** Drop feedback while dragging. */
   dropValid: 0xffffff,
   dropInvalid: 0xe53935,
+  hpBarBack: 0x1f2229,
+  hpBarFill: 0x9be15d,
+  /** Playback (task 10). Balls read as red rubber balls (GDD §12.1). */
+  ball: 0xe53935,
+  ballOutline: 0x8e1b18,
+  ballShine: 0xffffff,
+  tileFlash: 0xffffff,
+  laneWash: 0x000000,
+  laneHighlight: 0xffd54f,
+  celebration: 0xffc107,
+  celebrationOutline: 0xff8f00,
+  clonk: 0x9aa5b1,
+  puff: 0xb0b7c3,
 } as const;
 
 export const FONT_FAMILY = 'system-ui, -apple-system, sans-serif';
@@ -25,3 +38,5 @@ export const FONT_FAMILY = 'system-ui, -apple-system, sans-serif';
 export const TILE_TEXT_COLOR = '#1a1a1a';
 export const LIGHT_TEXT_COLOR = '#ffffff';
 export const DARK_STROKE_COLOR = '#000000';
+export const COIN_TEXT_COLOR = '#ffd54f';
+export const DOUBLED_DAMAGE_TEXT_COLOR = '#ffab40';

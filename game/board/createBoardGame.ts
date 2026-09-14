@@ -4,6 +4,15 @@ import type { AppStore } from '../state/store';
 import { BoardScene } from './BoardScene';
 import { WORLD_HEIGHT, WORLD_WIDTH } from './layout';
 
+/** The mounted board: the Phaser game plus the playback controls the test handle needs. */
+export interface BoardGame {
+  game: Phaser.Game;
+  /** Finishes any playback sequence instantly (test handle `skipAnimation`, TR §14). */
+  skipAnimation(): void;
+  /** True while the playback Director has a sequence, tweens or timers pending. */
+  isAnimating(): boolean;
+}
+
 export interface BoardGameOptions {
   parent: HTMLElement;
   /** The app store the board renders from and dispatches planning commands to (TR §10). */
@@ -17,7 +26,8 @@ export interface BoardGameOptions {
 /**
  * Creates the Phaser game: world = design space × UNIT, scaled to fit and centred (TR §11.2).
  */
-export function createBoardGame(options: BoardGameOptions): Phaser.Game {
+export function createBoardGame(options: BoardGameOptions): BoardGame {
+  const scene = new BoardScene(options.store);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: options.parent,
@@ -30,7 +40,7 @@ export function createBoardGame(options: BoardGameOptions): Phaser.Game {
       width: WORLD_WIDTH,
       height: WORLD_HEIGHT,
     },
-    scene: [new BoardScene(options.store)],
+    scene: [scene],
   });
 
   const placed = () => options.onCanvasPlaced(game.canvas);
@@ -39,5 +49,9 @@ export function createBoardGame(options: BoardGameOptions): Phaser.Game {
     game.scale.on(Phaser.Scale.Events.RESIZE, placed);
   });
 
-  return game;
+  return {
+    game,
+    skipAnimation: () => scene.director?.skipAll(),
+    isAnimating: () => scene.director?.busy ?? false,
+  };
 }

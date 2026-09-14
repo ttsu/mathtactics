@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { applyCommand } from '../../sim/commands';
 import {
+  canReplay,
   createAppStore,
   isPlaybackActive,
   displayFromRun,
@@ -11,6 +13,8 @@ import { scopedKey, type StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
 import type { RunState } from '../../sim/core/types';
 import { fakeDragSettings } from '../helpers/dragSettings';
+import { boardState, realData } from './boardFixtures';
+import { fakePacingSettings, fakePlaybackSettings } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
   const map = new Map<string, string>();
@@ -43,7 +47,8 @@ function fakeGameData(overrides: Partial<GameData['economy']> = {}): GameData {
     waves: { waves: [] },
     levels: { levels: [] },
     presentation: {
-      pacing: { ballCellDurationMs: 1, perTilePauseMs: 1, laneGapMs: 1, advanceDurationMs: 1 },
+      pacing: fakePacingSettings(),
+      playback: fakePlaybackSettings(),
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
       drag: fakeDragSettings(),
     },
@@ -391,5 +396,99 @@ describe('isPlaybackActive', () => {
   it('is true only while playback is playing', () => {
     expect(isPlaybackActive({ playback: { status: 'idle', events: [], cursor: 0 } })).toBe(false);
     expect(isPlaybackActive({ playback: { status: 'playing', events: [], cursor: 0 } })).toBe(true);
+  });
+});
+
+describe('Replay (task 10)', () => {
+  // Lane 2: base value 3 exactly kills a 3 HP robot (+2 coins); lane 0 has a robot that survives,
+  // so the level does not clear and the run stays in planning.
+  const rows = [
+    'C . R9 . . . . .',
+    '. . . . . . . .',
+    'C . R3 . . . . .',
+    '. . . . . . . .',
+    '. . . . . . . .',
+  ];
+
+  function playedTurn() {
+    // `loadLevel` stands in for any command that installs a fresh run (no levels ship yet).
+    const withFreshRun: ApplyCommandFn = (state, cmd, data) =>
+      cmd.type === 'loadLevel'
+        ? { ok: true, state: boardState(rows), events: [] }
+        : applyCommand(state, cmd, data);
+    const store = createAppStore({
+      data: realData,
+      applyCommand: withFreshRun,
+      storage: createMemoryStorage(),
+      basePath: '/',
+    });
+    const before = boardState(rows);
+    store.setState({ run: before, display: displayFromRun(before) });
+    store.getState().dispatch({ type: 'endTurn' });
+    return { store, before };
+  }
+
+  it('keeps the pre-turn run and the turn events as the replay snapshot', () => {
+    const { store, before } = playedTurn();
+    const { run, lastTurn, playback } = store.getState();
+    expect(lastTurn).toEqual({ before, events: run!.lastTurnEvents });
+    expect(lastTurn!.before).toBe(before);
+    expect(playback.status).toBe('playing');
+    // HUD values lag: nothing committed yet.
+    expect(store.getState().display.coins).toBe(before.coins);
+    expect(run!.coins).toBe(before.coins + realData.economy.income.exactKill);
+  });
+
+  it('is offered only in planning, when idle, with a snapshot and events', () => {
+    const { store } = playedTurn();
+    expect(canReplay(store.getState())).toBe(false); // still playing
+    expect(store.getState().startReplay()).toBe(false);
+
+    store.getState().finishPlayback();
+    expect(canReplay(store.getState())).toBe(true);
+    // Retained after playback ends.
+    expect(store.getState().lastTurn).not.toBeNull();
+
+    const state = store.getState();
+    expect(canReplay({ ...state, lastTurn: null })).toBe(false); // e.g. after a reload
+    expect(canReplay({ ...state, run: { ...state.run!, lastTurnEvents: [] } })).toBe(false);
+    expect(canReplay({ ...state, run: { ...state.run!, phase: 'levelCleared' } })).toBe(false);
+  });
+
+  it('plays the last turn visually: dispatches nothing, commits nothing, restores display', () => {
+    const { store } = playedTurn();
+    store.getState().finishPlayback();
+    const { run, display, lastTurn } = store.getState();
+
+    expect(store.getState().startReplay()).toBe(true);
+    expect(store.getState().playback).toEqual({
+      status: 'replaying',
+      events: lastTurn!.events,
+      cursor: 0,
+    });
+    expect(isPlaybackActive(store.getState())).toBe(true);
+
+    // The Director commits the replayed CoinsChanged — the store ignores it during a replay.
+    for (const event of lastTurn!.events) store.getState().commitEvent(event);
+    expect(store.getState().display).toEqual(display);
+
+    store.getState().finishPlayback();
+    expect(store.getState().run).toBe(run);
+    expect(store.getState().display).toEqual(display);
+    expect(store.getState().lastTurn).toBe(lastTurn);
+    expect(store.getState().playback.status).toBe('idle');
+  });
+
+  it('keeps the snapshot through planning commands but drops it when a new run is installed', () => {
+    const { store } = playedTurn();
+    store.getState().finishPlayback();
+    const snapshot = store.getState().lastTurn;
+
+    store.getState().dispatch({ type: 'moveCannon', fromLane: 0, toLane: 1 });
+    expect(store.getState().run!.board.cannons[1]).toBe(true);
+    expect(store.getState().lastTurn).toBe(snapshot);
+
+    store.getState().dispatch({ type: 'loadLevel', levelId: 'any' });
+    expect(store.getState().lastTurn).toBeNull();
   });
 });
