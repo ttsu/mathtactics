@@ -15,7 +15,7 @@ Gate: a blank board renders on the iPad via `https://mathtactics.timtsu.com`.
 | 03 | [App shell: Phaser + React layering, scaling, iPad web shell](tasks/03-app-shell.md) | presentation | 01 | Complete |
 | 04 | [Core types, RNG & data schemas](tasks/04-core-types-and-data.md) | sim / data | 01 | Complete |
 | 05 | [Store, persistence scoping & test handle](tasks/05-store-and-test-handle.md) | state | 03, 04 | Complete |
-| H0 | **Human:** DNS CNAME, Pages settings, branch protection; open production URL on iPad, add to Home Screen | human | 02, 03 | Partial (branch protection on `main` not yet enabled) |
+| H0 | **Human:** DNS CNAME, Pages settings, branch protection; open production URL on iPad, add to Home Screen | human | 02, 03 | Complete |
 
 ## M1 — Core Loop
 
