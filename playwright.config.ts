@@ -5,7 +5,10 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
-  reporter: 'list',
+  // 'list' for readable local/CI console output; 'html' (never auto-opened) so
+  // playwright-report/ actually exists for ci.yml's on-failure artifact upload — 'list' alone
+  // writes no report directory at all, which would leave that step no-op/empty.
+  reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:4173',
   },
