@@ -1,0 +1,234 @@
+[
+  {
+    "id": "add:1",
+    "kind": "add",
+    "n": 1,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "add:2",
+    "kind": "add",
+    "n": 2,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "add:3",
+    "kind": "add",
+    "n": 3,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "add:4",
+    "kind": "add",
+    "n": 4,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "add:5",
+    "kind": "add",
+    "n": 5,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "add:6",
+    "kind": "add",
+    "n": 6,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "add:7",
+    "kind": "add",
+    "n": 7,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "add:8",
+    "kind": "add",
+    "n": 8,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "add:9",
+    "kind": "add",
+    "n": 9,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "add:10",
+    "kind": "add",
+    "n": 10,
+    "priceCategory": "add",
+    "color": "green",
+    "starred": false
+  },
+  {
+    "id": "sub:1",
+    "kind": "sub",
+    "n": 1,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "sub:2",
+    "kind": "sub",
+    "n": 2,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "sub:3",
+    "kind": "sub",
+    "n": 3,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "sub:4",
+    "kind": "sub",
+    "n": 4,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "sub:5",
+    "kind": "sub",
+    "n": 5,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "sub:6",
+    "kind": "sub",
+    "n": 6,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "sub:7",
+    "kind": "sub",
+    "n": 7,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "sub:8",
+    "kind": "sub",
+    "n": 8,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "sub:9",
+    "kind": "sub",
+    "n": 9,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "sub:10",
+    "kind": "sub",
+    "n": 10,
+    "priceCategory": "sub",
+    "color": "blue",
+    "starred": false
+  },
+  {
+    "id": "mul:2",
+    "kind": "mul",
+    "n": 2,
+    "priceCategory": "mulLow",
+    "color": "orange",
+    "starred": false
+  },
+  {
+    "id": "mul:3",
+    "kind": "mul",
+    "n": 3,
+    "priceCategory": "mulLow",
+    "color": "orange",
+    "starred": false
+  },
+  {
+    "id": "mul:4",
+    "kind": "mul",
+    "n": 4,
+    "priceCategory": "mulLow",
+    "color": "orange",
+    "starred": false
+  },
+  {
+    "id": "mul:5",
+    "kind": "mul",
+    "n": 5,
+    "priceCategory": "mulLow",
+    "color": "orange",
+    "starred": false
+  },
+  {
+    "id": "mul:6",
+    "kind": "mul",
+    "n": 6,
+    "priceCategory": "mulHigh",
+    "color": "orange",
+    "starred": true
+  },
+  {
+    "id": "mul:7",
+    "kind": "mul",
+    "n": 7,
+    "priceCategory": "mulHigh",
+    "color": "orange",
+    "starred": true
+  },
+  {
+    "id": "mul:8",
+    "kind": "mul",
+    "n": 8,
+    "priceCategory": "mulHigh",
+    "color": "orange",
+    "starred": true
+  },
+  {
+    "id": "mul:9",
+    "kind": "mul",
+    "n": 9,
+    "priceCategory": "mulHigh",
+    "color": "orange",
+    "starred": true
+  },
+  {
+    "id": "mul:10",
+    "kind": "mul",
+    "n": 10,
+    "priceCategory": "mulHigh",
+    "color": "orange",
+    "starred": true
+  }
+]

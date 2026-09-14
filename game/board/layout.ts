@@ -7,6 +7,7 @@
 //
 // Kept free of Phaser imports so it is unit-testable in node.
 
+import { COLS, LANES } from '../../sim/core/coords';
 import { DESIGN_HEIGHT, DESIGN_WIDTH, HUD_BAR, type Rect } from '../state/designSpace';
 
 /**
@@ -27,9 +28,10 @@ export function worldToDesign(pixels: number): number {
   return pixels / UNIT;
 }
 
-// TODO(task 04): use LANES / COLS from /sim/core/coords once it exists.
-export const LANE_COUNT = 5;
-export const COLUMN_COUNT = 8; // col 0 = cannon slot, cols 1–7 = tile cells
+// Board dimensions come from /sim/core/coords (TR §3: they're a design constant, not tuning),
+// re-exported under these names since they're layout-facing (cell counts), not sim state.
+export const LANE_COUNT = LANES;
+export const COLUMN_COUNT = COLS; // col 0 = cannon slot, cols 1–7 = tile cells
 
 export const CELL_SIZE = 100;
 export const BASE_STRIP_WIDTH = 80;
