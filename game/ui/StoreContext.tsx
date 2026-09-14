@@ -26,3 +26,13 @@ export function useAppStore<T>(selector: (state: AppStore) => T): T {
   }
   return useStore(store, selector);
 }
+
+/** The store itself, for flow steps that read fresh state and act at click time (e.g.
+ * `/game/state/levelFlow.ts`). */
+export function useAppStoreApi(): StoreApi<AppStore> {
+  const store = useContext(StoreContext);
+  if (!store) {
+    throw new Error('useAppStoreApi must be used within a <StoreProvider>');
+  }
+  return store;
+}

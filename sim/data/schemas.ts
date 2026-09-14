@@ -224,6 +224,11 @@ const PresentationFileSchema = z.object({
     /** Movement (design points) before a press on an overflowing tray decides drag vs scroll. */
     trayScrollThresholdPt: z.number().positive(),
   }),
+  /** React screens and overlays (task 11: main menu, level cleared, all done). Presentation only. */
+  screens: z.object({
+    /** How long a screen's celebration art and big button take to pop in. */
+    popInMs: ms(),
+  }),
 });
 
 // --- robots.json — expanded in M3/M4 (robot templates, traits, visual keys) ---

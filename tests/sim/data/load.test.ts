@@ -3,7 +3,7 @@ import { parseGameData } from '../../../sim/data/load';
 import { applyTile } from '../../../sim/core/tiles';
 import type { TileDef } from '../../../sim/core/types';
 import { loadRawGameData } from '../../helpers/loadDataFiles';
-import { fakeDragSettings } from '../../helpers/dragSettings';
+import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
 import { fakePacingSettings, fakePlaybackSettings } from '../../helpers/playbackSettings';
 
 function validTile(overrides: Record<string, unknown> = {}) {
@@ -39,6 +39,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       playback: fakePlaybackSettings(),
       tileColors: { green: '#4caf50', blue: '#2196f3', orange: '#ff9800' },
       drag: fakeDragSettings(),
+      screens: fakeScreenSettings(),
     },
     ...overrides,
   };

@@ -97,5 +97,8 @@
     "snapRadiusCells": 0.75,
     "settleDurationMs": 160,
     "trayScrollThresholdPt": 12
+  },
+  "screens": {
+    "popInMs": 450
   }
 }

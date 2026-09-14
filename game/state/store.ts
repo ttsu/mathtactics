@@ -37,7 +37,9 @@ export interface Display {
   waveIndex: number;
 }
 
-export type Screen = 'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect';
+/** `allDone` = every M1 puzzle level cleared (task 11). */
+export type Screen =
+  'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect' | 'allDone';
 
 export interface Playback {
   /** `playing` = a just-resolved turn; `replaying` = the Replay button re-showing the last turn
@@ -77,6 +79,9 @@ export interface AppActions {
    * Dispatches nothing. */
   startReplay(): boolean;
   setSettings(patch: Partial<Settings>): void;
+  /** Shows `screen`. Screen changes never touch `run` (task 11: the level flow in `levelFlow.ts`
+   * pairs this with `dispatch`). */
+  setScreen(screen: Screen): void;
 }
 
 export type AppStore = AppState & AppActions;
@@ -138,9 +143,9 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     display: initialRun ? displayFromRun(initialRun) : displayFromEconomy(data),
     playback: { ...IDLE_PLAYBACK },
     lastTurn: null,
-    // Deviation (task 05): no menu/screen flow exists yet (task 03 shell shows the board
-    // directly) — 'game' is the simplest value consistent with what's on screen today.
-    screen: 'game',
+    // Task 11: the app opens on the main menu. A run restored from storage is kept in `run` but
+    // not resumed by the menu in M1 (▶ Play always starts the first level).
+    screen: 'menu',
     settings: initialSettings,
 
     dispatch(cmd) {
@@ -213,6 +218,10 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
       const next = { ...get().settings, ...patch };
       saveSettings(storage, basePath, next);
       set({ settings: next });
+    },
+
+    setScreen(screen) {
+      set({ screen });
     },
   }));
 }

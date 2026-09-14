@@ -10,3 +10,8 @@ export function fakeDragSettings() {
     trayScrollThresholdPt: 12,
   };
 }
+
+/** The `presentation.json` `screens` block (task 11) for hand-built fake `GameData` fixtures. */
+export function fakeScreenSettings() {
+  return { popInMs: 450 };
+}

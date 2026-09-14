@@ -36,13 +36,15 @@ declare global {
 
 /** Installs `state` directly, bypassing `dispatch`/playback entirely — shared by `loadState` and
  * `loadScenario`. Resets any in-flight playback too, otherwise `isIdle()` would stay false after
- * a fresh install (finding 8, final review). */
+ * a fresh install (finding 8, final review). Shows the game screen, bypassing the menu (TR §14,
+ * task 11). */
 function installState(store: StoreApi<AppStore>, state: RunState): void {
   store.setState({
     run: state,
     display: displayFromRun(state),
     playback: { ...IDLE_PLAYBACK },
     lastTurn: null,
+    screen: 'game',
   });
 }
 

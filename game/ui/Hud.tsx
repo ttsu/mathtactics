@@ -1,7 +1,11 @@
 // HUD (task 03 req. 5 placeholder, task 05 req. 6: reads coins/base HP from `display` via the
-// store; task 09 req. 4: End Turn and Undo dispatch real commands; task 10 req. 6: Replay).
+// store; task 09 req. 4: End Turn and Undo dispatch real commands; task 10 req. 6: Replay; task 11
+// req. 3: in level mode the level dots replace the wave, and base HP is hidden — levels never
+// damage the base, TR §4.1).
 import { HUD_BAR, MIN_TOUCH_TARGET } from '../state/designSpace';
+import { levelPosition } from '../state/levelFlow';
 import { hudButtons } from './hudButtons';
+import { LevelDots } from './LevelDots';
 import { useAppStore } from './StoreContext';
 
 const touchTarget = { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET };
@@ -13,6 +17,11 @@ export function Hud() {
   const canReplay = useAppStore((state) => hudButtons(state).replay);
   const dispatch = useAppStore((state) => state.dispatch);
   const startReplay = useAppStore((state) => state.startReplay);
+  const levelMode = useAppStore((state) => state.run?.mode === 'level');
+  const levelIndex = useAppStore(
+    (state) => levelPosition(state.data, state.run?.levelId)?.index ?? null,
+  );
+  const levelCount = useAppStore((state) => state.data.levels.levels.length);
 
   return (
     <div
@@ -20,8 +29,14 @@ export function Hud() {
       data-testid="hud-bar"
       style={{ left: HUD_BAR.x, top: HUD_BAR.y, width: HUD_BAR.width, height: HUD_BAR.height }}
     >
-      <span className="hud-stat">Wave {display.waveIndex + 1}</span>
-      <span className="hud-stat">♥ {display.baseHp}</span>
+      {levelMode ? (
+        levelIndex !== null && <LevelDots index={levelIndex} count={levelCount} />
+      ) : (
+        <>
+          <span className="hud-stat">Wave {display.waveIndex + 1}</span>
+          <span className="hud-stat">♥ {display.baseHp}</span>
+        </>
+      )}
       <span className="hud-stat">🪙 {display.coins}</span>
       <div className="hud-actions">
         <button
