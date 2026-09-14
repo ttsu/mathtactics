@@ -75,7 +75,7 @@ Resolution tests (event-list assertions via an ordered-subsequence matcher in `/
 
 **Verification:**
 
-- `npm test` — 21 files, 204 tests passed (158 pre-existing + 46 new: 25 in `tests/sim/resolve/impact.test.ts`, 19 in `tests/sim/resolve/resolveTurn.test.ts`, 2 in `tests/sim/commands/endTurn.test.ts`, plus 2 updated/new cases in `tests/game/testHandle.test.ts`); one pre-existing test in `tests/sim/commands/planningCommands.test.ts` updated (see Deviations).
+- `npm test` — 21 files, 204 tests passed (172 pre-existing + 32 new: 20 in `tests/sim/resolve/impact.test.ts`, 9 in `tests/sim/resolve/resolveTurn.test.ts`, 2 in `tests/sim/commands/endTurn.test.ts`, plus a net +1 in `tests/game/testHandle.test.ts` — the old "throws" case removed, two new dispatch-behavior cases added); one pre-existing test in `tests/sim/commands/planningCommands.test.ts` updated, not added (see Deviations).
 - `npm run typecheck` — `tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sim.json --noEmit`, both clean.
 - `npm run lint` — `eslint .`, 0 errors/warnings.
 - `npx prettier --check` on all new/changed files — clean after one `--write` pass (formatting only, no logic changes).
