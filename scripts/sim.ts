@@ -11,7 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { relative } from 'node:path';
 import { parseGameData } from '../sim/data/load';
-import { describeScenarioFailure, formatEventCompact, parseScenario, runScenario } from '../sim/scenario';
+import { describeScenarioFailureCompact, parseScenario, runScenario } from '../sim/scenario';
 import { discoverScenarioFiles, scenarioSlugFromPath } from '../tests/helpers/scenarioFiles';
 import { loadRawGameData } from '../tests/helpers/loadDataFiles';
 
@@ -45,13 +45,9 @@ for (const file of files) {
 
     failures++;
     console.log(`✘ ${rel} — ${scenario.name}`);
-    for (const line of describeScenarioFailure(result).split('\n')) {
+    for (const line of describeScenarioFailureCompact(result).split('\n')) {
       console.log(`  ${line}`);
     }
-    console.log('  actual events:');
-    result.events.forEach((event, index) => {
-      console.log(`    ${index}: ${formatEventCompact(event)}`);
-    });
   } catch (err) {
     failures++;
     console.log(`✘ ${rel}`);

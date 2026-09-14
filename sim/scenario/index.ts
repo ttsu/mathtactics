@@ -6,14 +6,16 @@ export { parseScenario, type Scenario } from './parse';
 export {
   buildScenarioState,
   describeScenarioFailure,
-  formatEventCompact,
+  describeScenarioFailureCompact,
   runScenario,
   type ScenarioCommandFailure,
   type ScenarioRunResult,
 } from './run';
 export {
   describeEventSequenceFailure,
+  describeEventSequenceFailureCompact,
   findPartialMismatch,
+  formatEventCompact,
   matchEventSequence,
   partialMatches,
   type EventSequenceMatch,
