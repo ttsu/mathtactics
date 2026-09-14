@@ -10,7 +10,7 @@ Gate: a blank board renders on the iPad via `https://mathtactics.timtsu.com`.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
-| 01 | [Project scaffold & tooling](tasks/01-project-scaffold.md) | infra | — | Not Started |
+| 01 | [Project scaffold & tooling](tasks/01-project-scaffold.md) | infra | — | Complete |
 | 02 | [CI, GitHub Pages & PR previews](tasks/02-ci-and-deploy.md) | infra | 01 | Not Started |
 | 03 | [App shell: Phaser + React layering, scaling, iPad web shell](tasks/03-app-shell.md) | presentation | 01 | Not Started |
 | 04 | [Core types, RNG & data schemas](tasks/04-core-types-and-data.md) | sim / data | 01 | Not Started |
