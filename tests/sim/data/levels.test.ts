@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseGameData } from '../../../sim/data/load';
+import { fakeDragSettings } from '../../helpers/dragSettings';
 
 function validTile(overrides: Record<string, unknown> = {}) {
   return {
@@ -37,14 +38,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
         advanceDurationMs: 400,
       },
       tileColors: { green: '#4caf50', blue: '#2196f3', orange: '#ff9800' },
-      drag: {
-        liftScale: 1.15,
-        liftDurationMs: 80,
-        fingerOffsetPt: 36,
-        snapRadiusCells: 0.75,
-        settleDurationMs: 160,
-        trayScrollThresholdPt: 12,
-      },
+      drag: fakeDragSettings(),
     },
     ...overrides,
   };

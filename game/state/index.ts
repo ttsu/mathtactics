@@ -19,7 +19,13 @@ export {
   DEFAULT_SETTINGS,
 } from './storage';
 export type { StorageLike, Settings } from './storage';
-export { createAppStore, stubApplyCommand, displayFromRun, IDLE_PLAYBACK } from './store';
+export {
+  createAppStore,
+  stubApplyCommand,
+  displayFromRun,
+  isPlaybackActive,
+  IDLE_PLAYBACK,
+} from './store';
 export type {
   AppState,
   AppActions,

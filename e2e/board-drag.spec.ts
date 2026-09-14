@@ -13,7 +13,7 @@ const SCENARIO = [
   'board:',
   '  - ". +5 . . . R7 . ."', // lane 0: a tile on (0,1); robot locks (0,5)
   '  - "C +2 . . . . . ."', // lane 1: cannon, a tile on (1,1)
-  '  - ". . . . . . . ."',
+  '  - ". . . . R9 . -2 ."', // lane 2: robot locks (2,4); (2,6) occupied; (1,4)/(1,6) empty
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
 ].join('\n');
@@ -50,9 +50,14 @@ async function mouseDrag(page: Page, from: Pt, to: Pt) {
 /** Touch events dispatched on the canvas (Phaser's TouchManager). Playwright has no touch-drag
  * API and WebKit has no `Touch` constructor, so the touches come from WebKit's
  * `document.createTouch`/`createTouchList` and are delivered as real `TouchEvent`s. */
-async function touchDrag(page: Page, from: Pt, to: Pt) {
+async function touchDrag(
+  page: Page,
+  from: Pt,
+  to: Pt,
+  { end = 'touchend' }: { end?: 'touchend' | 'touchcancel' } = {},
+) {
   await page.evaluate(
-    ({ from, to }) => {
+    ({ from, to, end }) => {
       // WebKit's legacy factories — the only way to build a `Touch`/`TouchList` there.
       type LegacyTouchDocument = Document & {
         createTouch(
@@ -90,9 +95,9 @@ async function touchDrag(page: Page, from: Pt, to: Pt) {
           true,
         );
       }
-      fire('touchend', to, false);
+      fire(end, to, false);
     },
-    { from, to },
+    { from, to, end },
   );
 }
 
@@ -122,17 +127,34 @@ test('dragging a tray tile onto a cell places it (touch)', async ({ page }) => {
   expect(after.tray).not.toContain(pieceId);
 });
 
-test('dropping onto a locked or occupied cell changes nothing', async ({ page }) => {
+test('dropping onto a locked or occupied cell changes nothing and is not re-routed', async ({
+  page,
+}) => {
   await loadBoard(page);
   const before = await getState(page);
 
-  // (0,5) is locked by a robot; (0,1) already holds a tile. Top-lane targets, so no empty cell
-  // is within snap reach of the held piece (it sits a little above the finger).
-  await mouseDrag(page, await trayPoint(page, 0), await cellPoint(page, { lane: 0, col: 5 }));
-  await touchDrag(page, await trayPoint(page, 0), await cellPoint(page, { lane: 0, col: 1 }));
+  // Middle-lane targets with an empty cell directly above each: the finger's cell alone decides.
+  await mouseDrag(page, await trayPoint(page, 0), await cellPoint(page, { lane: 2, col: 4 }));
+  await touchDrag(page, await trayPoint(page, 0), await cellPoint(page, { lane: 2, col: 6 }));
+  await mouseDrag(
+    page,
+    await cellPoint(page, { lane: 1, col: 1 }),
+    await cellPoint(page, { lane: 0, col: 5 }),
+  );
 
   expect(await getState(page)).toEqual(before);
   await expect(page.getByTestId('undo')).toBeDisabled();
+});
+
+test('a cancelled touch abandons the drag instead of dropping', async ({ page }) => {
+  await loadBoard(page);
+  const before = await getState(page);
+
+  await touchDrag(page, await trayPoint(page, 0), await cellPoint(page, { lane: 3, col: 3 }), {
+    end: 'touchcancel',
+  });
+
+  expect(await getState(page)).toEqual(before);
 });
 
 test('Undo restores the board and disables itself when history is empty', async ({ page }) => {
@@ -160,15 +182,15 @@ test('cell tiles move between cells and back to the tray; cannons move between s
   await touchDrag(
     page,
     await cellPoint(page, { lane: 1, col: 1 }),
-    await cellPoint(page, { lane: 2, col: 4 }),
+    await cellPoint(page, { lane: 3, col: 4 }),
   );
   let state = await getState(page);
   expect(state.board.cells[1]![1]).toBeNull();
-  expect(state.board.cells[2]![4]).toBe(tileOnBoard);
+  expect(state.board.cells[3]![4]).toBe(tileOnBoard);
 
-  await mouseDrag(page, await cellPoint(page, { lane: 2, col: 4 }), await trayPoint(page, 5));
+  await mouseDrag(page, await cellPoint(page, { lane: 3, col: 4 }), await trayPoint(page, 5));
   state = await getState(page);
-  expect(state.board.cells[2]![4]).toBeNull();
+  expect(state.board.cells[3]![4]).toBeNull();
   expect(state.tray.at(-1)).toBe(tileOnBoard);
 
   await touchDrag(

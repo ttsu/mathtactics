@@ -18,8 +18,10 @@ import {
   TRAY_PADDING,
   TRAY_SLOT_PITCH,
   TRAY_TILE_SIZE,
+  CELL_INSET,
   cellAtPoint,
   cellCenter,
+  cellFaceAtPoint,
   cellRect,
   cellToClient,
   designToWorld,
@@ -121,6 +123,11 @@ describe('piece and tray geometry (task 09)', () => {
     expect(traySlotAtPoint({ x: TRAY.x + 1, y: TRAY.y + 1 })).toBeNull(); // side padding
     expect(cellAtPoint(cellCenter(2, 3))).toEqual({ lane: 2, col: 3 });
     expect(cellAtPoint({ x: GRID.x - 1, y: GRID.y })).toBeNull();
+    // A cell's face excludes the drawn gutter; the cell rect itself doesn't.
+    const edge = { x: cellRect(2, 3).x + CELL_INSET - 1, y: cellCenter(2, 3).y };
+    expect(cellAtPoint(edge)).toEqual({ lane: 2, col: 3 });
+    expect(cellFaceAtPoint(edge)).toBeNull();
+    expect(cellFaceAtPoint(cellCenter(2, 3))).toEqual({ lane: 2, col: 3 });
   });
 
   it('makes robot HP the largest board text', () => {

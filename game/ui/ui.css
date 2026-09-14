@@ -42,13 +42,20 @@
 }
 
 .hud-button-undo {
-  padding: 0 20px;
-  background: #5b6b85;
-  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  padding: 0;
+  background: #4f86c6;
 }
 
 .hud-button:disabled {
-  opacity: 0.4;
+  opacity: 0.55;
+}
+
+.hud-button-undo:disabled {
+  background: #5b6b85;
 }
 
 .hud-button:active:not(:disabled) {

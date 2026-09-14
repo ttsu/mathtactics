@@ -4,6 +4,7 @@ import { buildLevelState } from '../../../sim/commands/level';
 import { parseGameData } from '../../../sim/data/load';
 import type { RunState } from '../../../sim/core/types';
 import { fakeGameData, fakeLevelDef, fakeRunState } from './fixtures';
+import { fakeDragSettings } from '../../helpers/dragSettings';
 
 function expectOk(result: ReturnType<typeof applyCommand>): asserts result is {
   ok: true;
@@ -187,14 +188,7 @@ describe('applyCommand — loadLevel', () => {
       presentation: {
         pacing: { ballCellDurationMs: 1, perTilePauseMs: 1, laneGapMs: 1, advanceDurationMs: 1 },
         tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
-        drag: {
-          liftScale: 1.15,
-          liftDurationMs: 80,
-          fingerOffsetPt: 36,
-          snapRadiusCells: 0.75,
-          settleDurationMs: 160,
-          trayScrollThresholdPt: 12,
-        },
+        drag: fakeDragSettings(),
       },
     };
     const data = parseGameData(raw);

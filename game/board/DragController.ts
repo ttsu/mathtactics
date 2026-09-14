@@ -1,6 +1,7 @@
 // Touch-friendly drag-and-drop for tiles and cannons (task 09 req. 3). Scene-level pointer
 // handling: a press picks up whatever `pickUpAt` finds, the piece lifts and follows the finger
-// (held a little above it), and the drop dispatches at most one planning command.
+// (drawn a little above it), and releasing dispatches at most one planning command, resolved at
+// the finger point.
 //
 // No optimistic state: on release the piece is handed back to the renderer, which settles it
 // home from the last synced state; a successful command then re-syncs it to its new home.
@@ -8,9 +9,15 @@
 
 import type Phaser from 'phaser';
 import type { StoreApi } from 'zustand/vanilla';
-import type { AppStore } from '../state/store';
+import { isPlaybackActive, type AppStore } from '../state/store';
 import type { BoardRenderer } from './BoardRenderer';
-import { pickUpAt, resolveDrop, type DragSource, type DropResolution } from './dragTargets';
+import {
+  heldPieceCenter,
+  pickUpAt,
+  resolveDrop,
+  type DragSource,
+  type DropResolution,
+} from './dragTargets';
 import { TRAY, rectContains, worldToDesign, type Point } from './layout';
 import { classifyTrayGesture, scrollAfterDrag, trayOverflows } from './trayScroll';
 
@@ -46,8 +53,9 @@ export class DragController {
 
   private onDown(pointer: Phaser.Input.Pointer): void {
     if (this.gesture !== null) return;
-    const { run, playback } = this.store.getState();
-    if (run === null || run.phase !== 'planning' || playback.status !== 'idle') return;
+    const state = this.store.getState();
+    const { run } = state;
+    if (run === null || run.phase !== 'planning' || isPlaybackActive(state)) return;
 
     const point = designPoint(pointer);
     const source = pickUpAt(point, run, this.renderer.trayScroll);
@@ -117,6 +125,12 @@ export class DragController {
   private onUp(pointer: Phaser.Input.Pointer): void {
     const gesture = this.gesture;
     if (gesture === null || pointer.id !== gesture.pointerId) return;
+    // Phaser 4 reports a TOUCH_CANCEL as a pointer up (InputPlugin processUpEvents) and flags
+    // the pointer `wasCanceled` — a cancelled touch abandons the drag instead of dropping.
+    if (pointer.wasCanceled) {
+      this.cancel();
+      return;
+    }
     this.gesture = null;
     if (gesture.mode === 'scroll') return;
 
@@ -131,19 +145,15 @@ export class DragController {
 
   /** Moves the held piece under the finger and refreshes drop feedback. */
   private follow(finger: Point, source: DragSource): void {
-    this.renderer.moveHeld(this.pieceCenter(finger));
+    this.renderer.moveHeld(heldPieceCenter(finger, this.config.fingerOffsetPt));
     this.renderer.showDrop(this.resolve(finger, source));
   }
 
+  /** Drops resolve at the finger; the finger offset only affects where the piece is drawn. */
   private resolve(finger: Point, source: DragSource): DropResolution | null {
     const { run } = this.store.getState();
     if (run === null) return null;
-    return resolveDrop(source, this.pieceCenter(finger), run, this.config.snapRadiusCells);
-  }
-
-  /** The piece is held above the finger so it stays visible; drops resolve where the piece is. */
-  private pieceCenter(finger: Point): Point {
-    return { x: finger.x, y: finger.y - this.config.fingerOffsetPt };
+    return resolveDrop(source, finger, run, this.config.snapRadiusCells);
   }
 }
 
