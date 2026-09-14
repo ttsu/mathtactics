@@ -43,10 +43,9 @@ describe('applyCommand — wrong_phase', () => {
     expect(result).toEqual({ ok: false, error: 'wrong_phase' });
   });
 
-  it('rejects endTurn, buyOffer, leaveShop, newRun even during planning (not implemented until M1/M3)', () => {
+  it('rejects buyOffer, leaveShop, newRun even during planning (not implemented until M3)', () => {
     const state = fakeRunState({ phase: 'planning' });
     const commands: Command[] = [
-      { type: 'endTurn' },
       { type: 'buyOffer', slot: 'cannon' },
       { type: 'leaveShop' },
       { type: 'newRun', seed: 'x' },
