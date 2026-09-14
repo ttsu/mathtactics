@@ -8,7 +8,8 @@
 // the job of the milestone that adds their real content, not this task.
 
 import { z } from 'zod';
-import { LANES } from '../core/coords';
+import { COLS, LANES } from '../core/coords';
+import type { Col, Lane } from '../core/coords';
 import type { TileId } from '../core/types';
 
 // --- tiles.json (GDD §9.1, all milestones) ---
@@ -133,9 +134,122 @@ const ShopFileSchema = z.object({}).passthrough();
 
 const WavesFileSchema = z.object({ waves: z.array(z.unknown()) });
 
-// --- levels.json — expanded in M1/task 11 (hand-authored puzzle levels) ---
+// --- levels.json — expanded in task 06 (hand-authored puzzle levels, M1) ---
 
-const LevelsFileSchema = z.object({ levels: z.array(z.unknown()) });
+/** References an existing tile definition by id (e.g. `"add:5"`) — used by a level's
+ * pre-placed board tiles and tray, not a full `TileDefSchema` (a level names tiles, it doesn't
+ * redefine them). Same narrowing rationale as `TileDefSchema`'s `.transform` above. */
+const TileIdRefSchema = z
+  .string()
+  .regex(/^(add|sub|mul):\d+$/, 'must be a tile id like "add:5"')
+  .transform((id) => id as TileId);
+
+/** Narrows a validated lane/col number to its branded `Lane`/`Col` type (TR §3), the same way
+ * `TileDefSchema` narrows `id` to `TileId` — callers get `Lane`/`Col` directly instead of a bare
+ * `number` that fails to satisfy `Robot`/`Board` at every call site. */
+const LaneSchema = z
+  .number()
+  .int()
+  .min(0)
+  .max(LANES - 1)
+  .transform((lane) => lane as Lane);
+
+/** Column 1..COLS-1 — a level's tiles and robots only ever occupy tile-cell columns (GDD §3.1);
+ * column 0 is the cannon slot. */
+const TileColSchema = z
+  .number()
+  .int()
+  .min(1)
+  .max(COLS - 1)
+  .transform((col) => col as Col);
+
+/** Mirrors `Trait` (`sim/core/types.ts`) exactly — task 08's scenario runner reuses this same
+ * shape for scenario robots. */
+const TraitSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('none') }),
+  z.object({
+    type: z.literal('weakness'),
+    n: z.union([z.literal(2), z.literal(5), z.literal(10)]),
+  }),
+  z.object({ type: z.literal('bounceBack') }),
+  z.object({ type: z.literal('oddOnly') }),
+  z.object({ type: z.literal('evenOnly') }),
+]);
+
+const LevelTilePlacementSchema = z.object({
+  lane: LaneSchema,
+  col: TileColSchema,
+  tileId: TileIdRefSchema,
+});
+
+/** Robot trait defaults to `{ type: 'none' }` (task 06 ruling) — v1 levels are stationary
+ * puzzles with no traits in play (traits arrive in M4), but the field exists now so task 08's
+ * scenario files (which do exercise traits) can reuse this same schema shape. */
+const LevelRobotSchema = z.object({
+  lane: LaneSchema,
+  col: TileColSchema,
+  hp: z.number().int().positive(),
+  trait: TraitSchema.default({ type: 'none' }),
+});
+
+const LevelDefSchema = z
+  .object({
+    id: z.string().min(1),
+    /** Lanes with a cannon at load time (GDD §9.4); at most one entry per lane. */
+    cannonLanes: z.array(LaneSchema),
+    /** The level's cannon base value (TR §4: `RunState.cannonBaseValue`). */
+    baseValue: z.number().int(),
+    boardTiles: z.array(LevelTilePlacementSchema).default([]),
+    /** Tray tile ids, in display order; each becomes one owned `TilePiece` (GDD §9.2). */
+    tray: z.array(TileIdRefSchema).default([]),
+    robots: z.array(LevelRobotSchema),
+  })
+  .superRefine((level, ctx) => {
+    const seenLanes = new Set<Lane>();
+    level.cannonLanes.forEach((lane, index) => {
+      if (seenLanes.has(lane)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['cannonLanes', index],
+          message: `duplicate cannon lane ${lane}`,
+        });
+      }
+      seenLanes.add(lane);
+    });
+
+    const seenCells = new Set<string>();
+    level.boardTiles.forEach((placement, index) => {
+      const key = `${placement.lane},${placement.col}`;
+      if (seenCells.has(key)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['boardTiles', index],
+          message: `duplicate tile placement at lane ${placement.lane} col ${placement.col}`,
+        });
+      }
+      seenCells.add(key);
+    });
+  });
+
+const LevelsFileSchema = z.object({
+  levels: z.array(LevelDefSchema).superRefine((levels, ctx) => {
+    const seen = new Set<string>();
+    levels.forEach((level, index) => {
+      if (seen.has(level.id)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'id'],
+          message: `duplicate level id "${level.id}"`,
+        });
+      }
+      seen.add(level.id);
+    });
+  }),
+});
+
+/** One hand-authored M1 puzzle level (TR §4.1). Consumed by `buildLevelState`
+ * (`sim/commands/level.ts`) and, from task 08, by the scenario runner. */
+export type LevelDef = z.infer<typeof LevelDefSchema>;
 
 // --- Combined ---
 

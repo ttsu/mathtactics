@@ -23,7 +23,7 @@ Gate: **Playtest 1** — is building an equation fun?
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
-| 06 | [Planning commands & undo](tasks/06-planning-commands.md) | sim | 04 | Not Started |
+| 06 | [Planning commands & undo](tasks/06-planning-commands.md) | sim | 04 | Complete |
 | 07 | [Fire resolution & impact](tasks/07-fire-resolution.md) | sim | 04 | Not Started |
 | 08 | [Scenario runner](tasks/08-scenario-runner.md) | sim / tooling | 06, 07 | Not Started |
 | 09 | [Board rendering & drag-and-drop](tasks/09-board-and-drag.md) | presentation | 05, 06 | Not Started |
