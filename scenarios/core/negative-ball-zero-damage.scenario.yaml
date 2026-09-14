@@ -1,0 +1,20 @@
+# GDD §5.4 note: a ball worth 0 or less deals 0 damage (never negative healing).
+name: a negative ball value deals zero damage
+baseValue: 1
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C -5 R3 . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents:
+  - { type: BallTransformed, newValue: -4 }
+  - { type: RobotDamaged, ballValue: -4, damage: 0, hpBefore: 3, hpAfter: 3 }
+expectState:
+  coins: 0
+  phase: planning
+  board:
+    robots:
+      - { hp: 3 }

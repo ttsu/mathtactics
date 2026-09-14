@@ -1,0 +1,18 @@
+# GDD §3.4: a cell containing a robot is locked during planning — placing a tile into it is
+# denied. `piece:0` is the scenario's one `tray` tile (boardTiles is empty, so it gets the first
+# allocated piece id).
+name: placing a tile onto a robot's cell is denied
+baseValue: 1
+tray:
+  - add:5
+board:
+  - "C . R5 . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - type: placeTile
+    pieceId: piece:0
+    to: { lane: 0, col: 2 }
+expectError: cell_locked

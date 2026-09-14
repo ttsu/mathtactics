@@ -1,0 +1,19 @@
+# GDD §5.4/§5.5: damage greater than HP still kills, but it's a normal kill (not exact) — 1 coin,
+# not 2.
+name: overkill is a normal kill, not an exact kill
+baseValue: 10
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C R5 . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDamaged, ballValue: 10, damage: 10, hpBefore: 5, hpAfter: -5 }
+  - { type: RobotDefeated, exact: false }
+  - { type: CoinsChanged, delta: 1, reason: kill }
+expectState:
+  coins: 1
+  phase: levelCleared

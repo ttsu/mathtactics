@@ -1,0 +1,25 @@
+# TR §12 canonical example: (1 + 4) × 3 − 2 is an exact kill on 13 HP.
+name: (1 + 4) × 3 − 2 is an exact kill on 13 HP
+mode: level
+baseValue: 1
+coins: 0
+board:
+  # tokens per column, col0..col7, space-separated
+  # C = cannon, . = empty, +N / -N / xN = tile, R<hp> = robot, R<hp>[tile] = robot on tile
+  # traits: R<hp>:bb (bounce-back), R<hp>:odd, R<hp>:even, R<hp>:w2|w5|w10
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C +4 x3 -2 . R13 . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents: # ordered subsequence, partial match
+  - { type: BallTransformed, newValue: 5 }
+  - { type: BallTransformed, newValue: 15 }
+  - { type: BallTransformed, newValue: 13 }
+  - { type: RobotDefeated, exact: true }
+  - { type: CoinsChanged, delta: 2 }
+expectState: # partial match on RunState after commands
+  coins: 2
+  phase: levelCleared

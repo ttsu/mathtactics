@@ -1,0 +1,19 @@
+# GDD §6.3: an Even-only robot blocks any odd-valued ball — 0 damage, ball consumed.
+name: even-only robots block odd balls
+baseValue: 1
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C R4:even . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents:
+  - { type: BallBlocked, value: 1, reason: evenOnly }
+expectState:
+  coins: 0
+  phase: planning
+  board:
+    robots:
+      - { hp: 4 }

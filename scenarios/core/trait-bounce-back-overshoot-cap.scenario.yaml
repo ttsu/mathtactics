@@ -1,0 +1,22 @@
+# GDD §6.2: Bounce-back's HP becomes how far off the shot was, capped at full health — a big
+# overshoot refills the robot rather than pushing it "past zero" the other way.
+name: bounce-back overshoot is capped at max HP
+baseValue: 5
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C x5 R10:bb . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents:
+  - { type: BallTransformed, newValue: 25 }
+  - { type: RobotDamaged, damage: 25, hpBefore: 10, hpAfter: 10 }
+  - { type: RobotBouncedBack, hpBefore: 10, hpAfter: 10, overshoot: 15 }
+expectState:
+  coins: 0
+  phase: planning
+  board:
+    robots:
+      - { hp: 10, maxHp: 10 }

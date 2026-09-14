@@ -8,6 +8,7 @@
 import type { StoreApi } from 'zustand/vanilla';
 import type { Cell } from '../../sim/core/coords';
 import type { Command, CommandError, GameEvent, RunState } from '../../sim/core/types';
+import { buildScenarioState, parseScenario } from '../../sim/scenario';
 import type { AppStore, Display, Screen } from './store';
 import { displayFromRun, IDLE_PLAYBACK } from './store';
 
@@ -40,6 +41,17 @@ function notImplemented(taskNumber: number): never {
   throw new Error(`not implemented yet (task ${taskNumber})`);
 }
 
+/** Installs `state` directly, bypassing `dispatch`/playback entirely — shared by `loadState` and
+ * `loadScenario`. Resets any in-flight playback too, otherwise `isIdle()` would stay false after
+ * a fresh install (finding 8, final review). */
+function installState(store: StoreApi<AppStore>, state: RunState): void {
+  store.setState({
+    run: state,
+    display: displayFromRun(state),
+    playback: { ...IDLE_PLAYBACK },
+  });
+}
+
 /** Builds the `__GAME__` object for `store` — pure, no `window` access, so it's unit-testable. */
 export function createTestHandle(store: StoreApi<AppStore>): TestHandle {
   return {
@@ -48,17 +60,12 @@ export function createTestHandle(store: StoreApi<AppStore>): TestHandle {
     getScreen: () => store.getState().screen,
     getEvents: () => store.getState().run?.lastTurnEvents ?? [],
     dispatch: (cmd) => store.getState().dispatch(cmd),
-    loadState: (state) => {
-      // Installing a state directly bypasses `dispatch`/playback entirely, so any in-flight
-      // playback from before must be reset too — otherwise `isIdle()` would stay false after a
-      // fresh `loadState` (finding 8, final review).
-      store.setState({
-        run: state,
-        display: displayFromRun(state),
-        playback: { ...IDLE_PLAYBACK },
-      });
+    loadState: (state) => installState(store, state),
+    loadScenario: (yamlText) => {
+      const scenario = parseScenario(yamlText);
+      const state = buildScenarioState(scenario, store.getState().data);
+      installState(store, state);
     },
-    loadScenario: () => notImplemented(8),
     endTurn: () => {
       const result = store.getState().dispatch({ type: 'endTurn' });
       if (!result.ok) return [];

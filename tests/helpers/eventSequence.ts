@@ -3,66 +3,22 @@
 // appear, in order, as a partial match of some event in `actual` — unrelated events before,
 // between, or after a match are allowed, so tests don't break when unrelated events are added.
 //
-// `matchEventSequence`/`partialMatches` below are the pure matching core — no test-framework
-// dependency — so task 08 can move just those two into `/sim/scenario` unchanged. Only
-// `expectEventSequence`, the thin `expect(...)` wrapper test files call, imports `vitest`.
+// The pure matching core (`matchEventSequence`, `partialMatches`) lives in `/sim/scenario/match.ts`
+// (task 08 ruling) so the scenario runner can reuse it too. This file re-exports it unchanged and
+// keeps only `expectEventSequence`, the thin `expect(...)` wrapper — the one thing here that
+// actually needs vitest.
 
 import { expect } from 'vitest';
 import type { GameEvent } from '../../sim/core/types';
+import {
+  describeEventSequenceFailure,
+  matchEventSequence,
+  type EventSequenceMatch,
+  type ExpectedEvent,
+} from '../../sim/scenario/match';
 
-/** Only the given keys are checked against the real event; any other keys the real event has are
- * ignored. Nested objects (e.g. `at`, `from`, `to`) are matched key-by-key the same way. */
-export type ExpectedEvent = { type: GameEvent['type'] } & Record<string, unknown>;
-
-export interface EventSequenceMatch {
-  ok: boolean;
-  /** Index into `expected` of the first entry that could not be matched, or -1 if `ok`. */
-  failedAt: number;
-}
-
-/** Pure matcher: true (well, `{ ok: true }`) iff every entry of `expected` matches, in order,
- * some event of `actual`. */
-export function matchEventSequence(
-  actual: readonly GameEvent[],
-  expected: readonly ExpectedEvent[],
-): EventSequenceMatch {
-  let cursor = 0;
-  for (let i = 0; i < expected.length; i++) {
-    const want = expected[i]!;
-    while (cursor < actual.length && !partialMatches(actual[cursor], want)) {
-      cursor++;
-    }
-    if (cursor >= actual.length) {
-      return { ok: false, failedAt: i };
-    }
-    cursor++; // consume this event so later expectations can't reuse it.
-  }
-  return { ok: true, failedAt: -1 };
-}
-
-function partialMatches(actual: unknown, expected: unknown): boolean {
-  if (typeof expected !== 'object' || expected === null) {
-    return Object.is(actual, expected);
-  }
-  if (typeof actual !== 'object' || actual === null) {
-    return false;
-  }
-  return Object.entries(expected).every(([key, value]) =>
-    partialMatches((actual as Record<string, unknown>)[key], value),
-  );
-}
-
-function describeFailure(
-  actual: readonly GameEvent[],
-  expected: readonly ExpectedEvent[],
-  match: EventSequenceMatch,
-): string {
-  return (
-    `expected event ${JSON.stringify(expected[match.failedAt])} ` +
-    `(position ${match.failedAt} of the sequence) not found, in order, among:\n` +
-    JSON.stringify(actual, null, 2)
-  );
-}
+export type { EventSequenceMatch, ExpectedEvent };
+export { matchEventSequence };
 
 /** Asserts `actual` contains `expected` as an ordered subsequence of partial matches. */
 export function expectEventSequence(
@@ -70,5 +26,7 @@ export function expectEventSequence(
   expected: readonly ExpectedEvent[],
 ): void {
   const match = matchEventSequence(actual, expected);
-  expect(match.ok, match.ok ? undefined : describeFailure(actual, expected, match)).toBe(true);
+  expect(match.ok, match.ok ? undefined : describeEventSequenceFailure(actual, expected, match)).toBe(
+    true,
+  );
 }

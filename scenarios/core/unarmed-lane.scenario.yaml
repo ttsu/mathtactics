@@ -1,0 +1,19 @@
+# GDD §5.1: a lane without a cannon fires no ball at all — the robot in it is untouched and no
+# coins change hands.
+name: a lane with no cannon never fires
+baseValue: 5
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . R7"
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents: []
+expectState:
+  coins: 0
+  phase: planning
+  board:
+    robots:
+      - { hp: 7 }
