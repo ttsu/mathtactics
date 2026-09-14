@@ -59,7 +59,11 @@ export function createTestHandle(store: StoreApi<AppStore>): TestHandle {
       });
     },
     loadScenario: () => notImplemented(8),
-    endTurn: () => notImplemented(7),
+    endTurn: () => {
+      const result = store.getState().dispatch({ type: 'endTurn' });
+      if (!result.ok) return [];
+      return store.getState().run?.lastTurnEvents ?? [];
+    },
     skipAnimation: () => notImplemented(10),
     isIdle: () => store.getState().playback.status === 'idle',
     cellToClient: () => notImplemented(9),

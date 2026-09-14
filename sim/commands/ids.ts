@@ -13,3 +13,8 @@ export function allocatePieceId(nextIds: NextIds): [pieceId: string, next: NextI
 export function allocateRobotId(nextIds: NextIds): [robotId: string, next: NextIds] {
   return [`robot:${nextIds.robot}`, { ...nextIds, robot: nextIds.robot + 1 }];
 }
+
+/** One ball id per fired ball (task 07: `/sim/resolve/fire.ts`). */
+export function allocateBallId(nextIds: NextIds): [ballId: string, next: NextIds] {
+  return [`ball:${nextIds.ball}`, { ...nextIds, ball: nextIds.ball + 1 }];
+}
