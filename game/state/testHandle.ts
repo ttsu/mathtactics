@@ -1,5 +1,5 @@
 // Browser test handle (TR §14, GDD §15.2). Installed on `window.__GAME__` only in dev and
-// preview builds — never production (CLAUDE.md rule 7) — via a guarded dynamic `import()` at
+// preview builds — never production (TR §14 / GDD §15.2) — via a guarded dynamic `import()` at
 // the edge (game/main.tsx) so this module is tree-shaken out of a plain `npm run build`.
 //
 // Methods that depend on later tasks throw a clearly-labelled "not implemented yet" error
@@ -9,7 +9,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import type { Cell } from '../../sim/core/coords';
 import type { Command, CommandError, GameEvent, RunState } from '../../sim/core/types';
 import type { AppStore, Display, Screen } from './store';
-import { displayFromRun } from './store';
+import { displayFromRun, IDLE_PLAYBACK } from './store';
 
 export interface TestHandle {
   getState(): RunState | null;
@@ -49,7 +49,14 @@ export function createTestHandle(store: StoreApi<AppStore>): TestHandle {
     getEvents: () => store.getState().run?.lastTurnEvents ?? [],
     dispatch: (cmd) => store.getState().dispatch(cmd),
     loadState: (state) => {
-      store.setState({ run: state, display: displayFromRun(state) });
+      // Installing a state directly bypasses `dispatch`/playback entirely, so any in-flight
+      // playback from before must be reset too — otherwise `isIdle()` would stay false after a
+      // fresh `loadState` (finding 8, final review).
+      store.setState({
+        run: state,
+        display: displayFromRun(state),
+        playback: { ...IDLE_PLAYBACK },
+      });
     },
     loadScenario: () => notImplemented(8),
     endTurn: () => notImplemented(7),

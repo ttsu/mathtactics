@@ -112,6 +112,23 @@ describe('createTestHandle', () => {
     expect(handle.getDisplay()).toEqual({ coins: 12, baseHp: 55, waveIndex: 4 });
   });
 
+  it('loadState resets playback to idle (finding 8, final review)', () => {
+    const { store, handle } = buildHandle();
+    store.setState({
+      playback: {
+        status: 'playing',
+        events: [{ step: 0, group: 'fire', type: 'LaneStarted', lane: 0 }],
+        cursor: 1,
+      },
+    });
+    expect(handle.isIdle()).toBe(false);
+
+    handle.loadState(fakeRunState());
+
+    expect(handle.isIdle()).toBe(true);
+    expect(store.getState().playback).toEqual({ status: 'idle', events: [], cursor: 0 });
+  });
+
   it('dispatch delegates to the store', () => {
     const { handle } = buildHandle();
     expect(handle.dispatch({ type: 'endTurn' })).toEqual({ ok: false, error: 'wrong_phase' });

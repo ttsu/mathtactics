@@ -3,6 +3,7 @@
 // on behalf of the framework-free /game/state modules (TR §13, task 05 decision).
 import { createRoot } from 'react-dom/client';
 import { createBoardGame } from './board';
+import { safeStorage } from './safeStorage';
 import { gameData } from './state/gameData';
 import { getAudioContext, installAudioUnlock } from './state/audio';
 import { DESIGN_HEIGHT, DESIGN_WIDTH, placementOverCanvas } from './state/designSpace';
@@ -53,14 +54,17 @@ const store = createAppStore({
   data: gameData,
   // Stub until task 06 — every command fails with `wrong_phase` (task 05 decision).
   applyCommand: stubApplyCommand,
-  storage: localStorage,
+  // Guarded: a bare `localStorage` read can throw (Safari "Block All Cookies", sandboxed
+  // contexts) before React ever mounts — falls back to an in-memory store rather than crashing
+  // boot into a blank screen (TR §13).
+  storage: safeStorage(),
   basePath,
 });
 
 // TR §14 / GDD §15.2: window.__GAME__ exists in dev and preview (VITE_TEST_HANDLE=1) builds
 // only, never in production. The dynamic import is statically eliminated by Vite when both
 // halves of the guard are false, so nothing from ./state/testHandle reaches a plain build
-// (CLAUDE.md rule 7 — verified by `npm run check:no-test-handle`).
+// (TR §14 / GDD §15.2 — verified by `npm run check:no-test-handle`).
 if (import.meta.env.DEV || import.meta.env.VITE_TEST_HANDLE === '1') {
   void import('./state/testHandle').then(({ installTestHandle }) => installTestHandle(store));
 }

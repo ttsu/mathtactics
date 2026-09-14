@@ -163,7 +163,7 @@ type CommandError =
   | 'no_tile_here' | 'piece_not_in_tray' | 'slot_occupied' | 'no_cannon_here'
   | 'nothing_to_undo' | 'insufficient_coins' | 'offer_unavailable';
 
-function applyCommand(state: RunState, cmd: Command, data: GameData):
+function applyCommand(state: RunState | null, cmd: Command, data: GameData):
   | { ok: true; state: RunState; events: GameEvent[] }
   | { ok: false; error: CommandError };
 ```
@@ -171,6 +171,8 @@ function applyCommand(state: RunState, cmd: Command, data: GameData):
 - Pure: never mutates the input state.
 - Planning commands push a `PlanningSnapshot` (board cells, tray, cannons) onto `undo`.
 - `endTurn` calls `resolveTurn` internally and returns its events.
+- `state` is `null` before any run exists; only `newRun` and `loadLevel` accept `null` (others
+  return `wrong_phase`).
 
 ---
 
@@ -258,9 +260,12 @@ Notes:
 
 ## 9. Data Files
 
-All files in `/data`, JSON, validated by Zod schemas in `/sim/data/schemas.ts`. `loadGameData()`
-validates everything and throws with a readable path on failure. A vitest test loads the real
-`/data` directory so bad data fails `npm test`.
+All files in `/data`, JSON, validated by Zod schemas in `/sim/data/schemas.ts`. `parseGameData(raw)`
+(`/sim/data/load.ts`) validates everything and throws with a readable path on failure. `raw` is
+already-parsed JSON keyed by file base name — the browser build gets it from Vite JSON imports
+(`/game/state/gameData.ts`), and tests/CLIs get it from the disk helper `loadRawGameData()`
+(`/tests/helpers/loadDataFiles.ts`). A vitest test loads the real `/data` directory so bad data
+fails `npm test`.
 
 | File | Contents |
 |---|---|

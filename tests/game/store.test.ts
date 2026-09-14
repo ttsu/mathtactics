@@ -4,6 +4,7 @@ import {
   displayFromRun,
   stubApplyCommand,
   type ApplyCommandFn,
+  type Playback,
 } from '../../game/state/store';
 import { scopedKey, type StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
@@ -113,16 +114,43 @@ describe('createAppStore — initial state', () => {
 });
 
 describe('dispatch', () => {
-  it('fails with wrong_phase and never calls applyCommand when run is null', () => {
-    const applyCommand = vi.fn<ApplyCommandFn>();
+  it('calls applyCommand with a null state when no run exists yet, and does not persist on failure', () => {
+    const data = fakeGameData();
+    const applyCommand = vi.fn<ApplyCommandFn>(() => ({ ok: false, error: 'wrong_phase' }));
     const storage = createMemoryStorage();
-    const store = createAppStore({ data: fakeGameData(), applyCommand, storage, basePath: '/' });
+    const store = createAppStore({ data, applyCommand, storage, basePath: '/' });
 
     const result = store.getState().dispatch({ type: 'endTurn' });
 
     expect(result).toEqual({ ok: false, error: 'wrong_phase' });
-    expect(applyCommand).not.toHaveBeenCalled();
+    expect(applyCommand).toHaveBeenCalledWith(null, { type: 'endTurn' }, data);
     expect(storage.getItem(scopedKey('/', 'run'))).toBeNull();
+  });
+
+  it('bootstraps a run from a null state on newRun/loadLevel success (finding 1, final review)', () => {
+    const storage = createMemoryStorage();
+    const bootstrapped = fakeRunState({ coins: 3 });
+    const applyCommand: ApplyCommandFn = (state) => {
+      if (state !== null) {
+        throw new Error('expected applyCommand to receive a null state for a fresh boot');
+      }
+      return { ok: true, state: bootstrapped, events: [] };
+    };
+    const store = createAppStore({
+      data: fakeGameData(),
+      applyCommand,
+      storage,
+      basePath: '/',
+      now: () => 777,
+    });
+
+    const result = store.getState().dispatch({ type: 'newRun', seed: 'abc' });
+
+    expect(result).toEqual({ ok: true });
+    expect(store.getState().run).toEqual(bootstrapped);
+    expect(store.getState().display).toEqual(displayFromRun(bootstrapped));
+    const saved = JSON.parse(storage.getItem(scopedKey('/', 'run')) ?? 'null');
+    expect(saved).toEqual({ schemaVersion: 1, savedAt: 777, state: bootstrapped });
   });
 
   it('does not persist on a failing command', () => {
@@ -164,6 +192,7 @@ describe('dispatch', () => {
 
     expect(result).toEqual({ ok: true });
     expect(store.getState().run).toEqual(nextRun);
+    expect(store.getState().display).toEqual(displayFromRun(nextRun));
     const saved = JSON.parse(storage.getItem(scopedKey('/', 'run')) ?? 'null');
     expect(saved).toEqual({ schemaVersion: 1, savedAt: 555, state: nextRun });
   });
@@ -192,19 +221,47 @@ describe('dispatch', () => {
     });
   });
 
-  it('leaves playback untouched when resolution produced no events', () => {
+  it('leaves playback untouched but refreshes display when resolution produced no events (finding 2, final review)', () => {
     const storage = createMemoryStorage();
     const run = fakeRunState();
     storage.setItem(
       scopedKey('/', 'run'),
       JSON.stringify({ schemaVersion: 1, savedAt: 1, state: run }),
     );
-    const applyCommand: ApplyCommandFn = () => ({ ok: true, state: fakeRunState(), events: [] });
+    const nextRun = fakeRunState({ coins: 42, baseHp: 7, waveIndex: 5 });
+    const applyCommand: ApplyCommandFn = () => ({ ok: true, state: nextRun, events: [] });
     const store = createAppStore({ data: fakeGameData(), applyCommand, storage, basePath: '/' });
 
     store.getState().dispatch({ type: 'placeTile', pieceId: 'p1', to: { lane: 0, col: 1 } });
 
     expect(store.getState().playback).toEqual({ status: 'idle', events: [], cursor: 0 });
+    expect(store.getState().display).toEqual(displayFromRun(nextRun));
+  });
+
+  it('does not overwrite display while playback is already playing, even with a no-event command', () => {
+    const storage = createMemoryStorage();
+    const run = fakeRunState();
+    storage.setItem(
+      scopedKey('/', 'run'),
+      JSON.stringify({ schemaVersion: 1, savedAt: 1, state: run }),
+    );
+    const applyCommand: ApplyCommandFn = () => ({
+      ok: true,
+      state: fakeRunState({ coins: 500 }),
+      events: [],
+    });
+    const store = createAppStore({ data: fakeGameData(), applyCommand, storage, basePath: '/' });
+    const stalePlayback: Playback = {
+      status: 'playing',
+      events: [{ step: 0, group: 'fire', type: 'LaneStarted', lane: 0 }],
+      cursor: 0,
+    };
+    const staleDisplay = { coins: 1, baseHp: 1, waveIndex: 1 };
+    store.setState({ playback: stalePlayback, display: staleDisplay });
+
+    store.getState().dispatch({ type: 'placeTile', pieceId: 'p1', to: { lane: 0, col: 1 } });
+
+    expect(store.getState().display).toEqual(staleDisplay);
   });
 });
 

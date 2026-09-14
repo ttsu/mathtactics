@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { LANES } from '../core/coords';
+import type { TileId } from '../core/types';
 
 // --- tiles.json (GDD §9.1, all milestones) ---
 
@@ -64,7 +65,12 @@ const TileDefSchema = z
         });
       }
     }
-  });
+  })
+  // The superRefine above already rejects any tile whose `id` isn't exactly `${kind}:${n}`, so
+  // by the time this transform runs on a successful parse the `TileId` template-literal shape
+  // is guaranteed — narrow the inferred type here instead of leaving callers with a bare
+  // `string` that fails to satisfy `TileDef` (TR §4) at every call site (e.g. `applyTile`).
+  .transform((tile) => ({ ...tile, id: tile.id as TileId }));
 
 const TilesFileSchema = z
   .array(TileDefSchema)

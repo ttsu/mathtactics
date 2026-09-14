@@ -20,8 +20,13 @@ import {
 export type ApplyCommandResult =
   { ok: true; state: RunState; events: GameEvent[] } | { ok: false; error: CommandError };
 
-/** Matches TR §5's `applyCommand(state, cmd, data)` signature. */
-export type ApplyCommandFn = (state: RunState, cmd: Command, data: GameData) => ApplyCommandResult;
+/** Matches TR §5's `applyCommand(state, cmd, data)` signature. `state` is `null` before any run
+ * exists — only `newRun`/`loadLevel` accept that; every other command returns `wrong_phase`. */
+export type ApplyCommandFn = (
+  state: RunState | null,
+  cmd: Command,
+  data: GameData,
+) => ApplyCommandResult;
 
 /** Until task 06 exists, inject this stub — every command fails with `wrong_phase`. */
 export const stubApplyCommand: ApplyCommandFn = () => ({ ok: false, error: 'wrong_phase' });
@@ -63,6 +68,10 @@ export interface AppActions {
 
 export type AppStore = AppState & AppActions;
 
+/** Shared idle-playback value — used for the store's initial state, `finishPlayback`, and (TR
+ * §14) `loadState`'s reset, so the three places that need "no playback" agree on its shape. */
+export const IDLE_PLAYBACK: Playback = { status: 'idle', events: [], cursor: 0 };
+
 export interface CreateAppStoreOptions {
   data: GameData;
   applyCommand: ApplyCommandFn;
@@ -95,7 +104,7 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     data,
     run: initialRun,
     display: initialRun ? displayFromRun(initialRun) : displayFromEconomy(data),
-    playback: { status: 'idle', events: [], cursor: 0 },
+    playback: { ...IDLE_PLAYBACK },
     // Deviation (task 05): no menu/screen flow exists yet (task 03 shell shows the board
     // directly) — 'game' is the simplest value consistent with what's on screen today.
     screen: 'game',
@@ -103,25 +112,31 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
 
     dispatch(cmd) {
       const state = get();
-      if (!state.run) {
-        // Don't call applyCommand with a null state; fail the same way a real wrong-phase
-        // command would (task 05 decision).
-        return { ok: false, error: 'wrong_phase' };
-      }
-
+      // `state.run` may be null (no run exists yet) — `applyCommand` is always called, even
+      // then; only `newRun`/`loadLevel` accept a null state, everything else returns
+      // `wrong_phase` itself (TR §5). This is what lets `newRun`/`loadLevel` bootstrap a run.
       const result = applyCommand(state.run, cmd, state.data);
       if (!result.ok) {
         return { ok: false, error: result.error };
       }
 
       saveRun(storage, basePath, result.state, now());
-      set({
-        run: result.state,
-        playback:
-          result.events.length > 0
-            ? { status: 'playing', events: result.events, cursor: 0 }
-            : state.playback,
-      });
+      if (result.events.length > 0) {
+        set({
+          run: result.state,
+          playback: { status: 'playing', events: result.events, cursor: 0 },
+        });
+      } else {
+        // No resolution events to play back, so `display` won't be refreshed by `commitEvent`/
+        // `finishPlayback` — derive it from `run` directly here (TR §10: `display` lags `run`
+        // only *during* playback). Leave it alone if playback is already mid-flight so we don't
+        // race ahead of what's still animating.
+        set({
+          run: result.state,
+          display:
+            state.playback.status === 'playing' ? state.display : displayFromRun(result.state),
+        });
+      }
       return { ok: true };
     },
 
@@ -141,7 +156,7 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     finishPlayback() {
       set((state) => ({
         display: state.run ? displayFromRun(state.run) : state.display,
-        playback: { status: 'idle', events: [], cursor: 0 },
+        playback: { ...IDLE_PLAYBACK },
       }));
     },
 

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseGameData } from '../../../sim/data/load';
+import { applyTile } from '../../../sim/core/tiles';
+import type { TileDef } from '../../../sim/core/types';
 import { loadRawGameData } from '../../helpers/loadDataFiles';
 
 function validTile(overrides: Record<string, unknown> = {}) {
@@ -130,5 +132,14 @@ describe('parseGameData on the real /data directory', () => {
       maxCannons: 5,
       income: { kill: 1, exactKill: 2, waveCleared: 3 },
     });
+  });
+
+  // Type-level guard for the schema-inferred `id: TileId` narrowing (not just `string`) — this
+  // assignment and `applyTile` call must *typecheck* (TS2345 if the narrowing regresses), not
+  // just run. See sim/data/schemas.ts's TileDefSchema `.transform`.
+  it('a loaded tile satisfies TileDef and can be passed to applyTile', () => {
+    const data = parseGameData(loadRawGameData());
+    const tile: TileDef = data.tiles[0]!;
+    expect(applyTile(5, tile)).toBeTypeOf('number');
   });
 });

@@ -19,7 +19,7 @@ export {
   DEFAULT_SETTINGS,
 } from './storage';
 export type { StorageLike, Settings } from './storage';
-export { createAppStore, stubApplyCommand, displayFromRun } from './store';
+export { createAppStore, stubApplyCommand, displayFromRun, IDLE_PLAYBACK } from './store';
 export type {
   AppState,
   AppActions,
@@ -31,5 +31,8 @@ export type {
   Screen,
   Playback,
 } from './store';
-export { createTestHandle, installTestHandle } from './testHandle';
-export type { TestHandle } from './testHandle';
+// `createTestHandle`/`installTestHandle`/`TestHandle` are deliberately NOT re-exported here
+// (finding 9, final review) — barrel-exporting them would invite a static `import { ... } from
+// '../state'` that defeats game/main.tsx's guarded dynamic `import('./state/testHandle')`
+// (TR §14), pulling the test handle into every build. Import directly from
+// `./testHandle` (or `../../game/state/testHandle` from tests) instead.

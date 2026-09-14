@@ -1,4 +1,5 @@
 // @ts-check
+import { builtinModules } from 'node:module';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import eslintConfigPrettier from 'eslint-config-prettier';
@@ -16,56 +17,40 @@ import globals from 'globals';
  * /game/ui must not cross-import each other's presentation framework or UI code.
  */
 
-const NODE_BUILTIN_NAMES = [
-  'fs',
-  'path',
-  'os',
-  'child_process',
-  'crypto',
-  'http',
-  'https',
-  'net',
-  'tls',
-  'stream',
-  'util',
-  'url',
-  'querystring',
-  'zlib',
-  'events',
-  'buffer',
-  'assert',
-  'timers',
-  'dns',
-  'readline',
-  'cluster',
-  'worker_threads',
-  'process',
-];
+/** Shared React-entry-point ban list (react, react-dom, react-dom/client, react/jsx-runtime),
+ * parameterized by the layer's own message — was duplicated 3× (sim/state/board). */
+function reactImportBans(message) {
+  return [
+    { name: 'react', message },
+    { name: 'react-dom', message },
+    { name: 'react-dom/client', message },
+    { name: 'react/jsx-runtime', message },
+  ];
+}
+
+// Every Node built-in module, bare and `node:`-prefixed, plus their subpaths (e.g. `fs/promises`,
+// `node:fs/promises`) — built from Node's own module registry instead of a hand-maintained list
+// that can silently miss an entry (e.g. `fs/promises`).
+const NODE_BUILTIN_PATTERNS = builtinModules.flatMap((name) => [
+  name,
+  `node:${name}`,
+  `${name}/*`,
+  `node:${name}/*`,
+]);
 
 const simRestrictedImports = {
   paths: [
     { name: 'phaser', message: '/sim must have no rendering dependency (CLAUDE.md rule 1).' },
-    { name: 'react', message: '/sim must have no rendering dependency (CLAUDE.md rule 1).' },
-    {
-      name: 'react-dom',
-      message: '/sim must have no rendering dependency (CLAUDE.md rule 1).',
-    },
-    {
-      name: 'react-dom/client',
-      message: '/sim must have no rendering dependency (CLAUDE.md rule 1).',
-    },
-    {
-      name: 'react/jsx-runtime',
-      message: '/sim must have no rendering dependency (CLAUDE.md rule 1).',
-    },
+    ...reactImportBans('/sim must have no rendering dependency (CLAUDE.md rule 1).'),
     { name: 'yaml', message: "'yaml' may only be imported within /sim/scenario (TR §2)." },
-    ...NODE_BUILTIN_NAMES.map((name) => ({
-      name,
-      message: '/sim must not import Node built-ins (TR §2).',
-    })),
   ],
   patterns: [
     {
+      group: NODE_BUILTIN_PATTERNS,
+      message: '/sim must not import Node built-ins (TR §2).',
+    },
+    {
+      // Safety net for any node: import not covered above (e.g. a future/experimental builtin).
       group: ['node:*'],
       message: '/sim must not import Node built-ins (TR §2).',
     },
@@ -134,7 +119,9 @@ export default tseslint.config(
     },
   },
   {
-    // /sim: ban nondeterminism (CLAUDE.md rule 1, TR §2).
+    // /sim: ban nondeterminism and other I/O/ambient-state escape hatches (CLAUDE.md rule 1,
+    // TR §2). All of these typecheck fine (ambient Node/DOM-ish globals) so lint is the only
+    // thing that catches them.
     files: ['sim/**/*.ts'],
     rules: {
       'no-restricted-properties': [
@@ -155,11 +142,25 @@ export default tseslint.config(
         { name: 'performance', message: '/sim must not use performance.' },
         { name: 'setTimeout', message: '/sim must not use setTimeout.' },
         { name: 'setInterval', message: '/sim must not use setInterval.' },
+        { name: 'crypto', message: '/sim must not use crypto; use /sim/core/rng.ts instead.' },
+        { name: 'process', message: '/sim must not use process (TR §2).' },
+        { name: 'fetch', message: '/sim must not use fetch — /sim performs no I/O (TR §2).' },
+        { name: 'queueMicrotask', message: '/sim must not use queueMicrotask.' },
+        { name: 'setImmediate', message: '/sim must not use setImmediate.' },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "NewExpression[callee.name='Date']",
+          message: '/sim must not use `new Date` (nondeterminism, CLAUDE.md rule 1).',
+        },
       ],
     },
   },
   {
-    // /game/state: framework-free store; no Phaser, no React.
+    // /game/state: framework-free store; no Phaser, no React, and it may only reach into /sim
+    // and `zustand/vanilla` — never the React `zustand` entry, and never /game/board or
+    // /game/ui (TR §2).
     files: ['game/state/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -167,15 +168,24 @@ export default tseslint.config(
         {
           paths: [
             { name: 'phaser', message: '/game/state must not import phaser (TR §2).' },
-            { name: 'react', message: '/game/state must not import react (TR §2).' },
-            { name: 'react-dom', message: '/game/state must not import react-dom (TR §2).' },
+            ...reactImportBans('/game/state must not import react (TR §2).'),
             {
-              name: 'react-dom/client',
-              message: '/game/state must not import react-dom (TR §2).',
+              name: 'zustand',
+              message:
+                "/game/state may only import 'zustand/vanilla', not the React entry 'zustand' (TR §2).",
             },
+          ],
+          patterns: [
             {
-              name: 'react/jsx-runtime',
-              message: '/game/state must not import react (TR §2).',
+              group: [
+                '**/game/board/**',
+                '**/game/ui/**',
+                '../board',
+                '../board/*',
+                '../ui',
+                '../ui/*',
+              ],
+              message: '/game/state must not import /game/board or /game/ui (TR §2).',
             },
           ],
         },
@@ -189,18 +199,7 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          paths: [
-            { name: 'react', message: '/game/board must not import react (TR §2).' },
-            { name: 'react-dom', message: '/game/board must not import react-dom (TR §2).' },
-            {
-              name: 'react-dom/client',
-              message: '/game/board must not import react-dom (TR §2).',
-            },
-            {
-              name: 'react/jsx-runtime',
-              message: '/game/board must not import react (TR §2).',
-            },
-          ],
+          paths: [...reactImportBans('/game/board must not import react (TR §2).')],
           patterns: [
             {
               group: ['**/game/ui/**', '**/ui/**', '**/ui'],
