@@ -40,6 +40,22 @@ describe('layer boundary lint rules', () => {
     expect(ruleIds(result)).toContain('no-restricted-imports');
   });
 
+  it('flags importing phaser from /game/state', async () => {
+    const result = await lint(
+      "import Phaser from 'phaser';\nexport const p = Phaser;\n",
+      'game/state/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-imports');
+  });
+
+  it('flags importing react from /game/state', async () => {
+    const result = await lint(
+      "import React from 'react';\nexport const r = React;\n",
+      'game/state/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-imports');
+  });
+
   it('flags importing /game/board from /game/ui and /game/ui from /game/board', async () => {
     const uiResult = await lint(
       "import { GRID } from '../board/layout';\nexport const g = GRID;\n",
@@ -69,5 +85,75 @@ describe('layer boundary lint rules', () => {
       'sim/core/fixture.ts',
     );
     expect(ruleIds(result)).toContain('no-restricted-properties');
+  });
+
+  it('flags crypto.randomUUID() in /sim', async () => {
+    const result = await lint(
+      'export function f(): string {\n  return crypto.randomUUID();\n}\n',
+      'sim/core/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-globals');
+  });
+
+  it('flags new Date() in /sim', async () => {
+    const result = await lint(
+      'export function f(): Date {\n  return new Date();\n}\n',
+      'sim/core/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-syntax');
+  });
+
+  it('flags process.env in /sim', async () => {
+    const result = await lint(
+      'export function f(): string | undefined {\n  return process.env.FOO;\n}\n',
+      'sim/core/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-globals');
+  });
+
+  it('flags importing fs/promises in /sim', async () => {
+    const result = await lint(
+      "import { readFile } from 'fs/promises';\nexport { readFile };\n",
+      'sim/core/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-imports');
+  });
+
+  it('flags importing node:fs/promises in /sim', async () => {
+    const result = await lint(
+      "import { readFile } from 'node:fs/promises';\nexport { readFile };\n",
+      'sim/core/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-imports');
+  });
+
+  it('flags importing the zustand React entry from /game/state', async () => {
+    const result = await lint(
+      "import { create } from 'zustand';\nexport const useStore = create;\n",
+      'game/state/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-imports');
+  });
+
+  it('allows importing zustand/vanilla from /game/state', async () => {
+    const result = await lint(
+      "import { createStore } from 'zustand/vanilla';\nexport const s = createStore(() => ({}));\n",
+      'game/state/fixture.ts',
+    );
+    expect(ruleIds(result)).not.toContain('no-restricted-imports');
+  });
+
+  it('flags importing /game/board or /game/ui from /game/state', async () => {
+    const boardResult = await lint(
+      "import { GRID } from '../board/layout';\nexport const g = GRID;\n",
+      'game/state/fixture.ts',
+    );
+    expect(ruleIds(boardResult)).toContain('no-restricted-imports');
+
+    const uiResult = await lint(
+      "import { App } from '../ui/App';\nexport const a = App;\n",
+      'game/state/fixture.ts',
+    );
+    expect(ruleIds(uiResult)).toContain('no-restricted-imports');
   });
 });
