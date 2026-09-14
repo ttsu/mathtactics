@@ -32,7 +32,7 @@ export function Hud() {
           disabled={!canUndo}
           onClick={() => dispatch({ type: 'undo' })}
         >
-          ↶
+          <UndoIcon />
         </button>
         <button
           type="button"
@@ -50,5 +50,29 @@ export function Hud() {
         </button>
       </div>
     </div>
+  );
+}
+
+/** A bold curved "go back" arrow — drawn as SVG so it stays heavy and high-contrast (the `↶`
+ * font glyph rendered thin and faint). */
+function UndoIcon() {
+  return (
+    <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+      <path
+        d="M16 20 H30 a10 10 0 0 1 0 20 H22"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20 8 L6 20 L20 32 Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

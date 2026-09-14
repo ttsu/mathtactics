@@ -41,6 +41,8 @@ export const TRAY_HEIGHT = 120;
 export const CELL_INSET = 4;
 export const CORNER_RADIUS = 10;
 export const CELL_OUTLINE_WIDTH = 2;
+/** Empty cannon slots are outlined more heavily so they read as sockets, not cannons. */
+export const CANNON_SLOT_OUTLINE_WIDTH = 4;
 
 const GRID_WIDTH = COLUMN_COUNT * CELL_SIZE;
 const GRID_HEIGHT = LANE_COUNT * CELL_SIZE;
@@ -143,6 +145,21 @@ export function cellAtPoint(point: Point): { lane: number; col: number } | null 
     lane: Math.floor((point.y - GRID.y) / CELL_SIZE),
     col: Math.floor((point.x - GRID.x) / CELL_SIZE),
   };
+}
+
+/** The grid cell whose drawn face (its rect inset by `CELL_INSET`) contains a design point, or
+ * `null` — outside the grid, or in the thin visual gutter between two cells. */
+export function cellFaceAtPoint(point: Point): { lane: number; col: number } | null {
+  const cell = cellAtPoint(point);
+  if (cell === null) return null;
+  const rect = cellRect(cell.lane, cell.col);
+  const face = {
+    x: rect.x + CELL_INSET,
+    y: rect.y + CELL_INSET,
+    width: rect.width - CELL_INSET * 2,
+    height: rect.height - CELL_INSET * 2,
+  };
+  return rectContains(face, point) ? cell : null;
 }
 
 // --- Tray slots (task 09, GDD §9.3) ---

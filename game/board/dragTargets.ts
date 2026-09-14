@@ -1,5 +1,5 @@
 // Drag-and-drop decisions (task 09 req. 3), kept Phaser-free so they're unit-testable: what a
-// press picks up, and what dropping it at a point does. The board never keeps a partial move:
+// press picks up, and what dropping it with the finger at a point does. The board never keeps a partial move:
 // a drop either maps to exactly one planning command, or to nothing (the piece animates home).
 //
 // Validity mirrors the planning commands (GDD §3.3–3.4, §9.3–9.4) so an invalid target is
@@ -14,6 +14,7 @@ import {
   TRAY,
   cellAtPoint,
   cellCenter,
+  cellFaceAtPoint,
   rectContains,
   traySlotAtPoint,
   type Point,
@@ -31,8 +32,8 @@ export type DropResolution =
   | { kind: 'command'; command: Command; target: DropTarget }
   /** Back where it came from: no command. */
   | { kind: 'origin'; target: DropTarget }
-  /** Nowhere valid in reach: no command, piece animates back. `hovered` is the grid cell under
-   * the piece (for the "can't drop here" tint), or `null` outside the grid. */
+  /** Nowhere valid: no command, piece animates back. `hovered` is the blocked cell under the
+   * finger (for the "can't drop here" tint), or `null` when the finger isn't on a cell. */
   | { kind: 'invalid'; hovered: Cell | null };
 
 function robotOn(run: RunState, cell: Cell): boolean {
@@ -68,36 +69,40 @@ export function pickUpAt(point: Point, run: RunState, trayScroll: number): DragS
   return { kind: 'cellTile', pieceId, from: cell };
 }
 
-/** Cells a dragged piece may land in: empty, unlocked tile cells for a tile (plus the cell it
- * came from); empty cannon slots for a cannon (plus its own slot). */
-function landingCells(source: DragSource, run: RunState): Cell[] {
-  const result: Cell[] = [];
-  for (let lane = 0; lane < LANES; lane += 1) {
-    for (let col = 0; col < COLS; col += 1) {
-      const cell = { lane, col } as Cell;
-      if (source.kind === 'cannon') {
-        if (col === 0 && (lane === source.lane || !run.board.cannons[lane])) result.push(cell);
-      } else if (isTileCell(cell.col)) {
-        const isOrigin = source.kind === 'cellTile' && sameCell(source.from, cell);
-        if (isOrigin || (tileOn(run, cell) === null && !robotOn(run, cell))) result.push(cell);
-      }
-    }
+/** Where a held piece is drawn: a little above the finger so it isn't hidden. Visual only —
+ * drops always resolve at the finger point (task 09 fix round 1 ruling). */
+export function heldPieceCenter(finger: Point, fingerOffsetPt: number): Point {
+  return { x: finger.x, y: finger.y - fingerOffsetPt };
+}
+
+/** Whether `source` may land in `cell`, and whether that's where it came from. */
+function landing(source: DragSource, run: RunState, cell: Cell): 'origin' | 'valid' | 'blocked' {
+  if (source.kind === 'cannon') {
+    if (isTileCell(cell.col)) return 'blocked';
+    if (cell.lane === source.lane) return 'origin';
+    return run.board.cannons[cell.lane] ? 'blocked' : 'valid';
   }
-  return result;
+  if (!isTileCell(cell.col)) return 'blocked';
+  if (source.kind === 'cellTile' && sameCell(source.from, cell)) return 'origin';
+  return tileOn(run, cell) === null && !robotOn(run, cell) ? 'valid' : 'blocked';
 }
 
 /**
- * What dropping `source` with its centre at `point` does. The tray area takes tiles back; on the
- * grid the target is the nearest landing cell whose centre is within `snapRadiusCells` of the
- * point on both axes (so any point inside a cell, plus a margin, snaps to it).
+ * What dropping `source` with the finger at design point `finger` does (task 09 fix round 1
+ * ruling — the finger, not the lifted piece, decides):
+ * - finger in the tray area: board tile → `returnTile`; tray tile → nothing;
+ * - finger on a cell's face: that cell alone decides — valid → command, its own origin → nothing,
+ *   locked/occupied/wrong column → invalid (and it's the hovered cell for the red tint);
+ * - finger in the gutter between cells or just outside the grid: the nearest valid (or origin)
+ *   cell whose centre is within `snapRadiusCells` on both axes; none in reach → invalid.
  */
 export function resolveDrop(
   source: DragSource,
-  point: Point,
+  finger: Point,
   run: RunState,
   snapRadiusCells: number,
 ): DropResolution {
-  if (rectContains(TRAY, point)) {
+  if (rectContains(TRAY, finger)) {
     switch (source.kind) {
       case 'trayTile':
         return { kind: 'origin', target: { kind: 'tray' } };
@@ -112,45 +117,54 @@ export function resolveDrop(
     }
   }
 
+  const face = cellFaceAtPoint(finger);
+  if (face !== null) {
+    const cell = face as Cell;
+    const kind = landing(source, run, cell);
+    return kind === 'blocked' ? { kind: 'invalid', hovered: cell } : dropOnto(source, cell, kind);
+  }
+
   const radius = snapRadiusCells * CELL_SIZE;
-  let best: { cell: Cell; distance: number } | null = null;
-  for (const cell of landingCells(source, run)) {
-    const center = cellCenter(cell.lane, cell.col);
-    const dx = Math.abs(point.x - center.x);
-    const dy = Math.abs(point.y - center.y);
-    if (dx > radius || dy > radius) continue;
-    const distance = Math.hypot(dx, dy);
-    if (best === null || distance < best.distance) best = { cell, distance };
+  let best: { cell: Cell; kind: 'origin' | 'valid'; distance: number } | null = null;
+  for (let lane = 0; lane < LANES; lane += 1) {
+    for (let col = 0; col < COLS; col += 1) {
+      const cell = { lane, col } as Cell;
+      const kind = landing(source, run, cell);
+      if (kind === 'blocked') continue;
+      const center = cellCenter(lane, col);
+      const dx = Math.abs(finger.x - center.x);
+      const dy = Math.abs(finger.y - center.y);
+      if (dx > radius || dy > radius) continue;
+      const distance = Math.hypot(dx, dy);
+      if (best === null || distance < best.distance) best = { cell, kind, distance };
+    }
   }
+  return best === null
+    ? { kind: 'invalid', hovered: null }
+    : dropOnto(source, best.cell, best.kind);
+}
 
-  if (best === null) {
-    const hovered = cellAtPoint(point);
-    return { kind: 'invalid', hovered: hovered === null ? null : (hovered as Cell) };
-  }
-
-  const target: DropTarget = { kind: 'cell', cell: best.cell };
+function dropOnto(source: DragSource, cell: Cell, kind: 'origin' | 'valid'): DropResolution {
+  const target: DropTarget = { kind: 'cell', cell };
+  if (kind === 'origin') return { kind: 'origin', target };
   switch (source.kind) {
     case 'trayTile':
       return {
         kind: 'command',
-        command: { type: 'placeTile', pieceId: source.pieceId, to: best.cell },
+        command: { type: 'placeTile', pieceId: source.pieceId, to: cell },
         target,
       };
     case 'cellTile':
-      return sameCell(source.from, best.cell)
-        ? { kind: 'origin', target }
-        : {
-            kind: 'command',
-            command: { type: 'moveTile', from: source.from, to: best.cell },
-            target,
-          };
+      return {
+        kind: 'command',
+        command: { type: 'moveTile', from: source.from, to: cell },
+        target,
+      };
     case 'cannon':
-      return best.cell.lane === source.lane
-        ? { kind: 'origin', target }
-        : {
-            kind: 'command',
-            command: { type: 'moveCannon', fromLane: source.lane, toLane: best.cell.lane },
-            target,
-          };
+      return {
+        kind: 'command',
+        command: { type: 'moveCannon', fromLane: source.lane, toLane: cell.lane },
+        target,
+      };
   }
 }

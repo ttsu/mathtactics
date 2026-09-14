@@ -1,4 +1,5 @@
-// A cannon in its slot (task 09 req. 2): dark block showing the cannon base value as a small number.
+// A cannon in its slot (task 09 req. 2): solid dark block with a barrel, showing the cannon base
+// value as a small number.
 
 import Phaser from 'phaser';
 import { CANNON_VALUE_FONT_SIZE, CORNER_RADIUS, PIECE_SIZE, designToWorld } from '../layout';
@@ -11,15 +12,19 @@ export class CannonView extends Phaser.GameObjects.Container {
     super(scene);
     const size = designToWorld(PIECE_SIZE);
     const body = scene.add.graphics();
+    // Solid dark body with a barrel pointing right, down the lane — clearly a cannon, and clearly
+    // different from the pale empty slot it sits in.
+    const barrelLength = designToWorld(30);
+    const barrelHeight = designToWorld(30);
+    const bodyWidth = size - designToWorld(14);
     body.fillStyle(PLACEHOLDER.cannon);
-    body.fillRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
-    // Muzzle pointing right, down the lane.
-    const muzzle = designToWorld(18);
-    body.fillStyle(PLACEHOLDER.cannonMuzzle);
-    body.fillRect(size / 2 - muzzle, -muzzle / 2, muzzle, muzzle);
+    body.fillRoundedRect(-size / 2, -size / 2, bodyWidth, size, designToWorld(CORNER_RADIUS));
+    body.fillRect(size / 2 - barrelLength, -barrelHeight / 2, barrelLength, barrelHeight);
+    body.fillStyle(PLACEHOLDER.cannonBand);
+    body.fillRect(size / 2 - designToWorld(8), -barrelHeight / 2, designToWorld(4), barrelHeight);
 
     this.value = scene.add
-      .text(-designToWorld(6), 0, '', {
+      .text(-designToWorld(12), 0, '', {
         fontFamily: FONT_FAMILY,
         fontSize: `${designToWorld(CANNON_VALUE_FONT_SIZE)}px`,
         fontStyle: 'bold',

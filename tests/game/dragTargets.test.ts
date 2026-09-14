@@ -1,15 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { pickUpAt, resolveDrop, type DragSource } from '../../game/board/dragTargets';
-import { CELL_SIZE, TRAY, cellCenter, traySlotCenter } from '../../game/board/layout';
+import {
+  heldPieceCenter,
+  pickUpAt,
+  resolveDrop,
+  type DragSource,
+} from '../../game/board/dragTargets';
+import {
+  CELL_INSET,
+  CELL_SIZE,
+  GRID,
+  TRAY,
+  cellCenter,
+  traySlotCenter,
+} from '../../game/board/layout';
 import type { Cell } from '../../sim/core/coords';
 import { boardState } from './boardFixtures';
 
 // Lane 0: tile on (0,1), robot locks (0,5) standing on a ×3 tile. Lane 1: cannon + tile on (1,1).
+// Lane 2: robot locks (2,4), tile occupies (2,6) — the cells above both, (1,4) and (1,6), are empty.
 const run = boardState(
   [
     '. +5 . . . R7[x3] . .',
     'C +2 . . . . . .',
-    '. . . . . . . .',
+    '. . . . R9 . -2 .',
     'C . . . . . . .',
     '. . . . . . . .',
   ],
@@ -103,47 +116,78 @@ describe('resolveDrop', () => {
     expect(resolveDrop(cannon, at(2, 3), run, SNAP).kind).toBe('invalid');
   });
 
-  it('a locked or occupied cell with nothing valid in reach is invalid and reports the cell', () => {
-    expect(resolveDrop(trayPiece(0), at(0, 5), run, SNAP)).toEqual({
+  it('the cell under the finger alone decides: a blocked cell is invalid, never re-routed', () => {
+    // Dead centre on the locked (2,4): invalid, even though (1,4) above is empty.
+    expect(resolveDrop(trayPiece(0), at(2, 4), run, SNAP)).toEqual({
       kind: 'invalid',
-      hovered: cell(0, 5),
+      hovered: cell(2, 4),
     });
-    expect(resolveDrop(trayPiece(0), at(1, 1), run, SNAP)).toEqual({
+    // Occupied (2,6), with (1,6) empty above.
+    expect(resolveDrop(trayPiece(0), at(2, 6), run, SNAP)).toEqual({
       kind: 'invalid',
-      hovered: cell(1, 1),
+      hovered: cell(2, 6),
     });
-    // Tiles never go into the cannon slot column; only its edge is within (2,1)'s snap margin.
+    // Anywhere on a blocked cell's face, including right by its edge.
+    const edge = { x: at(2, 4).x, y: at(2, 4).y - CELL_SIZE / 2 + CELL_INSET + 1 };
+    expect(resolveDrop(trayPiece(0), edge, run, SNAP)).toEqual({
+      kind: 'invalid',
+      hovered: cell(2, 4),
+    });
+    // Tiles never go into the cannon slot column.
     expect(resolveDrop(trayPiece(0), at(2, 0), run, SNAP)).toEqual({
       kind: 'invalid',
       hovered: cell(2, 0),
     });
-    expect(
-      resolveDrop(trayPiece(0), { x: at(2, 0).x + 30, y: at(2, 0).y }, run, SNAP),
-    ).toMatchObject({ command: { type: 'placeTile', to: cell(2, 1) } });
   });
 
-  it('snaps to the nearest valid cell within the radius (per axis), never beyond it', () => {
-    // Near the edge of the locked (0,5), inside (0,4)'s snap margin.
-    const nearEdge = { x: at(0, 5).x - 30, y: at(0, 5).y };
-    expect(resolveDrop(trayPiece(0), nearEdge, run, SNAP)).toMatchObject({
-      command: { type: 'placeTile', to: cell(0, 4) },
+  it('the top edge of a valid cell lands in that cell, not the lane above', () => {
+    const topEdge = { x: at(2, 3).x, y: at(2, 3).y - CELL_SIZE / 2 + CELL_INSET + 1 };
+    expect(resolveDrop(trayPiece(0), topEdge, run, SNAP)).toMatchObject({
+      command: { type: 'placeTile', to: cell(2, 3) },
     });
-    // A cell corner is inside the cell, so it still counts even though it's > radius diagonally.
-    const corner = { x: at(2, 3).x + 49, y: at(2, 3).y + 49 };
+    const corner = { x: at(2, 3).x + 45, y: at(2, 3).y + 45 };
     expect(resolveDrop(trayPiece(0), corner, run, SNAP)).toMatchObject({
       command: { to: cell(2, 3) },
     });
-    // Right of the grid, beyond any snap margin.
+  });
+
+  it('the top of the tray returns a board tile', () => {
+    const trayTop = { x: TRAY.x + TRAY.width / 2, y: TRAY.y + 1 };
+    expect(resolveDrop(cellPiece(1, 1), trayTop, run, SNAP)).toMatchObject({
+      command: { type: 'returnTile', from: cell(1, 1) },
+    });
+  });
+
+  it('in a gutter or just outside the grid, snaps to the nearest valid cell within the radius', () => {
+    // Gutter between (2,2) and (2,3), nearer (2,3).
+    const gutter = { x: at(2, 3).x - CELL_SIZE / 2 + 1, y: at(2, 3).y };
+    expect(resolveDrop(trayPiece(0), gutter, run, SNAP)).toMatchObject({
+      command: { to: cell(2, 3) },
+    });
+    // Gutter between the locked (2,4) and empty (2,5): the valid neighbour wins.
+    const byLocked = { x: at(2, 4).x + CELL_SIZE / 2 - 1, y: at(2, 4).y };
+    expect(resolveDrop(trayPiece(0), byLocked, run, SNAP)).toMatchObject({
+      command: { to: cell(2, 5) },
+    });
+    // The gap between the grid and the tray snaps to lane 4.
+    const belowGrid = { x: at(4, 2).x, y: GRID.y + GRID.height + 5 };
+    expect(resolveDrop(trayPiece(0), belowGrid, run, SNAP)).toMatchObject({
+      command: { to: cell(4, 2) },
+    });
+    // Right of the grid: within the margin → (2,7); beyond it → invalid.
+    const margin = { x: at(2, 7).x + CELL_SIZE * SNAP - 1, y: at(2, 7).y };
+    expect(resolveDrop(trayPiece(0), margin, run, SNAP)).toMatchObject({
+      command: { to: cell(2, 7) },
+    });
     const outside = { x: at(2, 7).x + CELL_SIZE * SNAP + 1, y: at(2, 7).y };
     expect(resolveDrop(trayPiece(0), outside, run, SNAP)).toEqual({
       kind: 'invalid',
       hovered: null,
     });
-    // Within the margin right of the grid → (2,7).
-    const margin = { x: at(2, 7).x + CELL_SIZE * SNAP - 1, y: at(2, 7).y };
-    expect(resolveDrop(trayPiece(0), margin, run, SNAP)).toMatchObject({
-      command: { to: cell(2, 7) },
-    });
+  });
+
+  it('draws the held piece above the finger without moving the drop point', () => {
+    expect(heldPieceCenter({ x: 300, y: 400 }, 36)).toEqual({ x: 300, y: 364 });
   });
 
   it('every command it produces is accepted by the sim', async () => {

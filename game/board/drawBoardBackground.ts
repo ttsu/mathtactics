@@ -5,6 +5,7 @@ import Phaser from 'phaser';
 import type { Rect } from '../state/designSpace';
 import {
   BASE_STRIP,
+  CANNON_SLOT_OUTLINE_WIDTH,
   CELL_INSET,
   CELL_OUTLINE_WIDTH,
   COLUMN_COUNT,
@@ -25,7 +26,11 @@ export function drawBoardBackground(scene: Phaser.Scene): Phaser.GameObjects.Gra
     for (let col = 0; col < COLUMN_COUNT; col += 1) {
       const cell = inset(cellRect(lane, col), CELL_INSET);
       if (col === 0) {
+        // An empty cannon slot reads as an empty socket: pale fill, heavy slate outline. A cannon
+        // (CannonView) covers it with a solid dark block.
         fillRect(g, cell, PLACEHOLDER.cannonSlot);
+        g.lineStyle(designToWorld(CANNON_SLOT_OUTLINE_WIDTH), PLACEHOLDER.cannonSlotOutline);
+        strokeRect(g, inset(cell, CANNON_SLOT_OUTLINE_WIDTH / 2));
       } else {
         fillRect(g, cell, PLACEHOLDER.tileCell);
         g.lineStyle(designToWorld(CELL_OUTLINE_WIDTH), PLACEHOLDER.cellOutline);

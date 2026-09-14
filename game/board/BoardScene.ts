@@ -7,7 +7,7 @@
 
 import Phaser from 'phaser';
 import type { StoreApi } from 'zustand/vanilla';
-import type { AppStore } from '../state/store';
+import { isPlaybackActive, type AppStore } from '../state/store';
 import { BoardRenderer } from './BoardRenderer';
 import { bindStore } from './bindStore';
 import { DragController } from './DragController';
@@ -27,11 +27,11 @@ export class BoardScene extends Phaser.Scene {
     renderer.sync(this.store.getState().run);
 
     bindStore(this, this.store, (state, previous) => {
-      if (state.playback.status === 'playing') {
-        if (previous.playback.status !== 'playing') drag.cancel();
+      if (isPlaybackActive(state)) {
+        if (!isPlaybackActive(previous)) drag.cancel();
         return;
       }
-      const playbackEnded = previous.playback.status === 'playing';
+      const playbackEnded = isPlaybackActive(previous);
       if (!playbackEnded && !boardSliceChanged(previous.run, state.run)) return;
       drag.cancel();
       renderer.sync(state.run);

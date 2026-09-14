@@ -4,13 +4,14 @@
 
 export const PLACEHOLDER = {
   base: 0x6d4c8f,
-  cannonSlot: 0x3b4a5c,
+  cannonSlot: 0xdfe4ea,
+  cannonSlotOutline: 0x7d8a9c,
   tileCell: 0xf4efe3,
   cellOutline: 0xc9bfa8,
   tray: 0xd9cfb8,
   trayMarker: 0x8a7f68,
-  cannon: 0x1b2430,
-  cannonMuzzle: 0x55606e,
+  cannon: 0x141b24,
+  cannonBand: 0x6b7788,
   robot: 0x4a4f5c,
   robotOutline: 0x1f2229,
   tileOutline: 0x000000,
