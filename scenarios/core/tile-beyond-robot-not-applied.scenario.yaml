@@ -1,0 +1,21 @@
+# GDD §5.3: the ball is consumed on impact, so a tile placed *after* (to the right of) the first
+# robot in the lane never applies to that ball — even when the robot survives. A wrong
+# implementation that kept applying tiles past the robot would report damage 2 (1 × 2), not 1.
+name: a tile past the first robot in a lane never applies
+baseValue: 1
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C . R5 . x2 . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDamaged, ballValue: 1, damage: 1, hpBefore: 5, hpAfter: 4 }
+expectState:
+  coins: 0
+  phase: planning
+  board:
+    robots:
+      - { hp: 4 }

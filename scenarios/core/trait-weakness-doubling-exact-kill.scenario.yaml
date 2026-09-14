@@ -1,0 +1,19 @@
+# GDD §6.4: a positive multiple of the Weakness number doubles damage — doubled to exactly the
+# robot's HP is still an exact kill.
+name: weakness doubling can land an exact kill
+baseValue: 5
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C R10:w5 . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDamaged, ballValue: 5, damage: 10, doubled: true, hpBefore: 10, hpAfter: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: CoinsChanged, delta: 2, reason: exactKill }
+expectState:
+  coins: 2
+  phase: levelCleared

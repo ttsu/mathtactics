@@ -1,0 +1,19 @@
+# GDD §5.4: damage less than HP leaves the robot standing, damage carrying to future turns.
+name: undershoot damage leaves the robot standing
+baseValue: 1
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C R9 . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDamaged, ballValue: 1, damage: 1, hpBefore: 9, hpAfter: 8 }
+expectState:
+  coins: 0
+  phase: planning
+  board:
+    robots:
+      - { hp: 8 }

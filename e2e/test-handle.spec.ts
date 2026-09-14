@@ -27,3 +27,30 @@ test('window.__GAME__ exists and getDisplay() returns base HP 100', async ({ pag
   const endTurnEvents = await page.evaluate(() => window.__GAME__!.endTurn());
   expect(endTurnEvents).toEqual([]);
 });
+
+// Task 08: `loadScenario` parses + builds + installs a scenario's initial state, same as
+// `loadState` but starting from scenario YAML text instead of a ready-made `RunState`.
+test('window.__GAME__.loadScenario installs the scenario’s initial state', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#board-root canvas')).toBeVisible();
+
+  const yamlText = [
+    'name: e2e scenario',
+    'baseValue: 1',
+    'board:',
+    '  - "C . . . . . . ."',
+    '  - ". . . . . . . ."',
+    '  - ". . . . . . . R5"',
+    '  - ". . . . . . . ."',
+    '  - ". . . . . . . ."',
+  ].join('\n');
+
+  await page.evaluate((text) => window.__GAME__!.loadScenario(text), yamlText);
+
+  const state = await page.evaluate(() => window.__GAME__!.getState());
+  expect(state?.phase).toBe('planning');
+  expect(state?.levelId).toBe('scenario:e2e-scenario');
+  expect(state?.board.cannons).toEqual([true, false, false, false, false]);
+  expect(state?.board.robots).toHaveLength(1);
+  expect(state?.board.robots[0]).toMatchObject({ lane: 2, col: 7, hp: 5, maxHp: 5 });
+});
