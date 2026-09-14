@@ -41,8 +41,6 @@ export const TRAY_HEIGHT = 120;
 export const CELL_INSET = 4;
 export const CORNER_RADIUS = 10;
 export const CELL_OUTLINE_WIDTH = 2;
-/** Font size of the crispness test label (task 03 req. 4). */
-export const TEST_LABEL_FONT_SIZE = 48;
 
 const GRID_WIDTH = COLUMN_COUNT * CELL_SIZE;
 const GRID_HEIGHT = LANE_COUNT * CELL_SIZE;
@@ -99,4 +97,91 @@ export function cellRect(lane: number, col: number): Rect {
     width: CELL_SIZE,
     height: CELL_SIZE,
   };
+}
+
+// --- Pieces (task 09) ---
+
+/** Gap between a cell's bounds and the tile / cannon block drawn in it. */
+export const PIECE_INSET = 8;
+/** On-board tile and cannon block size (a cell minus the inset on both sides). */
+export const PIECE_SIZE = CELL_SIZE - PIECE_INSET * 2;
+/** Robot block: smaller than a tile so the colour of a tile it stands on still shows around it. */
+export const ROBOT_SIZE = 76;
+/** Font sizes in design points. Robot HP must be the largest text on the board (GDD §11.2). */
+export const TILE_LABEL_FONT_SIZE = 40;
+export const ROBOT_HP_FONT_SIZE = 56;
+export const CANNON_VALUE_FONT_SIZE = 26;
+export const TILE_STAR_FONT_SIZE = 18;
+
+export interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+
+export function rectCenter(rect: Rect): Point {
+  return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+}
+
+export function rectContains(rect: Rect, point: Point): boolean {
+  return (
+    point.x >= rect.x &&
+    point.x < rect.x + rect.width &&
+    point.y >= rect.y &&
+    point.y < rect.y + rect.height
+  );
+}
+
+/** Design-space centre of a grid cell. */
+export function cellCenter(lane: number, col: number): Point {
+  return rectCenter(cellRect(lane, col));
+}
+
+/** The grid cell containing a design point, or `null` outside the grid. */
+export function cellAtPoint(point: Point): { lane: number; col: number } | null {
+  if (!rectContains(GRID, point)) return null;
+  return {
+    lane: Math.floor((point.y - GRID.y) / CELL_SIZE),
+    col: Math.floor((point.x - GRID.x) / CELL_SIZE),
+  };
+}
+
+// --- Tray slots (task 09, GDD §9.3) ---
+// The tray is one horizontal row of fixed slots. With more pieces than slots it scrolls a whole
+// slot at a time (see ./trayScroll), so a piece is always either fully shown or hidden.
+
+/** Pieces visible at once (task 09: ≥ 12 visible at 60pt+). */
+export const TRAY_CAPACITY = 12;
+/** Size a tile is drawn at in the tray (≥ 60pt touch target, GDD §3.2). */
+export const TRAY_TILE_SIZE = 64;
+/** Horizontal distance between tray slot centres; each slot's touch area is pitch × tray height. */
+export const TRAY_SLOT_PITCH = 70;
+/** Space either side of the slot row (holds the "more this way" markers when the tray scrolls). */
+export const TRAY_PADDING = (TRAY.width - TRAY_CAPACITY * TRAY_SLOT_PITCH) / 2;
+
+/** Centre of the tray slot showing piece `index` when the tray is scrolled by `scroll` slots. */
+export function traySlotCenter(index: number, scroll: number): Point {
+  return {
+    x: TRAY.x + TRAY_PADDING + (index - scroll) * TRAY_SLOT_PITCH + TRAY_SLOT_PITCH / 2,
+    y: TRAY.y + TRAY.height / 2,
+  };
+}
+
+/** The visible slot (0..TRAY_CAPACITY-1) under a design point, or `null` if the point is outside
+ * the tray or in its side padding. */
+export function traySlotAtPoint(point: Point): number | null {
+  if (!rectContains(TRAY, point)) return null;
+  const slot = Math.floor((point.x - TRAY.x - TRAY_PADDING) / TRAY_SLOT_PITCH);
+  return slot >= 0 && slot < TRAY_CAPACITY ? slot : null;
+}
+
+// --- Client coordinates (test handle, TR §14) ---
+
+/** Client (CSS px) position of a cell's centre, given the displayed canvas's client rect. */
+export function cellToClient(
+  canvas: Pick<DOMRectReadOnly, 'left' | 'top' | 'width'>,
+  cell: { lane: number; col: number },
+): Point {
+  const center = cellCenter(cell.lane, cell.col);
+  const scale = canvas.width / DESIGN_WIDTH;
+  return { x: canvas.left + center.x * scale, y: canvas.top + center.y * scale };
 }

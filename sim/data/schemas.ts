@@ -120,6 +120,20 @@ const PresentationFileSchema = z.object({
     advanceDurationMs: z.number().positive(),
   }),
   tileColors: z.record(TileColorSchema, z.string().min(1)),
+  /** Board drag-and-drop feel (task 09). Presentation only — never changes an outcome. */
+  drag: z.object({
+    /** Scale of a lifted piece relative to its on-board size. */
+    liftScale: z.number().min(1),
+    liftDurationMs: z.number().nonnegative(),
+    /** How far above the finger (design points) a dragged piece is held, so it isn't hidden. */
+    fingerOffsetPt: z.number().nonnegative(),
+    /** Snap radius in cells, measured per axis from a cell's centre (task 09: ≥ 0.6 cell). */
+    snapRadiusCells: z.number().min(0.6),
+    /** Tween back to a piece's home (after a drop, an invalid drop, or an undo). */
+    settleDurationMs: z.number().nonnegative(),
+    /** Movement (design points) before a press on an overflowing tray decides drag vs scroll. */
+    trayScrollThresholdPt: z.number().positive(),
+  }),
 });
 
 // --- robots.json — expanded in M3/M4 (robot templates, traits, visual keys) ---

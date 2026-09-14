@@ -1,9 +1,13 @@
 import Phaser from 'phaser';
-import { BoardLayoutScene } from './BoardLayoutScene';
+import type { StoreApi } from 'zustand/vanilla';
+import type { AppStore } from '../state/store';
+import { BoardScene } from './BoardScene';
 import { WORLD_HEIGHT, WORLD_WIDTH } from './layout';
 
 export interface BoardGameOptions {
   parent: HTMLElement;
+  /** The app store the board renders from and dispatches planning commands to (TR §10). */
+  store: StoreApi<AppStore>;
   /** Shared Web Audio context (see /game/state/audio), so Phaser doesn't create a second one. */
   audioContext?: AudioContext;
   /** Called once the canvas is placed, and again whenever Phaser re-fits it (resize, rotation). */
@@ -26,7 +30,7 @@ export function createBoardGame(options: BoardGameOptions): Phaser.Game {
       width: WORLD_WIDTH,
       height: WORLD_HEIGHT,
     },
-    scene: [BoardLayoutScene],
+    scene: [new BoardScene(options.store)],
   });
 
   const placed = () => options.onCanvasPlaced(game.canvas);

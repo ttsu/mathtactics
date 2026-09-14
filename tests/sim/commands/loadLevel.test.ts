@@ -187,6 +187,14 @@ describe('applyCommand — loadLevel', () => {
       presentation: {
         pacing: { ballCellDurationMs: 1, perTilePauseMs: 1, laneGapMs: 1, advanceDurationMs: 1 },
         tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
+        drag: {
+          liftScale: 1.15,
+          liftDurationMs: 80,
+          fingerOffsetPt: 36,
+          snapRadiusCells: 0.75,
+          settleDurationMs: 160,
+          trayScrollThresholdPt: 12,
+        },
       },
     };
     const data = parseGameData(raw);

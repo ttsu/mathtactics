@@ -3,7 +3,7 @@
 // on behalf of the framework-free /game/state modules (TR §13, task 05 decision).
 import { createRoot } from 'react-dom/client';
 import { applyCommand } from '../sim/commands';
-import { createBoardGame } from './board';
+import { cellToClient, createBoardGame } from './board';
 import { safeStorage } from './safeStorage';
 import { gameData } from './state/gameData';
 import { getAudioContext, installAudioUnlock } from './state/audio';
@@ -42,12 +42,6 @@ if (audioContext) {
   installAudioUnlock(window, audioContext);
 }
 
-createBoardGame({
-  parent: boardRoot,
-  audioContext: audioContext ?? undefined,
-  onCanvasPlaced: placeUiRoot,
-});
-
 // TR §13 key scoping: `/` in production, `/pr/pr-12/` in a PR preview.
 const basePath = new URL(import.meta.env.BASE_URL, location.href).pathname;
 
@@ -61,12 +55,23 @@ const store = createAppStore({
   basePath,
 });
 
+const game = createBoardGame({
+  parent: boardRoot,
+  store,
+  audioContext: audioContext ?? undefined,
+  onCanvasPlaced: placeUiRoot,
+});
+
 // TR §14 / GDD §15.2: window.__GAME__ exists in dev and preview (VITE_TEST_HANDLE=1) builds
 // only, never in production. The dynamic import is statically eliminated by Vite when both
 // halves of the guard are false, so nothing from ./state/testHandle reaches a plain build
 // (TR §14 / GDD §15.2 — verified by `npm run check:no-test-handle`).
 if (import.meta.env.DEV || import.meta.env.VITE_TEST_HANDLE === '1') {
-  void import('./state/testHandle').then(({ installTestHandle }) => installTestHandle(store));
+  void import('./state/testHandle').then(({ installTestHandle }) =>
+    installTestHandle(store, {
+      cellToClient: (cell) => cellToClient(game.canvas.getBoundingClientRect(), cell),
+    }),
+  );
 }
 
 createRoot(uiRoot).render(

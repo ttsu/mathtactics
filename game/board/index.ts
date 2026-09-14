@@ -5,3 +5,4 @@ export {
   type SceneLike,
   type SubscribableStore,
 } from './bindStore';
+export { cellToClient } from './layout';
