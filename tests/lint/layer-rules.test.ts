@@ -40,6 +40,22 @@ describe('layer boundary lint rules', () => {
     expect(ruleIds(result)).toContain('no-restricted-imports');
   });
 
+  it('flags importing phaser from /game/state', async () => {
+    const result = await lint(
+      "import Phaser from 'phaser';\nexport const p = Phaser;\n",
+      'game/state/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-imports');
+  });
+
+  it('flags importing react from /game/state', async () => {
+    const result = await lint(
+      "import React from 'react';\nexport const r = React;\n",
+      'game/state/fixture.ts',
+    );
+    expect(ruleIds(result)).toContain('no-restricted-imports');
+  });
+
   it('flags importing /game/board from /game/ui and /game/ui from /game/board', async () => {
     const uiResult = await lint(
       "import { GRID } from '../board/layout';\nexport const g = GRID;\n",

@@ -11,4 +11,4 @@ Play: https://mathtactics.timtsu.com (install via Share → Add to Home Screen)
 - Agent guide: [`CLAUDE.md`](CLAUDE.md)
 - Progress: [`TASKS.md`](TASKS.md)
 
-Status: pre-M0 — design complete, no code yet.
+Status: M0 in progress — scaffold, app shell, sim core/data, and the store/test handle are built (tasks 01–05); awaiting H0 (DNS, Pages, iPad install) before the production URL above is live.

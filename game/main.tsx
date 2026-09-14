@@ -1,9 +1,13 @@
-// Entry point — the one place that mounts both Phaser (/game/board) and React (/game/ui).
+// Entry point — the one place that mounts both Phaser (/game/board) and React (/game/ui), and
+// the edge that reads browser globals (`localStorage`, `location`, `import.meta.env.BASE_URL`)
+// on behalf of the framework-free /game/state modules (TR §13, task 05 decision).
 import { createRoot } from 'react-dom/client';
 import { createBoardGame } from './board';
+import { gameData } from './state/gameData';
 import { getAudioContext, installAudioUnlock } from './state/audio';
 import { DESIGN_HEIGHT, DESIGN_WIDTH, placementOverCanvas } from './state/designSpace';
-import { App } from './ui';
+import { createAppStore, stubApplyCommand } from './state/store';
+import { App, StoreProvider } from './ui';
 
 function requireElement(id: string): HTMLElement {
   const element = document.getElementById(id);
@@ -42,4 +46,27 @@ createBoardGame({
   onCanvasPlaced: placeUiRoot,
 });
 
-createRoot(uiRoot).render(<App />);
+// TR §13 key scoping: `/` in production, `/pr/pr-12/` in a PR preview.
+const basePath = new URL(import.meta.env.BASE_URL, location.href).pathname;
+
+const store = createAppStore({
+  data: gameData,
+  // Stub until task 06 — every command fails with `wrong_phase` (task 05 decision).
+  applyCommand: stubApplyCommand,
+  storage: localStorage,
+  basePath,
+});
+
+// TR §14 / GDD §15.2: window.__GAME__ exists in dev and preview (VITE_TEST_HANDLE=1) builds
+// only, never in production. The dynamic import is statically eliminated by Vite when both
+// halves of the guard are false, so nothing from ./state/testHandle reaches a plain build
+// (CLAUDE.md rule 7 — verified by `npm run check:no-test-handle`).
+if (import.meta.env.DEV || import.meta.env.VITE_TEST_HANDLE === '1') {
+  void import('./state/testHandle').then(({ installTestHandle }) => installTestHandle(store));
+}
+
+createRoot(uiRoot).render(
+  <StoreProvider store={store}>
+    <App />
+  </StoreProvider>,
+);
