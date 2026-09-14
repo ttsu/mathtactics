@@ -86,6 +86,7 @@ export default tseslint.config(
     ignores: [
       'node_modules/**',
       'dist/**',
+      'dist-subpath-test/**',
       'coverage/**',
       'playwright-report/**',
       'test-results/**',

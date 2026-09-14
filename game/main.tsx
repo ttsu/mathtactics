@@ -1,37 +1,45 @@
-// Entry point: mounts the Phaser board and the React UI root.
-// This is a placeholder wiring (task 01) — the real app shell (layering, scaling, iPad
-// web shell) is built in task 03.
+// Entry point — the one place that mounts both Phaser (/game/board) and React (/game/ui).
 import { createRoot } from 'react-dom/client';
-import Phaser from 'phaser';
+import { createBoardGame } from './board';
+import { getAudioContext, installAudioUnlock } from './state/audio';
+import { DESIGN_HEIGHT, DESIGN_WIDTH, placementOverCanvas } from './state/designSpace';
+import { App } from './ui';
 
-class BootScene extends Phaser.Scene {
-  constructor() {
-    super('boot');
+function requireElement(id: string): HTMLElement {
+  const element = document.getElementById(id);
+  if (!element) {
+    throw new Error(`missing #${id}`);
   }
+  return element;
 }
 
-function mountBoard(parent: HTMLElement): Phaser.Game {
-  return new Phaser.Game({
-    type: Phaser.AUTO,
-    parent,
-    width: 1180,
-    height: 820,
-    scene: [BootScene],
-  });
+const app = requireElement('app');
+const boardRoot = requireElement('board-root');
+const uiRoot = requireElement('ui-root');
+
+// #ui-root is a 1180×820 design-space layer scaled to sit exactly over the displayed canvas
+// (TR §11.2). Re-placed whenever Phaser re-fits the canvas.
+uiRoot.style.width = `${DESIGN_WIDTH}px`;
+uiRoot.style.height = `${DESIGN_HEIGHT}px`;
+
+function placeUiRoot(canvas: HTMLCanvasElement): void {
+  const { left, top, scale } = placementOverCanvas(
+    canvas.getBoundingClientRect(),
+    app.getBoundingClientRect(),
+  );
+  uiRoot.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
+  uiRoot.style.visibility = 'visible';
 }
 
-function mountUi(container: HTMLElement): void {
-  createRoot(container).render(<div>Math Tactics</div>);
+const audioContext = getAudioContext();
+if (audioContext) {
+  installAudioUnlock(window, audioContext);
 }
 
-const boardRoot = document.getElementById('board-root');
-if (!boardRoot) {
-  throw new Error('missing #board-root');
-}
-mountBoard(boardRoot);
+createBoardGame({
+  parent: boardRoot,
+  audioContext: audioContext ?? undefined,
+  onCanvasPlaced: placeUiRoot,
+});
 
-const uiRoot = document.getElementById('ui-root');
-if (!uiRoot) {
-  throw new Error('missing #ui-root');
-}
-mountUi(uiRoot);
+createRoot(uiRoot).render(<App />);

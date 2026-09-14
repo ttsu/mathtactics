@@ -328,14 +328,27 @@ Flow:
 
 React interactive elements set `pointer-events: auto`. Everything else passes through to the canvas.
 
-### 11.2 Scaling (validate in M0)
+### 11.2 Scaling (validated in M0-03)
 
 - Design space: **1180 × 820 pt** (iPad 10th gen landscape).
-- Phaser game size is set to design space × 2 (**2360 × 1640**) with `Scale.FIT` + center,
-  so text and shapes are crisp on 2× displays. Board layout code works in design points and
-  multiplies by a single `UNIT = 2` constant (or equivalent camera zoom — M0-03 decides and documents).
-- `#ui-root` is sized/positioned to exactly match the canvas's displayed bounds (subscribe to
-  Phaser scale resize) and uses a CSS transform so React lays out in the same 1180×820 design space.
+- Phaser game size is design space × 2 (**2360 × 1640**) with `Scale.FIT` + `CENTER_BOTH`,
+  so text and shapes are crisp on 2× displays.
+- **Decision (M0-03): `UNIT = 2` multiplier, not camera zoom.** Board layout code works in design
+  points and converts at the point of drawing with `designToWorld()` / `worldToDesign()` from
+  `/game/board/layout.ts`, which also holds all board geometry (`GRID`, `BASE_STRIP`, `TRAY`,
+  `cellRect(lane, col)`, …). Why: Phaser 4 `Text` rasterises at `resolution` 1 unless set per
+  object (there is no game-wide default), so under a 2× camera zoom every Text would need
+  `setResolution(2)` or silently render blurry on the iPad. With `UNIT`, a 48 pt label is a 96 px
+  font drawn 1:1 into the 2× backing canvas, and a forgotten conversion is obviously half-size
+  rather than subtly soft. Cost: pointer world coordinates are world pixels — convert with
+  `worldToDesign()`.
+- Design-space constants both renderers need (`DESIGN_WIDTH/HEIGHT`, `HUD_BAR`, `MIN_TOUCH_TARGET`,
+  `placementOverCanvas()`) live in framework-free `/game/state/designSpace.ts`, since `/game/board`
+  and `/game/ui` may not import each other. The board lays out below `HUD_BAR`.
+- `#ui-root` is a fixed 1180×820 box with `transform: translate(…) scale(canvasWidth / 1180)`,
+  re-placed from the canvas's `getBoundingClientRect()` on Phaser's `READY` and scale `RESIZE`
+  events (`game/main.tsx`), so a React element at design `(x, y)` sits over Phaser point `(x, y)`.
+  Viewport-sized React overlays (rotate overlay) portal to `<body>` so the transform doesn't apply.
 - Minimum touch target: 60 pt.
 
 ### 11.3 Ownership
@@ -441,7 +454,9 @@ Playwright asserts on structured state. Screenshots are for legibility review on
 - CSS: `html, body { position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; touch-action: none;
   -webkit-user-select: none; -webkit-touch-callout: none; }`.
 - Rotate overlay: React component shown when `innerHeight > innerWidth`.
-- Audio: create/resume `AudioContext` on first `pointerdown`.
+- Audio: create/resume `AudioContext` on first `pointerdown`. One shared context
+  (`/game/state/audio.ts`: `getAudioContext()`, `installAudioUnlock()`), also handed to Phaser via
+  `audio.context` so the app never holds two.
 - Vite `base: "./"`.
 
 ---
