@@ -38,6 +38,14 @@ function fakeGameData(): GameData {
     presentation: {
       pacing: { ballCellDurationMs: 1, perTilePauseMs: 1, laneGapMs: 1, advanceDurationMs: 1 },
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
+      drag: {
+        liftScale: 1.15,
+        liftDurationMs: 80,
+        fingerOffsetPt: 36,
+        snapRadiusCells: 0.75,
+        settleDurationMs: 160,
+        trayScrollThresholdPt: 12,
+      },
     },
   } as unknown as GameData;
 }
@@ -195,9 +203,22 @@ describe('createTestHandle', () => {
     ]);
   });
 
-  it('cellToClient throws "not implemented yet (task 9)"', () => {
+  it('cellToClient delegates to the mounted board', () => {
+    const store = createAppStore({
+      data: fakeGameData(),
+      applyCommand: stubApplyCommand,
+      storage: createMemoryStorage(),
+      basePath: '/',
+    });
+    const handle = createTestHandle(store, {
+      cellToClient: (cell) => ({ x: cell.col * 10, y: cell.lane * 10 }),
+    });
+    expect(handle.cellToClient({ lane: 2, col: 3 })).toEqual({ x: 30, y: 20 });
+  });
+
+  it('cellToClient throws when no board is mounted', () => {
     const { handle } = buildHandle();
-    expect(() => handle.cellToClient({ lane: 0, col: 0 })).toThrow('not implemented yet (task 9)');
+    expect(() => handle.cellToClient({ lane: 0, col: 0 })).toThrow('no board mounted');
   });
 
   it('skipAnimation throws "not implemented yet (task 10)"', () => {
