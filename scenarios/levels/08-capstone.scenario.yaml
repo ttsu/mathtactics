@@ -1,0 +1,33 @@
+# Level 8 (task 11): the capstone — two cannons, three robots, six tiles, targets 15, 11 and 24.
+# The 24 HP robot stands behind the 11 HP one in lane 3, so it can only be hit once the front
+# robot is gone.
+#   Turn 1: move the lane-2 cannon to lane 3. Lane 1: (1 + 4) × 3 = 15. Lane 3: (1 + 5) × 2 − 1 = 11.
+#   Turn 2: rebuild lane 3 with the +2 from the tray and the ×3 from lane 1: (1 + 5 + 2) × 3 = 24.
+# Tray piece ids: piece:0 +4, piece:1 ×3, piece:2 +5, piece:3 ×2, piece:4 −1, piece:5 +2.
+name: level 8 — capstone (15, 11, then 24)
+level: level-8
+commands:
+  - { type: moveCannon, fromLane: 2, toLane: 3 }
+  - { type: placeTile, pieceId: "piece:0", to: { lane: 1, col: 1 } } # +4
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 1, col: 2 } } # ×3
+  - { type: placeTile, pieceId: "piece:2", to: { lane: 3, col: 1 } } # +5
+  - { type: placeTile, pieceId: "piece:3", to: { lane: 3, col: 2 } } # ×2
+  - { type: placeTile, pieceId: "piece:4", to: { lane: 3, col: 3 } } # −1
+  - endTurn
+  - { type: returnTile, from: { lane: 3, col: 2 } } # ×2 back to the tray
+  - { type: returnTile, from: { lane: 3, col: 3 } } # −1 back to the tray
+  - { type: placeTile, pieceId: "piece:5", to: { lane: 3, col: 2 } } # +2
+  - { type: moveTile, from: { lane: 1, col: 2 }, to: { lane: 3, col: 3 } } # ×3 from lane 1
+  - endTurn
+expectEvents:
+  - { type: BallTransformed, tileId: "mul:3", newValue: 15 }
+  - { type: RobotDefeated, exact: true }
+  - { type: BallTransformed, tileId: "sub:1", newValue: 11 }
+  - { type: RobotDefeated, exact: true }
+  - { type: BallTransformed, tileId: "mul:3", newValue: 24 }
+  - { type: RobotDamaged, ballValue: 24, hpBefore: 24, hpAfter: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: LevelCleared, levelId: level-8 }
+expectState:
+  phase: levelCleared
+  coins: 6

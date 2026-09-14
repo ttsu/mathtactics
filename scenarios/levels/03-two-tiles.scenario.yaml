@@ -1,0 +1,15 @@
+# Level 3 (task 11): two add tiles in a row — 1 + 3 + 5 = 9.
+name: level 3 — 1 + 3 + 5 = 9
+level: level-3
+commands:
+  - { type: placeTile, pieceId: "piece:0", to: { lane: 2, col: 1 } } # +3
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 2, col: 2 } } # +5
+  - endTurn
+expectEvents:
+  - { type: BallTransformed, newValue: 4 }
+  - { type: BallTransformed, newValue: 9 }
+  - { type: RobotDefeated, exact: true }
+  - { type: LevelCleared, levelId: level-3 }
+expectState:
+  phase: levelCleared
+  coins: 2

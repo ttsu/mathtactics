@@ -1,0 +1,16 @@
+# Level 2 (task 11): the cannon starts in lane 1 but the 3 HP robot is in lane 3. Move the cannon,
+# place the +2: 1 + 2 = 3.
+name: level 2 — move the cannon, 1 + 2 = 3
+level: level-2
+commands:
+  - { type: moveCannon, fromLane: 1, toLane: 3 }
+  - { type: placeTile, pieceId: "piece:0", to: { lane: 3, col: 2 } } # +2
+  - endTurn
+expectEvents:
+  - { type: BallTransformed, tileId: "add:2", newValue: 3 }
+  - { type: RobotDamaged, ballValue: 3, hpBefore: 3, hpAfter: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: LevelCleared, levelId: level-2 }
+expectState:
+  phase: levelCleared
+  coins: 2

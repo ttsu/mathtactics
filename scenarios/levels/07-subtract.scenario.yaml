@@ -1,0 +1,17 @@
+# Level 7 (task 11): subtraction as a tool — (1 + 1) × 5 − 3 = 7.
+name: level 7 — (1 + 1) × 5 − 3 = 7
+level: level-7
+commands:
+  - { type: placeTile, pieceId: "piece:2", to: { lane: 2, col: 1 } } # +1
+  - { type: placeTile, pieceId: "piece:0", to: { lane: 2, col: 2 } } # ×5
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 2, col: 3 } } # −3
+  - endTurn
+expectEvents:
+  - { type: BallTransformed, newValue: 2 }
+  - { type: BallTransformed, newValue: 10 }
+  - { type: BallTransformed, tileId: "sub:3", newValue: 7 }
+  - { type: RobotDefeated, exact: true }
+  - { type: LevelCleared, levelId: level-7 }
+expectState:
+  phase: levelCleared
+  coins: 2

@@ -1,0 +1,20 @@
+# Level 6 (task 11): two robots in two lanes, one cannon. Fire at lane 1 (1 + 6 = 7), then move the
+# cannon to lane 3 and fire again ((1 + 4) × 2 = 10). Tiles stay put between turns.
+name: level 6 — one cannon, two lanes (7 and 10)
+level: level-6
+commands:
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 1, col: 2 } } # +6
+  - endTurn
+  - { type: moveCannon, fromLane: 1, toLane: 3 }
+  - { type: placeTile, pieceId: "piece:0", to: { lane: 3, col: 1 } } # +4
+  - { type: placeTile, pieceId: "piece:2", to: { lane: 3, col: 2 } } # ×2
+  - endTurn
+expectEvents:
+  - { type: BallTransformed, tileId: "add:6", newValue: 7 }
+  - { type: RobotDefeated, exact: true }
+  - { type: BallTransformed, tileId: "mul:2", newValue: 10 }
+  - { type: RobotDefeated, exact: true }
+  - { type: LevelCleared, levelId: level-6 }
+expectState:
+  phase: levelCleared
+  coins: 4
