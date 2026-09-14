@@ -15,10 +15,8 @@ import {
   ROBOT_SIZE,
   designToWorld,
 } from '../layout';
+import { formatNumber } from '../pieces';
 import { DARK_STROKE_COLOR, FONT_FAMILY, LIGHT_TEXT_COLOR, PLACEHOLDER } from './palette';
-
-/** A springy refill may overshoot a full bar a little before settling. */
-const MAX_BAR_FILL = 1.2;
 
 export class RobotView extends Phaser.GameObjects.Container {
   private readonly hp: Phaser.GameObjects.Text;
@@ -74,7 +72,7 @@ export class RobotView extends Phaser.GameObjects.Container {
 
   showHpText(hp: number): void {
     this.shownHp = hp;
-    const text = String(hp);
+    const text = formatNumber(hp);
     if (this.hp.text === text) return;
     this.hp.setText(text);
     // Three-digit HP shrinks to fit the block rather than spilling out of it.
@@ -82,9 +80,15 @@ export class RobotView extends Phaser.GameObjects.Container {
     this.hp.setScale(Math.min(1, maxWidth / this.hp.width));
   }
 
-  /** Bar fill as a fraction of max HP (clamped; a springy refill may briefly overshoot full). */
-  setBarFill(fraction: number): void {
-    const fill = Phaser.Math.Clamp(fraction, 0, MAX_BAR_FILL);
+  /** Current bar fill, as a fraction of max HP. */
+  get barFill(): number {
+    return Math.max(0, this.fill);
+  }
+
+  /** Bar fill as a fraction of max HP, clamped to `[0, max]` — a springy refill passes a `max`
+   * above 1 so it can briefly overshoot a full bar. */
+  setBarFill(fraction: number, max = 1): void {
+    const fill = Phaser.Math.Clamp(fraction, 0, max);
     if (fill === this.fill) return;
     this.fill = fill;
     const width = designToWorld(HP_BAR_WIDTH);

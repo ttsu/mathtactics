@@ -38,10 +38,6 @@ import type { TimedBeat } from './timeline';
 
 type EventOf<T extends GameEvent['type']> = Extract<GameEvent, { type: T }>;
 
-/** Shares of a beat's duration given to its sub-animations — the shape of a beat, not its
- * length (every length is a `presentation.json` value). */
-const SHARE = { quick: 0.25, grow: 0.4, half: 0.5, most: 0.7, fade: 0.3 } as const;
-
 export class SegmentPlayer {
   private readonly tweens: Phaser.Tweens.Tween[] = [];
   private readonly transients: Phaser.GameObjects.GameObject[] = [];
@@ -59,6 +55,11 @@ export class SegmentPlayer {
 
   private get settings(): GameData['presentation']['playback'] {
     return this.store.getState().data.presentation.playback;
+  }
+
+  /** Fractions of a beat's duration given to its sub-animations. */
+  private get share(): GameData['presentation']['playback']['beatShares'] {
+    return this.settings.beatShares;
   }
 
   play({ event, durationMs }: TimedBeat): void {
@@ -94,8 +95,10 @@ export class SegmentPlayer {
   }
 
   /** Stops every animation this segment started and applies each event's final state: the ball
-   * gone, tiles and cannon at rest, robots at their final HP or removed, HUD events committed. */
-  finish(): void {
+   * gone, tiles and cannon at rest, robots at their final HP or removed. With `commit`, HUD
+   * events not yet played are committed too (skip / natural end); without it (the sequence was
+   * abandoned because the store already moved on) nothing is reported to the store. */
+  finish({ commit }: { commit: boolean }): void {
     for (const tween of this.tweens) tween.remove();
     this.tweens.length = 0;
     this.ballPop = null;
@@ -111,7 +114,7 @@ export class SegmentPlayer {
           break;
         case 'BallTransformed': {
           const tile = this.renderer.tileView(event.pieceId);
-          tile?.setScale(1);
+          tile?.setScale(1).setDepth(DEPTH.piece);
           tile?.flash.setAlpha(0);
           break;
         }
@@ -126,7 +129,7 @@ export class SegmentPlayer {
           this.restRobot(event.robotId, event.at)?.setVisible(false);
           break;
         default:
-          this.commit(event);
+          if (commit) this.commit(event);
       }
     }
   }
@@ -140,7 +143,7 @@ export class SegmentPlayer {
     this.tween({
       targets: cannon,
       scale: this.settings.cannon.thumpScale,
-      duration: durationMs * SHARE.half,
+      duration: durationMs * this.share.half,
       yoyo: true,
       ease: 'Quad.easeOut',
     });
@@ -162,19 +165,31 @@ export class SegmentPlayer {
     const next = this.segment.events.find((e) => e.step > event.step);
     const hitsRobot = next?.type === 'RobotDamaged' || next?.type === 'BallBlocked';
     const x = hitsRobot ? target.x - designToWorld(BALL_IMPACT_OFFSET) : target.x;
-    this.tween({ targets: this.ball, x, y: target.y, duration: durationMs, ease: 'Linear' });
+    // A ball about to apply a tile hops up onto it, so the tile's label stays readable while it
+    // applies; the next move brings it back down the lane.
+    const onTile = next?.type === 'BallTransformed';
+    const y = onTile ? target.y - designToWorld(this.settings.transform.ballHopPt) : target.y;
+    this.tween({ targets: this.ball, x, y, duration: durationMs, ease: 'Linear' });
   }
 
   private ballTransformed(event: EventOf<'BallTransformed'>, durationMs: number): void {
     const { transform } = this.settings;
     const tile = this.renderer.tileView(event.pieceId);
     if (tile !== undefined) {
+      // The tile is drawn above the ball for its beat so its operator stays readable.
+      tile.setDepth(DEPTH.liftedTile);
       tile.flash.setAlpha(transform.tileFlashAlpha);
-      this.tween({ targets: tile.flash, alpha: 0, duration: durationMs, ease: 'Quad.easeIn' });
+      this.tween({
+        targets: tile.flash,
+        alpha: 0,
+        duration: durationMs,
+        ease: 'Quad.easeIn',
+        onComplete: () => tile.setDepth(DEPTH.piece),
+      });
       this.tween({
         targets: tile,
         scale: transform.tilePopScale,
-        duration: durationMs * SHARE.half,
+        duration: durationMs * this.share.half,
         yoyo: true,
         ease: 'Quad.easeOut',
       });
@@ -200,7 +215,7 @@ export class SegmentPlayer {
 
   private robotDamaged(event: EventOf<'RobotDamaged'>, durationMs: number): void {
     const { impact } = this.settings;
-    this.consumeBall(durationMs * SHARE.quick);
+    this.consumeBall(durationMs * this.share.quick);
     const robot = this.renderer.robotView(event.robotId);
     const center = worldCenter(event.at);
 
@@ -223,8 +238,8 @@ export class SegmentPlayer {
     this.tween({
       targets: label,
       alpha: 0,
-      delay: durationMs * SHARE.most,
-      duration: durationMs * SHARE.fade,
+      delay: durationMs * this.share.most,
+      duration: durationMs * this.share.fade,
     });
 
     if (event.damage > 0) {
@@ -239,29 +254,47 @@ export class SegmentPlayer {
     this.tween({
       targets: robot,
       x: center.x + designToWorld(impact.knockbackPt),
-      duration: durationMs * SHARE.quick,
+      duration: durationMs * this.share.quick,
       yoyo: true,
       ease: 'Quad.easeOut',
     });
-    // An overshot Bounce-back robot drains to empty here; its bounce beat refills it.
-    const shownAfter = bouncesBack(this.segment, event) ? 0 : event.hpAfter;
-    this.countHp(robot, event.hpBefore, shownAfter, durationMs * SHARE.most, 'Cubic.easeOut');
+    if (bouncesBack(this.segment, event)) {
+      // Overshot Bounce-back: the HP text holds `hpBefore` (it only ever shows payload values)
+      // while the bar dips toward empty; the bounce beat counts the text to `hpAfter` and springs
+      // the bar back up (GDD §6.2).
+      robot.showHpText(event.hpBefore);
+      this.counter(robot.barFill, 0, durationMs * this.share.most, 'Cubic.easeOut', (value) =>
+        robot.setBarFill(value),
+      );
+      return;
+    }
+    this.countHp(
+      robot,
+      event.hpBefore,
+      event.hpAfter,
+      durationMs * this.share.most,
+      'Cubic.easeOut',
+    );
   }
 
   private robotBouncedBack(event: EventOf<'RobotBouncedBack'>, durationMs: number): void {
     const robot = this.renderer.robotView(event.robotId);
     if (robot === undefined) return;
-    const from = robot.displayedHp;
-    this.counter(from, event.hpAfter, durationMs * SHARE.half, 'Quad.easeOut', (value) =>
-      robot.showHpText(Math.round(value)),
+    const { maxBarFill } = this.settings.bounceBack;
+    this.counter(
+      robot.displayedHp,
+      event.hpAfter,
+      durationMs * this.share.half,
+      'Quad.easeOut',
+      (value) => robot.showHpText(Math.round(value)),
     );
     // The bar springs back up past its final fill and wobbles into place.
     this.counter(
-      from / robot.maxHp,
+      robot.barFill,
       event.hpAfter / robot.maxHp,
       durationMs,
       'Elastic.easeOut',
-      (value) => robot.setBarFill(value),
+      (value) => robot.setBarFill(value, maxBarFill),
     );
     robot.setScale(this.settings.bounceBack.wobbleScale);
     this.tween({ targets: robot, scale: 1, duration: durationMs, ease: 'Elastic.easeOut' });
@@ -286,7 +319,7 @@ export class SegmentPlayer {
   private exactKill(event: EventOf<'RobotDefeated'>, durationMs: number): void {
     const { exactKill } = this.settings;
     const center = worldCenter(event.at);
-    this.popAway(event.robotId, exactKill.popScale, durationMs * SHARE.half);
+    this.popAway(event.robotId, exactKill.popScale, durationMs * this.share.half);
 
     const ring = this.track(
       drawRing(this.scene.add.graphics(), PLACEHOLDER.celebration, BURST_RING_WIDTH),
@@ -296,7 +329,7 @@ export class SegmentPlayer {
       targets: ring,
       scale: exactKill.ringScale,
       alpha: 0,
-      duration: durationMs * SHARE.most,
+      duration: durationMs * this.share.most,
       ease: 'Cubic.easeOut',
     });
 
@@ -316,15 +349,15 @@ export class SegmentPlayer {
         targets: star,
         x: center.x + Math.cos(angle) * distance,
         y: center.y + Math.sin(angle) * distance,
-        angle: 180,
-        duration: durationMs * SHARE.most,
+        angle: exactKill.starSpinDeg,
+        duration: durationMs * this.share.most,
         ease: 'Cubic.easeOut',
       });
       this.tween({
         targets: star,
         alpha: 0,
-        delay: durationMs * SHARE.half,
-        duration: durationMs * SHARE.fade,
+        delay: durationMs * this.share.half,
+        duration: durationMs * this.share.fade,
       });
     }
 
@@ -340,15 +373,15 @@ export class SegmentPlayer {
     this.tween({
       targets: bigStar,
       scale: exactKill.bigStarScale,
-      angle: 360,
-      duration: durationMs * SHARE.grow,
+      angle: exactKill.bigStarSpinDeg,
+      duration: durationMs * this.share.grow,
       ease: 'Back.easeOut',
     });
     this.tween({
       targets: bigStar,
       alpha: 0,
-      delay: durationMs * SHARE.most,
-      duration: durationMs * SHARE.fade,
+      delay: durationMs * this.share.most,
+      duration: durationMs * this.share.fade,
     });
 
     this.scene.cameras.main.shake(exactKill.shakeMs, exactKill.shake, true);
@@ -362,14 +395,14 @@ export class SegmentPlayer {
       this.tween({
         targets: ball,
         x: ball.x - designToWorld(blocked.bounceOffPt),
-        duration: durationMs * SHARE.half,
+        duration: durationMs * this.share.half,
         ease: 'Quad.easeOut',
       });
       this.tween({
         targets: ball,
         alpha: 0,
-        delay: durationMs * SHARE.half,
-        duration: durationMs * SHARE.fade,
+        delay: durationMs * this.share.half,
+        duration: durationMs * this.share.fade,
       });
     }
     const shield = this.track(
@@ -384,7 +417,7 @@ export class SegmentPlayer {
       this.tween({
         targets: robot,
         x: center.x + designToWorld(blocked.robotWobblePt),
-        duration: (durationMs * SHARE.half) / (2 * (blocked.robotWobbleRepeats + 1)),
+        duration: (durationMs * this.share.half) / (2 * (blocked.robotWobbleRepeats + 1)),
         yoyo: true,
         repeat: blocked.robotWobbleRepeats,
         ease: 'Sine.easeInOut',
@@ -400,7 +433,7 @@ export class SegmentPlayer {
     this.tween({
       targets: ball,
       x: ball.x + designToWorld(this.settings.exit.rollPt),
-      angle: 360,
+      angle: this.settings.exit.rollSpinDeg,
       alpha: 0,
       duration: durationMs,
       ease: 'Quad.easeIn',
@@ -453,14 +486,14 @@ export class SegmentPlayer {
     this.tween({
       targets: robot,
       scale: popScale,
-      duration: durationMs * SHARE.quick,
+      duration: durationMs * this.share.quick,
       ease: 'Quad.easeOut',
       onComplete: () =>
         this.tween({
           targets: robot,
           scale: 0,
           alpha: 0,
-          duration: durationMs * (1 - SHARE.quick),
+          duration: durationMs * (1 - this.share.quick),
           ease: 'Back.easeIn',
         }),
     });

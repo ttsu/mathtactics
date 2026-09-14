@@ -393,9 +393,12 @@ describe('setSettings', () => {
 });
 
 describe('isPlaybackActive', () => {
-  it('is true only while playback is playing', () => {
+  it('is true while a turn is playing or a Replay is replaying, false when idle', () => {
     expect(isPlaybackActive({ playback: { status: 'idle', events: [], cursor: 0 } })).toBe(false);
     expect(isPlaybackActive({ playback: { status: 'playing', events: [], cursor: 0 } })).toBe(true);
+    expect(isPlaybackActive({ playback: { status: 'replaying', events: [], cursor: 0 } })).toBe(
+      true,
+    );
   });
 });
 

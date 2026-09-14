@@ -80,6 +80,50 @@ test('left alone, playback commits coins lane by lane and finishes by itself', a
   await expect(page.getByTestId('end-turn')).toBeEnabled();
 });
 
+test('installing a state mid-playback abandons it without touching the new HUD values', async ({
+  page,
+}) => {
+  await load(page, MULTI_LANE);
+  await page.evaluate(() => window.__GAME__!.endTurn());
+  // Let lane 0 get under way, but not reach its coin reward.
+  await page.waitForTimeout(300);
+  expect((await getDisplay(page)).coins).toBe(0);
+
+  await page.evaluate(
+    (text) => window.__GAME__!.loadScenario(text),
+    MULTI_LANE.replace('baseValue: 1', 'baseValue: 1\ncoins: 7'),
+  );
+  // Give the abandoned sequence's timers a few frames to (not) fire.
+  await page.waitForTimeout(300);
+
+  const state = await getState(page);
+  expect(state.coins).toBe(7);
+  expect(await getDisplay(page)).toEqual({
+    coins: state.coins,
+    baseHp: state.baseHp,
+    waveIndex: state.waveIndex,
+  });
+  expect(await isIdle(page)).toBe(true);
+});
+
+test('a new turn dispatched mid-playback abandons the old sequence without committing it', async ({
+  page,
+}) => {
+  await load(page, MULTI_LANE);
+  // Level mode stays in planning (lane 1's robot survives), so a second End Turn is accepted.
+  const display = await page.evaluate(() => {
+    window.__GAME__!.endTurn();
+    window.__GAME__!.endTurn();
+    return window.__GAME__!.getDisplay();
+  });
+  // The first turn's +4 coins were never played, so they were never committed.
+  expect(display.coins).toBe(0);
+
+  await page.evaluate(() => window.__GAME__!.skipAnimation());
+  expect((await getDisplay(page)).coins).toBe((await getState(page)).coins);
+  expect(await isIdle(page)).toBe(true);
+});
+
 test('each tap on the canvas skips one lane, and taps never start a drag', async ({ page }) => {
   await load(page, MULTI_LANE);
   const before = await getState(page);

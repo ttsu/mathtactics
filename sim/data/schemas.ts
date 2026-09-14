@@ -116,6 +116,7 @@ const ms = () => z.number().nonnegative();
 const scale = () => z.number().positive();
 /** Camera shake intensity, as a fraction of the camera size (Phaser `Camera.shake`). */
 const shakeIntensity = () => z.number().min(0).max(0.05);
+const share = () => z.number().min(0).max(1);
 
 const PresentationFileSchema = z.object({
   pacing: z.object({
@@ -141,6 +142,15 @@ const PresentationFileSchema = z.object({
       exitMs: ms(),
       laneEndMs: ms(),
     }),
+    /** Fractions of a beat's duration given to its sub-animations (e.g. the damage number fades
+     * for the last `fade` of the impact beat, after `most` of it has passed). */
+    beatShares: z.object({
+      quick: share(),
+      grow: share(),
+      half: share(),
+      most: share(),
+      fade: share(),
+    }),
     lane: z.object({
       /** Alpha of the dark wash over inactive lanes. */
       dimAlpha: z.number().min(0).max(1),
@@ -158,6 +168,9 @@ const PresentationFileSchema = z.object({
       popScaleMax: scale(),
       tilePopScale: scale(),
       tileFlashAlpha: z.number().min(0).max(1),
+      /** The ball hops up this far onto a tile it is about to apply (and the tile draws above it for
+       * the beat), so the tile's label stays readable. */
+      ballHopPt: z.number().nonnegative(),
     }),
     impact: z.object({
       knockbackPt: z.number().nonnegative(),
@@ -176,19 +189,25 @@ const PresentationFileSchema = z.object({
       shakeMs: ms(),
       shake: shakeIntensity(),
     }),
-    bounceBack: z.object({ wobbleScale: scale() }),
+    bounceBack: z.object({
+      wobbleScale: scale(),
+      /** How far past full the springy HP bar refill may overshoot before settling (1 = none). */
+      maxBarFill: z.number().min(1),
+    }),
     defeat: z.object({ popScale: scale(), puffScale: scale() }),
     exactKill: z.object({
       popScale: scale(),
       starCount: z.number().int().nonnegative(),
       starBurstPt: z.number().nonnegative(),
+      starSpinDeg: z.number(),
+      bigStarSpinDeg: z.number(),
       bigStarScale: scale(),
       ringScale: scale(),
       shakeMs: ms(),
       shake: shakeIntensity(),
     }),
     coins: z.object({ floatPt: z.number().nonnegative() }),
-    exit: z.object({ rollPt: z.number().nonnegative() }),
+    exit: z.object({ rollPt: z.number().nonnegative(), rollSpinDeg: z.number() }),
   }),
   tileColors: z.record(TileColorSchema, z.string().min(1)),
   /** Board drag-and-drop feel (task 09). Presentation only — never changes an outcome. */

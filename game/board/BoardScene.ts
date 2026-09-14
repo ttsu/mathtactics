@@ -34,24 +34,30 @@ export class BoardScene extends Phaser.Scene {
     drag.attach(this);
     const director = new Director(this, renderer, this.store);
     this.playback = director;
-    renderer.sync(this.store.getState().run);
+    // A new sequence — a just-resolved turn, or a Replay. Either way the board first shows the run
+    // as it was before that turn, then the Director performs the events on it.
+    const startPlayback = (state: AppStore) => {
+      drag.cancel();
+      const { lastTurn } = state;
+      if (lastTurn !== null && lastTurn.events === state.playback.events) {
+        renderer.sync(lastTurn.before);
+      }
+      director.play(state.playback.events);
+    };
+
+    const initial = this.store.getState();
+    renderer.sync(initial.run);
+    // Playback may already be under way if a turn was dispatched before this scene existed.
+    if (isPlaybackActive(initial)) startPlayback(initial);
 
     bindStore(this, this.store, (state, previous) => {
       if (isPlaybackActive(state)) {
-        if (state.playback === previous.playback) return;
-        // A new sequence: a just-resolved turn, or a Replay. Either way the board first shows the
-        // run as it was before that turn, then the Director performs the events on it.
-        drag.cancel();
-        const { lastTurn } = state;
-        if (lastTurn !== null && lastTurn.events === state.playback.events) {
-          renderer.sync(lastTurn.before);
-        }
-        director.play(state.playback.events);
+        if (state.playback !== previous.playback) startPlayback(state);
         return;
       }
       const playbackEnded = isPlaybackActive(previous);
       // Normally the Director itself ended playback; if the store reset it (a state installed
-      // mid-sequence), abandon what's left.
+      // mid-sequence), abandon what's left without reporting anything back.
       if (playbackEnded) director.stop();
       if (!playbackEnded && !boardSliceChanged(previous.run, state.run)) return;
       drag.cancel();

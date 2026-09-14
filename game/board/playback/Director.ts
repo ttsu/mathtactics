@@ -77,7 +77,7 @@ export class Director {
     const active = this.active;
     this.active = null;
     this.plans = [];
-    if (active !== null) this.teardown(active);
+    if (active !== null) this.teardown(active, { commit: false });
     this.laneWash.clear();
   }
 
@@ -102,17 +102,18 @@ export class Director {
     const active = this.active;
     if (active === null) return;
     this.active = null;
-    this.teardown(active);
-    this.laneWash.clear();
+    this.teardown(active, { commit: true });
+    // The lane wash stays up through the lane gap; the next LaneStarted moves it, and it clears
+    // when the whole sequence ends.
     this.index += 1;
     this.startSegment();
   }
 
-  private teardown(active: ActiveSegment): void {
+  private teardown(active: ActiveSegment, options: { commit: boolean }): void {
     // `remove(false)` marks each timer done without firing it; the clock drops it next frame
     // (safe even when called from inside one of these timers' callbacks).
     for (const timer of active.timers) timer.remove(false);
-    active.player.finish();
+    active.player.finish(options);
   }
 
   private complete(): void {

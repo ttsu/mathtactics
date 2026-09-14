@@ -19,6 +19,13 @@
       "exitMs": 240,
       "laneEndMs": 150
     },
+    "beatShares": {
+      "quick": 0.25,
+      "grow": 0.4,
+      "half": 0.5,
+      "most": 0.7,
+      "fade": 0.3
+    },
     "lane": {
       "dimAlpha": 0.28
     },
@@ -33,7 +40,8 @@
       "popScalePerChain": 0.15,
       "popScaleMax": 2,
       "tilePopScale": 1.12,
-      "tileFlashAlpha": 0.75
+      "tileFlashAlpha": 0.75,
+      "ballHopPt": 72
     },
     "impact": {
       "knockbackPt": 16,
@@ -51,7 +59,8 @@
       "shake": 0.004
     },
     "bounceBack": {
-      "wobbleScale": 1.25
+      "wobbleScale": 1.25,
+      "maxBarFill": 1.2
     },
     "defeat": {
       "popScale": 1.25,
@@ -61,6 +70,8 @@
       "popScale": 1.7,
       "starCount": 12,
       "starBurstPt": 190,
+      "starSpinDeg": 180,
+      "bigStarSpinDeg": 360,
       "bigStarScale": 2.4,
       "ringScale": 3.2,
       "shakeMs": 320,
@@ -70,7 +81,8 @@
       "floatPt": 60
     },
     "exit": {
-      "rollPt": 160
+      "rollPt": 160,
+      "rollSpinDeg": 360
     }
   },
   "tileColors": {

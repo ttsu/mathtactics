@@ -25,6 +25,7 @@ export function fakePlaybackSettings() {
       exitMs: 90,
       laneEndMs: 5,
     },
+    beatShares: { quick: 0.25, grow: 0.4, half: 0.5, most: 0.7, fade: 0.3 },
     lane: { dimAlpha: 0.3 },
     cannon: { thumpScale: 1.2 },
     ball: { fireFromScale: 0.3 },
@@ -34,6 +35,7 @@ export function fakePlaybackSettings() {
       popScaleMax: 2,
       tilePopScale: 1.1,
       tileFlashAlpha: 0.7,
+      ballHopPt: 60,
     },
     impact: {
       knockbackPt: 16,
@@ -50,18 +52,20 @@ export function fakePlaybackSettings() {
       shakeMs: 160,
       shake: 0.004,
     },
-    bounceBack: { wobbleScale: 1.2 },
+    bounceBack: { wobbleScale: 1.2, maxBarFill: 1.2 },
     defeat: { popScale: 1.2, puffScale: 1.6 },
     exactKill: {
       popScale: 1.7,
       starCount: 12,
       starBurstPt: 190,
+      starSpinDeg: 180,
+      bigStarSpinDeg: 360,
       bigStarScale: 2.4,
       ringScale: 3,
       shakeMs: 320,
       shake: 0.014,
     },
     coins: { floatPt: 60 },
-    exit: { rollPt: 160 },
+    exit: { rollPt: 160, rollSpinDeg: 360 },
   };
 }

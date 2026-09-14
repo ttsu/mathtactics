@@ -40,7 +40,9 @@ export const DEPTH = {
   trayMarkers: 4,
   laneWash: 5,
   ball: 6,
-  effects: 7,
+  /** A tile lifted above the ball while it applies, so its label stays readable. */
+  liftedTile: 7,
+  effects: 8,
   held: 10,
 } as const;
 const TRAY_SCALE = TRAY_TILE_SIZE / PIECE_SIZE;

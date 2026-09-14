@@ -4,12 +4,8 @@
 
 import Phaser from 'phaser';
 import { BALL_RADIUS, BALL_VALUE_FONT_SIZE, designToWorld } from '../layout';
+import { formatNumber } from '../pieces';
 import { DARK_STROKE_COLOR, FONT_FAMILY, LIGHT_TEXT_COLOR, PLACEHOLDER } from './palette';
-
-/** `-3` with a real minus sign, matching tile labels. */
-export function formatBallValue(value: number): string {
-  return value < 0 ? `−${-value}` : String(value);
-}
 
 export class BallView extends Phaser.GameObjects.Container {
   private readonly value: Phaser.GameObjects.Text;
@@ -41,7 +37,7 @@ export class BallView extends Phaser.GameObjects.Container {
   }
 
   setValue(value: number): void {
-    const text = formatBallValue(value);
+    const text = formatNumber(value);
     if (this.value.text === text) return;
     this.value.setText(text);
     // Long values shrink to stay inside the ball rather than spilling out of it.
