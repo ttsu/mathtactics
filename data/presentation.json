@@ -1,0 +1,13 @@
+{
+  "pacing": {
+    "ballCellDurationMs": 220,
+    "perTilePauseMs": 120,
+    "laneGapMs": 300,
+    "advanceDurationMs": 400
+  },
+  "tileColors": {
+    "green": "#4caf50",
+    "blue": "#2196f3",
+    "orange": "#ff9800"
+  }
+}
