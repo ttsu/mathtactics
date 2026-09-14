@@ -38,6 +38,12 @@ jobs:
         if: github.event.action != 'closed'
         run: VITE_TEST_HANDLE=1 npm run build
 
+      # public/CNAME belongs only at the gh-pages root. The deploy action never
+      # cleans CNAME files, so a copy inside pr/pr-N/ would outlive the preview.
+      - name: Drop CNAME from preview build
+        if: github.event.action != 'closed'
+        run: rm -f dist/CNAME
+
       - name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         id: preview

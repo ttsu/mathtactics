@@ -48,20 +48,20 @@ Store wiring (05), drag/drop (09), real art.
 
 ## Completion Notes
 
-**Status:** Complete (one criterion awaiting human check on the iPad preview in H0)
+**Status:** Complete
 **Completed:** 2026-09-14
-**PR:** not yet opened
+**PR:** #3 · Preview: https://mathtactics.timtsu.com/pr/pr-3/ (removed on merge)
 
 **Acceptance criteria:**
 - [x] Board layout renders letterboxed but undistorted at 1180×820, 1366×1024, and 844×390 — Met: `e2e/app-shell.spec.ts` asserts, per size, canvas aspect = 1180/820, fits the viewport, fills one dimension and is centred in the other; at 1180×820 the canvas is 0,0,1180×820 with a 2360×1640 backing store. Screenshots at 1180×820, 844×390 and 820×1180 reviewed by eye (not committed).
 - [x] React HUD elements align with Phaser layout at all three sizes (e2e checks an anchor point within 2px) — Met: the HUD bar's bottom-left and bottom-right corners are compared with the Phaser board area's top corners (client position derived from the canvas rect + layout constants), ≤ 2px at all three sizes, plus a live 1180×820 → 844×390 resize test. Mutation-checked: forcing `scale(1)` on `#ui-root` fails the 1366×1024, 844×390 and resize tests.
 - [x] Rotate overlay appears in portrait — Met: at 820×1180 the overlay is visible, covers 0,0,820×1180 and contains no text; absent at all landscape sizes.
 - [x] Manifest and metas present; `start_url` and `scope` are relative — Met: e2e checks viewport/apple metas, fetches manifest (`start_url: "./"`, `scope: "./"`, standalone, landscape) and all icons (200); `e2e/subpath.spec.ts` additionally proves manifest, icons, `start_url` and `scope` all resolve inside `/pr/pr-0/`.
-- [ ] No page scroll, zoom, or text selection on touch — CSS present (TR §15 block in `index.html`; e2e asserts computed `position: fixed`, `overflow: hidden`, `touch-action: none`, `user-select: none` on body); awaiting human check on preview (H0).
+- [x] No page scroll, zoom, or text selection on touch — CSS present (TR §15 block in `index.html`; e2e asserts computed `position: fixed`, `overflow: hidden`, `touch-action: none`, `user-select: none` on body); checked by the human on the iPad in H0.
 - [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass — Met (see Verification).
 
 Also req. 9: End Turn button bounding box ≥ 60pt in both dimensions at 1180×820 — Met (e2e).
-Crispness of the 48pt Phaser test label on the physical device — awaiting human check on preview (H0).
+Crispness of the 48pt Phaser test label on the physical device — checked by the human on the iPad in H0.
 
 **Verification:** `npm test` ✔ (5 files, 22 tests) · `typecheck` ✔ · `lint` ✔ · `build` ✔ (pre-existing Phaser chunk-size warning only) · `check:no-test-handle` ✔ · `test:e2e` ✔ (11 passed, WebKit: 8 app-shell, 2 subpath, 1 smoke). Ran from clean `dist`/`dist-subpath-test`.
 

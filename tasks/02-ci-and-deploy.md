@@ -45,14 +45,14 @@ Configuring DNS or repo settings (human, task H0).
 
 ## Completion Notes
 
-**Status:** Partial
+**Status:** Complete
 **Completed:** 2026-09-14
-**PR:** not yet opened
+**PR:** #2 · Preview: https://mathtactics.timtsu.com/pr/pr-2/ (removed on merge)
 
 **Acceptance criteria:**
-- [ ] CI runs on this task's own PR and is green — Not met: no PR opened this session (instructed not to push/open a PR); workflow validated locally instead (YAML parses, actionlint clean, and every step's underlying command — `npm run typecheck/lint/test/build`, the handle check, `npm run test:e2e` — run green locally). Awaiting push/PR (not run in this session).
-- [ ] Opening the PR produces a preview deploy commit under `pr/pr-<N>/` on `gh-pages` — Not met: requires a real PR; awaiting push/PR (not run in this session).
-- [ ] Merging to `main` deploys to `gh-pages` root without deleting `pr/` — Not met: requires a real merge; awaiting push/PR (not run in this session).
+- [x] CI runs on this task's own PR and is green — Met with a caveat: PR #2 was retargeted to `main` and merged before a run was recorded on it, but `ci.yml` (added here) ran green on PRs #3, #4, #5 and on every push to `main` (2026-09-14).
+- [x] Opening the PR produces a preview deploy commit under `pr/pr-<N>/` on `gh-pages` — Met: `gh-pages` history has "Deploy preview for PR 3/4/5 🛫" commits, and matching "Remove preview for PR N 🛬" commits on close.
+- [x] Merging to `main` deploys to `gh-pages` root without deleting `pr/` — Met: "Deploying to gh-pages from @ …" commits from `main` left `pr/` in place; production `https://mathtactics.timtsu.com/` serves 200 and its JS contains no `__GAME__`.
 - [x] Production build contains no test handle code (grep `dist` for `__GAME__` returns nothing) — Met: `npm run check:no-test-handle` (new script, also wired into `ci.yml` and `deploy-github-pages.yml`) passes against a plain `npm run build` output; verified it correctly *fails* by temporarily appending `window.__GAME__ = {}` to a built JS file, then removed the injection and rebuilt clean.
 - [x] Assets load correctly when served from a subpath — Met: added `e2e/subpath.spec.ts` plus a second Playwright `webServer` entry (`playwright.config.ts`) that builds a handle-free `dist-subpath-test` and serves it mounted at `/pr/pr-0/` via a new `scripts/serve-subpath.ts` static server; the test asserts the canvas is visible and no request returns ≥400 or fails. `npm run test:e2e` passes both this and the existing smoke test.
 - [x] `docs/deploy.md` exists with the human steps — Met: DNS CNAME, Pages source (`gh-pages` branch) + custom domain + HTTPS, branch protection requiring the CI check, and iPad Home Screen install steps; notes this is task H0.
@@ -83,7 +83,7 @@ Configuring DNS or repo settings (human, task H0).
 - None. Every workflow value came from the task file, TR §16/16.1, GDD §15.3, or the "Decisions already made" list; where the task explicitly deferred to `bee-happy`'s pattern, that repo's actual workflow files were read directly rather than guessed.
 
 **Known issues / follow-up:**
-- All three acceptance criteria that require a real PR/CI run (CI green on this task's own PR, a preview commit under `pr/pr-<N>/`, a `main` merge deploying without deleting `pr/`) are unverified in this session per instructions — this task was not pushed, no PR was opened, and no GitHub/repo settings were touched. Task H0 (human: DNS, Pages settings, branch protection) still needs to be done before the production URL and previews are live at all.
+- PR-dependent criteria verified after merge (see above). Follow-up fixed in the M0 close-out PR: the preview build shipped `public/CNAME`, and the deploy action never cleans `CNAME` files, so closed previews left `pr/pr-N/CNAME` behind; `pr-preview.yml` now deletes `dist/CNAME` before deploying. Existing leftovers for PRs 3–5 remain on `gh-pages`.
 - The Phaser bundle-size warning from task 01 (`dist/assets/index-*.js` ~1.6 MB / ~426 KB gzipped) is unchanged and still out of scope here.
 
 **Files created:** `.github/workflows/ci.yml`, `.github/workflows/deploy-github-pages.yml`, `.github/workflows/pr-preview.yml`, `public/CNAME`, `docs/deploy.md`, `scripts/check-no-test-handle.ts`, `scripts/serve-subpath.ts`, `e2e/subpath.spec.ts`

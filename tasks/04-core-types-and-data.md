@@ -56,7 +56,7 @@ Commands (06), resolution (07), store (05).
 
 **Status:** Complete
 **Completed:** 2026-09-14
-**PR:** not yet opened
+**PR:** #4 · Preview: https://mathtactics.timtsu.com/pr/pr-4/ (removed on merge)
 
 **Acceptance criteria:**
 - [x] All types compile under `tsconfig.sim.json` (no DOM) — Met (`npm run typecheck` runs both `tsconfig.json` and `tsconfig.sim.json`; `sim/**` and `tests/sim/**`/`tests/helpers/**` are only in the latter's `include`, no DOM lib)

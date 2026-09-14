@@ -47,7 +47,7 @@ Real commands/resolution (06, 07), playback (10).
 
 **Status:** Complete
 **Completed:** 2026-09-14
-**PR:** not yet opened
+**PR:** #5 · Preview: https://mathtactics.timtsu.com/pr/pr-5/ (removed on merge)
 
 **Acceptance criteria:**
 
