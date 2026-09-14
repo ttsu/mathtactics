@@ -11,6 +11,7 @@ import { buildLevelState } from '../commands/level';
 import type { GameData, LevelDef } from '../data/schemas';
 import {
   describeEventSequenceFailure,
+  describeEventSequenceFailureCompact,
   findPartialMismatch,
   matchEventSequence,
   type EventSequenceMatch,
@@ -71,11 +72,12 @@ export function buildScenarioState(scenario: Scenario, data: GameData): RunState
 }
 
 /** Describes why a scenario's `commands` list didn't behave as expected: either a command failed
- * that wasn't supposed to (`actual` set, `expected` unset or mismatched), or the last command was
- * supposed to fail with `expected` but didn't (`actual` unset). */
+ * that wasn't supposed to (`actual` set, `expected` unset or mismatched), the last command was
+ * supposed to fail with `expected` but didn't (`actual` unset, `command` set), or `expectError`
+ * was declared with no `commands` at all to produce it (`index: -1`, `command` unset). */
 export interface ScenarioCommandFailure {
   index: number;
-  command: Command;
+  command?: Command;
   actual?: CommandError;
   expected?: CommandError;
 }
@@ -104,6 +106,13 @@ export function runScenario(scenario: Scenario, data: GameData): ScenarioRunResu
   let state = buildScenarioState(scenario, data);
   const events: GameEvent[] = [];
   let commandFailure: ScenarioCommandFailure | null = null;
+
+  // `expectError` names an error the *last* command must produce (see the ruling above) — with
+  // no commands at all there is no last command to produce it, so it can never be satisfied
+  // (review fix round 1, item 3: this used to pass silently).
+  if (scenario.commands.length === 0 && scenario.expectError !== undefined) {
+    commandFailure = { index: -1, expected: scenario.expectError };
+  }
 
   for (let i = 0; i < scenario.commands.length; i++) {
     const command = scenario.commands[i]!;
@@ -135,46 +144,62 @@ export function runScenario(scenario: Scenario, data: GameData): ScenarioRunResu
   return { scenario, state, events, eventsMatch, stateMismatch, commandFailure, pass };
 }
 
-/** One line per event, compact enough to scan a whole run at once (task 08 requirement 3). */
-export function formatEventCompact(event: GameEvent): string {
-  const { step, group, type, ...rest } = event;
-  const fields = Object.entries(rest)
-    .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
-    .join(' ');
-  return `[${step}] ${group} ${type}${fields ? ' ' + fields : ''}`;
+function describeCommandFailure(failure: ScenarioCommandFailure): string {
+  const { index, command, actual, expected } = failure;
+  if (command === undefined) {
+    return `expectError "${expected}" was declared, but there are no commands to produce it.`;
+  }
+  if (actual === undefined) {
+    return `command ${index} (${command.type}) was expected to fail with "${expected}", but succeeded.`;
+  }
+  if (expected !== undefined) {
+    return `command ${index} (${command.type}) failed with "${actual}", expected "${expected}".`;
+  }
+  return `command ${index} (${command.type}) failed unexpectedly with "${actual}".`;
 }
 
-/** Human-readable explanation of why `result` failed — reused by `scripts/sim.ts` and
- * `tests/scenarios.test.ts` so the CLI and vitest failure output agree. */
-export function describeScenarioFailure(result: ScenarioRunResult): string {
+function describeStateMismatch(mismatch: PartialMismatch): string {
+  return (
+    `expectState mismatch at "${mismatch.path}": ` +
+    `expected ${JSON.stringify(mismatch.expected)}, got ${JSON.stringify(mismatch.actual)}`
+  );
+}
+
+/** Human-readable explanation of why `result` failed, sharing the command-failure and
+ * expectState pieces between a verbose form (vitest — `describeScenarioFailure`, a full
+ * pretty-printed event dump on an events mismatch) and a compact one (the CLI —
+ * `describeScenarioFailureCompact`, one line per event; task 08 review fix round 1, item 2). */
+function describeScenarioFailureWith(
+  result: ScenarioRunResult,
+  describeEvents: (
+    actual: readonly GameEvent[],
+    expected: Scenario['expectEvents'],
+    match: EventSequenceMatch,
+  ) => string,
+): string {
   const lines: string[] = [];
 
   if (result.commandFailure) {
-    const { index, command, actual, expected } = result.commandFailure;
-    if (actual === undefined) {
-      lines.push(
-        `command ${index} (${command.type}) was expected to fail with "${expected}", but succeeded.`,
-      );
-    } else if (expected !== undefined) {
-      lines.push(`command ${index} (${command.type}) failed with "${actual}", expected "${expected}".`);
-    } else {
-      lines.push(`command ${index} (${command.type}) failed unexpectedly with "${actual}".`);
-    }
+    lines.push(describeCommandFailure(result.commandFailure));
   }
 
   if (!result.eventsMatch.ok) {
-    lines.push(
-      describeEventSequenceFailure(result.events, result.scenario.expectEvents, result.eventsMatch),
-    );
+    lines.push(describeEvents(result.events, result.scenario.expectEvents, result.eventsMatch));
   }
 
   if (result.stateMismatch) {
-    lines.push(
-      `expectState mismatch at "${result.stateMismatch.path}": ` +
-        `expected ${JSON.stringify(result.stateMismatch.expected)}, ` +
-        `got ${JSON.stringify(result.stateMismatch.actual)}`,
-    );
+    lines.push(describeStateMismatch(result.stateMismatch));
   }
 
   return lines.join('\n');
+}
+
+/** Verbose failure description (vitest) — see `describeScenarioFailureWith`. */
+export function describeScenarioFailure(result: ScenarioRunResult): string {
+  return describeScenarioFailureWith(result, describeEventSequenceFailure);
+}
+
+/** Compact failure description (CLI) — see `describeScenarioFailureWith`. */
+export function describeScenarioFailureCompact(result: ScenarioRunResult): string {
+  return describeScenarioFailureWith(result, describeEventSequenceFailureCompact);
 }

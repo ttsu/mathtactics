@@ -1,16 +1,22 @@
-# GDD §6.3: an Even-only robot blocks any odd-valued ball — 0 damage, ball consumed.
-name: even-only robots block odd balls
+# GDD §2.1/§5.4: zero is even. An Even-only robot is therefore NOT blocked by a 0-value ball —
+# it takes the hit normally, for zero damage. (A `BallBlocked` event would be the *wrong*
+# behavior here; "no BallBlocked" can't be written as an ordered-subsequence expectation, so this
+# instead pins down the actually-emitted RobotDamaged{damage:0} and the unchanged HP in
+# expectState — together those are only satisfiable by the ball reaching and passing the
+# even-only check without being blocked.)
+name: even-only robots are not blocked by a zero-value ball
 baseValue: 1
 board:
   - ". . . . . . . ."
   - ". . . . . . . ."
-  - "C R4:even . . . . . ."
+  - "C -1 R4:even . . . . ."
   - ". . . . . . . ."
   - ". . . . . . . ."
 commands:
   - endTurn
 expectEvents:
-  - { type: BallBlocked, value: 1, reason: evenOnly }
+  - { type: BallTransformed, newValue: 0 }
+  - { type: RobotDamaged, ballValue: 0, damage: 0, hpBefore: 4, hpAfter: 4 }
 expectState:
   coins: 0
   phase: planning
