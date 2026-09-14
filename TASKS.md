@@ -11,11 +11,11 @@ Gate: a blank board renders on the iPad via `https://mathtactics.timtsu.com`.
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
 | 01 | [Project scaffold & tooling](tasks/01-project-scaffold.md) | infra | — | Complete |
-| 02 | [CI, GitHub Pages & PR previews](tasks/02-ci-and-deploy.md) | infra | 01 | Partial (awaiting PR/CI verification) |
-| 03 | [App shell: Phaser + React layering, scaling, iPad web shell](tasks/03-app-shell.md) | presentation | 01 | Complete (touch gesture/crispness check pending H0) |
+| 02 | [CI, GitHub Pages & PR previews](tasks/02-ci-and-deploy.md) | infra | 01 | Complete |
+| 03 | [App shell: Phaser + React layering, scaling, iPad web shell](tasks/03-app-shell.md) | presentation | 01 | Complete |
 | 04 | [Core types, RNG & data schemas](tasks/04-core-types-and-data.md) | sim / data | 01 | Complete |
 | 05 | [Store, persistence scoping & test handle](tasks/05-store-and-test-handle.md) | state | 03, 04 | Complete |
-| H0 | **Human:** DNS CNAME, Pages settings, branch protection; open production URL on iPad, add to Home Screen | human | 02, 03 | Not Started |
+| H0 | **Human:** DNS CNAME, Pages settings, branch protection; open production URL on iPad, add to Home Screen | human | 02, 03 | Complete |
 
 ## M1 — Core Loop
 

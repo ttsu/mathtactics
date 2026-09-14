@@ -56,7 +56,7 @@ CI workflows (02), app shell/scaling (03), real types or data (04).
 
 **Status:** Complete
 **Completed:** 2026-09-14
-**PR:** not yet opened
+**PR:** #1
 
 **Acceptance criteria:**
 - [x] `npm ci && npm test && npm run typecheck && npm run lint && npm run build` all succeed from a clean clone — Met (ran `rm -rf node_modules dist && npm ci` then all four in sequence; all green)
