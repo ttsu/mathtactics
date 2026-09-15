@@ -56,4 +56,75 @@ SVG glyphs, `screens.popInMs`, double-tap guard). Task 14 owns switching `screen
 
 ## Completion Notes
 
-_To be filled in by `/finish-task`._
+**Status:** Complete (iPad check pending)
+**Completed:** 2026-09-15
+
+**Acceptance criteria:**
+- [x] Wave-cleared overlay shows reward tiles and ▶ starts the next wave — Met (`WaveClearedOverlay.tsx`,
+  `showWaveCleared`, `continueToNextWave`; e2e `wave-cleared overlay shows the reward tiles…`; also reappears after a
+  reload, e2e `reloading while the wave-cleared overlay is up…`)
+- [x] Win and lose screens show wave progress and the exact-kill count, ▶ returns to menu — Met (`WinScreen.tsx`,
+  `LoseScreen.tsx`, `ExactKillRow.tsx`; reached through the real End Turn → `finishPlayback` flow in e2e)
+- [ ] Lose screen is cheerful (human check) — **Pending human check.** Big smile + three dancing robots, no red X or
+  "game over" imagery, one ▶ only (e2e asserts exactly one button).
+- [x] Text-free, ≥ 60 pt, timings in data — Met (SVG glyphs and digits only; e2e-measured buttons;
+  `screens.rewardStaggerMs/iconStaggerMs/danceMs/danceStaggerMs` in `presentation.json`)
+- [x] `npm test` (572 tests), `typecheck`, `lint`, `build`, `npm run sim -- scenarios` (31/31), `test:e2e` (57) pass — Met
+
+**Deviations from spec:**
+- **Wave dots reuse `LevelDots`** (task 11) instead of a new component; its `data-testid="level-dots"` now also appears
+  on these screens.
+- **The lose screen's dots don't mark the current wave cleared** — it shows as "current" (orange), not "done" (gold),
+  since that wave beat the player.
+- **Win-screen stars/confetti pop in as one group** (like `AllDoneScreen`); only per-item rows (reward tiles, exact
+  kills, dancing robots) are staggered.
+- **Reward chips have no ★ badge.** v1 wave rewards are low tiles, never a starred ×6+.
+- **Tile label/colour logic is duplicated** from `game/board/pieces.ts` in `WaveClearedOverlay.tsx`: `/game/ui` may not
+  import `/game/board` (TR §2). An unknown reward tile id renders a neutral grey chip instead of throwing.
+- **`waveRewardTiles` returns a module-level `NO_REWARDS` singleton** for the empty case. A fresh `[]` from a Zustand
+  selector caused an infinite render loop (React #185) that unmounted `#ui-root`.
+- **Integration with tasks 14/15:** `showWaveCleared` also requires `screen === 'game'` (matching `showLevelCleared`);
+  `hudButtons.home` calls it instead of restating the condition. The won/lost e2e tests reach the screens through task
+  14's real `finishPlayback` switch, so the temporary `TestHandle.setScreen` was removed.
+- **Wave-flow tests use their own waves (final review fix).** `e2e/waves.spec.ts` and `tests/game/waveFlow.test.ts`
+  asserted the shipped wave-1 reward and a 3-wave run, so they would break when task 17 retunes `waves.json`. They now
+  use inline `waves:` fixtures (two waves, first rewards `mul:2` + `add:4`). For that to work in the browser, the test
+  handle's `loadScenario` now installs `effectiveData(scenario, shippedData)` (newly exported from `sim/scenario`) as
+  the store's `data`. `loadState` restores the shipped data. Before this, a scenario's `waves:` was silently ignored in
+  e2e. Verified by re-running both with a modified `waves.json` (4 waves, different wave-1 reward), then restoring it.
+  The resume test still needs the shipped file to have ≥ 2 waves, because a reload drops the scenario's waves.
+
+**Architectural decisions made:**
+- `game/state/waveFlow.ts`: `waveCount(data)`, `showWaveCleared(state)`, `waveRewardTiles(run)`,
+  `continueToNextWave(store)` — framework-free, mirrors `levelFlow.ts`; ▶ is guarded on `phase === 'waveCleared'`.
+- `App.tsx` renders `WaveClearedOverlay` inside the `screen === 'game'` block and `WinScreen`/`LoseScreen` for
+  `screen === 'won'`/`'lost'`; both read `run.exactKills`/`run.waveIndex`, so `run` stays in memory after the save is
+  cleared.
+- New icons: `SmileIcon`, `DancingRobotIcon` (`icons.tsx`). New test ids: `wave-cleared`, `wave-next`, `reward-tile`,
+  `won`, `won-menu`, `lost`, `lost-menu`, `exact-kill-count`.
+- Test handle: `loadScenario` honours `waves:` for the session (TR §14).
+
+**Known issues / follow-up needed:**
+- iPad check pending: the three screens' legibility, the lose screen's tone, and the placeholder dancing-robot art (M5).
+- The exact-kill row with 9–12 icons (a full M2 run) isn't covered by a test or screenshot; past roughly 20 exact kills
+  the win screen would overflow (a v1-length run concern).
+- `OPERATOR_GLYPH`/`rewardLabel` duplicate `game/board/pieces.ts`'s `tileFace`; could be hoisted to `/game/state`.
+- The dance keyframe's easing and rotation stay in CSS (same category as `pop-in`'s curve).
+
+**Files created:**
+- `game/state/waveFlow.ts`, `game/ui/WaveClearedOverlay.tsx`, `game/ui/WinScreen.tsx`, `game/ui/LoseScreen.tsx`,
+  `game/ui/ExactKillRow.tsx`
+- `tests/game/waveFlow.test.ts`, `e2e/waves.spec.ts`
+
+**Files modified:**
+- `game/ui/App.tsx`, `game/ui/icons.tsx`, `game/ui/ui.css`, `game/ui/hudButtons.ts`
+- `game/state/testHandle.ts`, `sim/scenario/run.ts`, `sim/scenario/index.ts` (`effectiveData` export)
+- `sim/data/schemas.ts`, `data/presentation.json`, `tests/helpers/dragSettings.ts` (`screens.*` stagger/dance keys)
+- `tests/game/hudButtons.test.ts`, `tests/game/testHandle.test.ts`
+- `TECHNICAL_REFERENCE.md` (§10 Home/`showWaveCleared` sentence, §14 `loadScenario` waves), `TASKS.md`
+
+**Notes for next agent:**
+- Task 17: e2e and unit tests for the wave flow no longer read `waves.json` content, so retune freely. Add new run
+  e2e scenarios with inline `waves:`. If the wave count changes, also retune `playback.detonate.heartTargetX` (task
+  15's ♥ e2e will flag it).
+- Zustand selectors in `/game/ui` must return stable references for "empty" values (see `NO_REWARDS`).
