@@ -3,6 +3,7 @@ import { parseGameData } from '../../../sim/data/load';
 import { applyTile } from '../../../sim/core/tiles';
 import type { TileDef } from '../../../sim/core/types';
 import { loadRawGameData } from '../../helpers/loadDataFiles';
+import { fakeDragSettings } from '../../helpers/dragSettings';
 
 function validTile(overrides: Record<string, unknown> = {}) {
   return {
@@ -40,6 +41,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
         advanceDurationMs: 400,
       },
       tileColors: { green: '#4caf50', blue: '#2196f3', orange: '#ff9800' },
+      drag: fakeDragSettings(),
     },
     ...overrides,
   };
@@ -141,5 +143,14 @@ describe('parseGameData on the real /data directory', () => {
     const data = parseGameData(loadRawGameData());
     const tile: TileDef = data.tiles[0]!;
     expect(applyTile(5, tile)).toBeTypeOf('number');
+  });
+});
+
+describe('presentation.json drag settings (task 09)', () => {
+  it('rejects a snap radius under 0.6 cell', () => {
+    const raw = validRaw();
+    const presentation = raw.presentation as { drag: Record<string, number> };
+    presentation.drag.snapRadiusCells = 0.5;
+    expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
   });
 });

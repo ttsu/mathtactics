@@ -173,7 +173,7 @@ test('web shell metas and manifest are present, with relative start_url and scop
   });
   expect(shellCss).toEqual({
     position: 'fixed',
-    overflow: 'hidden',
+    overflow: 'clip',
     touchAction: 'none',
     userSelect: 'none',
   });

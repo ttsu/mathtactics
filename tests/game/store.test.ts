@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   createAppStore,
+  isPlaybackActive,
   displayFromRun,
   stubApplyCommand,
   type ApplyCommandFn,
@@ -9,6 +10,7 @@ import {
 import { scopedKey, type StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
 import type { RunState } from '../../sim/core/types';
+import { fakeDragSettings } from '../helpers/dragSettings';
 
 function createMemoryStorage(): StorageLike {
   const map = new Map<string, string>();
@@ -43,6 +45,7 @@ function fakeGameData(overrides: Partial<GameData['economy']> = {}): GameData {
     presentation: {
       pacing: { ballCellDurationMs: 1, perTilePauseMs: 1, laneGapMs: 1, advanceDurationMs: 1 },
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
+      drag: fakeDragSettings(),
     },
   } as unknown as GameData;
 }
@@ -381,5 +384,12 @@ describe('setSettings', () => {
       hints: true,
       sound: true,
     });
+  });
+});
+
+describe('isPlaybackActive', () => {
+  it('is true only while playback is playing', () => {
+    expect(isPlaybackActive({ playback: { status: 'idle', events: [], cursor: 0 } })).toBe(false);
+    expect(isPlaybackActive({ playback: { status: 'playing', events: [], cursor: 0 } })).toBe(true);
   });
 });

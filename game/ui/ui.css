@@ -22,9 +22,14 @@
   white-space: nowrap;
 }
 
+.hud-actions {
+  display: flex;
+  gap: 16px;
+  margin-left: auto;
+}
+
 .hud-button {
   pointer-events: auto;
-  margin-left: auto;
   box-sizing: border-box;
   height: 68px;
   padding: 0 32px;
@@ -36,7 +41,24 @@
   font-size: 32px;
 }
 
-.hud-button:active {
+.hud-button-undo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  padding: 0;
+  background: #4f86c6;
+}
+
+.hud-button:disabled {
+  opacity: 0.55;
+}
+
+.hud-button-undo:disabled {
+  background: #5b6b85;
+}
+
+.hud-button:active:not(:disabled) {
   transform: translateY(2px);
 }
 

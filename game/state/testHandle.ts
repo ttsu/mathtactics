@@ -52,8 +52,15 @@ function installState(store: StoreApi<AppStore>, state: RunState): void {
   });
 }
 
-/** Builds the `__GAME__` object for `store` — pure, no `window` access, so it's unit-testable. */
-export function createTestHandle(store: StoreApi<AppStore>): TestHandle {
+/** What the mounted board contributes to the handle. Injected from the edge (game/main.tsx),
+ * since /game/state may not import /game/board (TR §2). */
+export interface TestHandleBoard {
+  cellToClient(cell: Cell): { x: number; y: number };
+}
+
+/** Builds the `__GAME__` object for `store` — pure, no `window` access, so it's unit-testable.
+ * Without a `board` (unit tests), board-dependent methods throw. */
+export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBoard): TestHandle {
   return {
     getState: () => store.getState().run,
     getDisplay: () => store.getState().display,
@@ -73,12 +80,15 @@ export function createTestHandle(store: StoreApi<AppStore>): TestHandle {
     },
     skipAnimation: () => notImplemented(10),
     isIdle: () => store.getState().playback.status === 'idle',
-    cellToClient: () => notImplemented(9),
+    cellToClient: (cell) => {
+      if (!board) throw new Error('cellToClient: no board mounted');
+      return board.cellToClient(cell);
+    },
   };
 }
 
 /** Installs the handle on `window.__GAME__`. Only ever called from the guarded dynamic import
  * in game/main.tsx (TR §14) — never reachable from a production build. */
-export function installTestHandle(store: StoreApi<AppStore>): void {
-  window.__GAME__ = createTestHandle(store);
+export function installTestHandle(store: StoreApi<AppStore>, board?: TestHandleBoard): void {
+  window.__GAME__ = createTestHandle(store, board);
 }

@@ -72,6 +72,12 @@ export type AppStore = AppState & AppActions;
  * §14) `loadState`'s reset, so the three places that need "no playback" agree on its shape. */
 export const IDLE_PLAYBACK: Playback = { status: 'idle', events: [], cursor: 0 };
 
+/** True while a resolved turn is playing back — the one gate both renderers use to block
+ * planning input (board drags, HUD buttons). */
+export function isPlaybackActive(state: Pick<AppState, 'playback'>): boolean {
+  return state.playback.status === 'playing';
+}
+
 export interface CreateAppStoreOptions {
   data: GameData;
   applyCommand: ApplyCommandFn;
