@@ -63,6 +63,7 @@ export function buildLevelState(levelDef: LevelDef, data: GameData): RunState {
     coins: data.economy.startCoins,
     cannonBaseValue: levelDef.baseValue,
     upgradesBought: 0,
+    exactKills: 0,
     pieces,
     tray,
     board: { cannons, cells, robots },

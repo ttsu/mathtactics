@@ -63,12 +63,16 @@ export interface Board {
 
 export type Phase = 'planning' | 'shop' | 'won' | 'lost' | 'levelCleared';
 
-/** One entry of a wave's spawn schedule (GDD §10.3): `(turn, lane, robot template)`.
- * Expanded in M2, once waves exist. */
+/** One concrete entry of a wave's spawn schedule (GDD §10.3), rolled at wave start by
+ * `rollWave`: lane letters are already resolved and the HP range already rolled. */
 export interface SpawnEntry {
+  /** 1-based turn within the wave. */
   turn: number;
   lane: Lane;
+  /** A `robots.json` id. */
   robotTemplateId: string;
+  /** The spawned robot's HP and `maxHp`. */
+  hp: number;
 }
 
 /** Identifies one shop offer slot (GDD §8.3: 3 tile offers, 1 cannon offer, 1 upgrade offer).
@@ -104,6 +108,8 @@ export interface RunState {
   coins: number;
   cannonBaseValue: number;
   upgradesBought: number;
+  /** Exact kills over the whole run, shown on the win and lose screens (GDD §10.6). */
+  exactKills: number;
   /** All owned tiles, keyed by `pieceId`. */
   pieces: Record<string, TilePiece>;
   /** `pieceId`s not on the board, in display order. */

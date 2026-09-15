@@ -55,6 +55,7 @@ function fakeRunState(overrides: Partial<RunState> = {}): RunState {
     coins: 0,
     cannonBaseValue: 1,
     upgradesBought: 0,
+    exactKills: 0,
     pieces: {},
     tray: [],
     board: { cannons: [false, false, true, false, false], cells: [], robots: [] },

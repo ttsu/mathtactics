@@ -75,4 +75,61 @@ are done (tasks 04, 06, 07).
 
 ## Completion Notes
 
-_To be filled in by `/finish-task`._
+**Status:** Complete
+**Completed:** 2026-09-15
+
+**Acceptance criteria:**
+- [x] `robots.json` and `waves.json` have strict schemas; bad data fails `npm test` with a readable path — Met
+  (e.g. `waves.json: waves[1].spawns[0].lane: lane must be 0-4 or a letter A-E`)
+- [x] Draft waves 1–3 shipped — Met (exactly the table in Requirements 3)
+- [x] `rollWave` and SPAWN are pure, deterministic, and follow TR §6 draw/spawn order — Met
+- [x] `newRun` produces the GDD §10.1 starting state with wave 1's first robot spawned — Met
+- [x] `schemaVersion` is 2 — Met
+- [x] `npm test` (401 tests), `typecheck`, `lint` pass — Met; `npm run build` also passes
+
+**Deviations from spec:**
+- **Cross-file validation had no existing home** (`parseGameData` did none; level tile ids are still not
+  cross-checked). Added a `.superRefine` on `GameDataSchema` in `sim/data/schemas.ts` for wave robot ids
+  and reward tile ids; its issue paths start with the file key, so errors read `waves.json: waves[0]...`.
+- **Extra validation beyond TR §9:** duplicate robot ids and duplicate wave ids are rejected, and robot
+  templates, waves, spawns and rewards use `z.strictObject` (unknown keys such as a `rewards` typo fail).
+- **HP draw always happens,** one `nextInt` per entry even when `min === max`, so the draw count never
+  depends on the data values. This is the normative order task 13 scenarios will reproduce.
+- **`spawn(state, data, firstStep = 0)`** takes the step of its first event, so task 13's `resolveTurn` can
+  append SPAWN events with `step` still strictly increasing.
+- `newRun` lives in `sim/commands/newRun.ts` as `buildNewRun(seed, data)`; the two streams come from the
+  existing `createStreams` (`${seed}:wave` / `${seed}:shop`).
+- The spawn HP cap `99` is a schema constant (`MAX_SPAWN_HP`), not data. It is the GDD §2.1 rule
+  "normal robot HP never exceeds 99", not a tuning value. The Boss (M4) will need its own limit.
+
+**Architectural decisions made:**
+- `WaveDef`, `RobotTemplate`, `LaneLetter` and `LANE_LETTERS` are exported from `sim/data/schemas.ts`.
+  A parsed spawn's `lane` is `Lane | LaneLetter`.
+- SPAWN keeps waiting robots in place in `board.robots` (only `col` changes on entry) and appends new
+  robots, so `board.robots` order is spawn order.
+- `spawn` throws on an unknown robot template (the schema makes this unreachable for shipped data).
+
+**Known issues / follow-up needed:**
+- Left for task 13 on purpose: `Phase` has no `waveCleared` yet, there is no `TilesGranted` event and no
+  `nextWave` command, and `resolveTurn` for `mode: 'run'` is still FIRE only. An `endTurn` on a `newRun`
+  state fires but doesn't advance or spawn. No UI dispatches `newRun` yet, so players can't reach this.
+- Run-mode scenario files (`pendingSpawns`, `waves`, `exactKills` keys) are not supported yet (task 13).
+
+**Files created:**
+- `sim/commands/newRun.ts`, `sim/waves/rollWave.ts`, `sim/waves/spawn.ts`
+- `tests/sim/data/waves.test.ts`, `tests/sim/waves/rollWave.test.ts`, `tests/sim/waves/spawn.test.ts`,
+  `tests/sim/commands/newRun.test.ts`
+
+**Files modified:**
+- `data/robots.json`, `data/waves.json`, `data/economy.json` (schemaVersion 2)
+- `sim/data/schemas.ts`, `sim/core/types.ts` (`SpawnEntry.hp`, `RunState.exactKills`),
+  `sim/commands/applyCommand.ts`, `sim/commands/level.ts`, `sim/commands/index.ts`, `sim/waves/index.ts`
+- Test fixtures and tests for the new required fields and stricter data: `tests/sim/commands/fixtures.ts`,
+  `tests/sim/commands/{loadLevel,planningCommands}.test.ts`, `tests/sim/data/{load,levels}.test.ts`,
+  `tests/game/{store,storage,testHandle}.test.ts`
+
+**Notes for next agent:**
+- Hand-built raw data passed through `parseGameData` now needs at least one valid wave and a robot
+  template it references. Copy the minimal `waves`/`robots` from `tests/sim/data/load.test.ts`.
+  `fakeGameData()` (not parsed) still has `robots: []` / `waves: []`, so override `robots` when calling
+  `spawn` with it. For task 13, call `spawn(state, data, events.length)` at the end of `resolveTurn`.

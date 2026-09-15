@@ -162,7 +162,7 @@ describe('applyCommand — loadLevel', () => {
       tiles: [
         { id: 'add:2', kind: 'add', n: 2, priceCategory: 'add', color: 'green', starred: false },
       ],
-      robots: [],
+      robots: [{ id: 'basic', trait: { type: 'none' }, isBoss: false }],
       economy: {
         schemaVersion: 1,
         baseHp: 100,
@@ -173,7 +173,9 @@ describe('applyCommand — loadLevel', () => {
         income: { kill: 1, exactKill: 2, waveCleared: 3 },
       },
       shop: {},
-      waves: { waves: [] },
+      waves: {
+        waves: [{ id: 'wave-1', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] }],
+      },
       levels: {
         levels: [
           {

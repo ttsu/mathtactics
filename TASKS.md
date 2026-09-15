@@ -38,7 +38,7 @@ ladder content is finalized after it (task 17). Tasks 14, 15 and 16 may run in p
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
-| 12 | [Wave data & spawning](tasks/12-wave-data-and-spawning.md) | sim / data | — | Not Started |
+| 12 | [Wave data & spawning](tasks/12-wave-data-and-spawning.md) | sim / data | — | Complete |
 | 13 | [Full turn loop: advance, detonation, waves, win/lose](tasks/13-full-turn-loop.md) | sim | 12 | Not Started |
 | 14 | [Save/resume, main menu & Home](tasks/14-save-resume-and-menu.md) | state / ui | 13 | Not Started |
 | 15 | [Run playback: spawn, advance, detonation, danger glow](tasks/15-run-playback.md) | presentation | 13 | Not Started |
