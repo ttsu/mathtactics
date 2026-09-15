@@ -1,16 +1,34 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.3
+**Version:** 0.4
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
-**Status:** Design refined, ready for M0. This document is the single source of truth for *design*.
+**Status:** M1 built; M2 decisions recorded (v0.4). This document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
 
-## 0. Changes in v0.3
+## 0. Changes in v0.4
+
+v0.4 records the decisions made while writing the M2 task specs (before Playtest 1):
+
+- **Fast-forward:** if the board is empty but the wave still has scheduled robots, the next
+  scheduled group spawns immediately (§4.4). The player never taps End Turn on an empty board.
+- **Lane letters:** authored spawn entries name a fixed lane or a lane letter; each distinct
+  letter is a different seeded-random lane for that wave (§10.3).
+- **Run length comes from data:** the run ends in a win after the last wave in `waves.json`
+  (10 in v1; 3 during M2).
+- **Wave rewards (M2 stand-in for the shop):** clearing a wave grants authored tiles to the
+  tray (§10.5). Removed when the shop arrives in M3.
+- **Wave-cleared screen** between waves; **exact-kill count** shown on the win and lose screens.
+- **Danger glow:** during planning, a lane whose robot is on column 1 glows red at the base (§12.2).
+- **Detonation playback:** the robot's HP flies to the base HP in the HUD, which counts down (§12.2).
+- **Main menu:** ▶ Continue · New Run · Puzzles (the M1 levels are kept). A **Home** button in
+  the HUD returns to the menu without confirmation (§10.4).
+
+## 0.1 Changes in v0.3
 
 v0.3 is the result of a structured design review. Every former `[OPEN DECISION]` is
 resolved or explicitly deferred. Major changes from v0.2:
@@ -178,6 +196,13 @@ A **wave** is played over multiple **turns**. Only End Turn is a required player
   ground steadily.
 - A robot always spawns *before* planning, so the player sees every robot before firing at it.
 - If the base falls on the same turn the wave would clear, the run is **lost**.
+
+### 4.4 Fast-Forward
+
+If, at the start of step 1, **no robots are on the board or waiting** but the wave still has
+scheduled robots, the turn counter jumps to the next scheduled spawn's turn and those robots
+spawn now. Spacing in the schedule therefore only matters while robots are present; killing
+quickly brings the next robot sooner, never an empty turn.
 
 ### 4.2 Placement Freedom and Brute Force
 
@@ -513,15 +538,44 @@ No tutorial mode and no text popups: wave design does the teaching.
 - A wave is **cleared** when every scheduled robot has spawned and none remain (killed or detonated).
 - Waves 1–7 are authored templates with seeded variation; waves 8–9 are generated from
   data tables; wave 10 is authored.
+- **Lane letters.** An authored entry's lane is either a fixed lane (0–4) or a letter (`A`–`E`).
+  At wave start each distinct letter is assigned a **different** seeded-random lane, avoiding
+  lanes used by fixed entries. `A, B, C` = three different lanes; `A` again = the same lane.
+  HP values and letter lanes are all rolled at wave start, so play never changes what comes.
+- Robots scheduled for the same turn spawn in file order. Waiting robots enter before newly
+  scheduled ones (they were scheduled earlier).
+- The run ends in a win after the **last wave in `waves.json`**.
 
 ### 10.4 Save and Resume
 
 - The run **autosaves after every command** (placement, move, End Turn, purchase).
 - On End Turn, the resolved result is saved **immediately**, before playback finishes.
   Reopening mid-playback lands in the next planning phase: no lost progress, no reload exploit.
-- Launch screen: big **▶ Continue** if a run exists; smaller **New Run**. No confirmation dialogs.
+- Launch screen: big **▶ Continue** if a run exists; smaller **New Run**; smaller **Puzzles**
+  (the M1 hand-authored levels). No confirmation dialogs. New Run replaces any saved run.
+- A small **Home** button in the HUD (hidden during playback) returns to the launch screen with
+  no confirmation. A run is already saved; a puzzle session is simply dropped.
+- **Puzzles are never saved** and never overwrite the saved run.
+- A run that is won or lost is cleared from storage; Continue disappears.
 - Saves carry a schema version. A mismatched save is silently discarded (no migrations in v1).
 - The seen-tiles log is stored separately, is additive, and survives version bumps.
+
+### 10.5 M2 Stand-ins (removed in M3)
+
+M2 builds a run before the shop exists. Without tiles, wave 2 (HP 4–10) is unplayable, so:
+
+- Each wave in `waves.json` may list a **reward**: tile ids granted to the end of the tray,
+  in listed order, when the wave clears. The final wave has no reward.
+- Clearing a non-final wave shows a text-free **wave-cleared** screen: a star, the reward
+  tiles popping in, a big ▶ that starts the next wave. This screen is where the shop goes in M3.
+- No cannons are granted in M2; runs play waves 1–3 with one cannon.
+- Coins are still earned and shown (kills, exact kills, wave cleared) but cannot be spent.
+
+### 10.6 Win and Lose Screens
+
+- Both are cheerful and text-free, with one big ▶ back to the launch screen.
+- Both show the run's **exact-kill count** as a row of icons (celebrating the core skill even
+  on a loss). `RunState` tracks `exactKills`.
 
 ---
 
@@ -562,8 +616,19 @@ timed, escalating sequence**. The simulation produces an event list; presentatio
 2. The **active lane is highlighted**; other lanes dim slightly. The camera does not move.
 3. Per lane: cannon *thump* → ball travels → *pop* per tile (rising pitch, growing scale
    pop, intensifying trail) → impact → outcome beat (kill / exact-kill / bounce-back / clonk / survive).
-4. Robots **advance together** in one beat.
-5. **Detonations** play one at a time.
+4. Robots **advance together** in one beat. A robot leaving column 1 lurches into the base
+   during this beat.
+5. **Detonations** play one at a time: flash and shake at the base; the robot's HP number flies
+   to the HUD base HP, which **counts down** to its new value (100 → 92). Base HP displays
+   never go below 0.
+6. **Spawns** play last: new robots drop into column 7. A robot that must wait appears as a
+   translucent **ghost** (HP visible) just right of column 7 in its lane, and slides in when
+   it enters.
+
+**Planning-phase cues (derived from state, not events):**
+
+- **Danger glow:** a lane whose robot stands on column 1 (it will detonate this turn unless
+  killed) pulses red at the base strip, and that robot wobbles slightly.
 
 **Requirements:**
 
@@ -701,7 +766,7 @@ Work is tracked in `TASKS.md` with one spec per task in `tasks/`.
 |---|---|---|
 | **M0 Foundation** | Scaffold, CI, Pages + previews, data schemas, store, test handle, app shell | Blank board on the iPad via production URL |
 | **M1 Core loop** | Sim (lanes, `±×` tiles, per-ball impact, exact kill), scenario runner, board + tray drag, End Turn, lane playback, hand-authored puzzle levels | **Playtest 1** — is building an equation fun? |
-| **M2 A run** | Waves & spawn schedules, advance, base HP & detonation, win/lose, save/resume, ladder waves 1–3 | Playtest 2 |
+| **M2 A run** | Waves & spawn schedules, advance, base HP & detonation, wave rewards (shop stand-in), win/lose, save/resume, main menu, ladder waves 1–3 | Playtest 2 — does a run hold together? |
 | **M3 Economy** | Shop, coins, cannons & upgrades, seen-tiles log, ladder waves 1–7 | Playtest 3 |
 | **M4 Traits & finale** | Weakness, Bounce-back, Odd/Even-only, waves 8–10 + Boss, hints toggle, settings | Playtest 4 — complete v1 run |
 | **M5 Juice & art** | Escalation, celebrations, sound, AI art pass | v1 |
@@ -746,7 +811,8 @@ questions**, not blockers for M0/M1:
 |---|---|
 | Concrete HP curves, prices, income values | Tuned in data during M2–M4 playtests |
 | Playback pacing values | Tuned after Playtest 1 |
-| Ladder wave 1–7 authored templates (exact robot counts, timing) | M2/M3 task specs |
+| Ladder waves 1–3 authored content | Drafted in task 12; finalized after Playtest 1 (task 17) |
+| Ladder waves 4–7 authored templates | M3/M4 task specs |
 | Waves 8–9 procedural table design | M4 task spec |
 | Sound sourcing (library vs generated) | M5 |
 | Kid-facing title and art style | M5 |

@@ -104,7 +104,15 @@ interface Board {
   robots: Robot[];                            // on-board and waiting
 }
 
-type Phase = 'planning' | 'shop' | 'won' | 'lost' | 'levelCleared';
+type Phase = 'planning' | 'waveCleared' | 'shop' | 'won' | 'lost' | 'levelCleared';
+// 'waveCleared' = between waves in M2 (reward screen); M3's shop takes this slot.
+
+interface SpawnEntry {                        // rolled at wave start (GDD §10.3) — concrete
+  turn: number;                               // 1-based turn within the wave
+  lane: Lane;                                 // lane letters already resolved
+  robotTemplateId: string;                    // robots.json id
+  hp: number;                                 // HP range already rolled; maxHp = hp
+}
 
 interface RunState {
   schemaVersion: number;
@@ -119,6 +127,7 @@ interface RunState {
   coins: number;
   cannonBaseValue: number;
   upgradesBought: number;
+  exactKills: number;                         // whole run; shown on win/lose screens (GDD §10.6)
   pieces: Record<string, TilePiece>;          // all owned tiles
   tray: string[];                             // pieceIds not on board, display order
   board: Board;
@@ -138,8 +147,10 @@ saved, diffed, and installed by the test handle.
 M1 ships hand-authored puzzle levels before waves exist. A level installs a fixed board,
 tray, cannons, and stationary robots. In `level` mode `resolveTurn` performs FIRE only
 (no advance, no spawn, no base damage); the phase becomes `levelCleared` when no robots
-remain. M2 adds the full turn for `mode: 'run'`. Level mode may be retained as a debug/puzzle
-mode or removed later — decide at M2.
+remain. M2 adds the full turn for `mode: 'run'`.
+
+**Decided in M2: level mode is kept.** It backs the menu's **Puzzles** button and most scenario
+files. Level-mode state is never persisted (§13).
 
 ---
 
@@ -154,7 +165,8 @@ type Command =
   | { type: 'undo' }
   | { type: 'endTurn' }
   | { type: 'buyOffer'; slot: ShopSlotId }
-  | { type: 'leaveShop' }
+  | { type: 'leaveShop' }                                   // M3
+  | { type: 'nextWave' }                                    // M2: waveCleared → next wave's planning
   | { type: 'newRun'; seed: string }
   | { type: 'loadLevel'; levelId: string };
 
@@ -172,7 +184,13 @@ function applyCommand(state: RunState | null, cmd: Command, data: GameData):
 - Planning commands push a `PlanningSnapshot` (board cells, tray, cannons) onto `undo`.
 - `endTurn` calls `resolveTurn` internally and returns its events.
 - `state` is `null` before any run exists; only `newRun` and `loadLevel` accept `null` (others
-  return `wrong_phase`).
+  return `wrong_phase`). Both also accept any existing state and replace it.
+- `newRun` builds the starting state from `economy.json` (GDD §10.1), seeds both RNG streams from
+  `seed`, starts wave 0 and returns its turn-1 spawn events. The seed is chosen at the edge
+  (`/game/state`), never in `/sim`.
+- `nextWave` requires phase `waveCleared`: `waveIndex += 1`, `turn = 1`, roll the wave, spawn turn 1,
+  phase `planning`, returns the spawn events. `newRun` and `nextWave` set `lastTurnEvents: []`, so
+  Replay is off until the wave's first End Turn.
 
 ---
 
@@ -184,8 +202,31 @@ function resolveTurn(state: RunState, data: GameData): { state: RunState; events
 
 Order (GDD §4): **FIRE** (lanes 0→4) → **ADVANCE** (front-most first) → **DETONATE** (lane order)
 → **END CHECK** → if continuing: **SPAWN** for next turn. Spawning for the *next* turn happens at
-the end of `resolveTurn` so robots are visible during planning. Wave start (from shop or new run)
+the end of `resolveTurn` so robots are visible during planning. Wave start (`newRun`/`nextWave`)
 emits the first turn's spawns.
+
+`mode: 'run'` details (M2, task 13):
+
+- **ADVANCE:** on-board robots in order `(col asc, lane asc)`. A robot on col 1 leaves the board and
+  is queued to detonate; its cell is free for robots behind it this same step. Otherwise it moves to
+  `col − 1` if no robot is there (`RobotAdvanced`), else stays (no event). Waiting robots don't advance.
+  Group `"advance"`.
+- **DETONATE:** queued robots in lane order: `RobotDetonated { damage: hp }` then `BaseDamaged`.
+  Group `"detonate:<lane>"`. `baseHp` may go negative in state; displays clamp at 0.
+- **END CHECK** (group `"end"`): `baseHp ≤ 0` → `RunLost`, phase `lost`. Else if `pendingSpawns` and
+  `board.robots` (including waiting) are both empty → `WaveCleared`, `CoinsChanged(waveCleared)`; then
+  if it was the last wave in `waves.json` → `RunWon`, phase `won`; else `TilesGranted` (reward tiles
+  appended to the tray as new pieces), phase `waveCleared`. Else continue.
+- **Continue:** `turn += 1`. **Fast-forward** (GDD §4.4): if `board.robots` is empty and the first
+  pending entry's `turn` is later, set `turn` to it.
+- **SPAWN** (group `"spawn"`): first waiting robots (in `board.robots` order), then pending entries
+  with `turn ≤ state.turn` (in order, removed from `pendingSpawns`). Each enters col 7 of its lane if
+  no robot is there (`RobotSpawned`), else waits with `col: null` (`RobotWaiting`, new robots only). A
+  waiting robot that enters emits `RobotSpawned` with its existing `robotId`.
+- **Rolling a wave** (`/sim/waves/rollWave.ts`, `wave` stream): letters in order of first appearance
+  each take `nextInt` over the lanes still free (not fixed in this wave, not already taken); then each
+  entry's HP in file order. Result sorted by `turn` (stable). Exact draw order is normative so saves
+  and scenarios are reproducible.
 
 Impact rules are implemented once in `/sim/resolve/impact.ts` as a pure function
 `resolveImpact(robot, ballValue) → ImpactOutcome`, exactly per GDD §5.4.
@@ -231,6 +272,7 @@ type GameEvent = EventBase & (
       trait: Trait; isBoss: boolean }
   | { type: 'RobotWaiting'; robotId: string; lane: Lane; hp: number; maxHp: number; trait: Trait }
   | { type: 'WaveCleared'; waveIndex: number }
+  | { type: 'TilesGranted'; tiles: { pieceId: string; tileId: TileId }[] }   // M2 wave reward
   | { type: 'LevelCleared'; levelId: string }
   | { type: 'RunWon' }
   | { type: 'RunLost' }
@@ -270,14 +312,37 @@ fails `npm test`.
 | File | Contents |
 |---|---|
 | `tiles.json` | 29 tile definitions: id, kind, n, priceCategory, color key |
-| `robots.json` | Robot templates: id, trait, visual key, boss flag |
-| `economy.json` | Starting state (base HP, coins, cannon lane, base value), income values, max cannons, schema version |
+| `robots.json` | Robot templates: id, trait, visual key, boss flag (M2 ships one: `basic`, no trait) |
+| `economy.json` | Starting state (base HP, coins, cannon lane, base value), income values, max cannons, schema version (2 from M2) |
 | `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees |
-| `waves.json` | Waves 1–10: authored spawn schedules with HP ranges/traits; procedural tables for 8–9 |
+| `waves.json` | Waves in run order (run length = array length): authored spawn schedules and M2 rewards (below); procedural tables for 8–9 arrive in M4 |
 | `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
 | `presentation.json` | Pacing (ball cell duration, per-tile pause, lane gap, advance duration), escalation curves, colors, drag feel, React screen pop-in (`screens`) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.
+
+`waves.json` authored wave (M2):
+
+```json
+{
+  "waves": [
+    {
+      "id": "wave-3",
+      "spawns": [
+        { "turn": 1, "lane": "A", "robot": "basic", "hp": [4, 10] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [4, 10] },
+        { "turn": 6, "lane": 0,   "robot": "basic", "hp": [5, 12] }
+      ],
+      "reward": { "tiles": ["add:4", "mul:2"] }
+    }
+  ]
+}
+```
+
+Validation: at least one wave; each wave has ≥ 1 spawn and one with `turn: 1`; `lane` is 0–4 or
+`A`–`E`; distinct letters ≤ lanes not fixed in that wave; `hp` is `[min, max]` with
+`1 ≤ min ≤ max ≤ 99`; `robot` names a `robots.json` id; reward tile ids exist in `tiles.json`;
+the **last** wave has no `reward`.
 
 ---
 
@@ -298,6 +363,7 @@ interface AppState {
   playback: { status: 'idle' | 'playing' | 'replaying'; events: GameEvent[]; cursor: number };
   lastTurn: { before: RunState; events: GameEvent[] } | null;  // Replay snapshot, memory only
   screen: 'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect' | 'allDone';
+  // the wave-cleared overlay is derived (run.phase === 'waveCleared' && playback idle), like level-cleared
   settings: { hints: boolean; sound: boolean };
 }
 
@@ -327,6 +393,13 @@ Flow:
 level, or `'allDone'` after the last. Progress is just `run.levelId` in memory; a run restored from
 storage is not resumed by the menu in M1. In level mode the HUD shows level dots instead of wave and
 base HP.
+
+**M2 run flow (task 14, `/game/state/runFlow.ts`):** menu shows ▶ Continue when a resumable run is
+saved (mode `run`, phase `planning` or `waveCleared`), New Run (`newRun` with a seed from the edge
+clock), and Puzzles (the level flow above). Continue restores the saved run to the `game` screen;
+the wave-cleared overlay reappears if it was saved there. When a run's playback ends on `won`/`lost`
+the matching screen shows and the save is cleared. HUD ⌂ Home → `menu` (planning only). In run mode
+the HUD shows wave dots and ♥ base HP.
 
 ---
 
@@ -432,7 +505,10 @@ cannot be combined with `board`, `baseValue` or `tray`. `/scenarios/levels/NN-*.
 each shipped level solvable with all-exact kills (`tests/levelSolutions.test.ts` checks the full event list).
 
 Optional keys: `seed`, `baseHp`, `tray` (list of tile ids), `waiting` (off-board robots),
-`mode: run`, `waveIndex`, `turn`. The parser lives in `/sim/scenario` (pure); the CLI in `/scripts/sim.ts`.
+`mode: run`, `waveIndex`, `turn`. M2 (task 13) adds `pendingSpawns` (concrete entries:
+`{ turn, lane, hp, robot? }`), `exactKills`, and `waves` (an inline `waves.json` array replacing the
+shipped waves for that scenario, so rule scenarios don't break when ladder content is tuned).
+Commands gain `nextWave` and `{ newRun: <seed> }`. The parser lives in `/sim/scenario` (pure); the CLI in `/scripts/sim.ts`.
 
 ---
 
@@ -443,7 +519,10 @@ Optional keys: `seed`, `baseHp`, `tray` (list of tile ids), `waiting` (off-board
   (`/` in production, `/pr/pr-12/` in previews). Keys: `run`, `seen`, `settings`.
 - `run` = `{ schemaVersion, savedAt, state: RunState }`. On load, `schemaVersion !== data.economy.schemaVersion`
   → discard silently.
-- Saved after **every successful command**, including `endTurn` (state already includes the resolved turn).
+- Saved after **every successful command** in `mode: 'run'`, including `endTurn` (state already includes the
+  resolved turn). **Level-mode (Puzzles) state is never saved** and never overwrites `run`.
+- A run whose phase is `won` or `lost` is not resumable; the key is removed once its end screen shows
+  (and ignored by Continue if the app closed first).
 - `seen` = sorted array of `TileId`, additive; unaffected by schema version.
 - All access wrapped in try/catch; storage failure never breaks play.
 
