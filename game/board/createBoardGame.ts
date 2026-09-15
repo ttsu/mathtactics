@@ -3,6 +3,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import type { AppStore } from '../state/store';
 import { BoardScene } from './BoardScene';
 import { WORLD_HEIGHT, WORLD_WIDTH } from './layout';
+import { refitOnResize } from './refitOnResize';
 
 /** The mounted board: the Phaser game plus the playback controls the test handle needs. */
 export interface BoardGame {
@@ -47,6 +48,8 @@ export function createBoardGame(options: BoardGameOptions): BoardGame {
   game.events.once(Phaser.Core.Events.READY, () => {
     placed();
     game.scale.on(Phaser.Scale.Events.RESIZE, placed);
+    const stopRefitting = refitOnResize(game.scale, options.parent);
+    game.events.once(Phaser.Core.Events.DESTROY, stopRefitting);
   });
 
   return {

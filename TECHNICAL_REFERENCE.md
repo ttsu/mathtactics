@@ -364,6 +364,10 @@ React interactive elements set `pointer-events: auto`. Everything else passes th
   re-placed from the canvas's `getBoundingClientRect()` on Phaser's `READY` and scale `RESIZE`
   events (`game/main.tsx`), so a React element at design `(x, y)` sits over Phaser point `(x, y)`.
   Viewport-sized React overlays (rotate overlay) portal to `<body>` so the transform doesn't apply.
+- A `ResizeObserver` on `#board-root` re-measures and re-fits the canvas whenever the parent
+  changes size (`/game/board/refitOnResize.ts`). Phaser alone leaves the canvas oversized after
+  rotating an iPhone Home Screen app from portrait to landscape: it fits to the stale portrait
+  height, then records the new size without re-fitting.
 - Minimum touch target: 60 pt.
 
 ### 11.3 Ownership
