@@ -1,4 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
+import presentation from '../data/presentation.json' with { type: 'json' };
+import { DESIGN_WIDTH } from '../game/state/designSpace';
 
 // Task 15: run-mode playback — advance, detonation (with the ♥ count-down), spawn, waiting
 // ghosts, and the planning-phase danger glow. Asserts on structured state (TR §14); screenshots
@@ -62,6 +64,26 @@ async function load(page: Page, yaml: string) {
   await page.waitForFunction(() => window.__GAME__ !== undefined);
   await page.evaluate((text) => window.__GAME__!.loadScenario(text), yaml);
 }
+
+/** A run in progress with robots, board tiles and tray tiles, a low base and some coins — the
+ * board and HUD a New Run must not be played over. Its first robot is `robot:0` in lane 2, col 3:
+ * the id a new run's first robot reuses, but far from where that one spawns. */
+const OLD_RUN = [
+  'name: e2e old run under a New Run',
+  'mode: run',
+  'baseValue: 1',
+  'baseHp: 5',
+  'coins: 17',
+  'tray: [add:3, mul:2]',
+  'board:',
+  `  - "${EMPTY}"`,
+  `  - "${EMPTY}"`,
+  '  - "C +2 . R4 . . . ."',
+  `  - "${EMPTY}"`,
+  '  - ". . . . . R9 . ."',
+  'pendingSpawns:',
+  '  - { turn: 99, lane: 4, hp: 1 }',
+].join('\n');
 
 const getState = (page: Page) => page.evaluate(() => window.__GAME__!.getState()!);
 const getDisplay = (page: Page) => page.evaluate(() => window.__GAME__!.getDisplay());
@@ -172,4 +194,105 @@ test('legibility screenshots (advance, detonation mid-count, ghost robot, danger
   await page.evaluate(() => window.__GAME__!.skipAnimation());
   await page.waitForTimeout(100);
   await page.screenshot({ path: testInfo.outputPath('ghost-robot.png') });
+});
+
+/** The HUD ♥ glyph's centre in design points (TR §11.2: the design space maps onto the canvas),
+ * measured on the ♥ character itself — the point the detonation number should fly to. */
+const heartCenter = (page: Page) =>
+  page.evaluate((designWidth) => {
+    const stats = [...document.querySelectorAll('[data-testid="hud-bar"] .hud-stat')];
+    const heart = stats.find((stat) => stat.textContent?.includes('♥'))!;
+    const text = [...heart.childNodes].find((node) => node.textContent?.includes('♥'))!;
+    const index = text.textContent!.indexOf('♥');
+    const range = document.createRange();
+    range.setStart(text, index);
+    range.setEnd(text, index + 1);
+    const glyph = range.getBoundingClientRect();
+    const canvas = document.querySelector('#board-root canvas')!.getBoundingClientRect();
+    const scale = canvas.width / designWidth;
+    return {
+      x: (glyph.left + glyph.width / 2 - canvas.left) / scale,
+      y: (glyph.top + glyph.height / 2 - canvas.top) / scale,
+      idle: window.__GAME__!.isIdle(),
+    };
+  }, DESIGN_WIDTH);
+
+test('the detonation number flies to where ♥ really is, and ♥ holds still during playback', async ({
+  page,
+}) => {
+  await load(page, COL1_DETONATES);
+  const planning = await heartCenter(page);
+  expect(planning.idle).toBe(true);
+
+  await page.evaluate(() => window.__GAME__!.endTurn());
+  // Mid count-down: the detonation beat has played and ♥ is ticking from 5 towards 0.
+  await page.waitForFunction(() => window.__GAME__!.getDisplay().baseHp < 5);
+  const counting = await heartCenter(page);
+  expect(counting.idle).toBe(false);
+  expect({ x: counting.x, y: counting.y }).toEqual({ x: planning.x, y: planning.y });
+
+  const { heartTargetX, heartTargetY } = presentation.playback.detonate;
+  expect(Math.abs(planning.x - heartTargetX)).toBeLessThanOrEqual(6);
+  expect(Math.abs(planning.y - heartTargetY)).toBeLessThanOrEqual(6);
+});
+
+test('New Run after Home never plays over the previous board or HUD', async ({ page }) => {
+  await load(page, OLD_RUN);
+  const old = await getState(page);
+  const oldRobot0 = old.board.robots.find((robot) => robot.robotId === 'robot:0')!;
+  expect(oldRobot0).toMatchObject({ lane: 2, col: 3 });
+  const oldRobot0At = await page.evaluate((cell) => window.__GAME__!.cellToClient(cell), {
+    lane: oldRobot0.lane,
+    col: oldRobot0.col!,
+  });
+  const before = await page.evaluate(() => window.__GAME__!.renderedBoard());
+  expect(before.robots).toHaveLength(2);
+  expect(before.tiles).toHaveLength(3);
+
+  await page.getByTestId('home').click();
+  await expect(page.getByTestId('main-menu')).toBeVisible();
+
+  // Tap New Run and look at the board a frame later, while its spawn is still playing.
+  const mid = await page.evaluate(async () => {
+    document.querySelector<HTMLButtonElement>('[data-testid="menu-new-run"]')!.click();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const game = window.__GAME__!;
+    return {
+      idle: game.isIdle(),
+      board: game.renderedBoard(),
+      state: game.getState()!,
+      display: game.getDisplay(),
+    };
+  });
+  expect(mid.idle).toBe(false);
+  expect(mid.state.phase).toBe('planning');
+  // Nothing from the old run is drawn: no tiles (a new run has none), only the new run's robots,
+  // and nothing sitting where the old `robot:0` stood.
+  expect(mid.board.tiles).toEqual([]);
+  const newRobotIds = mid.state.board.robots.map((robot) => robot.robotId);
+  for (const robot of mid.board.robots) {
+    expect(newRobotIds).toContain(robot.robotId);
+    const distance = Math.hypot(robot.x - oldRobot0At.x, robot.y - oldRobot0At.y);
+    expect(distance).toBeGreaterThan(20);
+  }
+  // …and the HUD already reads the new run, not the old ♥ 5 / 🪙 17.
+  expect(mid.display).toEqual({
+    coins: mid.state.coins,
+    baseHp: mid.state.baseHp,
+    waveIndex: mid.state.waveIndex,
+  });
+  await expect(page.getByTestId('hud-bar')).toContainText(`♥ ${mid.state.baseHp}`);
+
+  await page.evaluate(() => window.__GAME__!.skipAnimation());
+  const state = await getState(page);
+  expect(await getDisplay(page)).toEqual({
+    coins: state.coins,
+    baseHp: state.baseHp,
+    waveIndex: state.waveIndex,
+  });
+  const after = await page.evaluate(() => window.__GAME__!.renderedBoard());
+  expect(after.robots.map((robot) => robot.robotId).sort()).toEqual(
+    state.board.robots.map((robot) => robot.robotId).sort(),
+  );
+  expect(after.tiles).toEqual([]);
 });

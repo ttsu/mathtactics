@@ -25,6 +25,14 @@ export interface TestHandle {
   /** No playback, and the playback Director has no tweens/timers pending. */
   isIdle(): boolean;
   cellToClient(cell: Cell): { x: number; y: number };
+  /** What the board draws right now — robot views with their centres in client coordinates
+   * (mid-tween included) and tile views' piece ids — for asserting the board mid-playback. */
+  renderedBoard(): RenderedBoard;
+}
+
+export interface RenderedBoard {
+  robots: { robotId: string; x: number; y: number }[];
+  tiles: string[];
 }
 
 declare global {
@@ -56,6 +64,7 @@ export interface TestHandleBoard {
   skipAnimation(): void;
   /** True while the playback Director has a sequence, tweens or timers pending. */
   isAnimating(): boolean;
+  renderedBoard(): RenderedBoard;
 }
 
 /** Builds the `__GAME__` object for `store` — pure, no `window` access, so it's unit-testable.
@@ -88,6 +97,10 @@ export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBo
     cellToClient: (cell) => {
       if (!board) throw new Error('cellToClient: no board mounted');
       return board.cellToClient(cell);
+    },
+    renderedBoard: () => {
+      if (!board) throw new Error('renderedBoard: no board mounted');
+      return board.renderedBoard();
     },
   };
 }

@@ -18,6 +18,7 @@ import { boardSliceChanged } from './pieces';
 
 export class BoardScene extends Phaser.Scene {
   private playback: Director | null = null;
+  private boardRenderer: BoardRenderer | null = null;
 
   constructor(private readonly store: StoreApi<AppStore>) {
     super('board');
@@ -28,24 +29,29 @@ export class BoardScene extends Phaser.Scene {
     return this.playback;
   }
 
+  /** The board renderer, once the scene has been created (test handle `renderedBoard`). */
+  get boardView(): BoardRenderer | null {
+    return this.boardRenderer;
+  }
+
   create(): void {
     drawBoardBackground(this);
     const renderer = new BoardRenderer(this, this.store.getState().data);
+    this.boardRenderer = renderer;
     const drag = new DragController(this.store, renderer);
     drag.attach(this);
     const director = new Director(this, renderer, this.store);
     this.playback = director;
     const dangerGlow = new DangerGlow(this, renderer);
     const dangerSettings = () => this.store.getState().data.presentation.danger;
-    // A new sequence — a just-resolved turn, or a Replay. Either way the board first shows the run
-    // as it was before that turn, then the Director performs the events on it.
+    // A new sequence — a just-resolved turn, a fresh run/wave's spawns, or a Replay. Either way the
+    // board first shows where the sequence starts (`playback.before`: the pre-turn run, or an
+    // empty wave start), then the Director performs the events on it.
     const startPlayback = (state: AppStore) => {
       drag.cancel();
       dangerGlow.sync(null, dangerSettings());
-      const { lastTurn } = state;
-      if (lastTurn !== null && lastTurn.events === state.playback.events) {
-        renderer.sync(lastTurn.before);
-      }
+      const { before } = state.playback;
+      if (before !== undefined) renderer.sync(before);
       director.play(state.playback.events);
     };
 
@@ -71,6 +77,7 @@ export class BoardScene extends Phaser.Scene {
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.playback = null;
+      this.boardRenderer = null;
     });
   }
 }

@@ -154,7 +154,12 @@ export function rectCenter(rect: Rect): Point {
 /** Design-space rect of one lane's base strip cell — a robot has no `col` there (it's left of
  * column 0), so this doesn't come from `cellRect`. */
 export function baseStripRect(lane: number): Rect {
-  return { x: BASE_STRIP.x, y: BASE_STRIP.y + lane * CELL_SIZE, width: BASE_STRIP.width, height: CELL_SIZE };
+  return {
+    x: BASE_STRIP.x,
+    y: BASE_STRIP.y + lane * CELL_SIZE,
+    width: BASE_STRIP.width,
+    height: CELL_SIZE,
+  };
 }
 
 /** Design-space centre of one lane's base strip cell — where a detonating robot lurches to and
@@ -239,12 +244,19 @@ export function traySlotAtPoint(point: Point): number | null {
 
 // --- Client coordinates (test handle, TR §14) ---
 
+/** Client (CSS px) position of a design point, given the displayed canvas's client rect. */
+export function designToClient(
+  canvas: Pick<DOMRectReadOnly, 'left' | 'top' | 'width'>,
+  point: Point,
+): Point {
+  const scale = canvas.width / DESIGN_WIDTH;
+  return { x: canvas.left + point.x * scale, y: canvas.top + point.y * scale };
+}
+
 /** Client (CSS px) position of a cell's centre, given the displayed canvas's client rect. */
 export function cellToClient(
   canvas: Pick<DOMRectReadOnly, 'left' | 'top' | 'width'>,
   cell: { lane: number; col: number },
 ): Point {
-  const center = cellCenter(cell.lane, cell.col);
-  const scale = canvas.width / DESIGN_WIDTH;
-  return { x: canvas.left + center.x * scale, y: canvas.top + center.y * scale };
+  return designToClient(canvas, cellCenter(cell.lane, cell.col));
 }

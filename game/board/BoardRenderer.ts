@@ -21,6 +21,7 @@ import {
   cellCenter,
   cellRect,
   designToWorld,
+  worldToDesign,
   traySlotCenter,
   waitingGhostCenter,
   type Point,
@@ -111,6 +112,19 @@ export class BoardRenderer {
       this.robots.set(robotId, view);
     }
     return view;
+  }
+
+  /** What the board draws right now, for the test handle (TR §14): every robot view with its
+   * current centre in design points (mid-tween included), and every tile view's piece id. */
+  drawn(): { robots: { robotId: string; x: number; y: number }[]; tiles: string[] } {
+    return {
+      robots: [...this.robots].map(([robotId, view]) => ({
+        robotId,
+        x: worldToDesign(view.x),
+        y: worldToDesign(view.y),
+      })),
+      tiles: [...this.tiles.keys()],
+    };
   }
 
   cannonView(lane: Lane): CannonView | undefined {
@@ -236,7 +250,8 @@ export class BoardRenderer {
       }
       view.setHp(robot.hp, robot.maxHp);
       view.setAlpha(robot.col === null ? ghostAlpha : 1);
-      const center = robot.col === null ? waitingGhostCenter(robot.lane) : cellCenter(robot.lane, robot.col);
+      const center =
+        robot.col === null ? waitingGhostCenter(robot.lane) : cellCenter(robot.lane, robot.col);
       this.place(view, center, 1, !created);
     }
   }

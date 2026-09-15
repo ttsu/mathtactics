@@ -116,8 +116,8 @@
     "detonate": {
       "shakeMs": 220,
       "shake": 0.01,
-      "heartTargetX": 200,
-      "heartTargetY": 40,
+      "heartTargetX": 295,
+      "heartTargetY": 44,
       "heartLabelScale": 0.55
     },
     "spawn": {
