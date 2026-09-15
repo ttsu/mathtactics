@@ -26,6 +26,12 @@ export function pieceHomes(run: RunState): Map<string, PieceHome> {
 
 const OPERATOR_GLYPH = { add: '+', sub: '−', mul: '×' } as const;
 
+/** A number as the board shows it, with a real minus sign for negatives (`"−3"`) to match tile
+ * labels — for ball values and robot HP. */
+export function formatNumber(value: number): string {
+  return value < 0 ? `−${-value}` : String(value);
+}
+
 /** Tile face text with the real `−` and `×` glyphs (task 09 req. 2), e.g. `"+4"`, `"−2"`, `"×3"`. */
 export function tileLabel(tileId: TileId): string {
   const [kind, n] = tileId.split(':') as [keyof typeof OPERATOR_GLYPH, string];

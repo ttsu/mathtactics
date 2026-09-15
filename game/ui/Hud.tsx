@@ -1,5 +1,5 @@
 // HUD (task 03 req. 5 placeholder, task 05 req. 6: reads coins/base HP from `display` via the
-// store; task 09 req. 4: End Turn and Undo dispatch real commands).
+// store; task 09 req. 4: End Turn and Undo dispatch real commands; task 10 req. 6: Replay).
 import { HUD_BAR, MIN_TOUCH_TARGET } from '../state/designSpace';
 import { hudButtons } from './hudButtons';
 import { useAppStore } from './StoreContext';
@@ -10,8 +10,9 @@ export function Hud() {
   const display = useAppStore((state) => state.display);
   const canEndTurn = useAppStore((state) => hudButtons(state).endTurn);
   const canUndo = useAppStore((state) => hudButtons(state).undo);
+  const canReplay = useAppStore((state) => hudButtons(state).replay);
   const dispatch = useAppStore((state) => state.dispatch);
-  const finishPlayback = useAppStore((state) => state.finishPlayback);
+  const startReplay = useAppStore((state) => state.startReplay);
 
   return (
     <div
@@ -25,7 +26,18 @@ export function Hud() {
       <div className="hud-actions">
         <button
           type="button"
-          className="hud-button hud-button-undo"
+          className="hud-button hud-button-icon hud-button-replay"
+          data-testid="replay"
+          aria-label="Replay"
+          style={touchTarget}
+          disabled={!canReplay}
+          onClick={() => startReplay()}
+        >
+          <ReplayIcon />
+        </button>
+        <button
+          type="button"
+          className="hud-button hud-button-icon hud-button-undo"
           data-testid="undo"
           aria-label="Undo"
           style={touchTarget}
@@ -40,11 +52,9 @@ export function Hud() {
           data-testid="end-turn"
           style={touchTarget}
           disabled={!canEndTurn}
-          onClick={() => {
-            const result = dispatch({ type: 'endTurn' });
-            // TODO(task 10): remove once the playback Director drives finishPlayback
-            if (result.ok) finishPlayback();
-          }}
+          // The playback Director (/game/board/playback) plays the resolved turn and calls
+          // `finishPlayback` when it's done.
+          onClick={() => dispatch({ type: 'endTurn' })}
         >
           End Turn
         </button>
@@ -73,6 +83,23 @@ function UndoIcon() {
         strokeWidth="3"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+/** A circular arrow around a play triangle — "watch that again", distinct from Undo's back arrow. */
+function ReplayIcon() {
+  return (
+    <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+      <path
+        d="M38 24 A14 14 0 1 1 30 11.4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      />
+      <path d="M26 3 L38 10 L27 18 Z" fill="currentColor" />
+      <path d="M20 16 L32 24 L20 32 Z" fill="currentColor" />
     </svg>
   );
 }

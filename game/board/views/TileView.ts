@@ -1,5 +1,6 @@
 // One tile piece (task 09 req. 2): rounded square in its category colour with the operator and
 // number as the dominant element. Drawn at on-board size; the tray shows it scaled down.
+// `flash` is a white face overlay the playback Director fades when a ball crosses (task 10).
 
 import Phaser from 'phaser';
 import type { TileId } from '../../../sim/core/types';
@@ -17,6 +18,8 @@ export class TileView extends Phaser.GameObjects.Container {
   private readonly face: Phaser.GameObjects.Graphics;
   private readonly label: Phaser.GameObjects.Text;
   private readonly star: Phaser.GameObjects.Text;
+  /** White overlay on the face, alpha 0 at rest. */
+  readonly flash: Phaser.GameObjects.Graphics;
   private tileId: TileId | null = null;
 
   constructor(scene: Phaser.Scene) {
@@ -38,7 +41,11 @@ export class TileView extends Phaser.GameObjects.Container {
         color: TILE_TEXT_COLOR,
       })
       .setOrigin(1, 0);
-    this.add([this.face, this.label, this.star]);
+    const size = designToWorld(PIECE_SIZE);
+    this.flash = scene.add.graphics().setAlpha(0);
+    this.flash.fillStyle(PLACEHOLDER.tileFlash);
+    this.flash.fillRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
+    this.add([this.face, this.flash, this.label, this.star]);
     scene.add.existing(this);
   }
 

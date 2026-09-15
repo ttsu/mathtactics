@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { boardSliceChanged, pieceHomes, tileColor, tileLabel } from '../../game/board/pieces';
+import {
+  boardSliceChanged,
+  formatNumber,
+  pieceHomes,
+  tileColor,
+  tileLabel,
+} from '../../game/board/pieces';
 import { applyCommand } from '../../sim/commands';
 import { boardState, realData } from './boardFixtures';
 
@@ -73,5 +79,14 @@ describe('boardSliceChanged', () => {
     expect(boardSliceChanged(run, placed.state)).toBe(true);
     expect(boardSliceChanged(run, { ...run, coins: 5 })).toBe(false);
     expect(boardSliceChanged(run, { ...run, cannonBaseValue: 4 })).toBe(true);
+  });
+});
+
+describe('formatNumber', () => {
+  it('uses a real minus sign for negatives, like tile labels', () => {
+    expect(formatNumber(13)).toBe('13');
+    expect(formatNumber(0)).toBe('0');
+    expect(formatNumber(-2)).toBe('−2');
+    expect(formatNumber(-2)).not.toContain('-');
   });
 });

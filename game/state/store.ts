@@ -40,9 +40,18 @@ export interface Display {
 export type Screen = 'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect';
 
 export interface Playback {
-  status: 'idle' | 'playing';
+  /** `playing` = a just-resolved turn; `replaying` = the Replay button re-showing the last turn
+   * (visual only — `commitEvent` ignores its events, task 10 req. 6). */
+  status: 'idle' | 'playing' | 'replaying';
   events: GameEvent[];
   cursor: number;
+}
+
+/** The last resolved turn, with the run as it was just before it — the snapshot Replay plays
+ * from (TR §11.4). Kept in memory only: after a reload there is none, so Replay is disabled. */
+export interface LastTurn {
+  before: RunState;
+  events: GameEvent[];
 }
 
 export interface AppState {
@@ -53,16 +62,20 @@ export interface AppState {
   /** What the HUD shows; lags `run` during playback (TR §10). */
   display: Display;
   playback: Playback;
+  lastTurn: LastTurn | null;
   screen: Screen;
   settings: Settings;
 }
 
 export interface AppActions {
   dispatch(cmd: Command): { ok: boolean; error?: CommandError };
-  /** Playback → display slice only. Never touches `run` (TR §10). */
+  /** Playback → display slice only. Never touches `run` (TR §10). Ignored during a replay. */
   commitEvent(event: GameEvent): void;
   /** `display := derived from run`; playback → idle. */
   finishPlayback(): void;
+  /** Starts a visual-only replay of `lastTurn` when `canReplay`; returns whether it started.
+   * Dispatches nothing. */
+  startReplay(): boolean;
   setSettings(patch: Partial<Settings>): void;
 }
 
@@ -72,10 +85,23 @@ export type AppStore = AppState & AppActions;
  * §14) `loadState`'s reset, so the three places that need "no playback" agree on its shape. */
 export const IDLE_PLAYBACK: Playback = { status: 'idle', events: [], cursor: 0 };
 
-/** True while a resolved turn is playing back — the one gate both renderers use to block
+/** True while a resolved turn (or a Replay) is playing back — the one gate both renderers use to block
  * planning input (board drags, HUD buttons). */
 export function isPlaybackActive(state: Pick<AppState, 'playback'>): boolean {
-  return state.playback.status === 'playing';
+  return state.playback.status !== 'idle';
+}
+
+/** Replay is offered in planning, when idle, and only for a turn whose pre-turn snapshot this
+ * session still holds (task 10 req. 6). */
+export function canReplay(state: Pick<AppState, 'run' | 'playback' | 'lastTurn'>): boolean {
+  const { run, lastTurn } = state;
+  return (
+    run !== null &&
+    run.phase === 'planning' &&
+    !isPlaybackActive(state) &&
+    run.lastTurnEvents.length > 0 &&
+    lastTurn !== null
+  );
 }
 
 export interface CreateAppStoreOptions {
@@ -111,6 +137,7 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     run: initialRun,
     display: initialRun ? displayFromRun(initialRun) : displayFromEconomy(data),
     playback: { ...IDLE_PLAYBACK },
+    lastTurn: null,
     // Deviation (task 05): no menu/screen flow exists yet (task 03 shell shows the board
     // directly) — 'game' is the simplest value consistent with what's on screen today.
     screen: 'game',
@@ -131,6 +158,8 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
         set({
           run: result.state,
           playback: { status: 'playing', events: result.events, cursor: 0 },
+          // Replay's snapshot: the board as it was before this turn (task 10 req. 6).
+          lastTurn: state.run ? { before: state.run, events: result.events } : null,
         });
       } else {
         // No resolution events to play back, so `display` won't be refreshed by `commitEvent`/
@@ -139,8 +168,14 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
         // race ahead of what's still animating.
         set({
           run: result.state,
-          display:
-            state.playback.status === 'playing' ? state.display : displayFromRun(result.state),
+          display: isPlaybackActive(state) ? state.display : displayFromRun(result.state),
+          // A snapshot only belongs to the run whose last turn it recorded — a command that
+          // installs a different run (e.g. `loadLevel`) drops it. Planning commands carry
+          // `lastTurnEvents` over unchanged, so they keep it.
+          lastTurn:
+            state.lastTurn && result.state.lastTurnEvents === state.lastTurn.events
+              ? state.lastTurn
+              : null,
         });
       }
       return { ok: true };
@@ -148,6 +183,7 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
 
     commitEvent(event) {
       set((state) => {
+        if (state.playback.status === 'replaying') return {};
         switch (event.type) {
           case 'CoinsChanged':
             return { display: { ...state.display, coins: event.total } };
@@ -164,6 +200,13 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
         display: state.run ? displayFromRun(state.run) : state.display,
         playback: { ...IDLE_PLAYBACK },
       }));
+    },
+
+    startReplay() {
+      const state = get();
+      if (!canReplay(state) || state.lastTurn === null) return false;
+      set({ playback: { status: 'replaying', events: state.lastTurn.events, cursor: 0 } });
+      return true;
     },
 
     setSettings(patch) {

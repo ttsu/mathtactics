@@ -1,4 +1,4 @@
-export { createBoardGame, type BoardGameOptions } from './createBoardGame';
+export { createBoardGame, type BoardGame, type BoardGameOptions } from './createBoardGame';
 export {
   bindStore,
   SCENE_SHUTDOWN_EVENT,

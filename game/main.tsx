@@ -55,7 +55,7 @@ const store = createAppStore({
   basePath,
 });
 
-const game = createBoardGame({
+const board = createBoardGame({
   parent: boardRoot,
   store,
   audioContext: audioContext ?? undefined,
@@ -69,7 +69,9 @@ const game = createBoardGame({
 if (import.meta.env.DEV || import.meta.env.VITE_TEST_HANDLE === '1') {
   void import('./state/testHandle').then(({ installTestHandle }) =>
     installTestHandle(store, {
-      cellToClient: (cell) => cellToClient(game.canvas.getBoundingClientRect(), cell),
+      cellToClient: (cell) => cellToClient(board.game.canvas.getBoundingClientRect(), cell),
+      skipAnimation: board.skipAnimation,
+      isAnimating: board.isAnimating,
     }),
   );
 }
