@@ -476,7 +476,7 @@ Playwright asserts on structured state. Screenshots are for legibility review on
   `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `apple-touch-icon`, theme color.
 - `manifest.webmanifest` with **relative** `start_url: "./"` and `scope: "./"`, `display: "standalone"`,
   `orientation: "landscape"`.
-- CSS: `html, body { position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; touch-action: none;
+- CSS: `html, body { position: fixed; inset: 0; overflow: clip; overscroll-behavior: none; touch-action: none;
   -webkit-user-select: none; -webkit-touch-callout: none; }`.
 - Rotate overlay: React component shown when `innerHeight > innerWidth`.
 - Audio: create/resume `AudioContext` on first `pointerdown`. One shared context
