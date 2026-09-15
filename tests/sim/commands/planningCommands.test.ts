@@ -16,7 +16,7 @@ function expectOk(result: ReturnType<typeof applyCommand>): asserts result is {
 }
 
 describe('applyCommand — wrong_phase', () => {
-  it('rejects every non-loadLevel command when state is null', () => {
+  it('rejects every command except loadLevel and newRun when state is null', () => {
     const commands: Command[] = [
       { type: 'placeTile', pieceId: 'p1', to: { lane: 0, col: 1 } },
       { type: 'moveTile', from: { lane: 0, col: 1 }, to: { lane: 0, col: 2 } },
@@ -26,7 +26,6 @@ describe('applyCommand — wrong_phase', () => {
       { type: 'endTurn' },
       { type: 'buyOffer', slot: 'cannon' },
       { type: 'leaveShop' },
-      { type: 'newRun', seed: 'x' },
     ];
     for (const cmd of commands) {
       expect(applyCommand(null, cmd, data)).toEqual({ ok: false, error: 'wrong_phase' });
@@ -43,13 +42,9 @@ describe('applyCommand — wrong_phase', () => {
     expect(result).toEqual({ ok: false, error: 'wrong_phase' });
   });
 
-  it('rejects buyOffer, leaveShop, newRun even during planning (not implemented until M3)', () => {
+  it('rejects buyOffer, leaveShop even during planning (not implemented until M3)', () => {
     const state = fakeRunState({ phase: 'planning' });
-    const commands: Command[] = [
-      { type: 'buyOffer', slot: 'cannon' },
-      { type: 'leaveShop' },
-      { type: 'newRun', seed: 'x' },
-    ];
+    const commands: Command[] = [{ type: 'buyOffer', slot: 'cannon' }, { type: 'leaveShop' }];
     for (const cmd of commands) {
       expect(applyCommand(state, cmd, data)).toEqual({ ok: false, error: 'wrong_phase' });
     }

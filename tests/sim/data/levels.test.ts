@@ -18,7 +18,7 @@ function validTile(overrides: Record<string, unknown> = {}) {
 function validRaw(overrides: Record<string, unknown> = {}) {
   return {
     tiles: [validTile()],
-    robots: [],
+    robots: [{ id: 'basic', trait: { type: 'none' }, isBoss: false }],
     economy: {
       schemaVersion: 1,
       baseHp: 100,
@@ -29,7 +29,9 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       income: { kill: 1, exactKill: 2, waveCleared: 3 },
     },
     shop: {},
-    waves: { waves: [] },
+    waves: {
+      waves: [{ id: 'wave-1', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] }],
+    },
     levels: { levels: [] },
     presentation: {
       pacing: fakePacingSettings(),

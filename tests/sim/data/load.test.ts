@@ -21,7 +21,7 @@ function validTile(overrides: Record<string, unknown> = {}) {
 function validRaw(overrides: Record<string, unknown> = {}) {
   return {
     tiles: [validTile()],
-    robots: [],
+    robots: [{ id: 'basic', trait: { type: 'none' }, isBoss: false }],
     economy: {
       schemaVersion: 1,
       baseHp: 100,
@@ -32,7 +32,9 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       income: { kill: 1, exactKill: 2, waveCleared: 3 },
     },
     shop: {},
-    waves: { waves: [] },
+    waves: {
+      waves: [{ id: 'wave-1', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] }],
+    },
     levels: { levels: [] },
     presentation: {
       pacing: fakePacingSettings(),
@@ -124,7 +126,7 @@ describe('parseGameData on the real /data directory', () => {
   it('matches the economy values from the task spec', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.economy).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       baseHp: 100,
       startCoins: 0,
       startCannonLane: 2,

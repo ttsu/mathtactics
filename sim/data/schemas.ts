@@ -3,9 +3,9 @@
 // error on the first failure — so a broken data file is a loud, precise failure, not a
 // mysterious runtime bug three layers away.
 //
-// `robots.json`, `shop.json`, `waves.json` are not needed until M3/M4 — their schemas accept
-// only the minimal placeholder shape shipped in `/data` today, marked below. Expanding them is
-// the job of the milestone that adds their real content, not this task.
+// `shop.json` is not needed until M3 — its schema accepts only the minimal placeholder shape
+// shipped in `/data` today, marked below. Expanding it is the job of the milestone that adds its
+// real content.
 
 import { z } from 'zod';
 import { COLS, LANES } from '../core/coords';
@@ -257,17 +257,9 @@ const PresentationFileSchema = z.object({
   }),
 });
 
-// --- robots.json — expanded in M3/M4 (robot templates, traits, visual keys) ---
-
-const RobotsFileSchema = z.array(z.unknown());
-
 // --- shop.json — expanded in M3 (price table, cannon/upgrade formulas, offer tables, ladder) ---
 
 const ShopFileSchema = z.object({}).passthrough();
-
-// --- waves.json — expanded in M2 (spawn schedules, procedural tables) ---
-
-const WavesFileSchema = z.object({ waves: z.array(z.unknown()) });
 
 // --- levels.json — expanded in task 06 (hand-authored puzzle levels, M1) ---
 
@@ -386,17 +378,159 @@ const LevelsFileSchema = z.object({
  * (`sim/commands/level.ts`) and, from task 08, by the scenario runner. */
 export type LevelDef = z.infer<typeof LevelDefSchema>;
 
+// --- robots.json (GDD §6.1, TR §9) — M2 ships one template, `basic`; visual keys arrive in M5 ---
+
+const RobotTemplateSchema = z.strictObject({
+  id: z.string().min(1),
+  trait: TraitSchema,
+  isBoss: z.boolean(),
+});
+
+const RobotsFileSchema = z.array(RobotTemplateSchema).superRefine((robots, ctx) => {
+  const seen = new Set<string>();
+  robots.forEach((robot, index) => {
+    if (seen.has(robot.id)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'id'],
+        message: `duplicate robot id "${robot.id}"`,
+      });
+    }
+    seen.add(robot.id);
+  });
+});
+
+/** A `robots.json` entry: the trait and Boss flag every robot spawned from it gets. */
+export type RobotTemplate = z.infer<typeof RobotTemplateSchema>;
+
+// --- waves.json (GDD §10.3, §10.5, TR §9) — authored waves; procedural tables arrive in M4 ---
+
+export const LANE_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
+export type LaneLetter = (typeof LANE_LETTERS)[number];
+
+/** Highest HP an authored spawn may roll: normal robot HP never exceeds 99 (GDD §2.1). The Boss
+ * (M4) is the only three-digit robot and will need its own limit. */
+const MAX_SPAWN_HP = 99;
+
+const SpawnHpSchema = z.number().int().min(1).max(MAX_SPAWN_HP);
+
+const WaveSpawnSchema = z.strictObject({
+  /** 1-based turn within the wave. */
+  turn: z.number().int().min(1),
+  /** A fixed lane, or a letter rolled to a seeded-random lane at wave start (GDD §10.3). */
+  lane: z.union([LaneSchema, z.enum(LANE_LETTERS)], {
+    error: 'lane must be 0-4 or a letter A-E',
+  }),
+  /** A `robots.json` id (checked across files in `GameDataSchema`). */
+  robot: z.string().min(1),
+  /** `[min, max]`, both inclusive; rolled at wave start. */
+  hp: z.tuple([SpawnHpSchema, SpawnHpSchema]).superRefine(([min, max], ctx) => {
+    if (min > max) {
+      ctx.addIssue({ code: 'custom', message: `hp min ${min} is greater than max ${max}` });
+    }
+  }),
+});
+
+const WaveDefSchema = z
+  .strictObject({
+    id: z.string().min(1),
+    spawns: z.array(WaveSpawnSchema).min(1),
+    /** M2 stand-in for the shop (GDD §10.5): tiles appended to the tray when this wave clears. */
+    reward: z.strictObject({ tiles: z.array(TileIdRefSchema) }).optional(),
+  })
+  .superRefine((wave, ctx) => {
+    if (!wave.spawns.some((spawn) => spawn.turn === 1)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['spawns'],
+        message: 'a wave needs a spawn on turn 1',
+      });
+    }
+
+    const fixedLanes = new Set<number>();
+    const letters = new Set<string>();
+    for (const spawn of wave.spawns) {
+      if (typeof spawn.lane === 'number') fixedLanes.add(spawn.lane);
+      else letters.add(spawn.lane);
+    }
+    const freeLanes = LANES - fixedLanes.size;
+    if (letters.size > freeLanes) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['spawns'],
+        message: `${letters.size} lane letters but only ${freeLanes} lanes are not fixed`,
+      });
+    }
+  });
+
+/** One authored wave from `waves.json`. Rolled into concrete `SpawnEntry`s by `rollWave`. */
+export type WaveDef = z.infer<typeof WaveDefSchema>;
+
+const WavesFileSchema = z.strictObject({
+  waves: z
+    .array(WaveDefSchema)
+    .min(1)
+    .superRefine((waves, ctx) => {
+      const seen = new Set<string>();
+      waves.forEach((wave, index) => {
+        if (seen.has(wave.id)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [index, 'id'],
+            message: `duplicate wave id "${wave.id}"`,
+          });
+        }
+        seen.add(wave.id);
+      });
+      const lastIndex = waves.length - 1;
+      if (waves[lastIndex]?.reward !== undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [lastIndex, 'reward'],
+          message: 'the last wave cannot have a reward (the run is won)',
+        });
+      }
+    }),
+});
+
 // --- Combined ---
 
-export const GameDataSchema = z.object({
-  tiles: TilesFileSchema,
-  robots: RobotsFileSchema,
-  economy: EconomyFileSchema,
-  shop: ShopFileSchema,
-  waves: WavesFileSchema,
-  levels: LevelsFileSchema,
-  presentation: PresentationFileSchema,
-});
+export const GameDataSchema = z
+  .object({
+    tiles: TilesFileSchema,
+    robots: RobotsFileSchema,
+    economy: EconomyFileSchema,
+    shop: ShopFileSchema,
+    waves: WavesFileSchema,
+    levels: LevelsFileSchema,
+    presentation: PresentationFileSchema,
+  })
+  // Cross-file references: checked here, once every file has parsed on its own. Issue paths
+  // start with the file key, so `parseGameData` reports them as `waves.json: waves[0]...`.
+  .superRefine((data, ctx) => {
+    const robotIds = new Set(data.robots.map((robot) => robot.id));
+    const tileIds = new Set<string>(data.tiles.map((tile) => tile.id));
+    data.waves.waves.forEach((wave, waveIndex) => {
+      wave.spawns.forEach((spawn, spawnIndex) => {
+        if (!robotIds.has(spawn.robot)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['waves', 'waves', waveIndex, 'spawns', spawnIndex, 'robot'],
+            message: `unknown robot id "${spawn.robot}"`,
+          });
+        }
+      });
+      wave.reward?.tiles.forEach((tileId, tileIndex) => {
+        if (!tileIds.has(tileId)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['waves', 'waves', waveIndex, 'reward', 'tiles', tileIndex],
+            message: `unknown tile id "${tileId}"`,
+          });
+        }
+      });
+    });
+  });
 
 /** The validated shape of everything in `/data`, combined. `applyCommand` (TR §5, task 06) and
  * `resolveTurn` (TR §6, task 07) both take a `GameData` alongside `RunState`. */

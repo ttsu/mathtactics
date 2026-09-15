@@ -3,13 +3,15 @@
 // and mutation live there, not here.
 //
 // `endTurn` requires phase `planning` (else `wrong_phase`) and otherwise delegates to task 07's
-// `resolveTurn`, returning its state and events directly. `buyOffer`/`leaveShop`/`newRun` are
-// M3/M1-run features not yet implemented, so they still return `wrong_phase` (task 06 ruling).
+// `resolveTurn`, returning its state and events directly. `newRun` (task 12) and `loadLevel` both
+// accept a null state or any phase. `buyOffer`/`leaveShop` are M3 shop features not yet
+// implemented, so they still return `wrong_phase` (task 06 ruling).
 
 import type { Command, CommandError, GameEvent, RunState } from '../core/types';
 import type { GameData } from '../data/schemas';
 import { resolveTurn } from '../resolve/resolveTurn';
 import { buildLevelState } from './level';
+import { buildNewRun } from './newRun';
 import { moveCannon, moveTile, placeTile, returnTile, undoCommand } from './planning';
 import type { CommandResult } from './types';
 
@@ -28,8 +30,13 @@ export function applyCommand(
   cmd: Command,
   data: GameData,
 ): ApplyCommandResult {
-  // `loadLevel` is the one command that installs a run from scratch — it accepts `state: null`
-  // or any phase (it resets), unlike every other command (task 06 ruling).
+  // `loadLevel` and `newRun` install a state from scratch — they accept `state: null` or any
+  // phase (they replace it), unlike every other command (task 06 ruling, TR §5).
+  if (cmd.type === 'newRun') {
+    const result = buildNewRun(cmd.seed, data);
+    return { ok: true, state: result.state, events: result.events };
+  }
+
   if (cmd.type === 'loadLevel') {
     const levelDef = data.levels.levels.find((level) => level.id === cmd.levelId);
     if (!levelDef) {
@@ -60,7 +67,6 @@ export function applyCommand(
     }
     case 'buyOffer':
     case 'leaveShop':
-    case 'newRun':
       return { ok: false, error: 'wrong_phase' };
   }
 }
