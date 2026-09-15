@@ -137,6 +137,8 @@ export const BURST_RING_WIDTH = 8;
 /** Exact-kill star sizes (outer radius). */
 export const BURST_STAR_RADIUS = 16;
 export const BIG_STAR_RADIUS = 44;
+/** Sparks thrown off a ball passing through a × tile. */
+export const SPARK_STAR_RADIUS = 11;
 
 export interface Point {
   readonly x: number;

@@ -29,14 +29,15 @@ export function drawStar(
   return g;
 }
 
-/** A ring the size of a robot block, centred on the Graphics origin. */
+/** A ring centred on the Graphics origin — the size of a robot block unless a radius is given. */
 export function drawRing(
   g: Phaser.GameObjects.Graphics,
   color: number,
   thicknessPt: number,
+  radiusPt: number = ROBOT_SIZE / 2,
 ): Phaser.GameObjects.Graphics {
   g.lineStyle(designToWorld(thicknessPt), color);
-  g.strokeCircle(0, 0, designToWorld(ROBOT_SIZE / 2));
+  g.strokeCircle(0, 0, designToWorld(radiusPt));
   return g;
 }
 
