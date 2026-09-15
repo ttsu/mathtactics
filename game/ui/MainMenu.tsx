@@ -34,7 +34,7 @@ export function MainMenu() {
         </span>
       </div>
       <div className="menu-buttons">
-        {resumable && (
+        {resumable ? (
           <button
             type="button"
             className="big-button pop-in"
@@ -44,17 +44,29 @@ export function MainMenu() {
           >
             <PlayIcon size={96} />
           </button>
-        )}
-        <div className="menu-buttons-row">
+        ) : (
           <button
             type="button"
-            className={resumable ? 'small-button pop-in' : 'big-button pop-in'}
+            className="big-button pop-in"
             data-testid="menu-new-run"
             aria-label="New Run"
             onClick={() => startNewRun(store)}
           >
-            <RobotPlayIcon size={resumable ? 56 : 96} />
+            <RobotPlayIcon size={96} />
           </button>
+        )}
+        <div className="menu-buttons-row">
+          {resumable && (
+            <button
+              type="button"
+              className="small-button pop-in"
+              data-testid="menu-new-run"
+              aria-label="New Run"
+              onClick={() => startNewRun(store)}
+            >
+              <RobotPlayIcon size={56} />
+            </button>
+          )}
           <button
             type="button"
             className="small-button pop-in"

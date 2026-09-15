@@ -147,6 +147,8 @@ test('every menu and HUD button is at least 60pt in both dimensions', async ({ p
 
   await page.getByTestId('home').click();
   await expect(page.getByTestId('menu-continue')).toBeVisible();
+  await page.waitForTimeout(600); // let the pop-in finish (it scales the buttons)
   await expectTouchTarget(page, 'menu-continue');
   await expectTouchTarget(page, 'menu-new-run');
+  await expectTouchTarget(page, 'menu-puzzles');
 });
