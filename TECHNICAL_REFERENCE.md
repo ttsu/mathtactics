@@ -274,8 +274,8 @@ fails `npm test`.
 | `economy.json` | Starting state (base HP, coins, cannon lane, base value), income values, max cannons, schema version |
 | `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees |
 | `waves.json` | Waves 1–10: authored spawn schedules with HP ranges/traits; procedural tables for 8–9 |
-| `levels.json` | M1 hand-authored puzzle levels |
-| `presentation.json` | Pacing (ball cell duration, per-tile pause, lane gap, advance duration), escalation curves, colors |
+| `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
+| `presentation.json` | Pacing (ball cell duration, per-tile pause, lane gap, advance duration), escalation curves, colors, drag feel, React screen pop-in (`screens`) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.
 
@@ -297,7 +297,7 @@ interface AppState {
   };
   playback: { status: 'idle' | 'playing' | 'replaying'; events: GameEvent[]; cursor: number };
   lastTurn: { before: RunState; events: GameEvent[] } | null;  // Replay snapshot, memory only
-  screen: 'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect';
+  screen: 'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect' | 'allDone';
   settings: { hints: boolean; sound: boolean };
 }
 
@@ -307,6 +307,7 @@ interface AppActions {
   finishPlayback(): void;            // display := derived from run
   startReplay(): boolean;            // playback = replaying lastTurn (planning + idle only)
   setSettings(patch: Partial<AppState['settings']>): void;
+  setScreen(screen: AppState['screen']): void;  // never touches `run`
 }
 ```
 
@@ -319,6 +320,13 @@ Flow:
 5. During planning, Phaser renders the board directly from `run.board`/`run.tray`.
 
 `commitEvent` never touches `run`. Presentation never reports back to the simulation.
+
+**M1 level flow (task 11, `/game/state/levelFlow.ts`):** the app opens on `screen: 'menu'`. ▶ Play and
+▶ Play again → `loadLevel` (first level) + `'game'`. The level-cleared overlay shows when
+`run.phase === 'levelCleared'` and playback is idle (`showLevelCleared`); ▶ Next → `loadLevel` the next
+level, or `'allDone'` after the last. Progress is just `run.levelId` in memory; a run restored from
+storage is not resumed by the menu in M1. In level mode the HUD shows level dots instead of wave and
+base HP.
 
 ---
 
@@ -414,6 +422,11 @@ expectState:             # partial match on RunState after commands
   phase: levelCleared
 ```
 
+A scenario starts from exactly one of `board` (+ required `baseValue`, optional `tray`) or
+`level: <levelId>` — a shipped level from `data/levels.json`, built with `buildLevelState`; `level`
+cannot be combined with `board`, `baseValue` or `tray`. `/scenarios/levels/NN-*.scenario.yaml` prove
+each shipped level solvable with all-exact kills (`tests/levelSolutions.test.ts` checks the full event list).
+
 Optional keys: `seed`, `baseHp`, `tray` (list of tile ids), `waiting` (off-board robots),
 `mode: run`, `waveIndex`, `turn`. The parser lives in `/sim/scenario` (pure); the CLI in `/scripts/sim.ts`.
 
@@ -444,7 +457,7 @@ window.__GAME__ = {
   getScreen(): AppState['screen'];
   getEvents(): GameEvent[];                 // last resolved turn
   dispatch(cmd: Command): { ok: boolean; error?: CommandError };
-  loadState(state: RunState): void;         // install directly, bypassing menus/shop
+  loadState(state: RunState): void;         // install directly, bypassing menus/shop (screen → 'game')
   loadScenario(yamlText: string): void;     // install a scenario's initial state
   endTurn(): GameEvent[];
   skipAnimation(): void;                    // finish playback instantly

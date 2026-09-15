@@ -45,6 +45,13 @@ async function gotoApp(page: Page) {
   await expect(page.locator('#ui-root')).toBeVisible();
 }
 
+/** Opens the app and taps ▶ Play on the main menu (task 11), so the HUD and board are showing. */
+async function gotoGame(page: Page) {
+  await gotoApp(page);
+  await page.getByTestId('menu-play').click();
+  await expect(page.getByTestId('hud-bar')).toBeVisible();
+}
+
 test('canvas fills the 1180×820 viewport at 2× world resolution', async ({ page }) => {
   await page.setViewportSize({ width: 1180, height: 820 });
   await gotoApp(page);
@@ -66,7 +73,7 @@ for (const size of LANDSCAPE_SIZES) {
     page,
   }) => {
     await page.setViewportSize(size);
-    await gotoApp(page);
+    await gotoGame(page);
 
     const canvas = await canvasRect(page);
     // Undistorted: design aspect ratio preserved.
@@ -89,7 +96,7 @@ for (const size of LANDSCAPE_SIZES) {
 
 test('HUD re-aligns after a live resize', async ({ page }) => {
   await page.setViewportSize({ width: 1180, height: 820 });
-  await gotoApp(page);
+  await gotoGame(page);
   await page.setViewportSize({ width: 844, height: 390 });
 
   await expect
@@ -110,7 +117,7 @@ test('rotate overlay covers the screen in portrait', async ({ page }) => {
 
 test('End Turn button is at least 60pt in both dimensions', async ({ page }) => {
   await page.setViewportSize({ width: 1180, height: 820 });
-  await gotoApp(page);
+  await gotoGame(page);
 
   const button = page.getByTestId('end-turn');
   await expect(button).toBeVisible();

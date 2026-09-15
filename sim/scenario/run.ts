@@ -19,14 +19,20 @@ import {
 } from './match';
 import type { Scenario } from './parse';
 
-/**
- * Builds the scenario's initial `RunState`: a `LevelDef` built from the parsed board (reusing
- * `buildLevelState`, task 06), then scenario overrides applied in this order (task 08 interfaces
- * note): `coins`, `baseHp`, `seed`, `mode`, `waveIndex`, `turn`, `waiting` robots (`col: null`,
- * each with its own `maxHp`).
- */
-export function buildScenarioState(scenario: Scenario, data: GameData): RunState {
-  const levelDef: LevelDef = {
+/** The `LevelDef` a scenario starts from: the shipped level named by `level:` (task 11), or one
+ * built from the scenario's own `board`. */
+function initialLevelDef(scenario: Scenario, data: GameData): LevelDef {
+  if (scenario.level !== undefined) {
+    const levelDef = data.levels.levels.find((level) => level.id === scenario.level);
+    if (!levelDef) {
+      throw new Error(`scenario level: unknown level id "${scenario.level}" (not in levels.json)`);
+    }
+    return levelDef;
+  }
+  if (scenario.baseValue === undefined) {
+    throw new Error('scenario baseValue: required when the scenario has a "board"');
+  }
+  return {
     id: scenario.levelId,
     cannonLanes: scenario.cannonLanes,
     baseValue: scenario.baseValue,
@@ -34,8 +40,16 @@ export function buildScenarioState(scenario: Scenario, data: GameData): RunState
     tray: scenario.tray,
     robots: scenario.robots,
   };
+}
 
-  let state = buildLevelState(levelDef, data);
+/**
+ * Builds the scenario's initial `RunState`: `buildLevelState` (task 06) on the scenario's
+ * starting `LevelDef` (see `initialLevelDef`), then scenario overrides applied in this order (task 08 interfaces
+ * note): `coins`, `baseHp`, `seed`, `mode`, `waveIndex`, `turn`, `waiting` robots (`col: null`,
+ * each with its own `maxHp`).
+ */
+export function buildScenarioState(scenario: Scenario, data: GameData): RunState {
+  let state = buildLevelState(initialLevelDef(scenario, data), data);
 
   state = {
     ...state,

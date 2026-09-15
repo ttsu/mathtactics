@@ -1,0 +1,13 @@
+# Level 1 (task 11): one cannon, one 1 HP robot, no tiles. Just tap End Turn — the ball is worth 1,
+# so the very first kill is an exact kill (GDD §5.5: the celebration before the word "exact").
+name: level 1 — tap End Turn for an exact kill
+level: level-1
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDamaged, ballValue: 1, hpBefore: 1, hpAfter: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: LevelCleared, levelId: level-1 }
+expectState:
+  phase: levelCleared
+  coins: 2

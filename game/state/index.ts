@@ -9,6 +9,16 @@ export type { Rect, DesignSpacePlacement } from './designSpace';
 export { getAudioContext, installAudioUnlock } from './audio';
 export { gameData } from './gameData';
 export {
+  continueToNextLevel,
+  firstLevelId,
+  levelPosition,
+  nextLevelId,
+  playFromStart,
+  showLevelCleared,
+  startLevel,
+} from './levelFlow';
+export type { LevelPosition } from './levelFlow';
+export {
   scopedKey,
   saveRun,
   loadRun,

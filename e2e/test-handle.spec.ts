@@ -17,8 +17,9 @@ test('window.__GAME__ exists and getDisplay() returns base HP 100', async ({ pag
   const state = await page.evaluate(() => window.__GAME__!.getState());
   expect(state).toBeNull();
 
+  // Task 11: the app opens on the main menu.
   const screen = await page.evaluate(() => window.__GAME__!.getScreen());
-  expect(screen).toBe('game');
+  expect(screen).toBe('menu');
 
   const dispatchResult = await page.evaluate(() => window.__GAME__!.dispatch({ type: 'endTurn' }));
   expect(dispatchResult).toEqual({ ok: false, error: 'wrong_phase' });
@@ -55,4 +56,7 @@ test('window.__GAME__.loadScenario installs the scenario’s initial state', asy
   expect(state?.board.cannons).toEqual([true, false, false, false, false]);
   expect(state?.board.robots).toHaveLength(1);
   expect(state?.board.robots[0]).toMatchObject({ lane: 2, col: 7, hp: 5, maxHp: 5 });
+  // Installing a state bypasses the menu (task 11).
+  expect(await page.evaluate(() => window.__GAME__!.getScreen())).toBe('game');
+  await expect(page.getByTestId('hud-bar')).toBeVisible();
 });

@@ -113,14 +113,20 @@ const CommandErrorSchema = z.enum([
 const RawScenarioSchema = z.object({
   name: z.string().min(1),
   mode: z.enum(['level', 'run']).default('level'),
-  baseValue: z.number().int(),
+  /** A shipped level id from `data/levels.json` (task 11): the initial state is that level, built
+   * by `buildLevelState` — mutually exclusive with `board` (checked in `parseScenario`). */
+  level: z.string().min(1).optional(),
+  baseValue: z.number().int().optional(),
   coins: z.number().int().optional(),
   seed: z.string().min(1).optional(),
   baseHp: z.number().int().positive().optional(),
   waveIndex: z.number().int().nonnegative().optional(),
   turn: z.number().int().positive().optional(),
-  board: z.array(z.string()).length(5, 'board must have exactly 5 lane rows (GDD §3.1)'),
-  tray: z.array(z.string()).default([]),
+  board: z
+    .array(z.string())
+    .length(5, 'board must have exactly 5 lane rows (GDD §3.1)')
+    .optional(),
+  tray: z.array(z.string()).optional(),
   waiting: z.array(RawWaitingRobotSchema).default([]),
   commands: z.array(RawCommandSchema).default([]),
   expectEvents: z.array(RawExpectedEventSchema).default([]),
@@ -140,9 +146,15 @@ function formatZodPath(path: (string | number | symbol)[]): string {
 export interface Scenario {
   name: string;
   mode: 'level' | 'run';
-  /** Derived stable id for `buildLevelState` (task 08 ruling): `scenario:<file-or-name-slug>`. */
+  /** Set when the scenario starts from a shipped level (`level: <levelId>`, task 11) instead of a
+   * `board`. The board fields below (`baseValue`, `cannonLanes`, `boardTiles`, `robots`, `tray`)
+   * are then empty — the level supplies them. */
+  level?: string;
+  /** The id the initial state carries: the shipped level's id when `level` is set, else derived
+   * for `buildLevelState` (task 08 ruling) as `scenario:<file-or-name-slug>`. */
   levelId: string;
-  baseValue: number;
+  /** Always set for a `board` scenario; unset for a `level` scenario. */
+  baseValue?: number;
   coins?: number;
   seed?: string;
   baseHp?: number;
@@ -192,11 +204,32 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
   }
   const data = parsed.data;
 
+  // A scenario starts from exactly one of: a hand-written `board` (+ `baseValue`, `tray`), or a
+  // shipped `level` (task 11), which supplies all three.
+  if (data.level !== undefined) {
+    const conflicting = (['board', 'baseValue', 'tray'] as const).filter(
+      (key) => data[key] !== undefined,
+    );
+    if (conflicting.length > 0) {
+      throw new Error(
+        `scenario: "level" and "${conflicting.join('"/"')}" cannot be used together — ` +
+          `a level supplies its own board, baseValue and tray`,
+      );
+    }
+  } else {
+    if (data.board === undefined) {
+      throw new Error('scenario: needs either "board" (with "baseValue") or "level: <levelId>"');
+    }
+    if (data.baseValue === undefined) {
+      throw new Error('scenario baseValue: required when the scenario has a "board"');
+    }
+  }
+
   const cannonLanes: Lane[] = [];
   const boardTiles: Scenario['boardTiles'] = [];
   const robots: Scenario['robots'] = [];
 
-  data.board.forEach((rowText, laneIndex) => {
+  (data.board ?? []).forEach((rowText, laneIndex) => {
     const lane = laneIndex as Lane;
     const tokens = rowText.trim().split(/\s+/).filter((token) => token.length > 0);
     if (tokens.length !== COLS) {
@@ -259,7 +292,7 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
     });
   });
 
-  const tray: TileId[] = data.tray.map((id, index) => {
+  const tray: TileId[] = (data.tray ?? []).map((id, index) => {
     if (!TRAY_TILE_ID_RE.test(id)) {
       throw new Error(`scenario tray[${index}]: "${id}" is not a valid tile id (e.g. "add:5")`);
     }
@@ -285,11 +318,12 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
 
   const expectEvents = data.expectEvents as ExpectedEvent[];
 
-  const levelId = `scenario:${slugify(sourceName ?? data.name)}`;
+  const levelId = data.level ?? `scenario:${slugify(sourceName ?? data.name)}`;
 
   return {
     name: data.name,
     mode: data.mode,
+    level: data.level,
     levelId,
     baseValue: data.baseValue,
     coins: data.coins,

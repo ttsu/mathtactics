@@ -5,7 +5,7 @@ import type { ApplyCommandFn } from '../../game/state/store';
 import type { StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
 import type { GameEvent, RunState } from '../../sim/core/types';
-import { fakeDragSettings } from '../helpers/dragSettings';
+import { fakeDragSettings, fakeScreenSettings } from '../helpers/dragSettings';
 import { fakePacingSettings, fakePlaybackSettings } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
@@ -42,6 +42,7 @@ function fakeGameData(): GameData {
       playback: fakePlaybackSettings(),
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
       drag: fakeDragSettings(),
+      screens: fakeScreenSettings(),
     },
   } as unknown as GameData;
 }
@@ -92,9 +93,11 @@ describe('createTestHandle', () => {
     expect(handle.getDisplay()).toEqual({ coins: 0, baseHp: 100, waveIndex: 0 });
   });
 
-  it('getScreen mirrors store.screen', () => {
-    const { handle } = buildHandle();
-    expect(handle.getScreen()).toBe('game');
+  it('getScreen mirrors store.screen (the app opens on the menu, task 11)', () => {
+    const { store, handle } = buildHandle();
+    expect(handle.getScreen()).toBe('menu');
+    store.getState().setScreen('allDone');
+    expect(handle.getScreen()).toBe('allDone');
   });
 
   it('getEvents returns [] when there is no run', () => {
@@ -115,6 +118,18 @@ describe('createTestHandle', () => {
     handle.loadState(run);
     expect(handle.getState()).toEqual(run);
     expect(handle.getDisplay()).toEqual({ coins: 12, baseHp: 55, waveIndex: 4 });
+  });
+
+  it('loadState and loadScenario bypass the menu and show the game screen (task 11)', () => {
+    const { store, handle } = buildHandle();
+    handle.loadState(fakeRunState());
+    expect(handle.getScreen()).toBe('game');
+
+    store.getState().setScreen('menu');
+    handle.loadScenario(
+      ['name: t', 'baseValue: 1', 'board:', ...Array(5).fill('  - ". . . . . . . ."')].join('\n'),
+    );
+    expect(handle.getScreen()).toBe('game');
   });
 
   it('loadState resets playback to idle (finding 8, final review)', () => {

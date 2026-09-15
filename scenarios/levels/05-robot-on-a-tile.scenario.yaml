@@ -1,0 +1,20 @@
+# Level 5 (task 11): the 8 HP robot stands on a ×3 (GDD §3.4–3.5: that cell is locked and its tile
+# never applies). Only columns 1–3 are in front of it: (1 + 1 + 2) × 2 = 8.
+name: level 5 — robot on the ×3, (1 + 1 + 2) × 2 = 8
+level: level-5
+commands:
+  # piece:0 is the ×3 under the robot (board tiles are allocated before the tray).
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 2, col: 1 } } # +1
+  - { type: placeTile, pieceId: "piece:2", to: { lane: 2, col: 2 } } # +2
+  - { type: placeTile, pieceId: "piece:3", to: { lane: 2, col: 3 } } # ×2
+  - endTurn
+expectEvents:
+  - { type: BallTransformed, newValue: 2 }
+  - { type: BallTransformed, newValue: 4 }
+  - { type: BallTransformed, newValue: 8 }
+  - { type: RobotDamaged, ballValue: 8, hpBefore: 8, hpAfter: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: LevelCleared, levelId: level-5 }
+expectState:
+  phase: levelCleared
+  coins: 2

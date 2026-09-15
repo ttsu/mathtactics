@@ -28,7 +28,7 @@ Gate: **Playtest 1** — is building an equation fun?
 | 08 | [Scenario runner](tasks/08-scenario-runner.md) | sim / tooling | 06, 07 | Complete |
 | 09 | [Board rendering & drag-and-drop](tasks/09-board-and-drag.md) | presentation | 05, 06 | Complete |
 | 10 | [Playback director](tasks/10-playback-director.md) | presentation | 07, 09 | Complete |
-| 11 | [Puzzle levels & level flow](tasks/11-puzzle-levels.md) | data / presentation | 08, 10 | Not Started |
+| 11 | [Puzzle levels & level flow](tasks/11-puzzle-levels.md) | data / presentation | 08, 10 | Complete (iPad check pending) |
 | H1 | **Human: Playtest 1** — play levels with your son; record notes in `playtests/01.md` | human | 11 | Not Started |
 
 ## M2 — A Run *(specs written after Playtest 1)*

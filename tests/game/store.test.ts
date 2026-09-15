@@ -12,7 +12,7 @@ import {
 import { scopedKey, type StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
 import type { RunState } from '../../sim/core/types';
-import { fakeDragSettings } from '../helpers/dragSettings';
+import { fakeDragSettings, fakeScreenSettings } from '../helpers/dragSettings';
 import { boardState, realData } from './boardFixtures';
 import { fakePacingSettings, fakePlaybackSettings } from '../helpers/playbackSettings';
 
@@ -51,6 +51,7 @@ function fakeGameData(overrides: Partial<GameData['economy']> = {}): GameData {
       playback: fakePlaybackSettings(),
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
       drag: fakeDragSettings(),
+      screens: fakeScreenSettings(),
     },
   } as unknown as GameData;
 }

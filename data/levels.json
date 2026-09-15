@@ -1,3 +1,68 @@
 {
-  "levels": []
+  "levels": [
+    {
+      "id": "level-1",
+      "cannonLanes": [2],
+      "baseValue": 1,
+      "tray": [],
+      "robots": [{ "lane": 2, "col": 6, "hp": 1 }]
+    },
+    {
+      "id": "level-2",
+      "cannonLanes": [1],
+      "baseValue": 1,
+      "tray": ["add:2"],
+      "robots": [{ "lane": 3, "col": 6, "hp": 3 }]
+    },
+    {
+      "id": "level-3",
+      "cannonLanes": [2],
+      "baseValue": 1,
+      "tray": ["add:3", "add:5"],
+      "robots": [{ "lane": 2, "col": 6, "hp": 9 }]
+    },
+    {
+      "id": "level-4",
+      "cannonLanes": [2],
+      "baseValue": 1,
+      "tray": ["mul:2", "add:5"],
+      "robots": [{ "lane": 2, "col": 6, "hp": 12 }]
+    },
+    {
+      "id": "level-5",
+      "cannonLanes": [2],
+      "baseValue": 1,
+      "boardTiles": [{ "lane": 2, "col": 4, "tileId": "mul:3" }],
+      "tray": ["add:1", "add:2", "mul:2"],
+      "robots": [{ "lane": 2, "col": 4, "hp": 8 }]
+    },
+    {
+      "id": "level-6",
+      "cannonLanes": [1],
+      "baseValue": 1,
+      "tray": ["add:4", "add:6", "mul:2"],
+      "robots": [
+        { "lane": 1, "col": 6, "hp": 7 },
+        { "lane": 3, "col": 6, "hp": 10 }
+      ]
+    },
+    {
+      "id": "level-7",
+      "cannonLanes": [2],
+      "baseValue": 1,
+      "tray": ["mul:5", "sub:3", "add:1"],
+      "robots": [{ "lane": 2, "col": 6, "hp": 7 }]
+    },
+    {
+      "id": "level-8",
+      "cannonLanes": [1, 2],
+      "baseValue": 1,
+      "tray": ["add:4", "mul:3", "add:5", "mul:2", "sub:1", "add:2"],
+      "robots": [
+        { "lane": 1, "col": 6, "hp": 15 },
+        { "lane": 3, "col": 4, "hp": 11 },
+        { "lane": 3, "col": 7, "hp": 24 }
+      ]
+    }
+  ]
 }
