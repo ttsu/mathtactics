@@ -6,10 +6,11 @@ export interface HudButtons {
   endTurn: boolean;
   undo: boolean;
   replay: boolean;
-  /** ⌂ Home: hidden (not just disabled) during playback and while the run-mode wave-cleared
-   * overlay is up — the one moment, absent a shop, where a run is otherwise idle but not
-   * actionable (task 14 req. 5). Task 16's own `showWaveCleared` names the same condition for its
-   * overlay; kept local here rather than shared, per the task boundary. */
+  /** ⌂ Home: hidden during playback and while the run-mode wave-cleared overlay is up — the one
+   * moment, absent a shop, where a run is otherwise idle but not actionable (task 14 req. 5).
+   * The HUD hides it in place (`visibility: hidden`, disabled) so the row never shifts. Task 16's
+   * own `showWaveCleared` names the same condition for its overlay; kept local here rather than
+   * shared, per the task boundary. */
   home: boolean;
 }
 

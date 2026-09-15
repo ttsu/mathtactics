@@ -2,7 +2,7 @@
 // store; task 09 req. 4: End Turn and Undo dispatch real commands; task 10 req. 6: Replay; task 11
 // req. 3: in level mode the level dots replace the wave, and base HP is hidden — levels never
 // damage the base, TR §4.1; task 14 req. 4: in run mode the wave dots replace the "Wave N" text
-// and base HP is clamped at 0 for display; task 14 req. 5: ⌂ Home).
+// and base HP is clamped at 0 for display; task 14 req. 5: ⌂ Home, hidden in place).
 import { HUD_BAR, MIN_TOUCH_TARGET } from '../state/designSpace';
 import { levelPosition } from '../state/levelFlow';
 import { goHome } from '../state/runFlow';
@@ -37,18 +37,21 @@ export function Hud() {
       data-testid="hud-bar"
       style={{ left: HUD_BAR.x, top: HUD_BAR.y, width: HUD_BAR.width, height: HUD_BAR.height }}
     >
-      {canHome && (
-        <button
-          type="button"
-          className="hud-button hud-button-icon hud-button-home"
-          data-testid="home"
-          aria-label="Home"
-          style={touchTarget}
-          onClick={() => goHome(store)}
-        >
-          <HomeIcon />
-        </button>
-      )}
+      {/* Hidden, not unmounted: the button keeps its slot so the dots, ♥ and 🪙 never slide
+          sideways when playback starts or ends (and ♥ stays where the detonation number flies). */}
+      <button
+        type="button"
+        className="hud-button hud-button-icon hud-button-home"
+        data-testid="home"
+        aria-label="Home"
+        aria-hidden={!canHome}
+        tabIndex={canHome ? undefined : -1}
+        style={{ ...touchTarget, visibility: canHome ? 'visible' : 'hidden' }}
+        disabled={!canHome}
+        onClick={() => goHome(store)}
+      >
+        <HomeIcon />
+      </button>
       {levelMode ? (
         levelIndex !== null && <LevelDots index={levelIndex} count={levelCount} />
       ) : (

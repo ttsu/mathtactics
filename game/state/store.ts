@@ -197,6 +197,10 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
         set({
           run: result.state,
           savedRun,
+          // A fresh phase's events are spawns only — no HUD event will ever commit its coins or
+          // base HP — so `display` jumps to the new state now. Without this, New Run after a lost
+          // run (or a puzzle) would keep showing the old ♥/🪙 (♥ 0) until playback ends.
+          ...(freshPhase ? { display: displayFromRun(result.state) } : {}),
           playback: { status: 'playing', events: result.events, cursor: 0 },
           // Replay's snapshot: the board as it was before this turn (task 10 req. 6).
           lastTurn: !freshPhase && state.run ? { before: state.run, events: result.events } : null,

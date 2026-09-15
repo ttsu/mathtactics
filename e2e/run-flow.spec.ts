@@ -152,3 +152,48 @@ test('every menu and HUD button is at least 60pt in both dimensions', async ({ p
   await expectTouchTarget(page, 'menu-new-run');
   await expectTouchTarget(page, 'menu-puzzles');
 });
+
+test('⌂ Home hides in place during playback, so the HUD row never shifts', async ({ page }) => {
+  await openMenu(page);
+  await page.getByTestId('menu-new-run').click();
+  await waitIdle(page);
+
+  // Measured inside the page, a couple of frames after `dispatch`, in one go — so the "playback"
+  // numbers are guaranteed to come from mid-playback, not from after it finished.
+  const measureHud = (endTurnFirst: boolean) =>
+    page.evaluate(async (endTurn) => {
+      if (endTurn) window.__GAME__!.dispatch({ type: 'endTurn' });
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const bar = document.querySelector('[data-testid="hud-bar"]')!;
+      const stats = [...bar.querySelectorAll<HTMLElement>('.hud-stat')];
+      const origin = (element: Element | undefined) => {
+        const rect = element!.getBoundingClientRect();
+        return { x: rect.x, y: rect.y };
+      };
+      const home = bar.querySelector<HTMLButtonElement>('[data-testid="home"]')!;
+      return {
+        idle: window.__GAME__!.isIdle(),
+        homeVisibility: getComputedStyle(home).visibility,
+        homeDisabled: home.disabled,
+        home: origin(home),
+        dots: origin(bar.querySelector('[data-testid="level-dots"]')!),
+        heart: origin(stats.find((stat) => stat.textContent?.includes('♥'))),
+        coins: origin(stats.find((stat) => stat.textContent?.includes('🪙'))),
+      };
+    }, endTurnFirst);
+
+  const planning = await measureHud(false);
+  expect(planning).toMatchObject({ idle: true, homeVisibility: 'visible', homeDisabled: false });
+
+  const playing = await measureHud(true);
+  expect(playing).toMatchObject({ idle: false, homeVisibility: 'hidden', homeDisabled: true });
+  // ♥/🪙 widths follow their digits, so origins are compared — nothing may slide sideways.
+  expect({ ...playing, idle: true, homeVisibility: 'visible', homeDisabled: false }).toEqual(
+    planning,
+  );
+
+  await page.evaluate(() => window.__GAME__!.skipAnimation());
+  await waitIdle(page);
+  await expect(page.getByTestId('home')).toBeVisible();
+  await expect(page.getByTestId('home')).toBeEnabled();
+});

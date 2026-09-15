@@ -366,6 +366,55 @@ describe('dispatch', () => {
       expect(store.getState().lastTurn).toBeNull();
     });
   });
+
+  describe('display on a fresh phase (New Run must not show the previous run’s ♥/🪙)', () => {
+    function startedRunStore() {
+      const storage = createMemoryStorage();
+      const store = createAppStore({ data: realData, applyCommand, storage, basePath: '/' });
+      store.getState().dispatch({ type: 'newRun', seed: 'earlier' });
+      store.getState().finishPlayback();
+      return store;
+    }
+
+    it('newRun from a lost run shows the new run’s ♥ and 🪙 at once, not after playback', () => {
+      const store = startedRunStore();
+      const lostRun: RunState = { ...store.getState().run!, phase: 'lost', baseHp: -7, coins: 23 };
+      store.setState({ run: lostRun, display: displayFromRun(lostRun), screen: 'lost' });
+      expect(store.getState().display.coins).toBe(23);
+
+      store.getState().dispatch({ type: 'newRun', seed: 'fresh' });
+
+      const { run, display, playback } = store.getState();
+      // The spawn events are still to play — and carry no HUD events — yet the HUD already
+      // reads the new run, not the lost one.
+      expect(playback.status).toBe('playing');
+      expect(run?.phase).toBe('planning');
+      expect(display).toEqual(displayFromRun(run!));
+      expect(display).toMatchObject({
+        baseHp: realData.economy.baseHp,
+        coins: realData.economy.startCoins,
+      });
+    });
+
+    it('nextWave keeps ♥ and 🪙 (they carry over) while its spawns play', () => {
+      const store = startedRunStore();
+      const started = store.getState().run!;
+      const waveCleared: RunState = {
+        ...started,
+        phase: 'waveCleared',
+        board: { ...started.board, robots: [] },
+        pendingSpawns: [],
+        baseHp: 61,
+        coins: 9,
+      };
+      store.setState({ run: waveCleared, display: displayFromRun(waveCleared) });
+
+      store.getState().dispatch({ type: 'nextWave' });
+
+      expect(store.getState().playback.status).toBe('playing');
+      expect(store.getState().display).toEqual({ baseHp: 61, coins: 9, waveIndex: 1 });
+    });
+  });
 });
 
 describe('commitEvent', () => {
