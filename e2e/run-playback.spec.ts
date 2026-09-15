@@ -2,7 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 
 // Task 15: run-mode playback — advance, detonation (with the ♥ count-down), spawn, waiting
 // ghosts, and the planning-phase danger glow. Asserts on structured state (TR §14); screenshots
-// are for the human legibility check only (not committed — see scratchpad/t15-shots).
+// are for the human legibility check only (written to the test's output dir under the gitignored
+// `test-results/`, never committed).
 
 const EMPTY = '. . . . . . . .';
 
@@ -147,24 +148,22 @@ test('newRun spawns the first wave and finishes playback on its own', async ({ p
 
 test('legibility screenshots (advance, detonation mid-count, ghost robot, danger glow)', async ({
   page,
-}) => {
-  const shots = '/private/tmp/claude-501/-Users-tim-projects-mathtactics/dfa89d9c-741e-47df-b171-f9ccbfcba039/scratchpad/t15-shots';
-
+}, testInfo) => {
   // Danger glow: a robot already on column 1, in planning — no turn taken.
   await load(page, ADVANCE_AND_DETONATE);
   await page.waitForTimeout(350); // let the pulse rise off its minimum
-  await page.screenshot({ path: `${shots}/danger-glow.png` });
+  await page.screenshot({ path: testInfo.outputPath('danger-glow.png') });
 
   // Advance beat: both robots moving at once, ~200ms into the 400ms advance beat.
   const start = Date.now();
   await page.evaluate(() => window.__GAME__!.endTurn());
   await page.waitForTimeout(Math.max(0, 200 - (Date.now() - start)));
-  await page.screenshot({ path: `${shots}/advance-beat.png` });
+  await page.screenshot({ path: testInfo.outputPath('advance-beat.png') });
 
   // Detonation mid-count: the RobotDetonated flash beat (500ms) has played, the BaseDamaged
   // count-down (550ms) is under way.
   await page.waitForTimeout(Math.max(0, 1100 - (Date.now() - start)));
-  await page.screenshot({ path: `${shots}/detonation-mid-count.png` });
+  await page.screenshot({ path: testInfo.outputPath('detonation-mid-count.png') });
   await page.evaluate(() => window.__GAME__!.skipAnimation());
 
   // Waiting ghost: at rest, just right of column 7.
@@ -172,5 +171,5 @@ test('legibility screenshots (advance, detonation mid-count, ghost robot, danger
   await page.evaluate(() => window.__GAME__!.endTurn());
   await page.evaluate(() => window.__GAME__!.skipAnimation());
   await page.waitForTimeout(100);
-  await page.screenshot({ path: `${shots}/ghost-robot.png` });
+  await page.screenshot({ path: testInfo.outputPath('ghost-robot.png') });
 });
