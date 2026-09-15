@@ -125,7 +125,7 @@ export interface ScenarioRunResult {
  * requirement 5) replaces `data.waves.waves` for this scenario alone — every command
  * (`endTurn`, `nextWave`, `{ newRun }`) then sees the scenario's own wave list instead of the
  * shipped `waves.json`, so rule scenarios don't break when ladder content is tuned. */
-function effectiveData(scenario: Scenario, data: GameData): GameData {
+export function effectiveData(scenario: Scenario, data: GameData): GameData {
   if (scenario.waves === undefined) return data;
   return { ...data, waves: { waves: scenario.waves } };
 }

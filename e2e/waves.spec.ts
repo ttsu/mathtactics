@@ -6,10 +6,25 @@ import { MIN_TOUCH_TARGET } from '../game/state/designSpace';
 // playback, and `finishPlayback` (task 14 req. 2) switches `screen` to `won`/`lost` and clears
 // the save by itself; no `setScreen` needed. Asserts on structured state (TR §14); screenshots
 // are for the human legibility check only (not committed).
+//
+// Every scenario brings its own inline `waves:` (the test handle's `loadScenario` runs the session on
+// them), so ladder tuning of the shipped `waves.json` (task 17) can't break these tests.
 
-// A run one exact kill from clearing wave 1 of the real shipped `waves.json` (reward
-// add:1/add:2/add:3, not the final wave) — the cannon's base value 5 exactly matches the robot's
-// HP for an exact kill.
+/** Two waves: the first rewards `mul:2` + `add:4`, the second (final) has no reward. */
+const TWO_WAVES = [
+  'waves:',
+  '  - id: e2e-wave-1',
+  '    spawns:',
+  '      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }',
+  '    reward:',
+  '      tiles: ["mul:2", "add:4"]',
+  '  - id: e2e-wave-2',
+  '    spawns:',
+  '      - { turn: 1, lane: 1, robot: basic, hp: [4, 4] }',
+];
+
+// A run one exact kill from clearing the first (non-final) of its two waves — the cannon's base
+// value 5 exactly matches the robot's HP for an exact kill.
 const NON_FINAL_WAVE_CLEAR = [
   'name: e2e wave cleared',
   'mode: run',
@@ -20,21 +35,23 @@ const NON_FINAL_WAVE_CLEAR = [
   '  - "C R5 . . . . . ."',
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
+  ...TWO_WAVES,
 ].join('\n');
 
-// Wave 3 (index 2) is the last of the 3 shipped M2 waves — clearing it wins the run instead of
-// granting a reward.
+// The same run on its last wave (index 1 of 2) — clearing it wins the run instead of granting a
+// reward.
 const FINAL_WAVE_WIN = [
   'name: e2e final wave win',
   'mode: run',
   'baseValue: 5',
-  'waveIndex: 2',
+  'waveIndex: 1',
   'board:',
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
   '  - "C R5 . . . . . ."',
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
+  ...TWO_WAVES,
 ].join('\n');
 
 // One lane's cannon exact-kills its robot (lane 0) while a second lane's robot (already on col 1,
@@ -51,6 +68,7 @@ const LOSE = [
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
+  ...TWO_WAVES,
 ].join('\n');
 
 const getState = (page: Page) => page.evaluate(() => window.__GAME__!.getState()!);
@@ -86,9 +104,8 @@ test('wave-cleared overlay shows the reward tiles; ▶ starts the next wave', as
   expect(state.phase).toBe('waveCleared');
   const granted = state.lastTurnEvents.find((event) => event.type === 'TilesGranted');
   expect(granted?.tiles).toEqual([
-    { pieceId: expect.any(String), tileId: 'add:1' },
-    { pieceId: expect.any(String), tileId: 'add:2' },
-    { pieceId: expect.any(String), tileId: 'add:3' },
+    { pieceId: expect.any(String), tileId: 'mul:2' },
+    { pieceId: expect.any(String), tileId: 'add:4' },
   ]);
 
   await expect(page.getByTestId('wave-cleared')).toBeVisible();
@@ -122,7 +139,9 @@ test('reloading while the wave-cleared overlay is up resumes into it, rewards in
 
   // The `endTurn` dispatch above (unlike `loadScenario`) persists — it resolved to `mode: 'run'`
   // (task 14 req. 1) — so the saved run is this `waveCleared` state, `lastTurnEvents` included
-  // (task 16 req. 1: reward tiles must still show after resume).
+  // (task 16 req. 1: reward tiles must still show after resume). The reload drops the scenario's
+  // inline waves, so ▶ below starts wave index 1 of the shipped `waves.json` — this only needs it
+  // to have at least two waves.
   await page.reload();
   await page.waitForFunction(() => window.__GAME__ !== undefined);
   expect(await getScreen(page)).toBe('menu');

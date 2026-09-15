@@ -5,7 +5,8 @@
 import type { StoreApi } from 'zustand/vanilla';
 import type { Cell } from '../../sim/core/coords';
 import type { Command, CommandError, GameEvent, RunState } from '../../sim/core/types';
-import { buildScenarioState, parseScenario } from '../../sim/scenario';
+import type { GameData } from '../../sim/data/schemas';
+import { buildScenarioState, effectiveData, parseScenario } from '../../sim/scenario';
 import type { AppStore, Display, Screen } from './store';
 import { displayFromRun, IDLE_PLAYBACK, isPlaybackActive } from './store';
 
@@ -18,6 +19,9 @@ export interface TestHandle {
   dispatch(cmd: Command): { ok: boolean; error?: CommandError };
   /** Installs `state` directly, bypassing menus/shop. */
   loadState(state: RunState): void;
+  /** Installs a scenario's initial state. A scenario `waves:` list also replaces the shipped
+   * waves for the session (as in the scenario runner) until the next `loadState`/`loadScenario`
+   * or a page reload — so e2e wave flows don't depend on ladder tuning. */
   loadScenario(yamlText: string): void;
   endTurn(): GameEvent[];
   /** Finishes playback instantly: every remaining beat's final state and HUD commit applied. */
@@ -46,8 +50,9 @@ declare global {
  * `loadScenario`. Resets any in-flight playback too, otherwise `isIdle()` would stay false after
  * a fresh install (finding 8, final review). Shows the game screen, bypassing the menu (TR §14,
  * task 11). */
-function installState(store: StoreApi<AppStore>, state: RunState): void {
+function installState(store: StoreApi<AppStore>, state: RunState, data: GameData): void {
   store.setState({
+    data,
     run: state,
     display: displayFromRun(state),
     playback: { ...IDLE_PLAYBACK },
@@ -71,17 +76,19 @@ export interface TestHandleBoard {
  * Without a `board` (unit tests), `cellToClient` throws, and `skipAnimation`/`isIdle` fall back to
  * the store's playback status alone. */
 export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBoard): TestHandle {
+  // The data the app booted with; a scenario's `waves:` only ever overrides it for its own install.
+  const shippedData = store.getState().data;
   return {
     getState: () => store.getState().run,
     getDisplay: () => store.getState().display,
     getScreen: () => store.getState().screen,
     getEvents: () => store.getState().run?.lastTurnEvents ?? [],
     dispatch: (cmd) => store.getState().dispatch(cmd),
-    loadState: (state) => installState(store, state),
+    loadState: (state) => installState(store, state, shippedData),
     loadScenario: (yamlText) => {
       const scenario = parseScenario(yamlText);
-      const state = buildScenarioState(scenario, store.getState().data);
-      installState(store, state);
+      const data = effectiveData(scenario, shippedData);
+      installState(store, buildScenarioState(scenario, data), data);
     },
     endTurn: () => {
       const result = store.getState().dispatch({ type: 'endTurn' });

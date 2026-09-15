@@ -1,14 +1,19 @@
 // Task 16: the wave-cleared overlay's derived visibility and reward tiles, and ▶ Next's
-// double-tap guard — against the real store, the real `applyCommand`, and the real shipped
-// `waves.json`.
+// double-tap guard — against the real store and the real `applyCommand`, on the fixture's own
+// inline `waves:` (not the shipped `waves.json`, so ladder tuning in task 17 can't break it).
 
 import { describe, expect, it } from 'vitest';
 import { applyCommand } from '../../sim/commands';
 import type { RunState } from '../../sim/core/types';
-import { continueToNextWave, showWaveCleared, waveCount, waveRewardTiles } from '../../game/state/waveFlow';
+import {
+  continueToNextWave,
+  showWaveCleared,
+  waveCount,
+  waveRewardTiles,
+} from '../../game/state/waveFlow';
 import { createAppStore, IDLE_PLAYBACK } from '../../game/state/store';
 import type { StorageLike } from '../../game/state/storage';
-import { buildScenarioState, parseScenario } from '../../sim/scenario';
+import { buildScenarioState, effectiveData, parseScenario } from '../../sim/scenario';
 import { realData } from './boardFixtures';
 
 function createMemoryStorage(): StorageLike {
@@ -20,19 +25,10 @@ function createMemoryStorage(): StorageLike {
   };
 }
 
-function createStore() {
-  return createAppStore({
-    data: realData,
-    applyCommand,
-    storage: createMemoryStorage(),
-    basePath: '/',
-  });
-}
-
-/** A run one exact kill away from clearing wave 1 (mirrors `scenarios/run/wave-clear-coins-and-
- * tiles.scenario.yaml`), against the real shipped `waves.json` (wave 1 rewards `add:1/2/3`). */
-function nearlyClearedRun(): RunState {
-  const yaml = [
+/** A run one exact kill away from clearing the first of its own two inline waves (mirrors
+ * `scenarios/run/wave-clear-coins-and-tiles.scenario.yaml`); the first wave rewards `mul:2`, `add:4`. */
+const NEARLY_CLEARED = parseScenario(
+  [
     'name: waveFlow fixture',
     'mode: run',
     'baseValue: 5',
@@ -42,14 +38,35 @@ function nearlyClearedRun(): RunState {
     '  - "C R5 . . . . . ."',
     '  - ". . . . . . . ."',
     '  - ". . . . . . . ."',
-  ].join('\n');
-  return buildScenarioState(parseScenario(yaml), realData);
+    'waves:',
+    '  - id: fixture-wave-1',
+    '    spawns:',
+    '      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }',
+    '    reward:',
+    '      tiles: ["mul:2", "add:4"]',
+    '  - id: fixture-wave-2',
+    '    spawns:',
+    '      - { turn: 1, lane: 1, robot: basic, hp: [4, 4] }',
+  ].join('\n'),
+);
+const fixtureData = effectiveData(NEARLY_CLEARED, realData);
+
+function createStore() {
+  return createAppStore({
+    data: fixtureData,
+    applyCommand,
+    storage: createMemoryStorage(),
+    basePath: '/',
+  });
+}
+
+function nearlyClearedRun(): RunState {
+  return buildScenarioState(NEARLY_CLEARED, fixtureData);
 }
 
 describe('waveCount', () => {
-  it('reads the shipped waves.json length', () => {
-    expect(waveCount(realData)).toBe(realData.waves.waves.length);
-    expect(waveCount(realData)).toBeGreaterThan(0);
+  it('is the length of the data’s wave list', () => {
+    expect(waveCount(fixtureData)).toBe(2);
   });
 });
 
@@ -74,11 +91,9 @@ describe('showWaveCleared', () => {
     expect(showWaveCleared({ run: null, playback: IDLE_PLAYBACK, screen })).toBe(false);
   });
 
-  it('never shows outside the game screen, matching showLevelCleared\'s guard (task 14/16 integration)', () => {
+  it("never shows outside the game screen, matching showLevelCleared's guard (task 14/16 integration)", () => {
     for (const other of ['menu', 'won', 'lost'] as const) {
-      expect(showWaveCleared({ run: cleared, playback: IDLE_PLAYBACK, screen: other })).toBe(
-        false,
-      );
+      expect(showWaveCleared({ run: cleared, playback: IDLE_PLAYBACK, screen: other })).toBe(false);
     }
   });
 });
@@ -89,7 +104,9 @@ describe('waveRewardTiles', () => {
   });
 
   it('is empty when the last turn granted nothing', () => {
-    const run = { lastTurnEvents: [{ step: 0, group: 'end', type: 'WaveCleared', waveIndex: 0 }] } as unknown as RunState;
+    const run = {
+      lastTurnEvents: [{ step: 0, group: 'end', type: 'WaveCleared', waveIndex: 0 }],
+    } as unknown as RunState;
     expect(waveRewardTiles(run)).toEqual([]);
   });
 
@@ -101,7 +118,7 @@ describe('waveRewardTiles', () => {
     expect(waveRewardTiles(run)).toBe(tiles);
   });
 
-  it('reflects the real wave-1 reward after a real wave clear', () => {
+  it('reflects the cleared wave’s reward after a real wave clear', () => {
     const store = createStore();
     store.setState({
       run: nearlyClearedRun(),
@@ -112,9 +129,8 @@ describe('waveRewardTiles', () => {
     expect(result).toEqual({ ok: true });
     expect(store.getState().run?.phase).toBe('waveCleared');
     expect(waveRewardTiles(store.getState().run)).toEqual([
-      { pieceId: expect.any(String), tileId: 'add:1' },
-      { pieceId: expect.any(String), tileId: 'add:2' },
-      { pieceId: expect.any(String), tileId: 'add:3' },
+      { pieceId: expect.any(String), tileId: 'mul:2' },
+      { pieceId: expect.any(String), tileId: 'add:4' },
     ]);
   });
 });
