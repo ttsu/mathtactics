@@ -21,6 +21,9 @@
         position: fixed;
         inset: 0;
         margin: 0;
+        /* `clip`, not `hidden`: `hidden` still allows programmatic scrolling (scrollIntoView, focus),
+           which can shift the board and the scaled #ui-root box (whose 1180×820 layout box overflows
+           small viewports) out of alignment. `clip` forbids all scrolling. */
         overflow: clip;
         overscroll-behavior: none;
         touch-action: none;
