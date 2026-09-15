@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createTestHandle } from '../../game/state/testHandle';
 import { createAppStore, stubApplyCommand } from '../../game/state/store';
+import type { ApplyCommandFn } from '../../game/state/store';
 import type { StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
-import type { RunState } from '../../sim/core/types';
+import type { GameEvent, RunState } from '../../sim/core/types';
 
 function createMemoryStorage(): StorageLike {
   const map = new Map<string, string>();
@@ -66,10 +67,10 @@ function fakeRunState(overrides: Partial<RunState> = {}): RunState {
   };
 }
 
-function buildHandle() {
+function buildHandle(applyCommand = stubApplyCommand) {
   const store = createAppStore({
     data: fakeGameData(),
-    applyCommand: stubApplyCommand,
+    applyCommand,
     storage: createMemoryStorage(),
     basePath: '/',
   });
@@ -145,9 +146,20 @@ describe('createTestHandle', () => {
     expect(handle.isIdle()).toBe(false);
   });
 
-  it('endTurn throws "not implemented yet (task 7)"', () => {
+  it('endTurn returns [] when the dispatch fails (task 07 ruling)', () => {
     const { handle } = buildHandle();
-    expect(() => handle.endTurn()).toThrow('not implemented yet (task 7)');
+    expect(handle.endTurn()).toEqual([]);
+  });
+
+  it("endTurn dispatches endTurn and returns the resolved run's lastTurnEvents", () => {
+    const events: GameEvent[] = [{ step: 0, group: 'fire:lane:0', type: 'LaneStarted', lane: 0 }];
+    const resolvedRun = fakeRunState({ lastTurnEvents: events });
+    const fakeApplyCommand: ApplyCommandFn = (state, cmd) => {
+      if (cmd.type !== 'endTurn') return { ok: false, error: 'wrong_phase' };
+      return { ok: true, state: resolvedRun, events };
+    };
+    const { handle } = buildHandle(fakeApplyCommand);
+    expect(handle.endTurn()).toEqual(events);
   });
 
   it('loadScenario throws "not implemented yet (task 8)"', () => {

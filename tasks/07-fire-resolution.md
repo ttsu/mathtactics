@@ -55,12 +55,52 @@ Resolution tests (event-list assertions via an ordered-subsequence matcher in `/
 
 ## Acceptance Criteria
 
-- [ ] `resolveImpact` matches GDD §5.4 for every case above
-- [ ] Event list conforms to TR §7 and is deterministic (same input → deep-equal output)
-- [ ] Tile application follows GDD §3.5 exactly
-- [ ] Income values come from `economy.json`
-- [ ] `npm test`, `typecheck`, `lint` pass
+- [x] `resolveImpact` matches GDD §5.4 for every case above
+- [x] Event list conforms to TR §7 and is deterministic (same input → deep-equal output)
+- [x] Tile application follows GDD §3.5 exactly
+- [x] Income values come from `economy.json`
+- [x] `npm test`, `typecheck`, `lint` pass
 
 ## Completion Notes
 
-**Status:** Not Started
+**Status:** Complete
+
+**Acceptance criteria:**
+
+- [x] `resolveImpact` matches GDD §5.4 for every case above — Met: `sim/resolve/impact.ts` implements Parity → Weakness → apply damage → Bounce-back in that order; `tests/sim/resolve/impact.test.ts` covers every row of the table (normal under/exact/over/0/negative; Bounce-back 7/10/13/25/0 against a 10 HP robot plus the "never kills" invariant; Odd-only/Even-only including the "negative odd is not blocked" and "zero is even" edge cases; Weakness ×2 including the "exact kill evaluated on doubled damage" case).
+- [x] Event list conforms to TR §7 and is deterministic — Met: `sim/resolve/fire.ts` builds each event as a full literal matching one `GameEvent` union member (no partial-object indirection that could drift from the TR §7 shape); `resolveImpact`/`resolveFire`/`resolveTurn` are pure functions over plain data, so identical inputs always produce a deep-equal event list (asserted implicitly by every `expectEventSequence`/`toEqual` in the new tests, which would be flaky otherwise).
+- [x] Tile application follows GDD §3.5 exactly — Met: `fire.ts` checks `robotAt` before `tileAt` for every cell, so a robot's own tile never applies and nothing past the first robot is ever reached (loop `break`s on impact); covered by the "robot standing on a tile" and "tiles beyond the first robot" tests in `tests/sim/resolve/resolveTurn.test.ts`.
+- [x] Income values come from `economy.json` — Met: `fire.ts` reads `data.economy.income.kill`/`.exactKill` (never a literal), covered by the coins test asserting `+2`/`+1` and a running `coins` total.
+- [x] `npm test`, `typecheck`, `lint` pass — Met (see Verification).
+
+**Verification:**
+
+- `npm test` — 21 files, 204 tests passed (172 pre-existing + 32 new: 20 in `tests/sim/resolve/impact.test.ts`, 9 in `tests/sim/resolve/resolveTurn.test.ts`, 2 in `tests/sim/commands/endTurn.test.ts`, plus a net +1 in `tests/game/testHandle.test.ts` — the old "throws" case removed, two new dispatch-behavior cases added); one pre-existing test in `tests/sim/commands/planningCommands.test.ts` updated, not added (see Deviations).
+- `npm run typecheck` — `tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sim.json --noEmit`, both clean.
+- `npm run lint` — `eslint .`, 0 errors/warnings.
+- `npx prettier --check` on all new/changed files — clean after one `--write` pass (formatting only, no logic changes).
+
+**Deviations from spec / minor calls made (none conflict with GDD/TR, all within task ruling latitude):**
+
+- **`ImpactOutcome` shape**: the brief specifies `resolveImpact(robot, ballValue) → ImpactOutcome` but doesn't fix its fields. Chose a discriminated union: `{ kind: 'blocked'; reason }` | `{ kind: 'damaged'; damage; doubled; hpBefore; hpAfter; result: 'exact'|'kill'|'survive'; bounceBack: { overshoot } | null }`. `bounceBack` is non-null exactly when `RobotBouncedBack` should be emitted (`damage > hpBefore`), so `fire.ts` never re-derives that condition — the rule lives in exactly one place per CLAUDE.md rule 1/6.
+- **`BallExited.at`**: TR §7 doesn't say which cell a `BallExited` event carries. Used the last cell visited (col 7, the final tile cell) rather than a synthetic "col 8" — consistent with "the ball travels from column 1 to column 7" (GDD §5.3) and lets presentation exit the sprite from the last real cell.
+- **Ordered-subsequence matcher location**: put the pure core (`matchEventSequence`/`partialMatches`) and the vitest-only wrapper (`expectEventSequence`) in one file, `tests/helpers/eventSequence.ts`, rather than two — the pure functions have zero vitest import and are trivially cut out when task 08 moves them into `/sim/scenario`, so a second file seemed like premature indirection.
+- **`planningCommands.test.ts` update**: its "rejects endTurn, buyOffer, leaveShop, newRun even during planning" test predates `resolveTurn` and asserted `endTurn` always returns `wrong_phase` — now false for the `planning` phase, since `endTurn` is implemented. Removed `endTurn` from that list and renamed the test; the `state === null` case (which still returns `wrong_phase` for every command including `endTurn`) is untouched and still asserted separately.
+- **`RunState.levelId!` non-null assertion** in `resolveTurn.ts`: `levelId` is typed optional (`string | undefined`) on `RunState` even though every `mode: 'level'` state has one (`buildLevelState` always sets it). Used the same `!` style already established in `sim/commands/planning.ts` rather than widening the `LevelCleared` event's `levelId` to `string | undefined`.
+
+**Design questions raised:** None — every open call above was either explicit task-07 ruling or has no plausible alternative under GDD/TR.
+
+**Known issues / follow-up:**
+
+- `mode: 'run'` resolution is an explicit `// TODO(M2): advance, detonate, end check, spawn` stub in `resolveTurn.ts`, per the brief — FIRE runs for `'run'` mode too (coins/board updates apply) but nothing else happens yet; there is no automated test exercising `mode: 'run'` through `resolveTurn` since M2 hasn't defined what "done" looks like for it yet.
+- `fire.ts` throws (rather than returning a `CommandError`) if a board cell references a piece id not in `state.pieces`, or a piece references a tile id not in `data.tiles` — this mirrors task 06's existing stance in `sim/commands/level.ts` that cross-referential integrity between `RunState`/`GameData` isn't a recoverable runtime error, only a data-authoring bug that should fail loudly in tests.
+
+**Files created:** `sim/resolve/impact.ts`, `sim/resolve/fire.ts`, `sim/resolve/resolveTurn.ts`, `tests/sim/resolve/impact.test.ts`, `tests/sim/resolve/resolveTurn.test.ts`, `tests/sim/commands/endTurn.test.ts`, `tests/helpers/eventSequence.ts`
+
+**Files modified:** `sim/resolve/index.ts` (real barrel, was task-01 placeholder), `sim/commands/applyCommand.ts` (`endTurn` now checks phase and calls `resolveTurn`), `sim/commands/ids.ts` (added `allocateBallId`, same pattern as `allocatePieceId`/`allocateRobotId`), `game/state/testHandle.ts` (`endTurn()` dispatches through the store per the ruling), `tests/game/testHandle.test.ts` (updated/added `endTurn` cases, `buildHandle` now takes an optional `applyCommand`), `tests/sim/commands/planningCommands.test.ts` (removed the now-stale `endTurn` case from the "rejects ... during planning" test), `TASKS.md` (status for task 07)
+
+**Notes for next agent:**
+
+- Task 08's scenario runner should move `matchEventSequence`/`partialMatches` (`tests/helpers/eventSequence.ts`) into `/sim/scenario` — they're already pure and vitest-free; only `expectEventSequence` (the `expect(...)` wrapper) stays test-only.
+- `resolveFire`/`resolveTurn` are lane-independent and stateless beyond the `RunState`/`GameData` they're given, so M2's `mode: 'run'` work can call `resolveFire` unchanged and layer ADVANCE/DETONATE/END CHECK/SPAWN after it in `resolveTurn.ts` where the `// TODO(M2)` comment is.
+- `allocateBallId` follows the exact `allocatePieceId`/`allocateRobotId` convention (`sim/commands/ids.ts`) — reuse it for any future ball-shaped id need (e.g. multi-ball in v1.1).
