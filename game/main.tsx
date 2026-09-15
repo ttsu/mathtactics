@@ -2,12 +2,13 @@
 // the edge that reads browser globals (`localStorage`, `location`, `import.meta.env.BASE_URL`)
 // on behalf of the framework-free /game/state modules (TR §13, task 05 decision).
 import { createRoot } from 'react-dom/client';
+import { applyCommand } from '../sim/commands';
 import { createBoardGame } from './board';
 import { safeStorage } from './safeStorage';
 import { gameData } from './state/gameData';
 import { getAudioContext, installAudioUnlock } from './state/audio';
 import { DESIGN_HEIGHT, DESIGN_WIDTH, placementOverCanvas } from './state/designSpace';
-import { createAppStore, stubApplyCommand } from './state/store';
+import { createAppStore } from './state/store';
 import { App, StoreProvider } from './ui';
 
 function requireElement(id: string): HTMLElement {
@@ -52,8 +53,7 @@ const basePath = new URL(import.meta.env.BASE_URL, location.href).pathname;
 
 const store = createAppStore({
   data: gameData,
-  // Stub until task 06 — every command fails with `wrong_phase` (task 05 decision).
-  applyCommand: stubApplyCommand,
+  applyCommand,
   // Guarded: a bare `localStorage` read can throw (Safari "Block All Cookies", sandboxed
   // contexts) before React ever mounts — falls back to an in-memory store rather than crashing
   // boot into a blank screen (TR §13).
