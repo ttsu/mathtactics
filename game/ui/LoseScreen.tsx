@@ -15,6 +15,8 @@ const ROBOT_COLORS = ['#4f86c6', '#3f9e8f', '#ff8c42'];
 export function LoseScreen() {
   const store = useAppStoreApi();
   const popInMs = useAppStore((state) => state.data.presentation.screens.popInMs);
+  const danceMs = useAppStore((state) => state.data.presentation.screens.danceMs);
+  const danceStaggerMs = useAppStore((state) => state.data.presentation.screens.danceStaggerMs);
   const count = useAppStore((state) => waveCount(state.data));
   const waveIndex = useAppStore((state) => state.run?.waveIndex ?? 0);
   const exactKills = useAppStore((state) => state.run?.exactKills ?? 0);
@@ -32,7 +34,13 @@ export function LoseScreen() {
             <span
               key={color}
               className="dancing-robot"
-              style={{ color, animationDelay: `${i * 150}ms` } as CSSProperties}
+              style={
+                {
+                  color,
+                  '--dance-ms': `${danceMs}ms`,
+                  animationDelay: `${i * danceStaggerMs}ms`,
+                } as CSSProperties
+              }
             >
               <DancingRobotIcon size={80} />
             </span>

@@ -437,7 +437,7 @@
 
 .dancing-robot {
   display: inline-flex;
-  animation: dance 900ms ease-in-out infinite;
+  animation: dance var(--dance-ms, 0ms) ease-in-out infinite;
   transform-origin: 50% 90%;
 }
 

@@ -292,6 +292,10 @@ const PresentationFileSchema = z.object({
     rewardStaggerMs: ms(),
     /** Delay between each exact-kill icon's pop-in on the win/lose screens (task 16 req. 5). */
     iconStaggerMs: ms(),
+    /** One cycle of the lose screen's dancing-robot wiggle (task 16 req. 3). */
+    danceMs: ms(),
+    /** Delay between each dancing robot's animation start, so they wiggle out of sync. */
+    danceStaggerMs: ms(),
   }),
   /** Planning-phase danger glow (task 15, GDD §12.2 "Planning-phase cues"): a lane whose robot
    * sits on column 1 pulses red at the base strip and that robot wobbles. Derived from `run`

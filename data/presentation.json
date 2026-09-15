@@ -143,7 +143,9 @@
   "screens": {
     "popInMs": 450,
     "rewardStaggerMs": 180,
-    "iconStaggerMs": 90
+    "iconStaggerMs": 90,
+    "danceMs": 900,
+    "danceStaggerMs": 150
   },
   "danger": {
     "pulseMs": 700,
