@@ -1,10 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MIN_TOUCH_TARGET } from '../game/state/designSpace';
 
-// Task 16: the wave-cleared overlay and the win/lose screens. Task 14 (real phase → screen
-// switching, save/resume) isn't assumed here — the won/lost screens are driven directly via
-// `window.__GAME__.setScreen()`, per the task's own Context ruling. Asserts on structured state
-// (TR §14); screenshots are for the human legibility check only (not committed).
+// Task 16: the wave-cleared overlay and the win/lose screens. Now that task 14 is merged, the
+// won/lost screens are reached through the real flow — End Turn → skipAnimation() finishes
+// playback, and `finishPlayback` (task 14 req. 2) switches `screen` to `won`/`lost` and clears
+// the save by itself; no `setScreen` needed. Asserts on structured state (TR §14); screenshots
+// are for the human legibility check only (not committed).
 
 // A run one exact kill from clearing wave 1 of the real shipped `waves.json` (reward
 // add:1/add:2/add:3, not the final wave) — the cannon's base value 5 exactly matches the robot's
@@ -107,6 +108,39 @@ test('wave-cleared overlay shows the reward tiles; ▶ starts the next wave', as
   await expect(page.getByTestId('wave-cleared')).toHaveCount(0);
 });
 
+test('reloading while the wave-cleared overlay is up resumes into it, rewards intact (task 14+16 integration)', async ({
+  page,
+}) => {
+  await loadScenario(page, NON_FINAL_WAVE_CLEAR);
+  await endTurnAndSkip(page);
+
+  const state = await getState(page);
+  expect(state.phase).toBe('waveCleared');
+  const granted = state.lastTurnEvents.find((event) => event.type === 'TilesGranted');
+  await expect(page.getByTestId('wave-cleared')).toBeVisible();
+  await expect(page.getByTestId('reward-tile')).toHaveCount(granted!.tiles.length);
+
+  // The `endTurn` dispatch above (unlike `loadScenario`) persists — it resolved to `mode: 'run'`
+  // (task 14 req. 1) — so the saved run is this `waveCleared` state, `lastTurnEvents` included
+  // (task 16 req. 1: reward tiles must still show after resume).
+  await page.reload();
+  await page.waitForFunction(() => window.__GAME__ !== undefined);
+  expect(await getScreen(page)).toBe('menu');
+  await expect(page.getByTestId('menu-continue')).toBeVisible();
+
+  await page.getByTestId('menu-continue').click();
+  expect(await getScreen(page)).toBe('game');
+  expect((await getState(page))?.phase).toBe('waveCleared');
+  await expect(page.getByTestId('wave-cleared')).toBeVisible();
+  await expect(page.getByTestId('reward-tile')).toHaveCount(granted!.tiles.length);
+
+  await page.getByTestId('wave-next').click();
+  const next = await getState(page);
+  expect(next.phase).toBe('planning');
+  expect(next.waveIndex).toBe(1);
+  await expect(page.getByTestId('wave-cleared')).toHaveCount(0);
+});
+
 test('the final wave clear wins the run; ▶ returns to the menu', async ({ page }, testInfo) => {
   await loadScenario(page, FINAL_WAVE_WIN);
   await endTurnAndSkip(page);
@@ -115,8 +149,9 @@ test('the final wave clear wins the run; ▶ returns to the menu', async ({ page
   expect(state.phase).toBe('won');
   expect(state.exactKills).toBe(1);
 
-  // Task 14 owns the real phase → screen switch; drive it directly here (task 16 Context ruling).
-  await page.evaluate(() => window.__GAME__!.setScreen('won'));
+  // `finishPlayback` (task 14 req. 2) already switched `screen` to 'won' the instant
+  // `skipAnimation()` finished the last beat — no `setScreen` needed.
+  expect(await getScreen(page)).toBe('won');
   await expect(page.getByTestId('won')).toBeVisible();
   await expect(page.getByTestId('exact-kill-count')).toHaveText(String(state.exactKills));
   await page.waitForTimeout(700);
@@ -125,6 +160,8 @@ test('the final wave clear wins the run; ▶ returns to the menu', async ({ page
 
   await page.getByTestId('won-menu').click();
   expect(await getScreen(page)).toBe('menu');
+  // A won run is cleared (task 14 req. 2): the menu offers no Continue.
+  await expect(page.getByTestId('menu-continue')).toHaveCount(0);
 });
 
 test('a lost run shows the cheerful lose screen; ▶ returns to the menu', async ({
@@ -137,7 +174,9 @@ test('a lost run shows the cheerful lose screen; ▶ returns to the menu', async
   expect(state.phase).toBe('lost');
   expect(state.exactKills).toBe(1);
 
-  await page.evaluate(() => window.__GAME__!.setScreen('lost'));
+  // `finishPlayback` (task 14 req. 2) already switched `screen` to 'lost' the instant
+  // `skipAnimation()` finished the last beat — no `setScreen` needed.
+  expect(await getScreen(page)).toBe('lost');
   await expect(page.getByTestId('lost')).toBeVisible();
   await expect(page.getByTestId('exact-kill-count')).toHaveText(String(state.exactKills));
   await page.waitForTimeout(700);
@@ -149,4 +188,6 @@ test('a lost run shows the cheerful lose screen; ▶ returns to the menu', async
 
   await page.getByTestId('lost-menu').click();
   expect(await getScreen(page)).toBe('menu');
+  // A lost run is cleared (task 14 req. 2): the menu offers no Continue.
+  await expect(page.getByTestId('menu-continue')).toHaveCount(0);
 });

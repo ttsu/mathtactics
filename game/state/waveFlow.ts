@@ -16,9 +16,13 @@ export function waveCount(data: Pick<GameData, 'waves'>): number {
 
 /** The wave-cleared overlay shows once a non-final wave clears — reward tiles already granted to
  * the tray (task 13) — and its playback has finished, so the last kill's beat always plays first
- * (same rule as `showLevelCleared`, task 11). */
-export function showWaveCleared(state: Pick<AppState, 'run' | 'playback'>): boolean {
+ * (same rule as `showLevelCleared`, task 11 — which this now matches exactly, `screen === 'game'`
+ * included: integration follow-up to task 16 req. 1, so a resume flow that hasn't switched
+ * `screen` to `'game'` yet can't get a false positive from this alone). `hudButtons.ts`'s ⌂ Home
+ * uses this same function to hide itself while the overlay is up (task 14 req. 5). */
+export function showWaveCleared(state: Pick<AppState, 'run' | 'playback' | 'screen'>): boolean {
   return (
+    state.screen === 'game' &&
     state.run !== null &&
     state.run.mode === 'run' &&
     state.run.phase === 'waveCleared' &&

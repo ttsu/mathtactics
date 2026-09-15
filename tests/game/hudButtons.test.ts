@@ -13,10 +13,11 @@ const rows = [
 ];
 const snapshot: PlanningSnapshot = { cells: [], tray: [], cannons: [] };
 const events: GameEvent[] = [{ step: 0, group: 'fire:lane:0', type: 'LaneStarted', lane: 0 }];
+const screen = 'game' as const;
 
 describe('hudButtons', () => {
   it('disables End Turn/Undo/Replay with no run, but shows Home (idle)', () => {
-    expect(hudButtons({ run: null, playback: IDLE_PLAYBACK, lastTurn: null })).toEqual({
+    expect(hudButtons({ run: null, playback: IDLE_PLAYBACK, lastTurn: null, screen })).toEqual({
       endTurn: false,
       undo: false,
       replay: false,
@@ -26,14 +27,19 @@ describe('hudButtons', () => {
 
   it('enables End Turn in planning, and Undo only with undo history', () => {
     const run = boardState(rows);
-    expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null })).toEqual({
+    expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null, screen })).toEqual({
       endTurn: true,
       undo: false,
       replay: false,
       home: true,
     });
     expect(
-      hudButtons({ run: { ...run, undo: [snapshot] }, playback: IDLE_PLAYBACK, lastTurn: null }),
+      hudButtons({
+        run: { ...run, undo: [snapshot] },
+        playback: IDLE_PLAYBACK,
+        lastTurn: null,
+        screen,
+      }),
     ).toEqual({ endTurn: true, undo: true, replay: false, home: true });
   });
 
@@ -41,9 +47,9 @@ describe('hudButtons', () => {
     const before = boardState(rows);
     const run = { ...before, lastTurnEvents: events };
     const lastTurn = { before, events };
-    expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn }).replay).toBe(true);
+    expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn, screen }).replay).toBe(true);
     // No snapshot (e.g. after a reload): disabled.
-    expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null }).replay).toBe(false);
+    expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null, screen }).replay).toBe(false);
   });
 
   it('disables End Turn/Undo/Replay and hides Home while playback is playing or replaying', () => {
@@ -52,7 +58,9 @@ describe('hudButtons', () => {
     const lastTurn = { before, events };
     const none = { endTurn: false, undo: false, replay: false, home: false };
     for (const status of ['playing', 'replaying'] as const) {
-      expect(hudButtons({ run, playback: { status, events, cursor: 0 }, lastTurn })).toEqual(none);
+      expect(
+        hudButtons({ run, playback: { status, events, cursor: 0 }, lastTurn, screen }),
+      ).toEqual(none);
     }
   });
 
@@ -65,7 +73,7 @@ describe('hudButtons', () => {
       phase: 'levelCleared' as const,
     };
     const lastTurn = { before, events };
-    expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn })).toEqual({
+    expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn, screen })).toEqual({
       endTurn: false,
       undo: false,
       replay: false,
@@ -73,31 +81,47 @@ describe('hudButtons', () => {
     });
   });
 
-  describe('home (task 14 req. 5)', () => {
-    // ⌂ Home is the only way out of `waveCleared` until task 16's overlay ships its ▶. Hiding it
-    // here stranded the player: the wave is dead so no robot can be tapped, End Turn/Undo are
-    // already off outside `planning`, and nothing else dispatches `nextWave`. Home stays shown in
-    // every idle phase; only playback hides it.
-    it('shows Home while a run sits in waveCleared (idle) — nothing else can leave that phase', () => {
+  describe('home (task 14 req. 5, tightened per task 16 integration to require screen === "game")', () => {
+    // Task 14 shipped Home visible here: without task 16's overlay, nothing dispatched `nextWave`
+    // and hiding Home stranded the player on a cleared wave. The overlay now ships its own ▶, so
+    // Home hides again while it is up.
+    it('hides Home while the run-mode wave-cleared overlay is up (phase waveCleared, idle, screen game)', () => {
       const run = { ...boardState(rows), mode: 'run' as const, phase: 'waveCleared' as const };
-      expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null }).home).toBe(true);
+      expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null, screen }).home).toBe(false);
     });
 
     it('shows Home for a level-mode waveCleared-shaped phase too', () => {
       const run = { ...boardState(rows), mode: 'level' as const, phase: 'waveCleared' as const };
-      expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null }).home).toBe(true);
+      expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null, screen }).home).toBe(true);
     });
 
     it('shows Home in planning', () => {
       const run = { ...boardState(rows), mode: 'run' as const, phase: 'planning' as const };
-      expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null }).home).toBe(true);
+      expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null, screen }).home).toBe(true);
     });
 
-    it('hides Home only while playback is active, whatever the phase', () => {
+    it('shows Home for a run-mode waveCleared phase when screen is not "game" (matches showWaveCleared\'s guard)', () => {
+      // `hudButtons` now delegates to `showWaveCleared`, which requires `screen === 'game'`
+      // (task 16 integration). In practice Home is never rendered outside the game screen, but
+      // this documents the delegation is exact, not just "close enough".
       const run = { ...boardState(rows), mode: 'run' as const, phase: 'waveCleared' as const };
-      expect(hudButtons({ run, playback: { status: 'playing', events, cursor: 0 }, lastTurn: null }).home).toBe(
-        false,
-      );
+      for (const other of ['menu', 'won', 'lost'] as const) {
+        expect(
+          hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null, screen: other }).home,
+        ).toBe(true);
+      }
+    });
+
+    it('hides Home during playback whatever the phase (task 14 — playback alone is enough)', () => {
+      const run = { ...boardState(rows), mode: 'run' as const, phase: 'waveCleared' as const };
+      expect(
+        hudButtons({
+          run,
+          playback: { status: 'playing', events, cursor: 0 },
+          lastTurn: null,
+          screen,
+        }).home,
+      ).toBe(false);
     });
   });
 });

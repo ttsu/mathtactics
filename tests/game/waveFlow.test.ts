@@ -55,22 +55,31 @@ describe('waveCount', () => {
 
 describe('showWaveCleared', () => {
   const cleared = { mode: 'run', phase: 'waveCleared' } as RunState;
+  const screen = 'game' as const;
 
   it('shows once a run wave clears and playback is idle', () => {
-    expect(showWaveCleared({ run: cleared, playback: IDLE_PLAYBACK })).toBe(true);
+    expect(showWaveCleared({ run: cleared, playback: IDLE_PLAYBACK, screen })).toBe(true);
   });
 
   it('waits for playback to finish', () => {
     const playing = { status: 'playing' as const, events: [], cursor: 0 };
-    expect(showWaveCleared({ run: cleared, playback: playing })).toBe(false);
+    expect(showWaveCleared({ run: cleared, playback: playing, screen })).toBe(false);
   });
 
   it('never shows outside run mode, outside waveCleared, or with no run', () => {
     const levelMode = { mode: 'level', phase: 'waveCleared' } as unknown as RunState;
     const planning = { mode: 'run', phase: 'planning' } as RunState;
-    expect(showWaveCleared({ run: levelMode, playback: IDLE_PLAYBACK })).toBe(false);
-    expect(showWaveCleared({ run: planning, playback: IDLE_PLAYBACK })).toBe(false);
-    expect(showWaveCleared({ run: null, playback: IDLE_PLAYBACK })).toBe(false);
+    expect(showWaveCleared({ run: levelMode, playback: IDLE_PLAYBACK, screen })).toBe(false);
+    expect(showWaveCleared({ run: planning, playback: IDLE_PLAYBACK, screen })).toBe(false);
+    expect(showWaveCleared({ run: null, playback: IDLE_PLAYBACK, screen })).toBe(false);
+  });
+
+  it('never shows outside the game screen, matching showLevelCleared\'s guard (task 14/16 integration)', () => {
+    for (const other of ['menu', 'won', 'lost'] as const) {
+      expect(showWaveCleared({ run: cleared, playback: IDLE_PLAYBACK, screen: other })).toBe(
+        false,
+      );
+    }
   });
 });
 
