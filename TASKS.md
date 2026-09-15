@@ -31,10 +31,20 @@ Gate: **Playtest 1** — is building an equation fun?
 | 11 | [Puzzle levels & level flow](tasks/11-puzzle-levels.md) | data / presentation | 08, 10 | Complete (iPad check pending) |
 | H1 | **Human: Playtest 1** — play levels with your son; record notes in `playtests/01.md` | human | 11 | Not Started |
 
-## M2 — A Run *(specs written after Playtest 1)*
+## M2 — A Run
 
-Waves & spawn schedules · robot advance & waiting · base HP & detonation · win/lose screens ·
-save & resume · ladder waves 1–3 · **Playtest 2**
+Gate: **Playtest 2** — does a run hold together? Specs written before Playtest 1 (GDD v0.4);
+ladder content is finalized after it (task 17). Tasks 14, 15 and 16 may run in parallel once 13 is merged.
+
+| # | Task | Layer | Depends on | Status |
+|---|---|---|---|---|
+| 12 | [Wave data & spawning](tasks/12-wave-data-and-spawning.md) | sim / data | — | Not Started |
+| 13 | [Full turn loop: advance, detonation, waves, win/lose](tasks/13-full-turn-loop.md) | sim | 12 | Not Started |
+| 14 | [Save/resume, main menu & Home](tasks/14-save-resume-and-menu.md) | state / ui | 13 | Not Started |
+| 15 | [Run playback: spawn, advance, detonation, danger glow](tasks/15-run-playback.md) | presentation | 13 | Not Started |
+| 16 | [Wave-cleared, win & lose screens](tasks/16-wave-and-end-screens.md) | ui | 13 | Not Started |
+| 17 | [Ladder waves 1–3 & Playtest 2 checklist](tasks/17-ladder-waves-1-3.md) | data / e2e | 14, 15, 16, H1 | Not Started |
+| H2 | **Human: Playtest 2** — play a full run with your son; record notes in `playtests/02.md` | human | 17 | Not Started |
 
 ## M3 — Economy *(specs written after Playtest 2)*
 
