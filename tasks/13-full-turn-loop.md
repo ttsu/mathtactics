@@ -80,4 +80,71 @@ as today (FIRE only).
 
 ## Completion Notes
 
-_To be filled in by `/finish-task`._
+**Status:** Complete
+**Completed:** 2026-09-15
+
+**Acceptance criteria:**
+- [x] `mode: 'run'` resolves the full GDD §4 turn with fast-forward, events per TR §6/§7 — Met
+  (`sim/resolve/advance.ts`, `sim/resolve/detonate.ts`, END CHECK + fast-forward + SPAWN in `resolveTurn.ts`;
+  groups `advance`, `detonate:<lane>`, `end`, `spawn`)
+- [x] Wave clear pays coins and grants reward tiles; final wave wins; base ≤ 0 loses (and beats a same-turn clear) — Met
+- [x] `nextWave` starts the next wave with board/tray/cannons carried over — Met (`sim/commands/nextWave.ts`)
+- [x] Scenario runner supports `pendingSpawns`, `exactKills`, `waves`, `nextWave`, `newRun` — Met
+- [x] `/scenarios/run/` scenarios above pass; level scenarios unchanged — Met (11 run scenarios, one per requirement 6 bullet)
+- [x] `npm test` (511 tests), `typecheck`, `lint`, `npm run sim -- scenarios` (31/31) pass — Met; `npm run build` also passes
+
+**Deviations from spec:**
+- **Scenario `waves:` is structurally validated only.** It reuses the now-exported `WavesFileSchema` (turn-1 spawn,
+  lane letters, last wave has no reward), but robot/tile ids are not cross-checked against `robots.json`/`tiles.json`
+  at parse time — `parseScenario` has no `GameData` (TR §12). An unknown robot id still fails loudly in `spawn()`
+  (`unknown robot template "..."`).
+- **Reward tile ids are not validated at grant time.** `resolveTurn` creates a `TilePiece` per reward id verbatim; shipped
+  `waves.json` is validated at load, so this only matters for a hand-authored scenario `waves:` with a typo.
+- **Fast-forward reads `pendingSpawns[0]` as the earliest entry.** True because `rollWave` stable-sorts by turn and
+  `spawn()` removes due entries from the front. Hand-written scenario `pendingSpawns` out of turn order would break it
+  (not checked at parse).
+- `decideAdvance(robot, isOccupied)` is exported so the "stay" branch (unreachable through the full sweep in v1) is
+  unit-tested directly, as the Tests section asks.
+- `TilesGranted` is emitted with `tiles: []` when a non-final wave has no/empty reward (one shape for presentation).
+
+**Architectural decisions made:**
+- New exports: `advance(board, firstStep)`, `decideAdvance(robot, isOccupied)` (`sim/resolve/advance.ts`);
+  `detonate(detonating, baseHp, firstStep)` (`sim/resolve/detonate.ts`); `buildNextWave(state, data)`
+  (`sim/commands/nextWave.ts`); `WavesFileSchema` (`sim/data/schemas.ts`).
+- Types: `Phase` gains `'waveCleared'` (the M2 stand-in for the shop slot, GDD §10.5); `Command` gains
+  `{ type: 'nextWave' }`; `GameEvent` gains `TilesGranted { tiles: { pieceId, tileId }[] }` (group `"end"`).
+- DETONATE re-sorts queued robots by lane explicitly rather than relying on ADVANCE's incidental order.
+- `exactKills` is counted once from FIRE's `RobotDefeated { exact: true }` events, in both `level` and `run` mode.
+- Scenario runner: `effectiveData(scenario, data)` in `sim/scenario/run.ts` substitutes an inline `waves:` for
+  `data.waves.waves` for every command in the scenario (`endTurn`, `nextWave`, `{ newRun }`).
+- Existing `phase !== 'planning'` guards already reject planning commands and `endTurn` in `waveCleared`/`won`/`lost`
+  (requirement 4) — no code change needed.
+
+**Known issues / follow-up needed:**
+- Out-of-order scenario `pendingSpawns` silently mis-fast-forward (no sorted check at parse).
+- `waveIndex` past the end of `waves` gives a bare `TypeError` in the `resolveTurn` end check (`resolveTurn.ts` ~87, ~95)
+  rather than a readable error. Unreachable through real commands.
+- Run scenarios hardcode `economy.json` values (coins delta 2/3, coins 5); an economy retune will need them updated.
+- The scenario runner's `exactKills` override and `{ newRun }` command are only covered by parse tests.
+- Test gaps: exactKills-across-waves only checks carry-over; no test that requirement 4's guards reject commands in
+  `waveCleared` specifically; `nextWave` is missing from the null-state command list test.
+- Misplaced `runScenario` JSDoc in `sim/scenario/run.ts`; unrelated Prettier churn in `sim/scenario/parse.ts`.
+- End Turn only (never placing a tile) wins every seed on the shipped draft waves — intended for M2 (task 17 retunes).
+
+**Files created:**
+- `sim/resolve/advance.ts`, `sim/resolve/detonate.ts`, `sim/commands/nextWave.ts`
+- `scenarios/run/*.scenario.yaml` (11 files)
+- `tests/sim/resolve/advance.test.ts`, `tests/sim/resolve/detonate.test.ts`, `tests/sim/resolve/resolveTurnRun.test.ts`,
+  `tests/sim/commands/nextWave.test.ts`, `tests/sim/termination.test.ts`
+
+**Files modified:**
+- `sim/core/types.ts`, `sim/resolve/resolveTurn.ts`, `sim/resolve/index.ts`, `sim/commands/index.ts`,
+  `sim/commands/applyCommand.ts`, `sim/data/schemas.ts`, `sim/scenario/parse.ts`, `sim/scenario/run.ts`
+- `tests/sim/scenario/parse.test.ts`, `TASKS.md`
+
+**Notes for next agent:**
+- Presentation should treat `TilesGranted` with `tiles: []` as "no pop-in", not "event missing".
+- `newRun`/`nextWave` return a `spawn`-only event list; `endTurn` groups run
+  `fire:lane:* → advance → detonate:<lane> → end → spawn`.
+- `run.baseHp` can go negative in state and events; clamp only for display.
+- New run scenarios should use inline `waves:` so ladder tuning (task 17) never breaks them.
