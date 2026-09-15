@@ -12,6 +12,7 @@ import { BoardRenderer } from './BoardRenderer';
 import { bindStore } from './bindStore';
 import { DragController } from './DragController';
 import { drawBoardBackground } from './drawBoardBackground';
+import { DangerGlow } from './playback/DangerGlow';
 import { Director } from './playback/Director';
 import { boardSliceChanged } from './pieces';
 
@@ -34,10 +35,13 @@ export class BoardScene extends Phaser.Scene {
     drag.attach(this);
     const director = new Director(this, renderer, this.store);
     this.playback = director;
+    const dangerGlow = new DangerGlow(this, renderer);
+    const dangerSettings = () => this.store.getState().data.presentation.danger;
     // A new sequence — a just-resolved turn, or a Replay. Either way the board first shows the run
     // as it was before that turn, then the Director performs the events on it.
     const startPlayback = (state: AppStore) => {
       drag.cancel();
+      dangerGlow.sync(null, dangerSettings());
       const { lastTurn } = state;
       if (lastTurn !== null && lastTurn.events === state.playback.events) {
         renderer.sync(lastTurn.before);
@@ -47,6 +51,7 @@ export class BoardScene extends Phaser.Scene {
 
     const initial = this.store.getState();
     renderer.sync(initial.run);
+    dangerGlow.sync(isPlaybackActive(initial) ? null : initial.run, dangerSettings());
     // Playback may already be under way if a turn was dispatched before this scene existed.
     if (isPlaybackActive(initial)) startPlayback(initial);
 
@@ -62,6 +67,7 @@ export class BoardScene extends Phaser.Scene {
       if (!playbackEnded && !boardSliceChanged(previous.run, state.run)) return;
       drag.cancel();
       renderer.sync(state.run);
+      dangerGlow.sync(state.run, dangerSettings());
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.playback = null;

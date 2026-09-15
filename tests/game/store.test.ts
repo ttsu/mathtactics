@@ -471,6 +471,26 @@ describe('commitEvent', () => {
     expect(store.getState().display.baseHp).toBe(32);
   });
 
+  it('clamps display.baseHp at 0 for a negative BaseDamaged hpAfter (task 15 req. 3)', () => {
+    const store = createAppStore({
+      data: fakeGameData(),
+      applyCommand: stubApplyCommand,
+      storage: createMemoryStorage(),
+      basePath: '/',
+    });
+
+    store.getState().commitEvent({
+      step: 0,
+      group: 'detonate:2',
+      type: 'BaseDamaged',
+      amount: 30,
+      hpBefore: 10,
+      hpAfter: -20,
+    });
+
+    expect(store.getState().display.baseHp).toBe(0);
+  });
+
   it('is a no-op for other event types', () => {
     const store = createAppStore({
       data: fakeGameData(),
@@ -513,6 +533,26 @@ describe('finishPlayback', () => {
 
     expect(store.getState().display).toEqual({ coins: 5, baseHp: 80, waveIndex: 3 });
     expect(store.getState().playback).toEqual({ status: 'idle', events: [], cursor: 0 });
+  });
+
+  it('clamps a negative run.baseHp to 0 (task 15 req. 3)', () => {
+    const storage = createMemoryStorage();
+    const run = fakeRunState({ baseHp: -15 });
+    storage.setItem(
+      scopedKey('/', 'run'),
+      JSON.stringify({ schemaVersion: 1, savedAt: 1, state: run }),
+    );
+    const store = createAppStore({
+      data: fakeGameData(),
+      applyCommand: stubApplyCommand,
+      storage,
+      basePath: '/',
+    });
+    store.setState({ playback: { status: 'playing', events: [], cursor: 0 } });
+
+    store.getState().finishPlayback();
+
+    expect(store.getState().display.baseHp).toBe(0);
   });
 
   describe('end of run (task 14 req. 2)', () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   bouncesBack,
+  detonatingRobots,
   isHudEvent,
   lastCellBefore,
   laneOfGroup,
@@ -8,11 +9,29 @@ import {
 } from '../../game/board/playback/segments';
 import { applyCommand } from '../../sim/commands';
 import type { GameEvent } from '../../sim/core/types';
-import { boardState, realData } from './boardFixtures';
+import { boardState, realData, runState } from './boardFixtures';
 
 /** Resolves one End Turn (cannon base value 3) on a board built from scenario rows and returns its events. */
 function endTurnEvents(rows: string[]): GameEvent[] {
   const result = applyCommand(boardState(rows), { type: 'endTurn' }, realData);
+  if (!result.ok) throw new Error(result.error);
+  return result.events;
+}
+
+const RUN_WAVES = [
+  'waves:',
+  '  - id: only-wave',
+  '    spawns:',
+  '      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }',
+];
+
+/** Resolves one End Turn on a `mode: run` board (task 15) and returns its events. */
+function endTurnEventsRun(rows: string[], extraYaml: string[] = []): GameEvent[] {
+  const result = applyCommand(
+    runState(rows, [...extraYaml, ...RUN_WAVES]),
+    { type: 'endTurn' },
+    realData,
+  );
   if (!result.ok) throw new Error(result.error);
   return result.events;
 }
@@ -112,5 +131,41 @@ describe('lastCellBefore', () => {
     const coins = segment!.events.find((e) => e.type === 'CoinsChanged')!;
     expect(lastCellBefore(segment!, coins.step)).toEqual({ lane: 2, col: 3 });
     expect(lastCellBefore(segment!, segment!.events[0]!.step)).toBeNull();
+  });
+});
+
+describe('detonatingRobots', () => {
+  const RUN_EMPTY = ['. . . . . . . .', '. . . . . . . .', '. . . . . . . .', '. . . . . . . .'];
+
+  it('is empty when nothing detonates', () => {
+    const events = endTurnEventsRun([EMPTY, ...RUN_EMPTY], [
+      'pendingSpawns:',
+      '  - { turn: 99, lane: 4, hp: 1 }',
+    ]);
+    expect(detonatingRobots(events)).toEqual([]);
+  });
+
+  it('finds every RobotDetonated in the turn, one per detonating robot', () => {
+    // Lane 2's robot is already on column 1: it detonates with no other mover. Lane 4's stays
+    // "open" via a far-future pending spawn so this turn doesn't also wave-clear.
+    const events = endTurnEventsRun(
+      ['. . . . . . . .', '. . . . . . . .', '. R7 . . . . . .', '. . . . . . . .', '. . . . . . . .'],
+      ['pendingSpawns:', '  - { turn: 99, lane: 4, hp: 1 }'],
+    );
+    const detonated = detonatingRobots(events);
+    expect(detonated).toHaveLength(1);
+    expect(detonated[0]).toMatchObject({ type: 'RobotDetonated', lane: 2, damage: 7 });
+  });
+
+  it('finds one entry per lane when several robots detonate the same turn', () => {
+    const events = endTurnEventsRun(
+      ['. R4 . . . . . .', '. . . . . . . .', '. . . . . . . .', '. R6 . . . . . .', '. . . . . . . .'],
+      ['pendingSpawns:', '  - { turn: 99, lane: 2, hp: 1 }'],
+    );
+    const detonated = detonatingRobots(events);
+    expect(detonated.map((e) => [e.lane, e.damage])).toEqual([
+      [0, 4],
+      [3, 6],
+    ]);
   });
 });

@@ -149,6 +149,27 @@ export function rectCenter(rect: Rect): Point {
   return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
 }
 
+// --- Base strip / waiting ghosts (task 15) ---
+
+/** Design-space rect of one lane's base strip cell — a robot has no `col` there (it's left of
+ * column 0), so this doesn't come from `cellRect`. */
+export function baseStripRect(lane: number): Rect {
+  return { x: BASE_STRIP.x, y: BASE_STRIP.y + lane * CELL_SIZE, width: BASE_STRIP.width, height: CELL_SIZE };
+}
+
+/** Design-space centre of one lane's base strip cell — where a detonating robot lurches to and
+ * flashes (GDD §7.2, §12.2 step 5). */
+export function baseStripCenter(lane: number): Point {
+  return rectCenter(baseStripRect(lane));
+}
+
+/** Design-space centre of a waiting robot's ghost — one cell right of column 7, still inside the
+ * board's right margin (GDD §12.2 step 6: "just right of column 7"). */
+export function waitingGhostCenter(lane: number): Point {
+  const col7 = cellCenter(lane, COLUMN_COUNT - 1);
+  return { x: col7.x + CELL_SIZE, y: col7.y };
+}
+
 export function rectContains(rect: Rect, point: Point): boolean {
   return (
     point.x >= rect.x &&

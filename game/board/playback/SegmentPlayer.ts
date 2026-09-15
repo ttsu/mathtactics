@@ -12,22 +12,27 @@ import type { GameData } from '../../../sim/data/schemas';
 import type { StoreApi } from 'zustand/vanilla';
 import type { AppStore } from '../../state/store';
 import { DEPTH, type BoardRenderer } from '../BoardRenderer';
+import { fillRect, inset } from '../drawBoardBackground';
 import {
   BALL_IMPACT_OFFSET,
   BALL_RADIUS,
   BIG_STAR_RADIUS,
   BURST_RING_WIDTH,
   BURST_STAR_RADIUS,
+  CELL_INSET,
   COIN_FONT_SIZE,
   DAMAGE_FONT_SIZE,
   PUFF_RING_WIDTH,
   ROBOT_SIZE,
   SPARK_STAR_RADIUS,
   TILE_LABEL_FONT_SIZE,
+  baseStripCenter,
+  baseStripRect,
   cellCenter,
   designToWorld,
+  waitingGhostCenter,
 } from '../layout';
-import { tileColor, tileLabel } from '../pieces';
+import { formatNumber, tileColor, tileLabel } from '../pieces';
 import { BallView } from '../views/BallView';
 import {
   COIN_TEXT_COLOR,
@@ -94,6 +99,18 @@ export class SegmentPlayer {
         return this.coinsChanged(event, durationMs);
       case 'LaneEnded':
         return this.consumeBall(durationMs);
+      case 'RobotAdvanced':
+        return this.robotAdvanced(event, durationMs);
+      case 'RobotDetonated':
+        return this.segment.group === 'advance'
+          ? this.robotLurches(event, durationMs)
+          : this.robotDetonated(event, durationMs);
+      case 'BaseDamaged':
+        return this.baseDamaged(event, durationMs);
+      case 'RobotSpawned':
+        return this.robotSpawned(event, durationMs);
+      case 'RobotWaiting':
+        return this.robotWaiting(event, durationMs);
       default:
         // HUD events without a board beat yet (M2) still commit when they play.
         this.commit(event);
@@ -135,6 +152,38 @@ export class SegmentPlayer {
         case 'RobotDefeated':
           this.restRobot(event.robotId, event.at)?.setVisible(false);
           break;
+        case 'RobotAdvanced':
+          this.restRobot(event.robotId, event.to);
+          break;
+        case 'RobotDetonated':
+          if (this.segment.group === 'advance') {
+            this.restRobotAt(event.robotId, worldBaseCenter(event.lane));
+          } else {
+            this.restRobotAt(event.robotId, worldBaseCenter(event.lane))?.setVisible(false);
+          }
+          break;
+        case 'BaseDamaged':
+          // Always re-commits the exact clamped value, even if `baseDamaged`'s count-down never
+          // started (an earlier beat in this segment was skipped first) or was cut off mid-count
+          // (its tween was just removed, above) — the HUD must land on the real final number.
+          if (commit) {
+            this.store.getState().commitEvent({ ...event, hpAfter: Math.max(0, event.hpAfter) });
+          }
+          break;
+        case 'RobotSpawned': {
+          const robot = this.renderer.ensureRobotView(event.robotId);
+          robot.setHp(event.hp, event.maxHp);
+          this.restRobot(event.robotId, event.at);
+          break;
+        }
+        case 'RobotWaiting': {
+          const robot = this.renderer.ensureRobotView(event.robotId);
+          robot.setHp(event.hp, event.maxHp);
+          this.restRobotAt(event.robotId, worldGhostCenter(event.lane))?.setAlpha(
+            this.settings.spawn.ghostAlpha,
+          );
+          break;
+        }
         default:
           if (commit) this.commit(event);
       }
@@ -565,6 +614,132 @@ export class SegmentPlayer {
     });
   }
 
+  /** All `RobotAdvanced` robots move together, one cell left (task 15 req. 2). */
+  private robotAdvanced(event: EventOf<'RobotAdvanced'>, durationMs: number): void {
+    const robot = this.renderer.robotView(event.robotId);
+    if (robot === undefined) return;
+    const target = worldCenter(event.to);
+    this.tween({
+      targets: robot,
+      x: target.x,
+      y: target.y,
+      duration: durationMs,
+      ease: 'Quad.easeInOut',
+    });
+  }
+
+  /** A robot leaving column 1 this advance beat (it detonates later, in its own `detonate:<lane>`
+   * segment) lurches into the base strip instead of vanishing, in the same beat as any follower
+   * moving into its now-empty cell — so the two never occupy column 1 at once (task 15 req. 2). */
+  private robotLurches(event: EventOf<'RobotDetonated'>, durationMs: number): void {
+    const robot = this.renderer.robotView(event.robotId);
+    if (robot === undefined) return;
+    const target = worldBaseCenter(event.lane);
+    this.tween({
+      targets: robot,
+      x: target.x,
+      y: target.y,
+      duration: durationMs,
+      ease: 'Quad.easeIn',
+    });
+  }
+
+  /** The detonation beat itself (task 15 req. 3, GDD §12.2 step 5): flash and shake at the base
+   * strip, the robot's HP flies toward the HUD ♥, then the robot is gone. The base HP count-down
+   * is the next beat, `baseDamaged` (this detonation's own `BaseDamaged` event). */
+  private robotDetonated(event: EventOf<'RobotDetonated'>, durationMs: number): void {
+    const { detonate } = this.settings;
+    const center = worldBaseCenter(event.lane);
+
+    const flash = this.track(this.scene.add.graphics()).setDepth(DEPTH.effects);
+    fillRect(flash, inset(baseStripRect(event.lane), CELL_INSET), PLACEHOLDER.detonateFlash);
+    this.tween({ targets: flash, alpha: 0, duration: durationMs, ease: 'Quad.easeIn' });
+
+    const label = floatingText(
+      this.scene,
+      center.x,
+      center.y,
+      formatNumber(event.damage),
+      DAMAGE_FONT_SIZE,
+      LIGHT_TEXT_COLOR,
+    );
+    this.track(label).setDepth(DEPTH.effects);
+    this.tween({
+      targets: label,
+      x: designToWorld(detonate.heartTargetX),
+      y: designToWorld(detonate.heartTargetY),
+      scale: detonate.heartLabelScale,
+      duration: durationMs,
+      ease: 'Cubic.easeIn',
+    });
+    this.tween({
+      targets: label,
+      alpha: 0,
+      delay: durationMs * this.share.most,
+      duration: durationMs * this.share.fade,
+    });
+
+    this.scene.cameras.main.shake(detonate.shakeMs, detonate.shake, true);
+
+    const robot = this.renderer.robotView(event.robotId);
+    if (robot !== undefined) {
+      this.tween({ targets: robot, scale: 0, alpha: 0, duration: durationMs, ease: 'Back.easeIn' });
+    }
+  }
+
+  /** The HUD base HP counts down from `hpBefore` to `max(0, hpAfter)` (task 15 req. 3): ticked
+   * straight to the store every animation frame. `finish()` always re-commits the exact final
+   * clamped value, so a skip mid-count (or before this beat even starts) still lands correctly. */
+  private baseDamaged(event: EventOf<'BaseDamaged'>, durationMs: number): void {
+    const to = Math.max(0, event.hpAfter);
+    this.counter(event.hpBefore, to, durationMs, 'Linear', (value) => {
+      this.store.getState().commitEvent({ ...event, hpAfter: Math.round(value) });
+    });
+  }
+
+  /** A `RobotSpawned` robot drops into column 7 with its HP — or, for a robotId that was already
+   * a waiting ghost, slides in from its ghost slot and turns solid (task 15 req. 4). */
+  private robotSpawned(event: EventOf<'RobotSpawned'>, durationMs: number): void {
+    const { spawn } = this.settings;
+    const wasGhost = this.renderer.robotView(event.robotId) !== undefined;
+    const robot = this.renderer.ensureRobotView(event.robotId);
+    robot.setHp(event.hp, event.maxHp);
+    const target = worldCenter(event.at);
+    if (wasGhost) {
+      this.tween({
+        targets: robot,
+        x: target.x,
+        y: target.y,
+        alpha: 1,
+        duration: durationMs,
+        ease: 'Cubic.easeOut',
+      });
+      return;
+    }
+    robot
+      .setPosition(target.x, target.y - designToWorld(spawn.dropFromPt))
+      .setScale(spawn.dropFromScale)
+      .setAlpha(1);
+    this.tween({ targets: robot, y: target.y, scale: 1, duration: durationMs, ease: 'Back.easeOut' });
+  }
+
+  /** A `RobotWaiting` robot pops in as a translucent ghost, its HP visible, just right of column 7
+   * (task 15 req. 4). */
+  private robotWaiting(event: EventOf<'RobotWaiting'>, durationMs: number): void {
+    const { spawn } = this.settings;
+    const robot = this.renderer.ensureRobotView(event.robotId);
+    robot.setHp(event.hp, event.maxHp);
+    const target = worldGhostCenter(event.lane);
+    robot.setPosition(target.x, target.y).setScale(spawn.ghostPopFromScale).setAlpha(0);
+    this.tween({
+      targets: robot,
+      scale: 1,
+      alpha: spawn.ghostAlpha,
+      duration: durationMs,
+      ease: 'Back.easeOut',
+    });
+  }
+
   // --- Helpers ---
 
   /** HUD commits follow playback (GDD §12.2 req. 6) — each HUD event is committed exactly once. */
@@ -624,12 +799,18 @@ export class SegmentPlayer {
     });
   }
 
-  /** A robot back at its cell centre, unscaled and opaque (final state after knockback/pops). */
-  private restRobot(robotId: string, at: Cell): RobotView | undefined {
+  /** A robot back at rest at a world point — unscaled, opaque, no angle (final state after
+   * knockback/pops, or after lurching/spawning somewhere that isn't a grid `Cell`: the base strip
+   * or a waiting ghost's slot). */
+  private restRobotAt(robotId: string, point: { x: number; y: number }): RobotView | undefined {
     const robot = this.renderer.robotView(robotId);
     if (robot === undefined) return undefined;
-    const { x, y } = worldCenter(at);
-    return robot.setPosition(x, y).setScale(1).setAlpha(1).setAngle(0);
+    return robot.setPosition(point.x, point.y).setScale(1).setAlpha(1).setAngle(0);
+  }
+
+  /** A robot back at its cell centre (final state after knockback/pops). */
+  private restRobot(robotId: string, at: Cell): RobotView | undefined {
+    return this.restRobotAt(robotId, worldCenter(at));
   }
 
   private tween(config: Phaser.Types.Tweens.TweenBuilderConfig): Phaser.Tweens.Tween {
@@ -663,5 +844,18 @@ export class SegmentPlayer {
 
 function worldCenter(cell: Cell): { x: number; y: number } {
   const { x, y } = cellCenter(cell.lane, cell.col);
+  return { x: designToWorld(x), y: designToWorld(y) };
+}
+
+/** Where a detonating robot lurches to and flashes — the base strip has no `col`, so this isn't a
+ * grid `Cell` (task 15). */
+function worldBaseCenter(lane: number): { x: number; y: number } {
+  const { x, y } = baseStripCenter(lane);
+  return { x: designToWorld(x), y: designToWorld(y) };
+}
+
+/** Where a waiting robot's ghost sits, just right of column 7 (task 15). */
+function worldGhostCenter(lane: number): { x: number; y: number } {
+  const { x, y } = waitingGhostCenter(lane);
   return { x: designToWorld(x), y: designToWorld(y) };
 }

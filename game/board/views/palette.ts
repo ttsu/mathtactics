@@ -31,6 +31,8 @@ export const PLACEHOLDER = {
   celebrationOutline: 0xff8f00,
   clonk: 0x9aa5b1,
   puff: 0xb0b7c3,
+  /** A detonation's flash at the base strip (task 15). */
+  detonateFlash: 0xffab40,
 } as const;
 
 export const FONT_FAMILY = 'system-ui, -apple-system, sans-serif';

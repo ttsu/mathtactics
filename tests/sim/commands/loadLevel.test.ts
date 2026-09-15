@@ -5,7 +5,11 @@ import { parseGameData } from '../../../sim/data/load';
 import type { RunState } from '../../../sim/core/types';
 import { fakeGameData, fakeLevelDef, fakeRunState } from './fixtures';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
-import { fakePacingSettings, fakePlaybackSettings } from '../../helpers/playbackSettings';
+import {
+  fakeDangerSettings,
+  fakePacingSettings,
+  fakePlaybackSettings,
+} from '../../helpers/playbackSettings';
 
 function expectOk(result: ReturnType<typeof applyCommand>): asserts result is {
   ok: true;
@@ -194,6 +198,7 @@ describe('applyCommand — loadLevel', () => {
         tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
         drag: fakeDragSettings(),
         screens: fakeScreenSettings(),
+        danger: fakeDangerSettings(),
       },
     };
     const data = parseGameData(raw);

@@ -126,9 +126,13 @@ export interface CreateAppStoreOptions {
   now?: () => number;
 }
 
-/** `display` derived from the committed run (TR §10 flow step 4/5). */
+/** `display` derived from the committed run (TR §10 flow step 4/5). `baseHp` may go negative in
+ * `run` (TR §6, task 15 req. 3) — the display never shows below 0, so every path that derives
+ * `display` straight from `run` (not through a ticked `BaseDamaged` commit) clamps here too:
+ * `finishPlayback`, the no-events branch of `dispatch`, initial load, and the test handle's
+ * `loadState`/`loadScenario`. */
 export function displayFromRun(run: RunState): Display {
-  return { coins: run.coins, baseHp: run.baseHp, waveIndex: run.waveIndex };
+  return { coins: run.coins, baseHp: Math.max(0, run.baseHp), waveIndex: run.waveIndex };
 }
 
 /** `display` derived from `data.economy` before any run exists (task 05 decision: satisfies the
@@ -233,7 +237,10 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
           case 'CoinsChanged':
             return { display: { ...state.display, coins: event.total } };
           case 'BaseDamaged':
-            return { display: { ...state.display, baseHp: event.hpAfter } };
+            // `baseHp` may go negative in `run` (TR §6); the display never shows below 0 (task
+            // 15 req. 3) — clamped here, the one place a `BaseDamaged` event reaches `display`,
+            // whether committed once or ticked through a count-down.
+            return { display: { ...state.display, baseHp: Math.max(0, event.hpAfter) } };
           default:
             return {};
         }

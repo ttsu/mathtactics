@@ -4,8 +4,13 @@
 
 import type { GameEvent } from '../../../sim/core/types';
 import type { GameData } from '../../../sim/data/schemas';
-import { toSegments, type PlaybackSegment } from './segments';
+import { detonatingRobots, toSegments, type PlaybackSegment } from './segments';
 import { tileKind } from './transformEffect';
+
+/** Run-mode `"end"` event types (task 15 req. 5) — the short pause added to a run's `end`
+ * segment. `LevelCleared` (level mode, task 11) is excluded: it plays its overlay once playback
+ * goes idle, with no extra hold here. */
+const RUN_END_TYPES = new Set<GameEvent['type']>(['WaveCleared', 'TilesGranted', 'RunWon', 'RunLost']);
 
 export type PresentationSettings = Pick<GameData['presentation'], 'pacing' | 'playback'>;
 
@@ -56,14 +61,29 @@ export function beatDurationMs(
       return beats.coinsMs;
     case 'LaneEnded':
       return beats.laneEndMs;
+    case 'RobotAdvanced':
+      // Every `advance`-segment beat holds for the same duration — all robots move together
+      // (task 15 req. 2).
+      return pacing.advanceDurationMs;
+    case 'RobotDetonated':
+      // In the `advance` segment this is a borrowed event (task 15, `detonatingRobots`): the
+      // robot lurches from column 1 into the base strip in the same beat as any follower. In its
+      // own `detonate:<lane>` segment it plays the real flash/shake/HP-fly beat.
+      return segment.group === 'advance' ? pacing.advanceDurationMs : beats.detonateMs;
+    case 'BaseDamaged':
+      return beats.baseCountDownMs;
+    case 'RobotSpawned':
+    case 'RobotWaiting':
+      return beats.spawnMs;
     default:
-      // No beat yet for M2+ events (advance, detonate, spawn, …) or `LevelCleared` (task 11
-      // shows its overlay once playback is idle).
+      // No beat yet for `LevelCleared` (task 11 shows its overlay once playback is idle).
       return 0;
   }
 }
 
-/** Beats play one after another, in `step` order. */
+/** Beats play one after another, in `step` order. A run-mode `end` segment (wave cleared / won /
+ * lost) holds for one extra short pause after its (zero-duration) events, so playback doesn't
+ * jump straight to idle (task 15 req. 5). */
 export function planSegment(
   segment: PlaybackSegment,
   presentation: PresentationSettings,
@@ -76,19 +96,63 @@ export function planSegment(
     atMs += durationMs;
     return beat;
   });
-  return { segment, leadInMs, beats, totalMs: atMs };
+  const isRunEnd = segment.group === 'end' && segment.events.some((e) => RUN_END_TYPES.has(e.type));
+  const totalMs = isRunEnd ? atMs + presentation.playback.beats.endMs : atMs;
+  return { segment, leadInMs, beats, totalMs };
 }
 
-/** The whole turn: segments in order, each lane after the first preceded by the lane gap. */
+/** The `advance` segment (task 15 req. 2): every beat starts at once (`atMs: 0`) and holds for
+ * `pacing.advanceDurationMs` — real `RobotAdvanced` events plus any borrowed `RobotDetonated`
+ * events (a robot leaving column 1 lurches into the base strip in the same beat, `segments.ts`'s
+ * `detonatingRobots`). */
+function planAdvanceSegment(
+  segment: PlaybackSegment,
+  presentation: PresentationSettings,
+): SegmentPlan {
+  const beats = segment.events.map((event) => ({
+    event,
+    atMs: 0,
+    durationMs: beatDurationMs(event, segment, presentation),
+  }));
+  const totalMs = beats.reduce((max, beat) => Math.max(max, beat.durationMs), 0);
+  return { segment, leadInMs: 0, beats, totalMs };
+}
+
+/** The whole turn: segments in order, each lane after the first preceded by the lane gap. The
+ * `advance` segment always carries this turn's detonating robots too (task 15 req. 2), even when
+ * no robot actually moved (everyone on the board was already on column 1) — `advance`'s own
+ * events would then be empty and the group wouldn't appear in `toSegments`'s output at all, so one
+ * is synthesised right before the first `detonate:<lane>` segment. */
 export function planPlayback(
   events: readonly GameEvent[],
   presentation: PresentationSettings,
 ): SegmentPlan[] {
+  const detonating = detonatingRobots(events);
   let lanesSeen = 0;
-  return toSegments(events).map((segment) => {
+  let advancePlaced = detonating.length === 0;
+  const plans: SegmentPlan[] = [];
+
+  for (const segment of toSegments(events)) {
+    if (segment.group === 'advance') {
+      const merged: PlaybackSegment = { ...segment, events: [...segment.events, ...detonating] };
+      plans.push(planAdvanceSegment(merged, presentation));
+      advancePlaced = true;
+      continue;
+    }
+    if (!advancePlaced && segment.group.startsWith('detonate:')) {
+      const synthesised: PlaybackSegment = {
+        group: 'advance',
+        lane: null,
+        events: [...detonating],
+        ballExits: false,
+      };
+      plans.push(planAdvanceSegment(synthesised, presentation));
+      advancePlaced = true;
+    }
     const isLane = segment.lane !== null;
     const leadInMs = isLane && lanesSeen > 0 ? presentation.pacing.laneGapMs : 0;
     if (isLane) lanesSeen += 1;
-    return planSegment(segment, presentation, leadInMs);
-  });
+    plans.push(planSegment(segment, presentation, leadInMs));
+  }
+  return plans;
 }

@@ -78,3 +78,18 @@ export function lastCellBefore(segment: PlaybackSegment, step: number): Cell | n
   }
   return cell;
 }
+
+/** Every `RobotDetonated` event in a resolved turn's full event list (task 15, GDD §12.2 step 4)
+ * — "will detonate" derivation. `resolveTurn` runs ADVANCE and DETONATE at most once each per
+ * turn, so any robot detonating this turn is queued by that same ADVANCE sweep: the `advance`
+ * segment shows it lurching from column 1 into the base strip (instead of just vanishing), in the
+ * same beat as any `RobotAdvanced` follower moving into its now-empty cell — so the two never
+ * occupy column 1 at once. */
+export function detonatingRobots(
+  events: readonly GameEvent[],
+): Extract<GameEvent, { type: 'RobotDetonated' }>[] {
+  return events.filter(
+    (event): event is Extract<GameEvent, { type: 'RobotDetonated' }> =>
+      event.type === 'RobotDetonated',
+  );
+}

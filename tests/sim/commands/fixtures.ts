@@ -5,7 +5,11 @@ import { COLS, LANES } from '../../../sim/core/coords';
 import type { GameData, LevelDef } from '../../../sim/data/schemas';
 import type { RunState } from '../../../sim/core/types';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
-import { fakePacingSettings, fakePlaybackSettings } from '../../helpers/playbackSettings';
+import {
+  fakeDangerSettings,
+  fakePacingSettings,
+  fakePlaybackSettings,
+} from '../../helpers/playbackSettings';
 
 type TileDataDef = GameData['tiles'][number];
 
@@ -52,6 +56,7 @@ export function fakeGameData(overrides: Partial<GameData> = {}): GameData {
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
       drag: fakeDragSettings(),
       screens: fakeScreenSettings(),
+      danger: fakeDangerSettings(),
     },
     ...overrides,
   };
