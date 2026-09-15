@@ -6,6 +6,7 @@ import { expect, test } from '@playwright/test';
 test('window.__GAME__ exists and getDisplay() returns base HP 100', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('#board-root canvas')).toBeVisible();
+  await page.waitForFunction(() => window.__GAME__ !== undefined);
 
   const hasHandle = await page.evaluate(() => typeof window.__GAME__ !== 'undefined');
   expect(hasHandle).toBe(true);
@@ -33,6 +34,7 @@ test('window.__GAME__ exists and getDisplay() returns base HP 100', async ({ pag
 test('window.__GAME__.loadScenario installs the scenario’s initial state', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('#board-root canvas')).toBeVisible();
+  await page.waitForFunction(() => window.__GAME__ !== undefined);
 
   const yamlText = [
     'name: e2e scenario',
