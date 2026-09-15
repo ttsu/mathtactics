@@ -283,10 +283,15 @@ const PresentationFileSchema = z.object({
     /** Movement (design points) before a press on an overflowing tray decides drag vs scroll. */
     trayScrollThresholdPt: z.number().positive(),
   }),
-  /** React screens and overlays (task 11: main menu, level cleared, all done). Presentation only. */
+  /** React screens and overlays (task 11: main menu, level cleared, all done; task 16: wave
+   * cleared, win, lose). Presentation only. */
   screens: z.object({
     /** How long a screen's celebration art and big button take to pop in. */
     popInMs: ms(),
+    /** Delay between each wave-cleared reward tile's pop-in (task 16 req. 5). */
+    rewardStaggerMs: ms(),
+    /** Delay between each exact-kill icon's pop-in on the win/lose screens (task 16 req. 5). */
+    iconStaggerMs: ms(),
   }),
   /** Planning-phase danger glow (task 15, GDD §12.2 "Planning-phase cues"): a lane whose robot
    * sits on column 1 pulses red at the base strip and that robot wobbles. Derived from `run`

@@ -19,6 +19,9 @@ export interface TestHandle {
   /** Installs `state` directly, bypassing menus/shop. */
   loadState(state: RunState): void;
   loadScenario(yamlText: string): void;
+  /** Shows `screen` directly, bypassing whatever flow would normally get there (task 16: e2e
+   * coverage of the won/lost screens ahead of task 14's real phase → screen switch). */
+  setScreen(screen: Screen): void;
   endTurn(): GameEvent[];
   /** Finishes playback instantly: every remaining beat's final state and HUD commit applied. */
   skipAnimation(): void;
@@ -83,6 +86,7 @@ export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBo
       const state = buildScenarioState(scenario, store.getState().data);
       installState(store, state);
     },
+    setScreen: (screen) => store.getState().setScreen(screen),
     endTurn: () => {
       const result = store.getState().dispatch({ type: 'endTurn' });
       if (!result.ok) return [];
