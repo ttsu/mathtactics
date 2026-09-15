@@ -150,6 +150,23 @@ describe('createTestHandle', () => {
     expect(store.getState().playback).toEqual({ status: 'idle', events: [], cursor: 0 });
   });
 
+  it('loadState never touches storage or savedRun (task 14 req. 6, TR §14)', () => {
+    const storage = createMemoryStorage();
+    const store = createAppStore({
+      data: fakeGameData(),
+      applyCommand: stubApplyCommand,
+      storage,
+      basePath: '/',
+    });
+    const handle = createTestHandle(store);
+
+    handle.loadState(fakeRunState({ mode: 'run', coins: 42 }));
+
+    expect(store.getState().run?.coins).toBe(42);
+    expect(storage.getItem('mt:/:run')).toBeNull();
+    expect(store.getState().savedRun).toBeNull();
+  });
+
   it('dispatch delegates to the store', () => {
     const { handle } = buildHandle();
     expect(handle.dispatch({ type: 'endTurn' })).toEqual({ ok: false, error: 'wrong_phase' });

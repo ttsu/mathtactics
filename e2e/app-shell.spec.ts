@@ -48,7 +48,7 @@ async function gotoApp(page: Page) {
 /** Opens the app and taps ▶ Play on the main menu (task 11), so the HUD and board are showing. */
 async function gotoGame(page: Page) {
   await gotoApp(page);
-  await page.getByTestId('menu-play').click();
+  await page.getByTestId('menu-puzzles').click();
   await expect(page.getByTestId('hud-bar')).toBeVisible();
 }
 

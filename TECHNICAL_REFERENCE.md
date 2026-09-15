@@ -355,6 +355,7 @@ Phaser via `store.subscribe`.
 interface AppState {
   data: GameData;
   run: RunState | null;          // committed simulation truth (already includes resolved turn)
+  savedRun: RunState | null;     // memory copy of the `run` storage key (task 14 — see below)
   display: {                     // what the HUD shows; lags `run` during playback
     coins: number;
     baseHp: number;
@@ -394,12 +395,29 @@ level, or `'allDone'` after the last. Progress is just `run.levelId` in memory; 
 storage is not resumed by the menu in M1. In level mode the HUD shows level dots instead of wave and
 base HP.
 
-**M2 run flow (task 14, `/game/state/runFlow.ts`):** menu shows ▶ Continue when a resumable run is
-saved (mode `run`, phase `planning` or `waveCleared`), New Run (`newRun` with a seed from the edge
-clock), and Puzzles (the level flow above). Continue restores the saved run to the `game` screen;
-the wave-cleared overlay reappears if it was saved there. When a run's playback ends on `won`/`lost`
-the matching screen shows and the save is cleared. HUD ⌂ Home → `menu` (planning only). In run mode
-the HUD shows wave dots and ♥ base HP.
+**M2 run flow (task 14, `/game/state/runFlow.ts`):** menu shows ▶ Continue (`canContinue`) when a
+resumable run is saved (mode `run`, phase `planning` or `waveCleared`, `isResumable`), New Run
+(`startNewRun`: `dispatch({ type: 'newRun', seed })` with a seed made at the edge from the clock/
+`crypto`, never in `/sim`), and Puzzles (the level flow above, unchanged). `continueRun` installs
+the saved run as-is — the wave-cleared overlay reappears if it was saved there — with no playback
+and no Replay snapshot.
+
+`dispatch` only persists a `mode: 'run'` result (`saveRun`); a level-mode result (Puzzles) never
+writes or removes the `run` key. `AppState.savedRun` is a memory copy of that same key, updated in
+lock-step by `dispatch` and `finishPlayback` — `runFlow.ts`'s `canContinue`/`continueRun` read
+`savedRun`, not a fresh storage read, so Continue keeps offering the saved run after `run` has been
+replaced by a Puzzle for the current session. When a run's playback finishes on phase `won`/`lost`,
+`finishPlayback` itself switches `screen` to match and clears the save (`clearRun`) — the same
+treatment a `won`/`lost` save gets if found on boot (not resumable, cleared immediately). `goHome`
+sets `screen: 'menu'`, refused only while playback is active; a run is already saved, and a puzzle
+session is simply dropped (`run`/`savedRun` untouched).
+
+The HUD's ⌂ Home button is shown whenever playback is idle, except during the run-mode
+`waveCleared` phase (`hudButtons(state).home` in `/game/ui/hudButtons.ts` — task 16's own
+`showWaveCleared` names the same overlay condition, kept local here rather than shared). In run
+mode the HUD shows wave dots (`LevelDots`, reusing task 11's component; count = `waves.json`
+length, current = `waveIndex`) and ♥ base HP clamped at 0 for display only (`baseHp` itself is
+never clamped, TR §7).
 
 ---
 
@@ -550,6 +568,11 @@ window.__GAME__ = {
 ```
 
 Playwright asserts on structured state. Screenshots are for legibility review only.
+
+**`loadState` stays storage-free (task 14 req. 6):** it installs `state` directly via
+`store.setState`, the same as `loadScenario` — neither ever calls `saveRun`/`clearRun`, and
+neither touches `savedRun`. Installing a state this way is invisible to Continue/the `run` save;
+only a real `dispatch` (e.g. `endTurn()`, or `dispatch({ type: 'newRun', seed })`) persists.
 
 ---
 
