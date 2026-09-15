@@ -1,0 +1,29 @@
+# GDD §7.2: chip damage matters — a robot worn down by FIRE, then reaching col 1, detonates only
+# for its remaining HP, not its original HP.
+name: chip damage — a robot worn down then detonates for the remainder
+mode: run
+baseValue: 3
+baseHp: 100
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C R10 . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+pendingSpawns:
+  - { turn: 99, lane: 4, hp: 1 }
+waves:
+  - id: only-wave
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+commands:
+  - endTurn
+expectEvents:
+  # Ball worth 3 hits for 3 damage (hp 10 -> 7, survives), then it detonates for the remainder.
+  - { type: RobotDamaged, damage: 3, hpBefore: 10, hpAfter: 7 }
+  - { type: RobotDetonated, lane: 2, damage: 7 }
+  - { type: BaseDamaged, amount: 7, hpBefore: 100, hpAfter: 93 }
+expectState:
+  baseHp: 93
+  board:
+    robots: []

@@ -1,0 +1,30 @@
+# GDD §7.2, TR §6 "mode: run details": a robot already at col 1 always detonates on ADVANCE,
+# dealing its remaining HP to the base. `waves` is inline so tuning the real ladder never
+# breaks this scenario (TR §12, task 13).
+name: a robot on col 1 not killed detonates for its remaining HP; base HP drops
+mode: run
+baseValue: 0
+baseHp: 100
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". R7 . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+# A far-future pending spawn keeps the wave "open" (this scenario is only about DETONATE, not
+# END CHECK's wave-clear branch — that's covered separately in wave-clear-coins-and-tiles.scenario.yaml).
+pendingSpawns:
+  - { turn: 99, lane: 4, hp: 1 }
+waves:
+  - id: only-wave
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDetonated, lane: 2, damage: 7 }
+  - { type: BaseDamaged, amount: 7, hpBefore: 100, hpAfter: 93 }
+expectState:
+  baseHp: 93
+  board:
+    robots: []

@@ -12,6 +12,7 @@ import type { GameData } from '../data/schemas';
 import { resolveTurn } from '../resolve/resolveTurn';
 import { buildLevelState } from './level';
 import { buildNewRun } from './newRun';
+import { buildNextWave } from './nextWave';
 import { moveCannon, moveTile, placeTile, returnTile, undoCommand } from './planning';
 import type { CommandResult } from './types';
 
@@ -63,6 +64,11 @@ export function applyCommand(
     case 'endTurn': {
       if (state.phase !== 'planning') return { ok: false, error: 'wrong_phase' };
       const result = resolveTurn(state, data);
+      return { ok: true, state: result.state, events: result.events };
+    }
+    case 'nextWave': {
+      if (state.phase !== 'waveCleared') return { ok: false, error: 'wrong_phase' };
+      const result = buildNextWave(state, data);
       return { ok: true, state: result.state, events: result.events };
     }
     case 'buyOffer':

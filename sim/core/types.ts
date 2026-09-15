@@ -61,7 +61,7 @@ export interface Board {
   robots: Robot[];
 }
 
-export type Phase = 'planning' | 'shop' | 'won' | 'lost' | 'levelCleared';
+export type Phase = 'planning' | 'waveCleared' | 'shop' | 'won' | 'lost' | 'levelCleared';
 
 /** One concrete entry of a wave's spawn schedule (GDD §10.3), rolled at wave start by
  * `rollWave`: lane letters are already resolved and the HP range already rolled. */
@@ -201,6 +201,7 @@ export type GameEvent = EventBase &
       }
     | { type: 'RobotWaiting'; robotId: string; lane: Lane; hp: number; maxHp: number; trait: Trait }
     | { type: 'WaveCleared'; waveIndex: number }
+    | { type: 'TilesGranted'; tiles: { pieceId: string; tileId: TileId }[] }
     | { type: 'LevelCleared'; levelId: string }
     | { type: 'RunWon' }
     | { type: 'RunLost' }
@@ -217,6 +218,7 @@ export type Command =
   | { type: 'endTurn' }
   | { type: 'buyOffer'; slot: ShopSlotId }
   | { type: 'leaveShop' }
+  | { type: 'nextWave' }
   | { type: 'newRun'; seed: string }
   | { type: 'loadLevel'; levelId: string };
 

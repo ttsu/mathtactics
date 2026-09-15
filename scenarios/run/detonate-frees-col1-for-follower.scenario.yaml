@@ -1,0 +1,29 @@
+# GDD §4 step 4, §7.2: a robot at col 1 leaves the board immediately in ADVANCE's col-ascending
+# sweep, freeing col 1 in time for the robot behind it to move in during the very same ADVANCE.
+name: col-1 robot detonates and the robot behind it moves into col 1 in the same ADVANCE
+mode: run
+baseValue: 0
+baseHp: 100
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". R6 R4 . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+pendingSpawns:
+  - { turn: 99, lane: 4, hp: 1 }
+waves:
+  - id: only-wave
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotAdvanced, from: { lane: 2, col: 2 }, to: { lane: 2, col: 1 } }
+  - { type: RobotDetonated, lane: 2, damage: 6 }
+  - { type: BaseDamaged, amount: 6, hpBefore: 100, hpAfter: 94 }
+expectState:
+  baseHp: 94
+  board:
+    robots:
+      - { col: 1, hp: 4 }

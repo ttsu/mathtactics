@@ -1,0 +1,28 @@
+# GDD §4 step 4, TR §6: on-board robots advance front-most (lowest column) first — a queue of
+# adjacent robots in one lane all shift left together in the same ADVANCE, each cell freed just
+# in time for the follower behind it.
+name: a queue of robots in one lane all advance together, front-most first
+mode: run
+baseValue: 0
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . R5 R5 R5 . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+waves:
+  - id: only-wave
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotAdvanced, from: { lane: 2, col: 2 }, to: { lane: 2, col: 1 } }
+  - { type: RobotAdvanced, from: { lane: 2, col: 3 }, to: { lane: 2, col: 2 } }
+  - { type: RobotAdvanced, from: { lane: 2, col: 4 }, to: { lane: 2, col: 3 } }
+expectState:
+  board:
+    robots:
+      - { col: 1 }
+      - { col: 2 }
+      - { col: 3 }

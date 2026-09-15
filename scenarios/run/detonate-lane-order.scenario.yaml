@@ -1,0 +1,27 @@
+# GDD §7.2: "Detonations resolve one at a time in lane order." Two robots detonate the same
+# turn, in different lanes — lane 0's resolves before lane 3's.
+name: detonations resolve in lane order across two lanes
+mode: run
+baseValue: 0
+baseHp: 100
+board:
+  - ". R4 . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". R5 . . . . . ."
+  - ". . . . . . . ."
+pendingSpawns:
+  - { turn: 99, lane: 4, hp: 1 }
+waves:
+  - id: only-wave
+    spawns:
+      - { turn: 1, lane: 2, robot: basic, hp: [1, 1] }
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDetonated, lane: 0, damage: 4 }
+  - { type: BaseDamaged, amount: 4, hpBefore: 100, hpAfter: 96 }
+  - { type: RobotDetonated, lane: 3, damage: 5 }
+  - { type: BaseDamaged, amount: 5, hpBefore: 96, hpAfter: 91 }
+expectState:
+  baseHp: 91

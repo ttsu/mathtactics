@@ -1,0 +1,40 @@
+# GDD §10.3, §10.5, §4 step 5; TR §6: a wave clears when every scheduled robot has spawned and
+# none remain. Non-final clears pay the wave-cleared coin and grant the wave's reward tiles to
+# the tray; `nextWave` then starts the next wave's robots with the board/tray otherwise
+# untouched — the granted tile stays right where it landed.
+name: wave clear pays coins and grants reward tiles; nextWave starts the next wave, tiles kept in place
+mode: run
+baseValue: 5
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C R5 . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+waves:
+  - id: wave-1
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+    reward:
+      tiles: ["add:5"]
+  - id: wave-2
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [4, 4] }
+commands:
+  - endTurn
+  - nextWave
+expectEvents:
+  - { type: RobotDefeated, exact: true }
+  - { type: CoinsChanged, reason: exactKill, delta: 2 }
+  - { type: WaveCleared, waveIndex: 0 }
+  - { type: CoinsChanged, reason: waveCleared, delta: 3 }
+  - { type: TilesGranted, tiles: [{ tileId: "add:5" }] }
+  - { type: RobotSpawned, at: { lane: 0, col: 7 }, hp: 4, maxHp: 4 }
+expectState:
+  phase: planning
+  waveIndex: 1
+  turn: 1
+  coins: 5
+  tray: ["piece:0"]
+  pieces:
+    "piece:0": { pieceId: "piece:0", tileId: "add:5" }

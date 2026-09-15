@@ -1,0 +1,32 @@
+# GDD §4 step 1, TR §6 SPAWN: two robots scheduled for the same lane on the same turn — one
+# enters, one waits off-board. The waiter enters as soon as the lane's spawn cell frees up.
+name: two robots due in the same lane on the same turn — one spawns, one waits, then enters next turn
+mode: run
+baseValue: 0
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+pendingSpawns:
+  - { turn: 2, lane: 1, hp: 3 }
+  - { turn: 2, lane: 1, hp: 3 }
+waves:
+  - id: only-wave
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+commands:
+  - endTurn
+  - endTurn
+expectEvents:
+  - { type: RobotSpawned, at: { lane: 1, col: 7 } }
+  - { type: RobotWaiting, lane: 1 }
+  - { type: RobotAdvanced, from: { lane: 1, col: 7 }, to: { lane: 1, col: 6 } }
+  - { type: RobotSpawned, at: { lane: 1, col: 7 } }
+expectState:
+  turn: 3
+  board:
+    robots:
+      - { lane: 1, col: 6 }
+      - { lane: 1, col: 7 }

@@ -1,0 +1,26 @@
+# GDD §4.1: a robot defeated during FIRE never advances or blocks — the robot behind it moves
+# into the freed cell in that same turn's ADVANCE.
+name: front robot killed during FIRE lets the robot behind it advance into the freed cell
+mode: run
+baseValue: 5
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C . . R5 R99 . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+pendingSpawns:
+  - { turn: 99, lane: 4, hp: 1 }
+waves:
+  - id: only-wave
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDefeated, exact: true, at: { lane: 2, col: 3 } }
+  - { type: RobotAdvanced, from: { lane: 2, col: 4 }, to: { lane: 2, col: 3 } }
+expectState:
+  board:
+    robots:
+      - { col: 3, hp: 99 }

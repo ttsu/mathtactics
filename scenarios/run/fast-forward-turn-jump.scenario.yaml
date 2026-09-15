@@ -1,0 +1,25 @@
+# GDD §4.4: an empty board (no robots on-board or waiting) with spawns still scheduled jumps the
+# turn counter straight to the next scheduled spawn — robots spawn in that same resolution.
+name: fast-forward — board emptied with spawns remaining jumps turn and spawns in the same resolution
+mode: run
+baseValue: 1
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C R1 . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+pendingSpawns:
+  - { turn: 5, lane: 2, hp: 3 }
+waves:
+  - id: only-wave
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDefeated, exact: true }
+  - { type: RobotSpawned, at: { lane: 2, col: 7 }, hp: 3, maxHp: 3 }
+expectState:
+  turn: 5
+  pendingSpawns: []
