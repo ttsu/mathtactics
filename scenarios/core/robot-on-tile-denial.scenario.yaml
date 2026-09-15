@@ -1,0 +1,20 @@
+# GDD §3.5: the tile in a robot's own cell does not apply — the robot is hit first, at the
+# ball's value *before* that cell's tile, and the ball is consumed. A wrong implementation that
+# applied the ×10 under the robot would hit for 30 (overkill, not exact) instead of exactly 3.
+name: a tile under a robot does not apply to the ball that hits it
+baseValue: 3
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C . . R3[x10] . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDamaged, ballValue: 3, damage: 3, hpBefore: 3, hpAfter: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: CoinsChanged, delta: 2, reason: exactKill }
+expectState:
+  coins: 2
+  phase: levelCleared

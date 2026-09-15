@@ -1,0 +1,22 @@
+# GDD §6.3: an Odd-only robot blocks any even-valued ball — 0 damage, ball consumed. A second
+# robot placed behind the first (farther along the ball's path) proves the block is real: a
+# blocked ball never passes through to robots behind it.
+name: odd-only robots block even balls, and the block does not pass through
+baseValue: 2
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C R5:odd . . R3 . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+expectEvents:
+  - { type: BallBlocked, value: 2, reason: oddOnly }
+expectState:
+  coins: 0
+  phase: planning
+  board:
+    robots:
+      - { hp: 5 }
+      - { hp: 3 }

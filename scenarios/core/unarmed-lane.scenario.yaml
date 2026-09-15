@@ -1,0 +1,21 @@
+# GDD §5.1: a lane without a cannon fires no ball at all — the robot in it is untouched and no
+# coins change hands.
+name: a lane with no cannon never fires
+baseValue: 5
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . R7"
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+commands:
+  - endTurn
+# No `expectEvents`: an empty list would assert nothing (it's trivially satisfied by any actual
+# event list, including a nonempty one). The real assertion here is the `expectState` below — no
+# lane ever fires, so the robot's HP and the coin total are exactly as they started.
+expectState:
+  coins: 0
+  phase: planning
+  board:
+    robots:
+      - { hp: 7 }

@@ -162,9 +162,37 @@ describe('createTestHandle', () => {
     expect(handle.endTurn()).toEqual(events);
   });
 
-  it('loadScenario throws "not implemented yet (task 8)"', () => {
+  it('loadScenario installs the scenario’s initial state', () => {
     const { handle } = buildHandle();
-    expect(() => handle.loadScenario('')).toThrow('not implemented yet (task 8)');
+    const yamlText = [
+      'name: test scenario',
+      'baseValue: 1',
+      'board:',
+      '  - "C . . . . . . ."',
+      '  - ". . . . . . . ."',
+      '  - ". . . . . . . R5"',
+      '  - ". . . . . . . ."',
+      '  - ". . . . . . . ."',
+    ].join('\n');
+
+    handle.loadScenario(yamlText);
+
+    const state = handle.getState();
+    expect(state).not.toBeNull();
+    expect(state?.phase).toBe('planning');
+    expect(state?.levelId).toBe('scenario:test-scenario');
+    expect(state?.board.cannons).toEqual([true, false, false, false, false]);
+    expect(state?.board.robots).toEqual([
+      {
+        robotId: state?.board.robots[0]?.robotId,
+        lane: 2,
+        col: 7,
+        hp: 5,
+        maxHp: 5,
+        trait: { type: 'none' },
+        isBoss: false,
+      },
+    ]);
   });
 
   it('cellToClient throws "not implemented yet (task 9)"', () => {
