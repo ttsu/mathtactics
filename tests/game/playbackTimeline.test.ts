@@ -63,6 +63,19 @@ describe('planPlayback', () => {
     expect(normal).toBe(fake.playback.beats.defeatMs);
   });
 
+  it('a ball holds longer on a × tile than on a + or − tile', () => {
+    const events = endTurnEvents([EMPTY, EMPTY, 'C +4 x3 -2 . . . .', EMPTY, EMPTY]);
+    const [lane] = planPlayback(events, fake);
+    const holds = lane!.beats
+      .filter((b) => b.event.type === 'BallTransformed')
+      .map((b) => b.durationMs);
+    expect(holds).toEqual([
+      fake.pacing.perTilePauseMs,
+      fake.pacing.multiplyTilePauseMs,
+      fake.pacing.perTilePauseMs,
+    ]);
+  });
+
   it('meets GDD §12.2 with the real presentation.json: ~2–3 s for an active lane with 3 tiles', () => {
     const presentation = realData.presentation;
     // A robot at the far end, a normal (overkill) kill after a 3-tile chain.

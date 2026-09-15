@@ -14,6 +14,7 @@ import type { AppStore } from '../../state/store';
 import { DEPTH, type BoardRenderer } from '../BoardRenderer';
 import {
   BALL_IMPACT_OFFSET,
+  BALL_RADIUS,
   BIG_STAR_RADIUS,
   BURST_RING_WIDTH,
   BURST_STAR_RADIUS,
@@ -21,9 +22,12 @@ import {
   DAMAGE_FONT_SIZE,
   PUFF_RING_WIDTH,
   ROBOT_SIZE,
+  SPARK_STAR_RADIUS,
+  TILE_LABEL_FONT_SIZE,
   cellCenter,
   designToWorld,
 } from '../layout';
+import { tileColor, tileLabel } from '../pieces';
 import { BallView } from '../views/BallView';
 import {
   COIN_TEXT_COLOR,
@@ -35,6 +39,7 @@ import type { RobotView } from '../views/RobotView';
 import { drawRing, drawStar, floatingText } from './effects';
 import { bouncesBack, isHudEvent, lastCellBefore, type PlaybackSegment } from './segments';
 import type { TimedBeat } from './timeline';
+import { transformEffect, type TransformEffect } from './transformEffect';
 
 type EventOf<T extends GameEvent['type']> = Extract<GameEvent, { type: T }>;
 
@@ -44,6 +49,7 @@ export class SegmentPlayer {
   private readonly committed = new Set<number>();
   private ball: BallView | null = null;
   private ballPop: Phaser.Tweens.Tween | null = null;
+  private ballWobble: Phaser.Tweens.Tween | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -102,6 +108,7 @@ export class SegmentPlayer {
     for (const tween of this.tweens) tween.remove();
     this.tweens.length = 0;
     this.ballPop = null;
+    this.ballWobble = null;
     for (const object of this.transients) object.destroy();
     this.transients.length = 0;
     this.ball = null;
@@ -114,7 +121,7 @@ export class SegmentPlayer {
           break;
         case 'BallTransformed': {
           const tile = this.renderer.tileView(event.pieceId);
-          tile?.setScale(1).setDepth(DEPTH.piece);
+          tile?.setScale(1);
           tile?.flash.setAlpha(0);
           break;
         }
@@ -165,27 +172,21 @@ export class SegmentPlayer {
     const next = this.segment.events.find((e) => e.step > event.step);
     const hitsRobot = next?.type === 'RobotDamaged' || next?.type === 'BallBlocked';
     const x = hitsRobot ? target.x - designToWorld(BALL_IMPACT_OFFSET) : target.x;
-    // A ball about to apply a tile hops up onto it, so the tile's label stays readable while it
-    // applies; the next move brings it back down the lane.
-    const onTile = next?.type === 'BallTransformed';
-    const y = onTile ? target.y - designToWorld(this.settings.transform.ballHopPt) : target.y;
-    this.tween({ targets: this.ball, x, y, duration: durationMs, ease: 'Linear' });
+    // The ball rolls straight along the lane, through any tiles (the pass effect keeps the tile's
+    // operation readable while the ball covers it).
+    this.tween({ targets: this.ball, x, y: target.y, duration: durationMs, ease: 'Linear' });
   }
 
   private ballTransformed(event: EventOf<'BallTransformed'>, durationMs: number): void {
     const { transform } = this.settings;
+    const effect = transformEffect(event, transform);
+    const tileColorValue = Phaser.Display.Color.ValueToColor(
+      tileColor(event.tileId, this.store.getState().data).hex,
+    ).color;
     const tile = this.renderer.tileView(event.pieceId);
     if (tile !== undefined) {
-      // The tile is drawn above the ball for its beat so its operator stays readable.
-      tile.setDepth(DEPTH.liftedTile);
       tile.flash.setAlpha(transform.tileFlashAlpha);
-      this.tween({
-        targets: tile.flash,
-        alpha: 0,
-        duration: durationMs,
-        ease: 'Quad.easeIn',
-        onComplete: () => tile.setDepth(DEPTH.piece),
-      });
+      this.tween({ targets: tile.flash, alpha: 0, duration: durationMs, ease: 'Quad.easeIn' });
       this.tween({
         targets: tile,
         scale: transform.tilePopScale,
@@ -194,23 +195,124 @@ export class SegmentPlayer {
         ease: 'Quad.easeOut',
       });
     }
+    const center = worldCenter(event.at);
+    this.operatorLabel(event, effect, center, transform.effectMs);
+    this.passRings(effect, center, tileColorValue, transform.effectMs);
+    this.passSparks(effect, center, tileColorValue, transform.effectMs);
+    if (effect.shake > 0) this.scene.cameras.main.shake(effect.shakeMs, effect.shake, true);
+
     const ball = this.ball;
     if (ball === null) return;
     ball.setValue(event.newValue);
-    // Escalation (GDD §12.2): each further tile in the chain pops the ball bigger.
-    const pop = Math.min(
-      transform.popScaleMax,
-      transform.popScale + transform.popScalePerChain * (event.chainDepth - 1),
-    );
-    this.ballPop?.remove();
-    ball.setScale(1);
+    // Escalation (GDD §12.2): each further tile in the chain pops the ball bigger; × pops hardest.
+    this.settleBall(ball);
     this.ballPop = this.tween({
       targets: ball,
-      scale: pop,
+      scale: effect.ballPopScale,
       duration: durationMs,
       yoyo: true,
       ease: 'Back.easeOut',
     });
+    if (effect.wobbleDeg > 0) {
+      ball.setAngle(-effect.wobbleDeg);
+      this.ballWobble = this.tween({
+        targets: ball,
+        angle: 0,
+        duration: durationMs * 2,
+        ease: 'Elastic.easeOut',
+      });
+    }
+  }
+
+  /** A copy of the tile's label (`+2`, `×3`) pops out of the tile and floats above the ball, so
+   * the operation stays readable while the ball covers the tile. */
+  private operatorLabel(
+    event: EventOf<'BallTransformed'>,
+    effect: TransformEffect,
+    center: { x: number; y: number },
+    effectMs: number,
+  ): void {
+    const label = floatingText(
+      this.scene,
+      center.x,
+      center.y - designToWorld(BALL_RADIUS),
+      tileLabel(event.tileId),
+      TILE_LABEL_FONT_SIZE,
+      LIGHT_TEXT_COLOR,
+    );
+    this.track(label).setDepth(DEPTH.effects).setScale(this.settings.ball.fireFromScale);
+    this.tween({
+      targets: label,
+      y: center.y - designToWorld(effect.labelFloatPt),
+      scale: effect.labelScale,
+      duration: effectMs * this.share.grow,
+      ease: 'Back.easeOut',
+    });
+    this.tween({
+      targets: label,
+      alpha: 0,
+      delay: effectMs * this.share.most,
+      duration: effectMs * this.share.fade,
+    });
+  }
+
+  /** Rings in the tile's colour burst out from behind the ball, one after another. */
+  private passRings(
+    effect: TransformEffect,
+    center: { x: number; y: number },
+    color: number,
+    effectMs: number,
+  ): void {
+    for (let i = 0; i < effect.ringCount; i += 1) {
+      const ring = this.track(
+        drawRing(this.scene.add.graphics(), color, BURST_RING_WIDTH, BALL_RADIUS),
+      );
+      ring.setPosition(center.x, center.y).setDepth(DEPTH.tilePass);
+      this.tween({
+        targets: ring,
+        scale: effect.ringScale,
+        alpha: 0,
+        delay: effectMs * this.share.quick * i,
+        duration: effectMs * this.share.most,
+        ease: 'Cubic.easeOut',
+      });
+    }
+  }
+
+  /** Sparks fly out from behind the ball (× tiles). */
+  private passSparks(
+    effect: TransformEffect,
+    center: { x: number; y: number },
+    color: number,
+    effectMs: number,
+  ): void {
+    const distance = designToWorld(effect.sparkBurstPt);
+    for (let i = 0; i < effect.sparkCount; i += 1) {
+      const angle = (i / effect.sparkCount) * Math.PI * 2;
+      const spark = this.track(
+        drawStar(
+          this.scene.add.graphics(),
+          designToWorld(SPARK_STAR_RADIUS),
+          PLACEHOLDER.tileFlash,
+          color,
+        ),
+      );
+      spark.setPosition(center.x, center.y).setDepth(DEPTH.tilePass);
+      this.tween({
+        targets: spark,
+        x: center.x + Math.cos(angle) * distance,
+        y: center.y + Math.sin(angle) * distance,
+        angle: this.settings.exactKill.starSpinDeg,
+        duration: effectMs * this.share.most,
+        ease: 'Cubic.easeOut',
+      });
+      this.tween({
+        targets: spark,
+        alpha: 0,
+        delay: effectMs * this.share.half,
+        duration: effectMs * this.share.fade,
+      });
+    }
   }
 
   private robotDamaged(event: EventOf<'RobotDamaged'>, durationMs: number): void {
@@ -430,6 +532,7 @@ export class SegmentPlayer {
   private ballExited(_event: EventOf<'BallExited'>, durationMs: number): void {
     const ball = this.ball;
     if (ball === null) return;
+    this.settleBall(ball);
     this.tween({
       targets: ball,
       x: ball.x + designToWorld(this.settings.exit.rollPt),
@@ -476,8 +579,17 @@ export class SegmentPlayer {
     const ball = this.ball;
     if (ball === null) return;
     this.ball = null;
-    this.ballPop?.remove();
+    this.settleBall(ball);
     this.tween({ targets: ball, scale: 0, alpha: 0, duration: durationMs, ease: 'Quad.easeIn' });
+  }
+
+  /** Stops the ball's tile pop and wobble, leaving it upright at rest scale. */
+  private settleBall(ball: BallView): void {
+    this.ballPop?.remove();
+    this.ballWobble?.remove();
+    this.ballPop = null;
+    this.ballWobble = null;
+    ball.setScale(1).setAngle(0);
   }
 
   private popAway(robotId: string, popScale: number, durationMs: number): void {

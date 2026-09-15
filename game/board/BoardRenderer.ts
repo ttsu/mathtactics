@@ -39,9 +39,9 @@ export const DEPTH = {
   robot: 3,
   trayMarkers: 4,
   laneWash: 5,
-  ball: 6,
-  /** A tile lifted above the ball while it applies, so its label stays readable. */
-  liftedTile: 7,
+  /** Rings and sparks from a ball passing through a tile — behind the ball, so its number stays clear. */
+  tilePass: 6,
+  ball: 7,
   effects: 8,
   held: 10,
 } as const;

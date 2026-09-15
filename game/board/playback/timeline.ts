@@ -5,6 +5,7 @@
 import type { GameEvent } from '../../../sim/core/types';
 import type { GameData } from '../../../sim/data/schemas';
 import { toSegments, type PlaybackSegment } from './segments';
+import { tileKind } from './transformEffect';
 
 export type PresentationSettings = Pick<GameData['presentation'], 'pacing' | 'playback'>;
 
@@ -40,7 +41,7 @@ export function beatDurationMs(
     case 'BallMoved':
       return segment.ballExits ? pacing.exitBallCellDurationMs : pacing.ballCellDurationMs;
     case 'BallTransformed':
-      return pacing.perTilePauseMs;
+      return tileKind(event.tileId) === 'mul' ? pacing.multiplyTilePauseMs : pacing.perTilePauseMs;
     case 'BallExited':
       return beats.exitMs;
     case 'BallBlocked':

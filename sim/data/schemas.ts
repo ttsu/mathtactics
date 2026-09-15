@@ -118,12 +118,35 @@ const scale = () => z.number().positive();
 const shakeIntensity = () => z.number().min(0).max(0.05);
 const share = () => z.number().min(0).max(1);
 
+/** How hard a ball passing through one kind of tile is emphasised (presentation only). */
+const TransformStrengthSchema = z.object({
+  /** Added to the chain's ball pop scale. */
+  popBonus: z.number().nonnegative(),
+  /** The ball covers the tile as it rolls through, so a copy of the tile's label floats up this
+   * far above the ball's centre (clear of the popped ball) to keep the operation readable. */
+  labelFloatPt: z.number().nonnegative(),
+  /** Peak scale of the floating operator label. */
+  labelScale: scale(),
+  /** Rings in the tile's colour bursting out from the ball, and how far each grows (× ball size). */
+  ringCount: z.number().int().nonnegative(),
+  ringScale: scale(),
+  /** Sparks flying out from the ball, and how far they fly. */
+  sparkCount: z.number().int().nonnegative(),
+  sparkBurstPt: z.number().nonnegative(),
+  /** The ball rocks this far either way while it pops (0 = no rock). */
+  wobbleDeg: z.number().nonnegative(),
+  shakeMs: ms(),
+  shake: shakeIntensity(),
+});
+
 const PresentationFileSchema = z.object({
   pacing: z.object({
     ballCellDurationMs: z.number().positive(),
     /** Per-cell travel for a lane whose ball exits without hitting a robot (task 10 req. 2). */
     exitBallCellDurationMs: z.number().positive(),
     perTilePauseMs: z.number().nonnegative(),
+    /** The hold on a `×N` tile — longer than `perTilePauseMs` so its stronger effect lands. */
+    multiplyTilePauseMs: z.number().nonnegative(),
     laneGapMs: z.number().nonnegative(),
     advanceDurationMs: z.number().positive(),
   }),
@@ -162,15 +185,18 @@ const PresentationFileSchema = z.object({
     }),
     transform: z.object({
       /** Ball scale pop on the first tile; each further tile in the chain adds `popScalePerChain`,
-       * up to `popScaleMax` (escalation, GDD §12.2). */
+       * up to `popScaleMax` (escalation, GDD §12.2). A tile kind's `popBonus` is added on top. */
       popScale: scale(),
       popScalePerChain: z.number().nonnegative(),
       popScaleMax: scale(),
       tilePopScale: scale(),
       tileFlashAlpha: z.number().min(0).max(1),
-      /** The ball hops up this far onto a tile it is about to apply (and the tile draws above it for
-       * the beat), so the tile's label stays readable. */
-      ballHopPt: z.number().nonnegative(),
+      /** How long the pass effect (operator label, rings, sparks) plays. It may outlast the tile's
+       * pause — the ball rolls on while it fades. */
+      effectMs: ms(),
+      /** Pass effect for `+N` / `−N` tiles, and a stronger one for `×N` tiles. */
+      additive: TransformStrengthSchema,
+      multiply: TransformStrengthSchema,
     }),
     impact: z.object({
       knockbackPt: z.number().nonnegative(),

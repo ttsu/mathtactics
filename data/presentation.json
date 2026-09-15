@@ -3,6 +3,7 @@
     "ballCellDurationMs": 160,
     "exitBallCellDurationMs": 60,
     "perTilePauseMs": 120,
+    "multiplyTilePauseMs": 240,
     "laneGapMs": 300,
     "advanceDurationMs": 400
   },
@@ -41,7 +42,31 @@
       "popScaleMax": 2,
       "tilePopScale": 1.12,
       "tileFlashAlpha": 0.75,
-      "ballHopPt": 72
+      "effectMs": 520,
+      "additive": {
+        "popBonus": 0,
+        "labelFloatPt": 66,
+        "labelScale": 1.15,
+        "ringCount": 1,
+        "ringScale": 1.9,
+        "sparkCount": 0,
+        "sparkBurstPt": 0,
+        "wobbleDeg": 0,
+        "shakeMs": 0,
+        "shake": 0
+      },
+      "multiply": {
+        "popBonus": 0.35,
+        "labelFloatPt": 100,
+        "labelScale": 1.6,
+        "ringCount": 2,
+        "ringScale": 2.8,
+        "sparkCount": 8,
+        "sparkBurstPt": 84,
+        "wobbleDeg": 14,
+        "shakeMs": 140,
+        "shake": 0.005
+      }
     },
     "impact": {
       "knockbackPt": 16,
