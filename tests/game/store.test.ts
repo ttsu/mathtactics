@@ -589,6 +589,39 @@ describe('finishPlayback', () => {
       });
     }
 
+    it('clamps display.baseHp at 0 for a lost run whose final blow took it negative (tasks 14+15 integration)', () => {
+      // Neither task's own tests covered this combination: task 14's won/lost fixtures used
+      // `baseHp: 0`; task 15's clamp test used a phase that isn't `won`/`lost`. The merged
+      // `finishPlayback` runs the same `displayFromRun` clamp on both branches, so a run that
+      // lost by taking `baseHp` negative must still show ♥ 0, not a negative number, once the
+      // won/lost screen switch and `clearRun` fire.
+      const storage = createMemoryStorage();
+      const store = createAppStore({
+        data: fakeGameData(),
+        applyCommand: stubApplyCommand,
+        storage,
+        basePath: '/',
+      });
+      const run = fakeRunState({ mode: 'run', phase: 'lost', baseHp: -12 });
+      storage.setItem(
+        scopedKey('/', 'run'),
+        JSON.stringify({ schemaVersion: 1, savedAt: 1, state: run }),
+      );
+      store.setState({
+        run,
+        savedRun: run,
+        screen: 'game',
+        playback: { status: 'playing', events: [], cursor: 0 },
+      });
+
+      store.getState().finishPlayback();
+
+      expect(store.getState().screen).toBe('lost');
+      expect(store.getState().display.baseHp).toBe(0);
+      expect(store.getState().savedRun).toBeNull();
+      expect(storage.getItem(scopedKey('/', 'run'))).toBeNull();
+    });
+
     it('leaves the screen and save alone for any other phase', () => {
       const storage = createMemoryStorage();
       const store = createAppStore({
