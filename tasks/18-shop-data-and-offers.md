@@ -213,8 +213,7 @@ wave never has a shop (GDD §8.3).
 **Verification:** npm test ✔ (54 files / 809 tests) · typecheck ✔ · lint ✔ · build not required · e2e not required
 
 **Deviations from spec:**
-- Branch name is `cursor/18-shop-data-and-offers-8f5d` (requested) rather than `task/18-shop-data-and-offers`.
-- No PR opened (requested). Preview URL therefore N/A.
+- Branch name is `cursor/18-shop-data-and-offers-8f5d` (stacked-PR convention) rather than `task/18-shop-data-and-offers`.
 - Two-wave schema fixtures wrap `fakeShop()` with `afterWave` 1…`waves.length-1` tables whose `n` is `[1, 1]`, so they parse against a one-tile `tiles` array. One-wave fixtures keep `shops: []` as specified.
 
 **Architectural decisions made:**
