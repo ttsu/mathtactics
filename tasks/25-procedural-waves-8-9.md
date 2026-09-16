@@ -23,8 +23,10 @@ adding wave 9 as last means shop after 9 is **not** required until task 26 adds 
 **this task ships `afterWave` 7 and 8**, and **also ships `afterWave` 9** (allowed extra table
 today; required once wave 10 exists). That way task 26 does not touch `shop.json`.
 
-Playtest 3 asked for hardness. These waves are the stretch: mixed traits, more simultaneous
-lanes (up to 4), HP inside §6.6 (≤ 99). Armor is deferred to v1.1+.
+Playtest 3 asked for hardness. These waves are the stretch: mixed traits, up to 4 simultaneous
+lanes, HP inside §6.6 (≤ 99). They are where a sensible player **loses most of the 20–50 HP**
+between wave 7 (80–100 leftover) and the win (median 50–70, min near 40). Armor is deferred
+to v1.1+.
 
 ## Requirements
 
@@ -80,8 +82,10 @@ lanes (up to 4), HP inside §6.6 (≤ 99). Armor is deferred to v1.1+.
    `RobotSpawned`. Gameplay change → event list (CLAUDE.md rule 2).
 
 6. **Ladder tests:** extend `tests/ladder.test.ts` to the new `waves.json` length. Sensible
-   player still wins seeds 1–100 above 40 base HP; End-Turn-only still loses. If the draft
-   numbers break that, retune **waves 8–9 only** (not 1–7) and record why.
+   player still wins seeds 1–100. On this 9-wave run (no Boss yet), leftover should already
+   sit near the 10-wave target — **min ≥ 40**, **median 50–70** — because the Boss wave is
+   not a chip source. End-Turn-only still loses. If the draft numbers break that, retune
+   **waves 8–9 only** (not 1–7) and record why.
 
 ## Out of Scope
 

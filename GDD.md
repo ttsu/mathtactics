@@ -25,6 +25,8 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   base HP (min ≥ 80 across seeds 1–100; at least some seeds finish below 100 — today's
   100/100/100 is the too-easy bug). Waves 8–10 do the real damage: a sensible player
   **wins the 10-wave run** with leftover **min near 40** (still ≥ 40) and **median 50–70**.
+  Those chips come from **waves 8–9** (mixed traits, up to 4 lanes). The Boss escort is light;
+  detonating the Boss is a loss, not a chip.
 - **Armor is deferred to v1.1+.** It is a new rule (a second number on the robot), not a trait.
   It fights §11.2 (HP is the largest element) and is closer to Barrier (§19) than to Weakness /
   Bounce-back / parity. Not in M4, M5, or v1.
@@ -965,6 +967,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Wave 5 stays fully `basic` — subtraction is the lesson, not a new trait.
 - Waves 4–7 leftover after wave 7: sensible-player min ≥ 80, and not every seed at 100.
 - 10-wave leftover after the Boss: sensible-player min near 40 (still ≥ 40), median 50–70.
+  Chips come from waves 8–9; Boss escort is light; leaking the Boss is a loss.
 - The Settings gear on the main menu is labelled *Settings* (one extra word beyond the §11.1
   navigation list). Hints and Sound toggles are icon + one word each.
 - The sound toggle persists and does nothing to playback until M5 ships Web Audio.
