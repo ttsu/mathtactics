@@ -105,6 +105,39 @@ test('HUD re-aligns after a live resize', async ({ page }) => {
   expect((await canvasRect(page)).height).toBeCloseTo(390, 0);
 });
 
+test.describe('iOS frame backdrop', () => {
+  test.use({
+    userAgent:
+      'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+  });
+
+  test('stretches full width beside a height-limited canvas', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await gotoGame(page);
+
+    const canvas = await canvasRect(page);
+    const backdrop = page.getByTestId('frame-backdrop');
+    await expect(backdrop).toBeVisible();
+
+    const box = await backdrop.boundingBox();
+    expect(box).toEqual({
+      x: 0,
+      y: canvas.y,
+      width: 1600,
+      height: canvas.height,
+    });
+    await expect(backdrop).toHaveCSS('background-image', /linear-gradient/);
+  });
+
+  test('stays hidden when the canvas already fills the viewport width', async ({ page }) => {
+    for (const size of LANDSCAPE_SIZES) {
+      await page.setViewportSize(size);
+      await gotoGame(page);
+      await expect(page.getByTestId('frame-backdrop')).toBeHidden();
+    }
+  });
+});
+
 test('rotate overlay covers the screen in portrait', async ({ page }) => {
   await page.setViewportSize({ width: 820, height: 1180 });
   await gotoApp(page);

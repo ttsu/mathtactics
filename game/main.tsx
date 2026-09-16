@@ -7,7 +7,12 @@ import { cellToClient, createBoardGame, designToClient } from './board';
 import { safeStorage } from './safeStorage';
 import { gameData } from './state/gameData';
 import { getAudioContext, installAudioUnlock } from './state/audio';
+import {
+  frameBackdropGradient,
+  frameBackdropPlacement,
+} from './state/frameBackdrop';
 import { DESIGN_HEIGHT, DESIGN_WIDTH, placementOverCanvas } from './state/designSpace';
+import { isIOS } from './state/platform';
 import { createAppStore } from './state/store';
 import { App, StoreProvider } from './ui';
 
@@ -20,6 +25,7 @@ function requireElement(id: string): HTMLElement {
 }
 
 const app = requireElement('app');
+const frameBackdrop = requireElement('frame-backdrop');
 const boardRoot = requireElement('board-root');
 const uiRoot = requireElement('ui-root');
 
@@ -28,13 +34,28 @@ const uiRoot = requireElement('ui-root');
 uiRoot.style.width = `${DESIGN_WIDTH}px`;
 uiRoot.style.height = `${DESIGN_HEIGHT}px`;
 
+function placeFrameBackdrop(canvas: HTMLCanvasElement): void {
+  if (!isIOS()) {
+    frameBackdrop.style.display = 'none';
+    return;
+  }
+  const placement = frameBackdropPlacement(canvas.getBoundingClientRect(), window.innerWidth);
+  if (placement === null) {
+    frameBackdrop.style.display = 'none';
+    return;
+  }
+  frameBackdrop.style.display = 'block';
+  frameBackdrop.style.top = `${placement.top}px`;
+  frameBackdrop.style.height = `${placement.height}px`;
+  frameBackdrop.style.background = frameBackdropGradient(placement);
+}
+
 function placeUiRoot(canvas: HTMLCanvasElement): void {
-  const { left, top, scale } = placementOverCanvas(
-    canvas.getBoundingClientRect(),
-    app.getBoundingClientRect(),
-  );
+  const canvasRect = canvas.getBoundingClientRect();
+  const { left, top, scale } = placementOverCanvas(canvasRect, app.getBoundingClientRect());
   uiRoot.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
   uiRoot.style.visibility = 'visible';
+  placeFrameBackdrop(canvas);
 }
 
 const audioContext = getAudioContext();
