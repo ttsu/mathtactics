@@ -1,15 +1,22 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.6
+**Version:** 0.6.1
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
-**Status:** M2 built (Playtest 2 pending); M3 decisions recorded (v0.6); navigation labels allowed
-(v0.5, §11.1). This document is the single source of truth for *design*.
+**Status:** M3 built (Playtest 2–3 pending); HUD fire control is ▶ Go (v0.6.1, §11.1). This
+document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.6.1
+
+The in-play fire control is a green ▶ **Go**, not an orange "End Turn" label. Firing is the one
+required action each turn; the old wording and colour were too easy to miss. After
+`presentation.json` `hud.goNudgeIdleMs` with no tile, cannon, or tray change during planning, Go
+gives a subtle wiggle. The simulation command remains `endTurn`.
 
 ## 0. Changes in v0.6
 
@@ -205,7 +212,7 @@ enters a cell containing a robot, **the robot is hit first and the ball is consu
 
 ## 4. Turn Structure
 
-A **wave** is played over multiple **turns**. Only End Turn is a required player action.
+A **wave** is played over multiple **turns**. Only Go (End Turn) is a required player action.
 
 ```
 1. SPAWN         Robots scheduled for this turn (and any robots waiting off-board)
@@ -213,7 +220,7 @@ A **wave** is played over multiple **turns**. Only End Turn is a required player
                  A robot whose spawn cell is occupied waits off-board (shown as a ghost).
 2. PLANNING      Untimed. Player drags tiles between tray and cells, moves cannons
                  between empty cannon slots, uses Undo, may Replay the last turn.
-3. FIRE          Player taps End Turn. Each armed lane resolves independently (§5).
+3. FIRE          Player taps Go. Each armed lane resolves independently (§5).
                  Hits resolve immediately, per ball (§5.4).
 4. ADVANCE       Surviving robots advance one cell left, front-most (lowest column)
                  first. A robot blocked by a robot ahead waits in place.
@@ -653,12 +660,15 @@ and the reward chips became the wallet beat above.
    that *navigates* — menu entries, screen buttons — pairs its icon with a short label beneath.
    Rules for that label:
    - One or two words, grade-1 decodable, from the kid's spoken vocabulary
-     (*Keep Going*, *New Game*, *Puzzles*, *Home*, *Next*). Never *Continue*, *Resume*,
+     (*Keep Going*, *New Game*, *Puzzles*, *Home*, *Next*, *Go*). Never *Continue*, *Resume*,
      *Proceed*, *Select*.
    - It **repeats** what the icon already says; it never adds information the icon lacks.
      Cover the text and the screen must still be usable.
-   - In-play HUD controls (End Turn, Undo, Replay) stay icon-only — they are used dozens of
-     times a run and are learned by doing, not by reading.
+   - In-play HUD Undo and Replay stay icon-only — they are used dozens of times a run and are
+     learned by doing, not by reading.
+   - The fire control is a green ▶ **Go**. Firing is the one required action each turn, so it
+     pairs the play icon with a one-word label (same rule as navigation: cover the text and the
+     button still reads). After `hud.goNudgeIdleMs` with no tile/cannon/tray change, it wiggles.
    - Still no sentences, no instructions, no explanations of rules, and no words carrying math
      meaning. Wave design does the teaching (§9).
 2. **Numbers are the largest UI element.** Ball values and robot HP beat art for priority.
@@ -707,6 +717,8 @@ timed, escalating sequence**. The simulation produces an event list; presentatio
 
 - **Danger glow:** a lane whose robot stands on column 1 (it will detonate this turn unless
   killed) pulses red at the base strip, and that robot wobbles slightly.
+- **Go nudge:** if tiles, cannons, and the tray have not changed for `hud.goNudgeIdleMs` during
+  planning, the Go button wiggles. Any placement, move, return, or cannon move restarts the wait.
 
 **Requirements:**
 
@@ -877,6 +889,8 @@ Task specs are written one milestone at a time; later milestones may change afte
 | Blocked | A wrong-parity ball; 0 damage, consumed. |
 | Hint | Optional running-total numbers under tiles during planning. |
 | Playback | Presentation performing a resolved event list. |
+| Go | HUD fire control (green ▶). Tapping it dispatches End Turn. |
+| End Turn | The command that starts FIRE. The HUD label is Go. |
 
 ---
 

@@ -318,6 +318,17 @@ const PresentationFileSchema = z.object({
     wobbleDeg: z.number().nonnegative(),
     wobbleMs: ms(),
   }),
+  /** In-play HUD fire control (▶ Go). Presentation only — never changes an outcome. */
+  hud: z.object({
+    /** Fill of the Go button. Green reads as "do this next" against the dark HUD. */
+    goColor: z.string().min(1),
+    /** How long planning can sit with no tile/cannon/tray change before Go wiggles. */
+    goNudgeIdleMs: ms(),
+    /** One wiggle cycle (a short shake, then rest). */
+    goNudgeWiggleMs: z.number().positive(),
+    /** How far Go rocks each way, in degrees. */
+    goNudgeWiggleDeg: z.number().nonnegative(),
+  }),
 });
 
 /** References an existing tile definition by id (e.g. `"add:5"`) — used by shop guarantees,
