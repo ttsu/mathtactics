@@ -199,4 +199,37 @@ wave never has a shop (GDD §8.3).
 
 ## Completion Notes
 
-_(filled in by `/finish-task`)_
+**Status:** Complete
+**Completed:** 2026-09-16
+**PR:** none (branch `cursor/18-shop-data-and-offers-8f5d` from `cursor/m3-spec-clarifications-8f5d`; no PR per request)
+
+**Acceptance criteria:**
+- [x] `shop.json` ships prices, formulas and six per-wave tables with guarantees matching GDD §10.2 — Met
+- [x] `ShopFileSchema` validates all of requirement 7, with fixture tests for each failure — Met (`tests/sim/data/shop.test.ts`)
+- [x] `rollShop` is pure, deterministic, `shop`-stream-only, and honours guarantees, ranges and duplicates — Met
+- [x] Prices come only from data; no number hardcoded in `/sim` — Met
+- [x] `npm test`, `typecheck`, `lint` pass — Met (809 tests)
+
+**Verification:** npm test ✔ (54 files / 809 tests) · typecheck ✔ · lint ✔ · build not required · e2e not required
+
+**Deviations from spec:**
+- Branch name is `cursor/18-shop-data-and-offers-8f5d` (requested) rather than `task/18-shop-data-and-offers`.
+- No PR opened (requested). Preview URL therefore N/A.
+- Two-wave schema fixtures wrap `fakeShop()` with `afterWave` 1…`waves.length-1` tables whose `n` is `[1, 1]`, so they parse against a one-tile `tiles` array. One-wave fixtures keep `shops: []` as specified.
+
+**Architectural decisions made:**
+- `ShopFileSchema` holds per-file rules (unique `afterWave`, legal `n`, weights, satisfiable `{ kind, n? }` guarantees, `tileSlots ≥ 1`). Cross-file rules live on `GameDataSchema.superRefine` with issue paths starting at `'shop'`: wave coverage `{1…waves.length-1} ⊆ afterWave`, every id in a table range exists in `tiles.json`, `{ tileId }` names a real tile, `prices` covers every `priceCategory` used by tiles.
+- Extra `afterWave` tables (`≥ waves.length`) are allowed so the six M3 shops ship while `waves.json` still has three waves.
+- `rollShop` returns `{ offers, rng }` where `rng` is the advanced **shop** stream only; it does not write `RunState.shop` or change phase.
+
+**Design questions raised:**
+- None.
+
+**Known issues / follow-up:**
+- Task 19 must call `rollShop(waveIndex + 1, …)` (1-based `afterWave`) when entering the shop, install `ShopState`, and bump `economy.json` `schemaVersion`.
+
+**Files created:** `sim/shop/pricing.ts`, `sim/shop/rollShop.ts`, `tests/helpers/shop.ts`, `tests/sim/shop/pricing.test.ts`, `tests/sim/shop/rollShop.test.ts`, `tests/sim/data/shop.test.ts`
+**Files modified:** `data/shop.json`, `sim/core/types.ts`, `sim/data/schemas.ts`, `sim/shop/index.ts`, `tests/sim/commands/fixtures.ts`, `tests/sim/commands/loadLevel.test.ts`, `tests/sim/data/{load,waves,levels}.test.ts`, `tests/game/{store,testHandle}.test.ts`, `TASKS.md`, `tasks/18-shop-data-and-offers.md`
+
+**Notes for next agent:**
+- Offers are rolled here; nothing opens a shop yet. Convert with `afterWave = waveIndex + 1`. Guaranteed cards are always leftmost. Cannon stays in layout at `maxCannons` with `available: false`. Do not bump `schemaVersion` until `RunState.shop` and wave `reward` actually change.

@@ -54,7 +54,7 @@ A run becomes 7 waves and losable for the first time.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
-| 18 | [Shop data, pricing & offer generation](tasks/18-shop-data-and-offers.md) | sim / data | — | In Progress |
+| 18 | [Shop data, pricing & offer generation](tasks/18-shop-data-and-offers.md) | sim / data | — | Complete |
 | 19 | [Shop phase, commands & run flow](tasks/19-shop-phase-and-flow.md) | sim / state | 18 | Not Started |
 | 20 | [Shop screen, seen-tiles log & NEW badge](tasks/20-shop-screen-and-seen-log.md) | ui / state | 19 | Not Started |
 | 21 | [Ladder waves 4–7, balance, full-run e2e & Playtest 3 checklist](tasks/21-ladder-waves-4-7.md) | data / e2e | 19, 20, H2 | Not Started |
