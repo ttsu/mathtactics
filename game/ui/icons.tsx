@@ -89,3 +89,41 @@ export function StarIcon({ size }: { size: number }) {
     </svg>
   );
 }
+
+/** A big round smiling face — the lose screen's "cheerful, not sad" signal (task 16 req. 3: no
+ * shaming, no red X, no "game over" imagery). */
+export function SmileIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
+      <circle cx="50" cy="50" r="46" fill="#ffd166" stroke="#e09f1f" strokeWidth="5" />
+      <circle cx="34" cy="42" r="7" fill="#3a2e1e" />
+      <circle cx="66" cy="42" r="7" fill="#3a2e1e" />
+      <path
+        d="M26 56 Q50 86 74 56"
+        fill="none"
+        stroke="#3a2e1e"
+        strokeWidth="8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** A small rounded robot, arms out — the lose screen's "silly dance" placeholder (task 16 req.
+ * 3), coloured via `currentColor` so each copy can dance in a different colour. */
+export function DancingRobotIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 60 70" width={size} height={size} aria-hidden="true">
+      <rect x="8" y="10" width="10" height="10" rx="4" fill="currentColor" />
+      <rect x="42" y="10" width="10" height="10" rx="4" fill="currentColor" />
+      <rect x="14" y="20" width="32" height="32" rx="12" fill="currentColor" />
+      <circle cx="24" cy="34" r="5" fill="#ffffff" />
+      <circle cx="36" cy="34" r="5" fill="#ffffff" />
+      <path d="M22 42 Q30 50 38 42" stroke="#ffffff" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <rect x="2" y="26" width="10" height="8" rx="4" fill="currentColor" />
+      <rect x="48" y="26" width="10" height="8" rx="4" fill="currentColor" />
+      <rect x="18" y="52" width="10" height="14" rx="4" fill="currentColor" />
+      <rect x="32" y="52" width="10" height="14" rx="4" fill="currentColor" />
+    </svg>
+  );
+}

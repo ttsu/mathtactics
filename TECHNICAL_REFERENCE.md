@@ -419,9 +419,10 @@ treatment a `won`/`lost` save gets if found on boot (not resumable, cleared imme
 sets `screen: 'menu'`, refused only while playback is active; a run is already saved, and a puzzle
 session is simply dropped (`run`/`savedRun` untouched).
 
-The HUD's ⌂ Home button is shown whenever playback is idle, except during the run-mode
-`waveCleared` phase (`hudButtons(state).home` in `/game/ui/hudButtons.ts` — task 16's own
-`showWaveCleared` names the same overlay condition, kept local here rather than shared). In run
+The HUD's ⌂ Home button is shown whenever playback is idle, except while the run-mode wave-cleared
+overlay is up (`hudButtons(state).home` in `/game/ui/hudButtons.ts` calls `showWaveCleared` from
+`/game/state/waveFlow.ts`, so the condition is defined once). When hidden it keeps its slot
+(`visibility: hidden`, disabled), so the dots, ♥ and 🪙 never shift. In run
 mode the HUD shows wave dots (`LevelDots`, reusing task 11's component; count = `waves.json`
 length, current = `waveIndex`) and ♥ base HP clamped at 0 for display only (`baseHp` itself is
 never clamped, TR §7).
@@ -568,7 +569,8 @@ window.__GAME__ = {
   getEvents(): GameEvent[];                 // last resolved turn
   dispatch(cmd: Command): { ok: boolean; error?: CommandError };
   loadState(state: RunState): void;         // install directly, bypassing menus/shop (screen → 'game')
-  loadScenario(yamlText: string): void;     // install a scenario's initial state
+  loadScenario(yamlText: string): void;     // install a scenario's initial state; its `waves:` (if any)
+                                            // replaces the shipped waves until the next load/reload
   endTurn(): GameEvent[];
   skipAnimation(): void;                    // finish playback instantly
   isIdle(): boolean;                        // no playback, no tweens pending

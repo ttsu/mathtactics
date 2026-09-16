@@ -141,7 +141,11 @@
     "trayScrollThresholdPt": 12
   },
   "screens": {
-    "popInMs": 450
+    "popInMs": 450,
+    "rewardStaggerMs": 180,
+    "iconStaggerMs": 90,
+    "danceMs": 900,
+    "danceStaggerMs": 150
   },
   "danger": {
     "pulseMs": 700,

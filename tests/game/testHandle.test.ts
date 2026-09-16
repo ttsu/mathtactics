@@ -232,6 +232,36 @@ describe('createTestHandle', () => {
     ]);
   });
 
+  it('loadScenario with waves: runs the session on those waves; loadState restores the shipped ones', () => {
+    const { store, handle } = buildHandle();
+    const shipped = store.getState().data;
+    const yamlText = [
+      'name: scenario waves',
+      'mode: run',
+      'baseValue: 1',
+      'board:',
+      ...Array(5).fill('  - ". . . . . . . ."'),
+      'waves:',
+      '  - id: first',
+      '    spawns:',
+      '      - { turn: 1, lane: 0, robot: basic, hp: [2, 2] }',
+      '    reward:',
+      '      tiles: ["add:5"]',
+      '  - id: second',
+      '    spawns:',
+      '      - { turn: 1, lane: 1, robot: basic, hp: [3, 3] }',
+    ].join('\n');
+
+    handle.loadScenario(yamlText);
+    const data = store.getState().data;
+    expect(data.waves.waves.map((wave) => wave.id)).toEqual(['first', 'second']);
+    // Only `waves` is swapped; everything else is still the shipped data.
+    expect({ ...data, waves: shipped.waves }).toEqual(shipped);
+
+    handle.loadState(fakeRunState());
+    expect(store.getState().data).toBe(shipped);
+  });
+
   it('cellToClient delegates to the mounted board', () => {
     const store = createAppStore({
       data: fakeGameData(),

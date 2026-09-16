@@ -357,3 +357,96 @@
     opacity: 1;
   }
 }
+
+/* --- Task 16: wave-cleared overlay, win/lose screens --- */
+
+.reward-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  max-width: 900px;
+}
+
+.reward-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+  font-size: 44px;
+  color: #1a1a1a;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+}
+
+.exact-kill-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.exact-kill-icons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 520px;
+}
+
+.exact-kill-number {
+  font-size: 96px;
+  line-height: 1;
+}
+
+.win-celebration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.win-stars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.confetti {
+  display: flex;
+  gap: 14px;
+}
+
+.confetti-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.lose-cheer {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.lose-robots {
+  display: flex;
+  gap: 20px;
+}
+
+.dancing-robot {
+  display: inline-flex;
+  animation: dance var(--dance-ms, 0ms) ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+@keyframes dance {
+  0%,
+  100% {
+    transform: rotate(-12deg) translateY(0);
+  }
+  50% {
+    transform: rotate(12deg) translateY(-8px);
+  }
+}
