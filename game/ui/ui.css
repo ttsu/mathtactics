@@ -366,18 +366,12 @@
 }
 
 .wave-wallet-bonus {
-  font-size: 44px;
-  font-weight: 800;
-  color: #ffd166;
-}
-
-.wave-wallet-bonus {
-  font-size: 44px;
-  font-weight: 800;
-  color: #ffd166;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-size: 44px;
+  font-weight: 800;
+  color: #ffd166;
 }
 
 .shop-wallet-inline {
