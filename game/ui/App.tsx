@@ -3,6 +3,7 @@ import { Hud } from './Hud';
 import { LevelClearedOverlay } from './LevelClearedOverlay';
 import { MainMenu } from './MainMenu';
 import { RotateOverlay } from './RotateOverlay';
+import { UpdateBanner } from './UpdateBanner';
 import { useAppStore } from './StoreContext';
 import './ui.css';
 
@@ -20,6 +21,7 @@ export function App() {
       )}
       {screen === 'allDone' && <AllDoneScreen />}
       <RotateOverlay />
+      <UpdateBanner />
     </>
   );
 }

@@ -566,6 +566,13 @@ Playwright asserts on structured state. Screenshots are for legibility review on
   (`/game/state/audio.ts`: `getAudioContext()`, `installAudioUnlock()`), also handed to Phaser via
   `audio.context` so the app never holds two.
 - Vite `base: "./"`.
+- **Update detection (production only):** each deploy to `main` stamps `import.meta.env.VITE_BUILD_ID`
+  (full `GITHUB_SHA`) and emits `version.json` plus `<meta name="mt-build-id">` in `index.html`.
+  On production (`basePath === '/'`), the client polls `version.json` every 5 minutes and on
+  `visibilitychange` / `pageshow`; if the fetch fails, it falls back to parsing the meta tag from
+  `index.html`. When a newer build is found, React shows a bottom banner (“Update available” /
+  Reload). Dismiss hides it until the next time the page becomes visible. PR previews and dev skip
+  checks. Reload is a full page refresh (save/resume is not required for the prompt).
 
 ---
 

@@ -30,6 +30,8 @@ jobs:
         run: npm ci
 
       - name: Build (no test handle)
+        env:
+          VITE_BUILD_ID: ${{ github.sha }}
         run: npm run build
 
       - name: Check dist has no test handle
