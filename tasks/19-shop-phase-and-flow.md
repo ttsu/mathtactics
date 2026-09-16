@@ -173,7 +173,7 @@ requires phase `shop` instead of `waveCleared`.
 
 **Status:** Complete
 **Completed:** 2026-09-16
-**PR:** not opened (stacked on `cursor/18-shop-data-and-offers-8f5d`; user asked to skip `gh pr create`)
+**PR:** #34 · stacked on #33 (`cursor/18-shop-data-and-offers-8f5d`)
 
 **Acceptance criteria:**
 - [x] Wave rewards are gone from data, schema, resolution and UI; the shop is the only tile source — Met
