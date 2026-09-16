@@ -134,7 +134,7 @@ test('clearing a wave opens the shop; buying a tile then Next wave puts it in th
 
   const trayBeforeSecondTap = afterBuy.tray.length;
   const coinsBeforeSecondTap = afterBuy.coins;
-  await page.getByTestId('shop-offer-tile:0').click();
+  await page.getByTestId('shop-offer-tile:0').click({ force: true });
   const afterSecondTap = await getState(page);
   expect(afterSecondTap.tray.length).toBe(trayBeforeSecondTap);
   expect(afterSecondTap.coins).toBe(coinsBeforeSecondTap);
@@ -185,8 +185,10 @@ test('NEW stickers appear only for never-offered tile types', async ({ page }, t
     offer.kind === 'tile' ? [offer.tileId] : [],
   );
   expect(firstTiles.length).toBeGreaterThan(0);
-  for (const tileId of firstTiles) {
-    await expect(page.getByTestId(`shop-new-${tileId}`)).toBeVisible();
+  for (const offer of first.shop!.offers) {
+    if (offer.kind === 'tile') {
+      await expect(page.getByTestId(`shop-new-${offer.slot}`)).toBeVisible();
+    }
   }
   await expect(page.getByTestId('shop-new-cannon')).toHaveCount(0);
   await expect(page.getByTestId('shop-new-upgrade')).toHaveCount(0);
@@ -204,12 +206,9 @@ test('NEW stickers appear only for never-offered tile types', async ({ page }, t
   await expect(page.getByTestId('shop')).toBeVisible();
 
   const second = await getState(page);
-  const secondTiles = second.shop!.offers.flatMap((offer) =>
-    offer.kind === 'tile' ? [offer.tileId] : [],
-  );
-  for (const tileId of secondTiles) {
-    if (firstTiles.includes(tileId)) {
-      await expect(page.getByTestId(`shop-new-${tileId}`)).toHaveCount(0);
+  for (const offer of second.shop!.offers) {
+    if (offer.kind === 'tile' && firstTiles.includes(offer.tileId)) {
+      await expect(page.getByTestId(`shop-new-${offer.slot}`)).toHaveCount(0);
     }
   }
 

@@ -118,7 +118,7 @@ function ShopOfferCard({
       }}
     >
       {isNew && (
-        <span className="shop-new" data-testid={`shop-new-${offer.kind === 'tile' ? offer.tileId : offer.slot}`}>
+        <span className="shop-new" data-testid={`shop-new-${offer.slot}`}>
           NEW
         </span>
       )}
