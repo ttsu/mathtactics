@@ -68,7 +68,8 @@ this milestone telegraphs them, swaps the first teaching trait into waves 4/6/7,
 run to 10 waves. Task 24 (settings & hints) may run in parallel with 22–23 and 25–26.
 
 Playtest 3: fun but too easy. Waves 4–7 get a HP bump (one teaching trait on 4/6/7); a clean
-7-wave run still ends at 80–100 HP. Waves 1–3 unchanged. Armor is **deferred to v1.1+**.
+7-wave run still ends at 80–100 HP. The 10-wave run ends min near 40, median 50–70. Waves 1–3
+unchanged. Armor is **deferred to v1.1+**.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|

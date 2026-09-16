@@ -19,8 +19,8 @@ the Playtest 4 checklist.
 
 Tasks 22–26 stacked: traits on 4/6/7, telegraph, settings, waves 8–10, Boss. Playtest 3 said
 too easy. Waves 4–7 leftover is locked: sensible player ends the 7-wave stretch at 80–100 HP.
-Waves 8–10 do the real damage (leftover after the Boss still grilling). Do **not** retune
-waves 1–3. Do **not** add armor. Do **not** drop the 40 HP floor on the full 10-wave run.
+Waves 8–10 do the real damage. After the Boss: min near 40 (still ≥ 40, and min ≤ 55 so the
+floor is actually used), median 50–70. Do **not** retune waves 1–3. Do **not** add armor.
 
 Settings/hints are not part of the sensible-player bot (hints off is the default a kid gets).
 
@@ -32,7 +32,8 @@ Settings/hints are not part of the sensible-player bot (hints off is the default
 2. **Balance tests** (`tests/ladder.test.ts`, shipped data, seeds 1–100), same two bots as
    task 21 (real `applyCommand`, never a reimplementation):
 
-   - sensible player **wins** every seed, never drops below **40** base HP;
+   - sensible player **wins** every seed; leftover base HP **min ≥ 40 and min ≤ 55**,
+     **median in 50–70** (grill B);
    - End-Turn-only **loses** every seed;
    - every shop visit (after 1–9) offers the sensible player at least one affordable item;
    - second cannon still affordable by the shop after wave 3;
