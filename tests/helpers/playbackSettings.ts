@@ -123,3 +123,13 @@ export function fakeDangerSettings() {
     wobbleMs: 80,
   };
 }
+
+/** The `presentation.json` `hud` block (▶ Go colour and idle nudge) for fake `GameData`. */
+export function fakeHudSettings() {
+  return {
+    goColor: '#43a047',
+    goNudgeIdleMs: 30000,
+    goNudgeWiggleMs: 2400,
+    goNudgeWiggleDeg: 5,
+  };
+}

@@ -163,15 +163,28 @@ test('rotate overlay covers the screen in portrait', async ({ page }) => {
   await expect(overlay).toHaveText('');
 });
 
-test('End Turn button is at least 60pt in both dimensions', async ({ page }) => {
+test('Go button is green, labelled, has a play icon, and is at least 60pt', async ({ page }) => {
   await page.setViewportSize({ width: 1180, height: 820 });
   await gotoGame(page);
 
   const button = page.getByTestId('end-turn');
   await expect(button).toBeVisible();
+  await expect(button).toBeEnabled();
+  await expect(button).toHaveText('Go');
+  await expect(button.locator('svg')).toHaveCount(1);
+  await expect(button).toHaveClass(/hud-button-go/);
+  await expect(button).toHaveClass(/is-planning/);
   const box = await button.boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
   expect(box?.height).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
+
+  const painted = await button.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { color: style.backgroundColor, delay: style.animationDelay };
+  });
+  // `#43a047` → rgb(67, 160, 71)
+  expect(painted.color).toBe('rgb(67, 160, 71)');
+  expect(parseFloat(painted.delay)).toBe(30);
 });
 
 test('web shell metas and manifest are present, with relative start_url and scope', async ({

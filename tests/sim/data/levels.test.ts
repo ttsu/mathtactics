@@ -4,6 +4,7 @@ import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings
 import { fakeShop } from '../../helpers/shop';
 import {
   fakeDangerSettings,
+  fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
 } from '../../helpers/playbackSettings';
@@ -45,6 +46,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       drag: fakeDragSettings(),
       screens: fakeScreenSettings(),
       danger: fakeDangerSettings(),
+      hud: fakeHudSettings(),
     },
     ...overrides,
   };

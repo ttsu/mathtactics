@@ -16,7 +16,11 @@ import type { GameEvent, RunState } from '../../sim/core/types';
 import { fakeDragSettings, fakeScreenSettings } from '../helpers/dragSettings';
 import { fakeShop } from '../helpers/shop';
 import { boardState, realData } from './boardFixtures';
-import { fakePacingSettings, fakePlaybackSettings } from '../helpers/playbackSettings';
+import {
+  fakePacingSettings,
+  fakePlaybackSettings,
+  fakeHudSettings,
+} from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
   const map = new Map<string, string>();
@@ -54,6 +58,7 @@ function fakeGameData(overrides: Partial<GameData['economy']> = {}): GameData {
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
       drag: fakeDragSettings(),
       screens: fakeScreenSettings(),
+      hud: fakeHudSettings(),
     },
   } as unknown as GameData;
 }
@@ -936,9 +941,7 @@ describe('shop-phase dispatch (task 19)', () => {
       lastTurnEvents: lastTurn.events,
       shop: {
         afterWave: 1,
-        offers: [
-          { slot: 'tile:0', kind: 'tile', tileId: 'add:5', price: 4, bought: false },
-        ],
+        offers: [{ slot: 'tile:0', kind: 'tile', tileId: 'add:5', price: 4, bought: false }],
       },
     };
     store.setState({
@@ -973,4 +976,3 @@ describe('shop-phase dispatch (task 19)', () => {
     expect(store.getState().run).toBeNull();
   });
 });
-

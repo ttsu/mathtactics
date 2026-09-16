@@ -351,7 +351,7 @@ fails `npm test`.
 | `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees (below) |
 | `waves.json` | Waves in run order (run length = array length): authored spawn schedules (below); procedural tables for 8–9 arrive in M4 |
 | `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
-| `presentation.json` | Pacing (ball cell duration, per-tile pause, lane gap, advance duration), escalation curves, colors, drag feel, React screen pop-in (`screens`) |
+| `presentation.json` | Pacing (ball cell duration, per-tile pause, lane gap, advance duration), escalation curves, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.
 
@@ -573,7 +573,7 @@ React interactive elements set `pointer-events: auto`. Everything else passes th
 
 - **Phaser (`/game/board`):** grid, cannon slots, tray strip, tiles, cannons, robots, balls,
   hints, drag/drop, locked-cell feedback, playback Director, particles.
-- **React (`/game/ui`):** HUD (coins, base HP, wave, End Turn, Undo, Replay), shop, main menu,
+- **React (`/game/ui`):** HUD (coins, base HP, wave, Go, Undo, Replay), shop, main menu,
   settings, win/loss screens, seen-tiles log, rotate-device overlay.
 
 ### 11.4 Playback Director

@@ -159,5 +159,11 @@
     "color": "#e53935",
     "wobbleDeg": 6,
     "wobbleMs": 320
+  },
+  "hud": {
+    "goColor": "#43a047",
+    "goNudgeIdleMs": 30000,
+    "goNudgeWiggleMs": 2400,
+    "goNudgeWiggleDeg": 5
   }
 }

@@ -7,6 +7,7 @@ import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings
 import { fakeShop } from '../../helpers/shop';
 import {
   fakeDangerSettings,
+  fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
 } from '../../helpers/playbackSettings';
@@ -48,6 +49,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       drag: fakeDragSettings(),
       screens: fakeScreenSettings(),
       danger: fakeDangerSettings(),
+      hud: fakeHudSettings(),
     },
     ...overrides,
   };
@@ -158,5 +160,20 @@ describe('presentation.json drag settings (task 09)', () => {
     const presentation = raw.presentation as { drag: Record<string, number> };
     presentation.drag.snapRadiusCells = 0.5;
     expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
+  });
+});
+
+describe('presentation.json hud Go nudge', () => {
+  it('rejects a missing idle delay', () => {
+    const raw = validRaw();
+    const presentation = raw.presentation as { hud: Record<string, unknown> };
+    delete presentation.hud.goNudgeIdleMs;
+    expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
+  });
+
+  it('ships a 30s idle before the Go wiggle', () => {
+    const data = parseGameData(loadRawGameData());
+    expect(data.presentation.hud.goNudgeIdleMs).toBe(30000);
+    expect(data.presentation.hud.goColor).toMatch(/^#/);
   });
 });

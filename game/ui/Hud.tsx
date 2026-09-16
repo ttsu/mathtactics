@@ -4,11 +4,15 @@
 // damage the base, TR §4.1; task 14 req. 4: in run mode the wave dots replace the "Wave N" text;
 // task 14 req. 5: ⌂ Home, hidden in place. `display.baseHp` is clamped at 0 by the store (task 15
 // req. 3: `displayFromRun`/`commitEvent`'s `BaseDamaged` case), the single source for the clamp —
-// the HUD renders it as-is).
+// the HUD renders it as-is). The fire control is labelled ▶ Go (not "End Turn") so tapping to
+// continue is obvious; it still dispatches `endTurn`.
+import type { CSSProperties } from 'react';
 import { HUD_BAR, MIN_TOUCH_TARGET } from '../state/designSpace';
 import { levelPosition } from '../state/levelFlow';
 import { goHome } from '../state/runFlow';
+import { goButtonClassName, goNudgeAnimationKey, planningLayoutKey } from './goNudge';
 import { hudButtons } from './hudButtons';
+import { PlayIcon } from './icons';
 import { LevelDots } from './LevelDots';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
@@ -30,6 +34,8 @@ export function Hud() {
   const levelCount = useAppStore((state) => state.data.levels.levels.length);
   const waveIndex = useAppStore((state) => state.run?.waveIndex ?? 0);
   const waveCount = useAppStore((state) => state.data.waves.waves.length);
+  const layoutKey = useAppStore((state) => planningLayoutKey(state.run));
+  const hud = useAppStore((state) => state.data.presentation.hud);
 
   return (
     <div
@@ -86,15 +92,26 @@ export function Hud() {
         </button>
         <button
           type="button"
-          className="hud-button"
+          className={goButtonClassName(canEndTurn)}
           data-testid="end-turn"
-          style={touchTarget}
+          key={goNudgeAnimationKey(canEndTurn, layoutKey)}
+          style={
+            {
+              ...touchTarget,
+              background: hud.goColor,
+              '--go-nudge-idle-ms': `${hud.goNudgeIdleMs}ms`,
+              '--go-nudge-wiggle-ms': `${hud.goNudgeWiggleMs}ms`,
+              '--go-nudge-wiggle-deg': `${hud.goNudgeWiggleDeg}deg`,
+            } as CSSProperties
+          }
           disabled={!canEndTurn}
           // The playback Director (/game/board/playback) plays the resolved turn and calls
-          // `finishPlayback` when it's done.
+          // `finishPlayback` when it's done. Command is still `endTurn` (GDD §4); the
+          // control is labelled Go so tapping to fire is obvious (GDD §11.1).
           onClick={() => dispatch({ type: 'endTurn' })}
         >
-          End Turn
+          <PlayIcon size={36} />
+          Go
         </button>
       </div>
     </div>

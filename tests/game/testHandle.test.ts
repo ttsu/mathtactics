@@ -7,7 +7,11 @@ import type { GameData } from '../../sim/data/schemas';
 import type { GameEvent, RunState } from '../../sim/core/types';
 import { fakeDragSettings, fakeScreenSettings } from '../helpers/dragSettings';
 import { fakeShop } from '../helpers/shop';
-import { fakePacingSettings, fakePlaybackSettings } from '../helpers/playbackSettings';
+import {
+  fakePacingSettings,
+  fakePlaybackSettings,
+  fakeHudSettings,
+} from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
   const map = new Map<string, string>();
@@ -44,6 +48,7 @@ function fakeGameData(): GameData {
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
       drag: fakeDragSettings(),
       screens: fakeScreenSettings(),
+      hud: fakeHudSettings(),
     },
   } as unknown as GameData;
 }

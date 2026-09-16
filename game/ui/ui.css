@@ -41,6 +41,44 @@
   font-size: 32px;
 }
 
+/* ▶ Go — the one required in-play action (GDD §11.1). Green + play triangle + a short
+   grade-1 word. `is-planning` waits `hud.goNudgeIdleMs` then loops a subtle wiggle;
+   remounting the button (new layout or a new planning phase) restarts the delay. */
+.hud-button-go {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 22px;
+  font-size: 34px;
+  letter-spacing: 0.02em;
+}
+
+.hud-button-go.is-planning:not(:disabled) {
+  animation: go-nudge var(--go-nudge-wiggle-ms, 2400ms) ease-in-out var(--go-nudge-idle-ms, 30000ms)
+    infinite;
+}
+
+@keyframes go-nudge {
+  0%,
+  14%,
+  100% {
+    transform: rotate(0deg);
+  }
+  3% {
+    transform: rotate(calc(-1 * var(--go-nudge-wiggle-deg, 5deg)));
+  }
+  6% {
+    transform: rotate(var(--go-nudge-wiggle-deg, 5deg));
+  }
+  9% {
+    transform: rotate(calc(-0.6 * var(--go-nudge-wiggle-deg, 5deg)));
+  }
+  12% {
+    transform: rotate(calc(0.35 * var(--go-nudge-wiggle-deg, 5deg)));
+  }
+}
+
 .hud-button-icon {
   display: flex;
   align-items: center;
