@@ -74,4 +74,77 @@ whether it's hard.
 
 ## Completion Notes
 
-_To be filled in by `/finish-task`._
+**Status:** Complete
+**Completed:** 2026-09-15
+
+**Acceptance criteria:**
+- [x] `waves.json` final for M2, changes justified by Playtest 1 notes — Met (kept draft; see waves.json changes below)
+- [x] Ladder balance tests pass for seeds 1–100 — Met (`tests/ladder.test.ts`: unlosable total, exact-kill reachability, sensible-player wave-1 zero detonations, End-Turn-only wins with baseHp > 0)
+- [x] e2e plays a full run through the real menus and screens, including a reload + Continue — Met (`e2e/run.spec.ts`)
+- [x] Pacing measured and noted — Met (see below; no `presentation.json` change)
+- [x] `playtests/02-checklist.md` exists — Met (includes End-Turn/"shooting 1s" watch item from Playtest 1)
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass — Met; also `npm run sim -- scenarios` (31/31)
+
+**Verification:** npm test ✔ (775) · typecheck ✔ · lint ✔ · build ✔ · sim scenarios ✔ (31/31) · e2e ✔ (via `e2e-locked.sh`)
+
+**waves.json changes (or no change) + reasons:**
+- **No change** to any spawn HP ranges, turn spacing, lanes, or rewards vs the task-12 draft.
+- **Reason:** Playtest 1 notes (`playtests/01-checklist.md`) are from the puzzle levels, not the ladder. They report enjoyment, easy controls, and that he discovered "shooting 1s" eventually clears enemies without movement — looking forward to movement and enemy variety. That is a features/pacing observation already addressed by M2 (advance + detonation), not a specific HP/spacing number request. Controller ruling: if notes don't justify specific number changes, keeping the draft with written rationale is acceptable. Raising wave 2–3 HP for more visible chip damage was optional within the unlosable budget; without playtest evidence of "too soft," inventing harder numbers would be an unauthorized design call.
+- Wave-1 HP stays [1, 3]: base-value-1 balls exact-kill every robot before detonation (sensible-player bot: 0 detonations, seeds 1–100).
+- Worst-case full-run detonation total (sum of every spawn's `hp` max) = **83** (< 100). End-Turn-only bot always `won` with baseHp > 0 (min remaining across seeds 1–100: **36**).
+
+**Run-length stats (seeds 1–100):**
+
+*Sensible-player bot* (move cannon to front-most robot each turn; fire; no tiles):
+
+| | min | median | max |
+|---|---|---|---|
+| Wave 1 turns | 3 | 6 | 9 |
+| Wave 2 turns | 13 | 15 | 15 |
+| Wave 3 turns | 12 | 12 | 12 |
+| Full-run End Turns | 29 | 33 | 36 |
+
+*End-Turn-only bot* (no cannon moves, no tiles) — also recorded for the unlosable claim:
+
+| | min | median | max |
+|---|---|---|---|
+| Wave 1 turns | 10 | 13 | 13 |
+| Wave 2 turns | 12 | 15 | 15 |
+| Wave 3 turns | 12 | 12 | 12 |
+| Full-run End Turns | 34 | 40 | 40 |
+
+Primary Completion Notes figure is the **sensible-player** table (matches the e2e driver and requirement 2's wave-1 bot). `e2e/run.spec.ts` uses `MAX_TURNS = 80` over the measured sensible-player max of 36.
+
+**Pacing (requirement 4):**
+- Measured on a local production build (Playwright WebKit, `VITE_TEST_HANDLE=1` build + preview): real (non-skipped) End Turn → `isIdle()` for a wave-3-shaped turn (one armed lane with a 3-tile chain on an HP-8 robot; second lane undamaged so it advances — representative of wave-3 "two lanes, one cannon").
+- **Elapsed: 3398 ms (~3.4 s).**
+- GDD §12.2 target: ~2–3 s per active lane + ~1 s advance → ~8–10 s for a **3-lane** turn. Task 15 noted ~10–12 s for 3-lane with detonation+spawn. A wave-3 turn arms **one** cannon, so ~3.4 s sits in the ~2–3 s + advance band — not clearly off.
+- **`presentation.json`: no change.**
+
+**Deviations from spec:**
+- Pacing was measured on a local production-style Playwright preview (same stack as CI e2e), not a deployed PR preview URL — equivalent build, throwaway test not committed.
+- Run-length stats computed with a one-off `tsx` script (not left in the tree).
+
+**Architectural decisions made:**
+- Kept task-12 draft ladder numbers as the M2 final content pending Playtest 2 feedback.
+- Ladder balance tests load real shipped data via `parseGameData(loadRawGameData())` and drive `applyCommand` (no reimplementation of resolution).
+
+**Design questions raised:**
+- None for this task. Playtest 2's "shooting 1s" watch item will tell whether End-Turn-only clearing reduces engagement enough to justify harder wave 2–3 numbers later.
+
+**Known issues / follow-up:**
+- H2 (Playtest 2) is ready; human should run `playtests/02-checklist.md` on the preview/iPad.
+- Tasks 14–16 still note "iPad check pending" from earlier sessions — unrelated to this data/e2e closeout.
+
+**Files created:**
+- `tests/ladder.test.ts`
+- `e2e/run.spec.ts`
+- `playtests/02-checklist.md`
+
+**Files modified:**
+- `TASKS.md` (H1 Complete; 17 Complete; H2 Not Started — ready)
+- `tasks/17-ladder-waves-1-3.md` (these Completion Notes)
+- `playtests/01-checklist.md` (H1 notes — prior commit `9888e79`)
+
+**Notes for next agent:**
+- `waves.json` is intentionally still the task-12 draft; do not retune from Playtest 1 alone. Wait for Playtest 2 notes (especially the "shooting 1s" watch item) before changing HP/spacing. Worst-case detonation budget headroom is 100 − 83 = 17 if harder numbers are later justified.
