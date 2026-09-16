@@ -14,6 +14,7 @@ import { scopedKey, type StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
 import type { GameEvent, RunState } from '../../sim/core/types';
 import { fakeDragSettings, fakeScreenSettings } from '../helpers/dragSettings';
+import { fakeShop } from '../helpers/shop';
 import { boardState, realData } from './boardFixtures';
 import { fakePacingSettings, fakePlaybackSettings } from '../helpers/playbackSettings';
 
@@ -44,7 +45,7 @@ function fakeGameData(overrides: Partial<GameData['economy']> = {}): GameData {
       income: { kill: 1, exactKill: 2, waveCleared: 3 },
       ...overrides,
     },
-    shop: {},
+    shop: fakeShop(),
     waves: { waves: [] },
     levels: { levels: [] },
     presentation: {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseGameData } from '../../../sim/data/load';
 import { loadRawGameData } from '../../helpers/loadDataFiles';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
+import { fakeShop } from '../../helpers/shop';
 import {
   fakeDangerSettings,
   fakePacingSettings,
@@ -14,6 +15,16 @@ function spawnDef(overrides: Record<string, unknown> = {}) {
 
 function waveDef(overrides: Record<string, unknown> = {}) {
   return { id: 'wave-1', spawns: [spawnDef()], ...overrides };
+}
+
+function shopForWaves(waveCount: number) {
+  return fakeShop({
+    shops: Array.from({ length: Math.max(0, waveCount - 1) }, (_, i) => ({
+      afterWave: i + 1,
+      guarantees: [],
+      table: [{ kind: 'add' as const, n: [1, 1] as [number, number], weight: 1 }],
+    })),
+  });
 }
 
 function validRaw(waves: unknown[], robots?: unknown[]) {
@@ -31,7 +42,7 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
       maxCannons: 5,
       income: { kill: 1, exactKill: 2, waveCleared: 3 },
     },
-    shop: {},
+    shop: shopForWaves(waves.length),
     waves: { waves },
     levels: { levels: [] },
     presentation: {
