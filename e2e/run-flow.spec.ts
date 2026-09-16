@@ -133,11 +133,13 @@ test('a lost run is cleared: Continue disappears after its playback finishes', a
   await expect(page.getByTestId('menu-continue')).toHaveCount(0);
 });
 
-// Regression: clearing a non-final wave left the run with every HUD button dead. End Turn and
-// Undo are correctly off outside `planning`, ⌂ Home was hidden for a wave-cleared overlay that
-// task 16 has not built yet, and no robots remain to touch — the run was unrecoverable without a
-// reload. Home must stay live in `waveCleared` until that overlay exists.
-test('⌂ Home still works on a cleared wave, so a run is never stranded in waveCleared', async ({
+// Regression (task 14): clearing a non-final wave left the run with every HUD button dead. End
+// Turn and Undo are correctly off outside `planning`, no robots remain to touch, and ⌂ Home was
+// hidden for a wave-cleared overlay that task 14 could not yet rely on — so the run was
+// unrecoverable without a reload. Task 14 answered that by keeping Home live; task 16 ships the
+// overlay, so Home is hidden here again by design and the overlay's ▶ is the way on. The
+// invariant outliving both is what this guards: a cleared wave always offers one live control.
+test('a cleared wave always offers a live way on, so a run is never stranded in waveCleared', async ({
   page,
 }) => {
   await openMenu(page);
@@ -169,22 +171,27 @@ test('⌂ Home still works on a cleared wave, so a run is never stranded in wave
   expect(cleared?.phase).toBe('waveCleared');
   expect(cleared?.board.robots.length).toBe(0);
 
-  // End Turn and Undo are legitimately off here, but Home must not be.
+  // End Turn and Undo are legitimately off here, and ⌂ Home is now hidden in place (task 16) —
+  // the overlay owns this moment.
   await expect(page.getByTestId('end-turn')).toBeDisabled();
-  await expect(page.getByTestId('home')).toBeEnabled();
-  await expectTouchTarget(page, 'home');
+  await expect(page.getByTestId('home')).toBeDisabled();
   expect(
     await page.evaluate(
       () => getComputedStyle(document.querySelector('[data-testid="home"]')!).visibility,
     ),
-  ).toBe('visible');
+  ).toBe('hidden');
 
-  await page.getByTestId('home').click();
-  expect(await getScreen(page)).toBe('menu');
-  // And the cleared wave is resumable, so the run is not lost by going Home.
-  await expect(page.getByTestId('menu-continue')).toBeVisible();
-  await page.getByTestId('menu-continue').click();
-  expect((await getState(page))?.phase).toBe('waveCleared');
+  // The overlay's ▶ is live and tappable, and it moves the run on rather than stranding it.
+  await expect(page.getByTestId('wave-cleared')).toBeVisible();
+  await expect(page.getByTestId('wave-next')).toBeEnabled();
+  await expectTouchTarget(page, 'wave-next');
+
+  await page.getByTestId('wave-next').click();
+  await waitIdle(page);
+  await expect(page.getByTestId('wave-cleared')).toHaveCount(0);
+  const next = await getState(page);
+  expect(next?.phase).toBe('planning');
+  expect(next?.waveIndex).toBe(1);
 });
 
 test('every menu and HUD button is at least 60pt in both dimensions', async ({ page }) => {
