@@ -20,9 +20,10 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
 
 - **Hardness: one teaching trait plus a 4–7 HP bump.** Waves 4/6/7 still get a single teaching
   trait; remaining robots on those waves stay `basic`; wave 5 stays untraited. HP on waves
-  4–7 is raised so the 7-wave stretch can hurt (Playtest 3: too easy). Waves 1–3 are unchanged
-  (Playtest 2 notes empty). Concrete 4–7 ranges follow the leftover-HP target (v0.7 grill).
-  Waves 8–10 are a further step up, not the first time the run can hurt.
+  4–7 is raised so sloppy play can leak (Playtest 3: too easy). Waves 1–3 are unchanged
+  (Playtest 2 notes empty). A **sensible player** still ends the 7-wave stretch at **80–100**
+  base HP (min ≥ 80 across seeds 1–100; at least some seeds finish below 100 — today's
+  100/100/100 is the too-easy bug). Waves 8–10 do the real damage.
 - **Armor is deferred to v1.1+.** It is a new rule (a second number on the robot), not a trait.
   It fights §11.2 (HP is the largest element) and is closer to Barrier (§19) than to Weakness /
   Bounce-back / parity. Not in M4, M5, or v1.
@@ -962,7 +963,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Wave 7's first parity robot is Odd-only (cannon base value 1 is odd). Even-only enters in 8–9.
 - Wave 5 stays fully `basic` — subtraction is the lesson, not a new trait.
 - Waves 4–7 HP are raised (Playtest 3 too easy); one teaching trait stays on 4/6/7. Waves 1–3
-  HP unchanged. Concrete ranges follow the leftover-HP target.
+  HP unchanged. Sensible-player leftover after wave 7: min ≥ 80, and not every seed at 100.
 - The Settings gear on the main menu is labelled *Settings* (one extra word beyond the §11.1
   navigation list). Hints and Sound toggles are icon + one word each.
 - The sound toggle persists and does nothing to playback until M5 ships Web Audio.

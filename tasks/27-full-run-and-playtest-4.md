@@ -18,11 +18,9 @@ the Playtest 4 checklist.
 ## Context
 
 Tasks 22–26 stacked: traits on 4/6/7, telegraph, settings, waves 8–10, Boss. Playtest 3 said
-too easy. If after 22–26 the sensible player still finishes seeds 1–100 with a min base HP
-**above 70**, that is evidence the stretch is still soft — you may raise wave 8–9 HP or
-`count` **inside §6.6** (≤ 99, ≤ 4 lanes) with a recorded reason. Do **not** retune waves 1–3
-(Playtest 2 notes empty). Waves 4–7 HP are task 22's job. Do **not** add armor. Do **not**
-drop the 40 HP floor.
+too easy. Waves 4–7 leftover is locked: sensible player ends the 7-wave stretch at 80–100 HP.
+Waves 8–10 do the real damage (leftover after the Boss still grilling). Do **not** retune
+waves 1–3. Do **not** add armor. Do **not** drop the 40 HP floor on the full 10-wave run.
 
 Settings/hints are not part of the sensible-player bot (hints off is the default a kid gets).
 

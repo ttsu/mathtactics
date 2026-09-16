@@ -45,8 +45,16 @@ Scenario files already exercise every trait (`:bb`, `:odd`, `:even`, `:w2`, `:w5
 
 2. **Ladder swap** in `waves.json`. Keep every spawn's turn, lane letter, and robot count.
    Change **one** `robot` id per teaching wave, as follows. **Also raise HP on waves 4–7**
-   (Playtest 3: too easy; grill decision C). Exact ranges are set by the leftover-HP target
-   in GDD v0.7; do not invent them. Waves 1–3 HP and spawns stay as shipped.
+   (Playtest 3: too easy; grill C then A). Raise until a sensible player on the **7-wave**
+   shipped run (this task, before 8–10 exist) meets:
+
+   - wins every seed 1–100 with final base HP **≥ 80**
+   - **not** every seed at 100 (today's min/median/max 100/100/100 is the too-easy bug —
+     at least 10 of 100 seeds must finish below 100)
+   - End-Turn-only still loses every seed
+
+   Record the new ranges and the leftover-HP table in Completion Notes. Do not change spawn
+   counts, turns, or lane letters. Waves 1–3 HP stay as shipped.
 
    | Wave | Which spawn | New `robot` | Why |
    |---|---|---|---|
@@ -59,9 +67,11 @@ Scenario files already exercise every trait (`:bb`, `:odd`, `:even`, `:w2`, `:w5
    - `robots.json` contains exactly the seven ids above, with those traits.
    - After `rollWave` of shipped wave-4/6/7, **at least one** pending spawn uses the teaching
      template; every other spawn on that wave is `basic`. Wave 5 is all `basic` for seeds 1–20.
-   - Existing `tests/ladder.test.ts` still passes: sensible player wins seeds 1–100 above 40
-     base HP; End-Turn-only loses. If the HP bump makes the sensible player lose or drop
-     below 40, **stop and raise it** — do not silently undo the teaching trait.
+   - Existing `tests/ladder.test.ts` still passes: sensible player wins seeds 1–100;
+     End-Turn-only loses. **Add** leftover-HP assertions: sensible-player final base HP
+     min ≥ 80, and at least 10/100 seeds finish below 100. If min drops below 80, lower
+     the 4–7 bump (do not undo the teaching trait). If every seed is still 100, raise HP
+     further.
    - A sim scenario (new file under `scenarios/`) that loads shipped wave 4, puts a `×5` in
      front of the Weakness-5 robot, and asserts `RobotDamaged.doubled === true` on the event
      list (gameplay change → event-list test, CLAUDE.md rule 2).
@@ -79,6 +89,7 @@ Trait silhouette / shield / chest-n (23). Procedural 8–9 (25). Boss (26). Sett
 - [ ] `robots.json` has the seven templates above
 - [ ] Waves 4/6/7 each have exactly one teaching-trait spawn; wave 5 all `basic`; waves 1–3 unchanged
 - [ ] Waves 4–7 HP raised vs M3 shipped ranges; 1–3 HP unchanged
+- [ ] Sensible-player leftover after 7 waves: min ≥ 80, ≥10/100 seeds below 100
 - [ ] Ladder balance tests still pass for seeds 1–100
 - [ ] Scenario asserts doubled damage against shipped Weakness-5
 - [ ] `npm test`, `typecheck`, `lint` pass

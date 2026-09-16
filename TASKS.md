@@ -67,8 +67,8 @@ Boss is in? Specs written after Playtest 3 (GDD v0.7). Trait *rules* already res
 this milestone telegraphs them, swaps the first teaching trait into waves 4/6/7, and extends the
 run to 10 waves. Task 24 (settings & hints) may run in parallel with 22–23 and 25–26.
 
-Playtest 3: fun but too easy. Waves 4–7 get a HP bump (still one teaching trait on 4/6/7).
-Waves 1–3 unchanged. Armor is **deferred to v1.1+**.
+Playtest 3: fun but too easy. Waves 4–7 get a HP bump (one teaching trait on 4/6/7); a clean
+7-wave run still ends at 80–100 HP. Waves 1–3 unchanged. Armor is **deferred to v1.1+**.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
