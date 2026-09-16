@@ -29,7 +29,7 @@ Gate: **Playtest 1** — is building an equation fun?
 | 09 | [Board rendering & drag-and-drop](tasks/09-board-and-drag.md) | presentation | 05, 06 | Complete |
 | 10 | [Playback director](tasks/10-playback-director.md) | presentation | 07, 09 | Complete |
 | 11 | [Puzzle levels & level flow](tasks/11-puzzle-levels.md) | data / presentation | 08, 10 | Complete (iPad check pending) |
-| H1 | **Human: Playtest 1** — play levels with your son; record notes in `playtests/01.md` | human | 11 | Not Started |
+| H1 | **Human: Playtest 1** — play levels with your son; record notes in `playtests/01.md` | human | 11 | Complete |
 
 ## M2 — A Run
 
@@ -43,8 +43,8 @@ ladder content is finalized after it (task 17). Tasks 14, 15 and 16 may run in p
 | 14 | [Save/resume, main menu & Home](tasks/14-save-resume-and-menu.md) | state / ui | 13 | Complete (iPad check pending) |
 | 15 | [Run playback: spawn, advance, detonation, danger glow](tasks/15-run-playback.md) | presentation | 13 | Complete (iPad check pending) |
 | 16 | [Wave-cleared, win & lose screens](tasks/16-wave-and-end-screens.md) | ui | 13 | Complete (iPad check pending) |
-| 17 | [Ladder waves 1–3 & Playtest 2 checklist](tasks/17-ladder-waves-1-3.md) | data / e2e | 14, 15, 16, H1 | Not Started |
-| H2 | **Human: Playtest 2** — play a full run with your son; record notes in `playtests/02.md` | human | 17 | Not Started |
+| 17 | [Ladder waves 1–3 & Playtest 2 checklist](tasks/17-ladder-waves-1-3.md) | data / e2e | 14, 15, 16, H1 | Complete |
+| H2 | **Human: Playtest 2** — play a full run with your son; record notes in `playtests/02.md` | human | 17 | Not Started — ready |
 
 ## M3 — Economy *(specs written after Playtest 2)*
 
