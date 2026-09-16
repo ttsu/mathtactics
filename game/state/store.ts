@@ -228,7 +228,10 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
       // events (the wave's turn-1 spawns) that play back like any other turn.
       const freshPhase = cmd.type === 'newRun' || cmd.type === 'nextWave';
 
-      if (result.events.length > 0) {
+      // A shop-phase result never starts playback (task 19): `buyOffer` emits events for tests
+      // and scenarios, but there is no board animation for a purchase. `display` still updates
+      // from the new run at once, and the lastTurn Replay snapshot is kept.
+      if (result.events.length > 0 && result.state.phase !== 'shop') {
         set({
           run: result.state,
           savedRun,

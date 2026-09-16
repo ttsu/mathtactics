@@ -55,10 +55,17 @@ test('a full run plays through the real menus and screens: New Run -> waves 1-3 
     expect(turns, 'ran out of turns before the run won').toBeLessThan(MAX_TURNS);
     turns++;
 
+    const screen = await getScreen(page);
     const state = await getState(page);
     if (state?.phase === 'waveCleared') {
       await expect(page.getByTestId('wave-cleared')).toBeVisible();
       await page.getByTestId('wave-next').click();
+      continue;
+    }
+    if (state?.phase === 'shop' || screen === 'shop') {
+      await expect(page.getByTestId('shop')).toBeVisible();
+      await page.getByTestId('shop-next').click();
+      await waitIdle(page);
       continue;
     }
     expect(state?.phase).toBe('planning');
@@ -95,6 +102,9 @@ test('reloading mid wave 2 resumes via Continue and the run completes', async ({
 
     if (state?.phase === 'waveCleared') {
       await page.getByTestId('wave-next').click();
+    } else if (state?.phase === 'shop' || (await getScreen(page)) === 'shop') {
+      await page.getByTestId('shop-next').click();
+      await waitIdle(page);
     } else {
       await playOneTurn(page);
       turns++;
@@ -118,9 +128,15 @@ test('reloading mid wave 2 resumes via Continue and the run completes', async ({
   while ((await getScreen(page)) !== 'won') {
     expect(turns, 'ran out of turns before the run won').toBeLessThan(MAX_TURNS);
     turns++;
+    const screen = await getScreen(page);
     const state = await getState(page);
     if (state?.phase === 'waveCleared') {
       await page.getByTestId('wave-next').click();
+      continue;
+    }
+    if (state?.phase === 'shop' || screen === 'shop') {
+      await page.getByTestId('shop-next').click();
+      await waitIdle(page);
       continue;
     }
     await playOneTurn(page);

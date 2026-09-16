@@ -10,14 +10,12 @@ import { MIN_TOUCH_TARGET } from '../game/state/designSpace';
 // Every scenario brings its own inline `waves:` (the test handle's `loadScenario` runs the session on
 // them), so ladder tuning of the shipped `waves.json` (task 17) can't break these tests.
 
-/** Two waves: the first rewards `mul:2` + `add:4`, the second (final) has no reward. */
+/** Two waves: the first is non-final, the second is the last (no shop after it). */
 const TWO_WAVES = [
   'waves:',
   '  - id: e2e-wave-1',
   '    spawns:',
   '      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }',
-  '    reward:',
-  '      tiles: ["mul:2", "add:4"]',
   '  - id: e2e-wave-2',
   '    spawns:',
   '      - { turn: 1, lane: 1, robot: basic, hp: [4, 4] }',
@@ -94,7 +92,7 @@ async function expectTouchTarget(page: Page, testId: string) {
   expect(box?.height).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
 }
 
-test('wave-cleared overlay shows the reward tiles; ▶ starts the next wave', async ({
+test('wave-cleared overlay shows the wallet bonus; ▶ opens the shop', async ({
   page,
 }, testInfo) => {
   await loadScenario(page, NON_FINAL_WAVE_CLEAR);
@@ -102,46 +100,39 @@ test('wave-cleared overlay shows the reward tiles; ▶ starts the next wave', as
 
   const state = await getState(page);
   expect(state.phase).toBe('waveCleared');
-  const granted = state.lastTurnEvents.find((event) => event.type === 'TilesGranted');
-  expect(granted?.tiles).toEqual([
-    { pieceId: expect.any(String), tileId: 'mul:2' },
-    { pieceId: expect.any(String), tileId: 'add:4' },
-  ]);
+  const bonus = state.lastTurnEvents.find(
+    (event) => event.type === 'CoinsChanged' && event.reason === 'waveCleared',
+  );
+  expect(bonus && bonus.type === 'CoinsChanged' ? bonus.delta : undefined).toBe(3);
 
   await expect(page.getByTestId('wave-cleared')).toBeVisible();
-  await expect(page.getByTestId('reward-tile')).toHaveCount(granted!.tiles.length);
-  await page.waitForTimeout(700); // let the staggered pop-ins finish
+  await expect(page.getByTestId('wave-clear-coins')).toHaveText('+3 🪙');
+  await page.waitForTimeout(700); // let the pop-in finish
   await page.screenshot({ path: testInfo.outputPath('wave-cleared.png') });
   await expectTouchTarget(page, 'wave-next');
 
-  // ▶ starts the next wave and the overlay hides itself (the double-tap guard itself — a second
-  // `nextWave` refused as `wrong_phase` once the overlay is gone — is `continueToNextWave`'s own
-  // unit test, tests/game/waveFlow.test.ts, since the button is no longer there to tap twice).
   await page.getByTestId('wave-next').click();
 
   const next = await getState(page);
-  expect(next.phase).toBe('planning');
-  expect(next.waveIndex).toBe(1);
+  expect(next.phase).toBe('shop');
+  expect(await getScreen(page)).toBe('shop');
+  await expect(page.getByTestId('shop')).toBeVisible();
   await expect(page.getByTestId('wave-cleared')).toHaveCount(0);
 });
 
-test('reloading while the wave-cleared overlay is up resumes into it, rewards intact (task 14+16 integration)', async ({
+test('reloading while the wave-cleared overlay is up resumes into it (task 14+16 integration)', async ({
   page,
 }) => {
   await loadScenario(page, NON_FINAL_WAVE_CLEAR);
   await endTurnAndSkip(page);
 
-  const state = await getState(page);
-  expect(state.phase).toBe('waveCleared');
-  const granted = state.lastTurnEvents.find((event) => event.type === 'TilesGranted');
+  expect((await getState(page)).phase).toBe('waveCleared');
   await expect(page.getByTestId('wave-cleared')).toBeVisible();
-  await expect(page.getByTestId('reward-tile')).toHaveCount(granted!.tiles.length);
+  await expect(page.getByTestId('wave-clear-coins')).toHaveText('+3 🪙');
 
-  // The `endTurn` dispatch above (unlike `loadScenario`) persists — it resolved to `mode: 'run'`
-  // (task 14 req. 1) — so the saved run is this `waveCleared` state, `lastTurnEvents` included
-  // (task 16 req. 1: reward tiles must still show after resume). The reload drops the scenario's
-  // inline waves, so ▶ below starts wave index 1 of the shipped `waves.json` — this only needs it
-  // to have at least two waves.
+  // The `endTurn` dispatch above persists — it resolved to `mode: 'run'` — so the saved run is
+  // this `waveCleared` state, `lastTurnEvents` included. The reload drops the scenario's inline
+  // waves, so ▶ below opens a shop for wave index 0 of the shipped `waves.json`.
   await page.reload();
   await page.waitForFunction(() => window.__GAME__ !== undefined);
   expect(await getScreen(page)).toBe('menu');
@@ -151,13 +142,11 @@ test('reloading while the wave-cleared overlay is up resumes into it, rewards in
   expect(await getScreen(page)).toBe('game');
   expect((await getState(page))?.phase).toBe('waveCleared');
   await expect(page.getByTestId('wave-cleared')).toBeVisible();
-  await expect(page.getByTestId('reward-tile')).toHaveCount(granted!.tiles.length);
+  await expect(page.getByTestId('wave-clear-coins')).toHaveText('+3 🪙');
 
   await page.getByTestId('wave-next').click();
-  const next = await getState(page);
-  expect(next.phase).toBe('planning');
-  expect(next.waveIndex).toBe(1);
-  await expect(page.getByTestId('wave-cleared')).toHaveCount(0);
+  expect((await getState(page)).phase).toBe('shop');
+  expect(await getScreen(page)).toBe('shop');
 });
 
 test('the final wave clear wins the run; ▶ returns to the menu', async ({ page }, testInfo) => {

@@ -10,7 +10,7 @@ import { tileKind } from './transformEffect';
 /** Run-mode `"end"` event types (task 15 req. 5) — the short pause added to a run's `end`
  * segment. `LevelCleared` (level mode, task 11) is excluded: it plays its overlay once playback
  * goes idle, with no extra hold here. */
-const RUN_END_TYPES = new Set<GameEvent['type']>(['WaveCleared', 'TilesGranted', 'RunWon', 'RunLost']);
+const RUN_END_TYPES = new Set<GameEvent['type']>(['WaveCleared', 'RunWon', 'RunLost']);
 
 export type PresentationSettings = Pick<GameData['presentation'], 'pacing' | 'playback'>;
 

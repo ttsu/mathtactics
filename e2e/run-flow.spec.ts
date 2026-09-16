@@ -187,8 +187,15 @@ test('a cleared wave always offers a live way on, so a run is never stranded in 
   await expectTouchTarget(page, 'wave-next');
 
   await page.getByTestId('wave-next').click();
+  expect((await getState(page))?.phase).toBe('shop');
+  expect(await getScreen(page)).toBe('shop');
+  await expect(page.getByTestId('shop')).toBeVisible();
+  await expect(page.getByTestId('shop-next')).toBeEnabled();
+  await expectTouchTarget(page, 'shop-next');
+
+  await page.getByTestId('shop-next').click();
   await waitIdle(page);
-  await expect(page.getByTestId('wave-cleared')).toHaveCount(0);
+  await expect(page.getByTestId('shop')).toHaveCount(0);
   const next = await getState(page);
   expect(next?.phase).toBe('planning');
   expect(next?.waveIndex).toBe(1);

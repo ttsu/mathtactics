@@ -21,7 +21,9 @@ import {
  * won/lost. */
 export function isResumable(run: RunState | null): run is RunState {
   return (
-    run !== null && run.mode === 'run' && (run.phase === 'planning' || run.phase === 'waveCleared')
+    run !== null &&
+    run.mode === 'run' &&
+    (run.phase === 'planning' || run.phase === 'waveCleared' || run.phase === 'shop')
   );
 }
 
@@ -30,9 +32,10 @@ export function canContinue(state: Pick<AppState, 'savedRun'>): boolean {
   return isResumable(state.savedRun);
 }
 
-/** ▶ Continue: installs the saved run as-is (including a `waveCleared` phase — its overlay just
- * reappears, task 16), shows the game screen, no playback, and no Replay snapshot (there is none
- * after a reload). Ignored if nothing is resumable, so a stray tap can't clobber `run`. */
+/** ▶ Continue: installs the saved run as-is (including a `waveCleared` or `shop` phase — its
+ * overlay/screen just reappears), no playback, and no Replay snapshot (there is none after a
+ * reload). A shop-phase save lands on `screen: 'shop'`; every other resumable phase lands on
+ * `'game'`. Ignored if nothing is resumable, so a stray tap can't clobber `run`. */
 export function continueRun(store: StoreApi<AppStore>): void {
   const { savedRun } = store.getState();
   if (!isResumable(savedRun)) return;
@@ -41,7 +44,7 @@ export function continueRun(store: StoreApi<AppStore>): void {
     display: displayFromRun(savedRun),
     playback: { ...IDLE_PLAYBACK },
     lastTurn: null,
-    screen: 'game',
+    screen: savedRun.phase === 'shop' ? 'shop' : 'game',
   });
 }
 
