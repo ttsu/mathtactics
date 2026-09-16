@@ -5,6 +5,7 @@
 import type { Cell } from '../../sim/core/coords';
 import type { RunState, TileId } from '../../sim/core/types';
 import type { GameData } from '../../sim/data/schemas';
+import { tileFace } from '../state/tileFace';
 
 export type PieceHome = { kind: 'cell'; cell: Cell } | { kind: 'tray'; index: number };
 
@@ -24,8 +25,6 @@ export function pieceHomes(run: RunState): Map<string, PieceHome> {
   return homes;
 }
 
-const OPERATOR_GLYPH = { add: '+', sub: '−', mul: '×' } as const;
-
 /** A number as the board shows it, with a real minus sign for negatives (`"−3"`) to match tile
  * labels — for ball values and robot HP. */
 export function formatNumber(value: number): string {
@@ -34,8 +33,8 @@ export function formatNumber(value: number): string {
 
 /** Tile face text with the real `−` and `×` glyphs (task 09 req. 2), e.g. `"+4"`, `"−2"`, `"×3"`. */
 export function tileLabel(tileId: TileId): string {
-  const [kind, n] = tileId.split(':') as [keyof typeof OPERATOR_GLYPH, string];
-  return `${OPERATOR_GLYPH[kind]}${n}`;
+  const face = tileFace(tileId);
+  return `${face.glyph}${face.n}`;
 }
 
 /** True when anything the board draws differs between two states (task 09 req. 1: `run.board`,
@@ -60,7 +59,8 @@ export function tileColor(
 ): { hex: string; starred: boolean } {
   const def = data.tiles.find((tile) => tile.id === tileId);
   if (!def) throw new Error(`unknown tile id "${tileId}"`);
-  const hex = data.presentation.tileColors[def.color];
-  if (!hex) throw new Error(`no presentation colour for "${def.color}"`);
-  return { hex, starred: def.starred };
+  const { colorKey, starred } = tileFace(tileId);
+  const hex = data.presentation.tileColors[colorKey];
+  if (!hex) throw new Error(`no presentation colour for "${colorKey}"`);
+  return { hex, starred };
 }

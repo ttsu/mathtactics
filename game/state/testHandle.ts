@@ -8,7 +8,7 @@ import type { Command, CommandError, GameEvent, RunState } from '../../sim/core/
 import type { GameData } from '../../sim/data/schemas';
 import { buildScenarioState, effectiveData, parseScenario } from '../../sim/scenario';
 import type { AppStore, Display, Screen } from './store';
-import { displayFromRun, IDLE_PLAYBACK, isPlaybackActive } from './store';
+import { displayFromRun, IDLE_PLAYBACK, isPlaybackActive, NO_SHOP_NEW } from './store';
 
 export interface TestHandle {
   getState(): RunState | null;
@@ -48,8 +48,8 @@ declare global {
 
 /** Installs `state` directly, bypassing `dispatch`/playback entirely — shared by `loadState` and
  * `loadScenario`. Resets any in-flight playback too, otherwise `isIdle()` would stay false after
- * a fresh install (finding 8, final review). Shows the game screen, bypassing the menu (TR §14,
- * task 11). */
+ * a fresh install (finding 8, final review). A shop-phase install lands on the shop screen so
+ * e2e can pin a 0-coin shop; every other phase shows the game screen, bypassing the menu. */
 function installState(store: StoreApi<AppStore>, state: RunState, data: GameData): void {
   store.setState({
     data,
@@ -57,7 +57,8 @@ function installState(store: StoreApi<AppStore>, state: RunState, data: GameData
     display: displayFromRun(state),
     playback: { ...IDLE_PLAYBACK },
     lastTurn: null,
-    screen: 'game',
+    shopNew: NO_SHOP_NEW,
+    screen: state.phase === 'shop' ? 'shop' : 'game',
   });
 }
 

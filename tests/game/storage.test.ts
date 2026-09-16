@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addSeen,
+  addSeenMany,
   loadRun,
   loadSeen,
   loadSettings,
@@ -149,6 +150,22 @@ describe('loadSeen / addSeen', () => {
   it('does not throw when the underlying storage throws', () => {
     const storage = throwingStorage();
     expect(() => addSeen(storage, '/', 'add:1')).not.toThrow();
+    expect(loadSeen(storage, '/')).toEqual([]);
+  });
+});
+
+describe('addSeenMany', () => {
+  it('is additive, sorted, and de-duplicated', () => {
+    const storage = createMemoryStorage();
+    addSeen(storage, '/', 'mul:3');
+    const result = addSeenMany(storage, '/', ['add:5', 'mul:3', 'add:1']);
+    expect(result).toEqual(['add:1', 'add:5', 'mul:3']);
+    expect(loadSeen(storage, '/')).toEqual(['add:1', 'add:5', 'mul:3']);
+  });
+
+  it('does not throw when the underlying storage throws', () => {
+    const storage = throwingStorage();
+    expect(() => addSeenMany(storage, '/', ['add:1', 'sub:2'])).not.toThrow();
     expect(loadSeen(storage, '/')).toEqual([]);
   });
 });

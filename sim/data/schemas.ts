@@ -288,6 +288,16 @@ const PresentationFileSchema = z.object({
     popInMs: ms(),
     /** Delay between each wave-cleared wallet bonus pop-in (task 16; reused in task 19). */
     rewardStaggerMs: ms(),
+    /** Delay between each of the 5 shop cards popping in (task 20). */
+    shopCardStaggerMs: ms(),
+    /** Bought-card pop (task 20). */
+    shopPurchasePopMs: ms(),
+    /** Shop wallet numeral counting down to the new total (task 20). */
+    shopWalletCountMs: ms(),
+    /** Unaffordable-card shake (task 20). */
+    shopRefusalShakeMs: ms(),
+    /** NEW sticker pop (task 20). */
+    shopNewPopMs: ms(),
     /** Delay between each exact-kill icon's pop-in on the win/lose screens (task 16 req. 5). */
     iconStaggerMs: ms(),
     /** One cycle of the lose screen's dancing-robot wiggle (task 16 req. 3). */
