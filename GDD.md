@@ -27,13 +27,15 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   **wins the 10-wave run** with leftover **min near 40** (still ≥ 40) and **median 50–70**.
   Those chips come from **waves 8–9** for a sensible player (who kills the escort). Wave 10
   keeps a **light-but-present escort**: one `basic` at T1 plus two more at T7. Leaking the
-  Boss is a loss. The T7 pair is a kid-facing trap, not a bot HP tax.
+  Boss is a loss. The T7 pair is a kid-facing trap, not a bot HP tax. A sloppy run **can
+  lose on 8–9 and never see the Boss** (grill A). The sensible player still always reaches
+  wave 10.
 - **Armor is deferred to v1.1+.** It is a new rule (a second number on the robot), not a trait.
   It fights §11.2 (HP is the largest element) and is closer to Barrier (§19) than to Weakness /
   Bounce-back / parity. Not in M4, M5, or v1.
 - **Waves 4, 6, 7 gain their first teaching trait.** Wave 4: one Weakness (`n = 5`, grill A). Wave 6:
   one Bounce-back. Wave 7: one Odd-only (grill A: base value 1 is odd, so the first contact
-  without a tile). Wave 5 stays untraited — it teaches subtraction. Remaining robots on those
+  can hurt without a tile). Wave 5 stays untraited — it teaches subtraction. Remaining robots on those
   waves stay `basic`.
 - **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
   already follow `waves.json` length.
@@ -977,6 +979,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
   template from the pool (with replacement) and roll HP — file order, `wave` stream only.
 - The Boss is authored in lane 2 (center), matching the starting cannon. Escort is T1 one
   `basic` in a letter lane plus T7 two more `basic`s (grill: keep the draft, not a single escort).
+- A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.
 
 ---
 

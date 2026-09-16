@@ -25,8 +25,9 @@ today; required once wave 10 exists). That way task 26 does not touch `shop.json
 
 Playtest 3 asked for hardness. These waves are the stretch: mixed traits, up to 4 simultaneous
 lanes, HP inside §6.6 (≤ 99). They are where a sensible player **loses most of the 20–50 HP**
-between wave 7 (80–100 leftover) and the win (median 50–70, min near 40). Armor is deferred
-to v1.1+.
+between wave 7 (80–100 leftover) and the win (median 50–70, min near 40). A sloppy run can
+lose here and never see the Boss; the sensible player still always reaches wave 10. Armor is
+deferred to v1.1+.
 
 ## Requirements
 

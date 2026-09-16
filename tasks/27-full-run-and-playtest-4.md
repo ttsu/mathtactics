@@ -57,8 +57,8 @@ Settings/hints are not part of the sensible-player bot (hints off is the default
    - Does he read Weakness n / Bounce-back coil / Odd vs Even without being told?
    - Wrong-parity clonk: confusion or "oh, even"?
    - Bounce-back overshoot: does he reach for `−N`?
-   - Wave 8–9: frustration or focus? Too long?
-   - Boss: does three-digit HP land as special?
+   - Wave 8–9: frustration or focus? Too long? Does he lose here and never see the Boss?
+   - Boss: does three-digit HP land as special? (May not appear if he lost on 8–9.)
    - Settings / hints: does he find them? Does turning hints on change how he plays?
    - After win/lose: another run?
    - Session length, waves reached, per-wave notes, quotes, bugs, ideas for M5.
