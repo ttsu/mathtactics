@@ -4,6 +4,7 @@
 import type { CSSProperties } from 'react';
 import { openShopScreen } from '../state/shopFlow';
 import { showWaveCleared, waveClearCoins, waveCount } from '../state/waveFlow';
+import { CoinStack } from './CoinStack';
 import { PlayIcon, StarIcon } from './icons';
 import { LevelDots } from './LevelDots';
 import { useAppStore, useAppStoreApi } from './StoreContext';
@@ -31,14 +32,18 @@ export function WaveClearedOverlay() {
       </div>
       <LevelDots index={waveIndex} count={count} cleared size="large" />
       <div className="wave-wallet" data-testid="wave-wallet">
-        <span className="hud-stat">🪙 {coins}</span>
+        <span className="hud-stat shop-wallet-inline">
+          {coins}
+          <CoinStack size={40} />
+        </span>
         {bonus > 0 && (
           <span
             className="wave-wallet-bonus pop-in"
             data-testid="wave-clear-coins"
             style={{ animationDelay: `${rewardStaggerMs}ms` } as CSSProperties}
           >
-            +{bonus} 🪙
+            +{bonus}
+            <CoinStack size={28} />
           </span>
         )}
       </div>

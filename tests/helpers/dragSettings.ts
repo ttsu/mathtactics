@@ -17,6 +17,11 @@ export function fakeScreenSettings() {
   return {
     popInMs: 450,
     rewardStaggerMs: 180,
+    shopCardStaggerMs: 80,
+    shopPurchasePopMs: 220,
+    shopWalletCountMs: 280,
+    shopRefusalShakeMs: 320,
+    shopNewPopMs: 180,
     iconStaggerMs: 90,
     danceMs: 900,
     danceStaggerMs: 150,

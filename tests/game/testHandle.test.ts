@@ -134,6 +134,27 @@ describe('createTestHandle', () => {
     expect(handle.getScreen()).toBe('game');
   });
 
+  it('loadScenario with phase shop lands on the shop screen', () => {
+    const { handle } = buildHandle();
+    handle.loadScenario(
+      [
+        'name: t',
+        'mode: run',
+        'phase: shop',
+        'baseValue: 1',
+        'coins: 0',
+        'board:',
+        ...Array(5).fill('  - ". . . . . . . ."'),
+        'shop:',
+        '  - { slot: "tile:0", kind: tile, tileId: "add:5", price: 4, bought: false }',
+        '  - { slot: cannon, kind: cannon, price: 10, bought: false, available: true }',
+        '  - { slot: upgrade, kind: upgrade, price: 12, bought: false, fromValue: 1, toValue: 2 }',
+      ].join('\n'),
+    );
+    expect(handle.getScreen()).toBe('shop');
+    expect(handle.getState()?.phase).toBe('shop');
+  });
+
   it('loadState resets playback to idle (finding 8, final review)', () => {
     const { store, handle } = buildHandle();
     store.setState({

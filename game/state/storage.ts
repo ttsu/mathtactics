@@ -110,15 +110,25 @@ export function loadSeen(storage: StorageLike, basePath: string): TileId[] {
   }
 }
 
-/** Adds `tileId` to the seen-tiles log and returns the new (sorted, de-duplicated) list. */
-export function addSeen(storage: StorageLike, basePath: string, tileId: TileId): TileId[] {
-  const next = dedupeSorted([...loadSeen(storage, basePath), tileId]);
+/** Adds every id in `tileIds` to the seen-tiles log and returns the new (sorted, de-duplicated)
+ * list. Additive; storage failure never throws (TR §13, GDD §8.7). */
+export function addSeenMany(
+  storage: StorageLike,
+  basePath: string,
+  tileIds: readonly TileId[],
+): TileId[] {
+  const next = dedupeSorted([...loadSeen(storage, basePath), ...tileIds]);
   try {
     storage.setItem(scopedKey(basePath, 'seen'), JSON.stringify(next));
   } catch {
     // Storage failure must never break play (TR §13).
   }
   return next;
+}
+
+/** Adds `tileId` to the seen-tiles log and returns the new (sorted, de-duplicated) list. */
+export function addSeen(storage: StorageLike, basePath: string, tileId: TileId): TileId[] {
+  return addSeenMany(storage, basePath, [tileId]);
 }
 
 /** Loads settings, falling back to `DEFAULT_SETTINGS` for a missing store, a corrupt value, or

@@ -6,11 +6,13 @@
 // basePath })`) so tasks 06/07 (real `applyCommand`) plug in without any store change.
 
 import { createStore, type StoreApi } from 'zustand/vanilla';
-import type { Command, CommandError, GameEvent, RunState } from '../../sim/core/types';
+import type { Command, CommandError, GameEvent, RunState, TileId } from '../../sim/core/types';
 import type { GameData } from '../../sim/data/schemas';
 import {
   clearRun,
+  addSeenMany,
   loadRun,
+  loadSeen,
   loadSettings,
   saveRun,
   saveSettings,
@@ -77,6 +79,9 @@ export interface AppState {
   display: Display;
   playback: Playback;
   lastTurn: LastTurn | null;
+  /** Tile types this shop visit offered for the first time on this device (GDD §8.7). Memory-only:
+   * a reload inside the shop loses the NEW stickers. Default is `NO_SHOP_NEW`. */
+  shopNew: TileId[];
   screen: Screen;
   settings: Settings;
 }
@@ -94,6 +99,10 @@ export interface AppActions {
   /** Shows `screen`. Screen changes never touch `run` (task 11: the level flow in `levelFlow.ts`
    * pairs this with `dispatch`). */
   setScreen(screen: Screen): void;
+  /** Shop-open seen log (task 20): snapshot ids not already in `loadSeen` into `shopNew`, then
+   * write every offered tile type via `addSeenMany`. Storage is closed over here, not on
+   * `AppState`. */
+  recordShopVisit(tileIds: readonly TileId[]): void;
 }
 
 export type AppStore = AppState & AppActions;
@@ -101,6 +110,9 @@ export type AppStore = AppState & AppActions;
 /** Shared idle-playback value — used for the store's initial state, `finishPlayback`, and (TR
  * §14) `loadState`'s reset, so the three places that need "no playback" agree on its shape. */
 export const IDLE_PLAYBACK: Playback = { status: 'idle', events: [], cursor: 0 };
+
+/** Stable empty `shopNew` for selectors (task 16's `NO_REWARDS` lesson: a fresh `[]` loops React). */
+export const NO_SHOP_NEW: TileId[] = [];
 
 /** True while a resolved turn (or a Replay) is playing back — the one gate both renderers use to block
  * planning input (board drags, HUD buttons). */
@@ -200,6 +212,7 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     display: initialRun ? displayFromRun(initialRun) : displayFromEconomy(data),
     playback: { ...IDLE_PLAYBACK },
     lastTurn: null,
+    shopNew: NO_SHOP_NEW,
     // Task 11/14: the app always opens on the main menu, never auto-resuming a saved run.
     screen: 'menu',
     settings: initialSettings,
@@ -330,6 +343,16 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
 
     setScreen(screen) {
       set({ screen });
+    },
+
+    recordShopVisit(tileIds) {
+      const seen = new Set(loadSeen(storage, basePath));
+      const fresh: TileId[] = [];
+      for (const id of tileIds) {
+        if (!seen.has(id) && !fresh.includes(id)) fresh.push(id);
+      }
+      addSeenMany(storage, basePath, tileIds);
+      set({ shopNew: fresh.length === 0 ? NO_SHOP_NEW : fresh });
     },
   }));
 }

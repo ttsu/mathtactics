@@ -366,49 +366,277 @@
 }
 
 .wave-wallet-bonus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 44px;
   font-weight: 800;
   color: #ffd166;
 }
 
+.shop-wallet-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .shop-screen {
-  gap: 28px;
-  padding: 48px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr;
+  justify-items: stretch;
+  align-content: stretch;
+  gap: 20px;
+  padding: 28px 36px 28px;
 }
 
-.shop-offers {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 420px;
-  font-size: 28px;
-}
-
-.shop-offer-row {
+.shop-wallet {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+  justify-content: flex-start;
+  gap: 12px;
+  font-size: 64px;
+  line-height: 1;
+  min-height: 60px;
 }
 
-.shop-offer-row button {
+.shop-wallet-n {
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(60px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  align-self: start;
+  min-height: 0;
+}
+
+.shop-card {
   pointer-events: auto;
-  min-width: 96px;
-  min-height: 60px;
-  padding: 8px 20px;
+  position: relative;
+  overflow: visible;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 60px;
+  min-height: 220px;
+  padding: 16px 10px 14px;
   border: none;
-  border-radius: 16px;
-  background: #ff8c42;
+  border-radius: 24px;
+  background: #3d4f6c;
   color: #ffffff;
   font: inherit;
-  font-size: 24px;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.28);
+  animation: pop-in var(--pop-in-ms, 0ms) cubic-bezier(0.2, 1.5, 0.4, 1) backwards;
 }
 
-.shop-offer-row button:disabled {
-  opacity: 0.55;
+.shop-card-bought,
+.shop-card-unavailable {
+  opacity: 0.5;
+}
+
+.shop-card.is-buying {
+  animation: shop-purchase-pop var(--shop-purchase-pop-ms, 220ms) ease;
+}
+
+.shop-card.is-refusing {
+  animation: shop-shake var(--shop-refusal-shake-ms, 320ms) ease;
+}
+
+.shop-tick {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  color: #8be28b;
+}
+
+.shop-new {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  z-index: 3;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: #ffd166;
+  color: #3a2e1e;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
+  animation: pop-in var(--shop-new-pop-ms, 180ms) cubic-bezier(0.2, 1.5, 0.4, 1) backwards;
+}
+
+.shop-tile-face {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  width: 100%;
+  min-height: 120px;
+  border-radius: 18px;
+  padding: 8px 4px 4px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.shop-tile-op {
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.shop-tile-n {
+  font-size: 72px;
+  line-height: 0.9;
+  font-weight: 800;
+}
+
+.shop-tile-star {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 22px;
+}
+
+.shop-cannon-face,
+.shop-upgrade-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 120px;
+}
+
+.shop-upgrade-values {
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.shop-pips {
+  display: flex;
+  gap: 6px;
+}
+
+.shop-pip {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #6a7a96;
+}
+
+.shop-pip.is-filled {
+  background: #ffd166;
+}
+
+.shop-price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 28px;
+  line-height: 1;
+  min-height: 32px;
+}
+
+.shop-price.is-flashing {
+  animation: shop-price-flash var(--shop-refusal-shake-ms, 320ms) ease;
+}
+
+.shop-owned {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+  max-height: 88px;
+  overflow: auto;
+  min-height: 44px;
+  padding-right: 240px;
+}
+
+.tile-face-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  flex: 0 0 auto;
+}
+
+.tile-face-chip-label {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tile-face-chip-star {
+  position: absolute;
+  top: 1px;
+  right: 4px;
+  font-size: 12px;
+}
+
+.shop-next {
+  position: absolute;
+  right: 28px;
+  bottom: 20px;
+  width: 220px;
+  height: 140px;
+  z-index: 1;
+}
+
+.coin-stack {
+  flex: 0 0 auto;
+}
+
+@keyframes shop-purchase-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shop-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-10px);
+  }
+  40% {
+    transform: translateX(10px);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes shop-price-flash {
+  0%,
+  100% {
+    color: #ffffff;
+  }
+  30%,
+  70% {
+    color: #ff6b6b;
+  }
 }
 
 /* --- Task 16: win/lose screens --- */

@@ -106,7 +106,7 @@ test('wave-cleared overlay shows the wallet bonus; ▶ opens the shop', async ({
   expect(bonus && bonus.type === 'CoinsChanged' ? bonus.delta : undefined).toBe(3);
 
   await expect(page.getByTestId('wave-cleared')).toBeVisible();
-  await expect(page.getByTestId('wave-clear-coins')).toHaveText('+3 🪙');
+  await expect(page.getByTestId('wave-clear-coins')).toHaveText('+3');
   await page.waitForTimeout(700); // let the pop-in finish
   await page.screenshot({ path: testInfo.outputPath('wave-cleared.png') });
   await expectTouchTarget(page, 'wave-next');
@@ -128,7 +128,7 @@ test('reloading while the wave-cleared overlay is up resumes into it (task 14+16
 
   expect((await getState(page)).phase).toBe('waveCleared');
   await expect(page.getByTestId('wave-cleared')).toBeVisible();
-  await expect(page.getByTestId('wave-clear-coins')).toHaveText('+3 🪙');
+  await expect(page.getByTestId('wave-clear-coins')).toHaveText('+3');
 
   // The `endTurn` dispatch above persists — it resolved to `mode: 'run'` — so the saved run is
   // this `waveCleared` state, `lastTurnEvents` included. The reload drops the scenario's inline
@@ -142,7 +142,7 @@ test('reloading while the wave-cleared overlay is up resumes into it (task 14+16
   expect(await getScreen(page)).toBe('game');
   expect((await getState(page))?.phase).toBe('waveCleared');
   await expect(page.getByTestId('wave-cleared')).toBeVisible();
-  await expect(page.getByTestId('wave-clear-coins')).toHaveText('+3 🪙');
+  await expect(page.getByTestId('wave-clear-coins')).toHaveText('+3');
 
   await page.getByTestId('wave-next').click();
   expect((await getState(page)).phase).toBe('shop');

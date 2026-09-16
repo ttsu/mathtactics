@@ -491,7 +491,9 @@ on `screen: 'shop'` for such a run — the same offers, the same bought slots. T
 shop (the HUD renders only on `screen: 'game'`); the run is saved in phase `shop`, so ▶ Continue returns
 to it. `shopNew` is filled when the shop opens — the offered tile ids not already in the `seen` log (§13),
 which are written to that log at the same moment — and cleared when the shop closes. It is memory-only, so
-a reload inside the shop loses the NEW stickers; device-local state must not enter `RunState`.
+a reload inside the shop loses the NEW stickers; device-local state must not enter `RunState`. Storage is
+closed over in `createAppStore`; `openShopScreen` calls store action `recordShopVisit` rather than taking
+a `StorageLike` (task 20).
 
 **M1 level flow (task 11, `/game/state/levelFlow.ts`):** the app opens on `screen: 'menu'`. ▶ Play and
 ▶ Play again → `loadLevel` (first level) + `'game'`. The level-cleared overlay shows when

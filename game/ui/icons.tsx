@@ -127,3 +127,31 @@ export function DancingRobotIcon({ size }: { size: number }) {
     </svg>
   );
 }
+
+/** A side-on cannon: barrel plus a round body. Used on shop cannon and upgrade cards. */
+export function CannonIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 64 48" width={size} height={Math.round(size * 0.75)} aria-hidden="true">
+      <rect x="4" y="28" width="22" height="10" rx="4" fill="currentColor" />
+      <circle cx="16" cy="24" r="12" fill="currentColor" />
+      <rect x="24" y="16" width="34" height="12" rx="5" fill="currentColor" />
+      <circle cx="16" cy="24" r="4" fill="#2f3e57" />
+    </svg>
+  );
+}
+
+/** A fat tick for a bought shop card. */
+export function CheckIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
+      <path
+        d="M10 26 L20 36 L38 12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

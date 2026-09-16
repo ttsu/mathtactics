@@ -24,6 +24,7 @@ export {
   loadRun,
   loadSeen,
   addSeen,
+  addSeenMany,
   loadSettings,
   saveSettings,
   DEFAULT_SETTINGS,
@@ -36,6 +37,7 @@ export {
   isPlaybackActive,
   canReplay,
   IDLE_PLAYBACK,
+  NO_SHOP_NEW,
 } from './store';
 export type {
   AppState,
@@ -49,6 +51,10 @@ export type {
   Playback,
   LastTurn,
 } from './store';
+export { tileFace } from './tileFace';
+export type { TileFace, TileColorKey } from './tileFace';
+export { shopCardStatus } from './shopCard';
+export type { ShopCardStatus } from './shopCard';
 // `createTestHandle`/`installTestHandle`/`TestHandle` are deliberately NOT re-exported here
 // (finding 9, final review) — barrel-exporting them would invite a static `import { ... } from
 // '../state'` that defeats game/main.tsx's guarded dynamic `import('./state/testHandle')`
