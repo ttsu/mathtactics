@@ -1,7 +1,7 @@
-// Termination property (task 13 requirement): a run driven only by `endTurn` (and `nextWave`
-// once `waveCleared`) always reaches `won` or `lost` within a bound, for many seeds, using the
-// real shipped `waves.json`. No tile placement ever happens — this exercises ADVANCE, DETONATE,
-// END CHECK, fast-forward, and SPAWN purely from the turn loop itself.
+// Termination property (task 13 requirement): a run driven only by `endTurn` (and `openShop` /
+// `nextWave` between waves) always reaches `won` or `lost` within a bound, for many seeds, using
+// the real shipped `waves.json`. No tile placement ever happens — this exercises ADVANCE, DETONATE,
+// END CHECK, fast-forward, SPAWN, and the shop pass-through purely from the turn loop itself.
 
 import { describe, expect, it } from 'vitest';
 import { applyCommand } from '../../sim/commands/applyCommand';
@@ -23,7 +23,11 @@ function driveToEnd(seed: string): { phase: Phase; endTurns: number } {
     if (endTurns >= MAX_END_TURNS) break;
 
     const cmd =
-      state.phase === 'waveCleared' ? { type: 'nextWave' as const } : { type: 'endTurn' as const };
+      state.phase === 'waveCleared'
+        ? { type: 'openShop' as const }
+        : state.phase === 'shop'
+          ? { type: 'nextWave' as const }
+          : { type: 'endTurn' as const };
     const result = applyCommand(state, cmd, data);
     if (!result.ok) {
       throw new Error(
@@ -37,7 +41,7 @@ function driveToEnd(seed: string): { phase: Phase; endTurns: number } {
   return { phase: state.phase, endTurns };
 }
 
-describe('termination property: newRun + endTurn/nextWave always reaches won or lost', () => {
+describe('termination property: newRun + endTurn/openShop/nextWave always reaches won or lost', () => {
   for (let seed = 1; seed <= 50; seed++) {
     it(`seed ${seed}`, () => {
       const { phase, endTurns } = driveToEnd(String(seed));

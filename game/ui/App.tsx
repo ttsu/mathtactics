@@ -4,6 +4,7 @@ import { LevelClearedOverlay } from './LevelClearedOverlay';
 import { LoseScreen } from './LoseScreen';
 import { MainMenu } from './MainMenu';
 import { RotateOverlay } from './RotateOverlay';
+import { ShopScreen } from './ShopScreen';
 import { UpdateBanner } from './UpdateBanner';
 import { useAppStore } from './StoreContext';
 import { WaveClearedOverlay } from './WaveClearedOverlay';
@@ -23,6 +24,7 @@ export function App() {
           <WaveClearedOverlay />
         </>
       )}
+      {screen === 'shop' && <ShopScreen />}
       {screen === 'allDone' && <AllDoneScreen />}
       {screen === 'won' && <WinScreen />}
       {screen === 'lost' && <LoseScreen />}

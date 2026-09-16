@@ -1,0 +1,31 @@
+# GDD §8.3: unbought offers vanish when leaving the shop (`nextWave` clears ShopState).
+name: unbought offers vanish on nextWave
+mode: run
+phase: shop
+baseValue: 1
+coins: 10
+board:
+  - "C . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+waves:
+  - id: wave-1
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+  - id: wave-2
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [4, 4] }
+shop:
+  - { slot: "tile:0", kind: tile, tileId: "add:5", price: 4, bought: false }
+  - { slot: cannon, kind: cannon, price: 10, bought: false, available: true }
+  - { slot: upgrade, kind: upgrade, price: 12, bought: false, fromValue: 1, toValue: 2 }
+commands:
+  - nextWave
+expectState:
+  phase: planning
+  waveIndex: 1
+  shop: null
+  tray: []
+  coins: 10

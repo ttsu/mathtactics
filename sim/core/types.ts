@@ -216,7 +216,11 @@ export type GameEvent = EventBase &
       }
     | { type: 'RobotWaiting'; robotId: string; lane: Lane; hp: number; maxHp: number; trait: Trait }
     | { type: 'WaveCleared'; waveIndex: number }
+    /** Tiles entered the tray — shop purchases (M2 used this for wave rewards). */
     | { type: 'TilesGranted'; tiles: { pieceId: string; tileId: TileId }[] }
+    | { type: 'OfferBought'; slot: ShopSlotId; kind: 'tile' | 'cannon' | 'upgrade'; price: number }
+    | { type: 'CannonPlaced'; lane: Lane }
+    | { type: 'BaseValueChanged'; from: number; to: number }
     | { type: 'LevelCleared'; levelId: string }
     | { type: 'RunWon' }
     | { type: 'RunLost' }
@@ -231,8 +235,8 @@ export type Command =
   | { type: 'moveCannon'; fromLane: Lane; toLane: Lane }
   | { type: 'undo' }
   | { type: 'endTurn' }
+  | { type: 'openShop' }
   | { type: 'buyOffer'; slot: ShopSlotId }
-  | { type: 'leaveShop' }
   | { type: 'nextWave' }
   | { type: 'newRun'; seed: string }
   | { type: 'loadLevel'; levelId: string };

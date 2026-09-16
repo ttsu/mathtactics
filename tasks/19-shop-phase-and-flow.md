@@ -171,4 +171,42 @@ requires phase `shop` instead of `waveCleared`.
 
 ## Completion Notes
 
-_(filled in by `/finish-task`)_
+**Status:** Complete
+**Completed:** 2026-09-16
+**PR:** #34 · stacked on #33 (`cursor/18-shop-data-and-offers-8f5d`)
+
+**Acceptance criteria:**
+- [x] Wave rewards are gone from data, schema, resolution and UI; the shop is the only tile source — Met
+- [x] `openShop` / `buyOffer` / `nextWave` implement GDD §8.6 with the event order of requirement 4 — Met
+- [x] Offers are rolled once and survive a reload; unbought offers vanish on leaving — Met (`e2e/shop.spec.ts`, `unbought-offers-vanish-on-next-wave`)
+- [x] A purchase never starts playback, never advances the `wave` stream, and cannot be undone — Met
+- [x] A run saved in the shop resumes into the shop — Met
+- [x] `schemaVersion` is 3 — Met (`data/economy.json`)
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e`, `npm run sim -- scenarios` pass — Met
+
+**Verification:** npm test ✔ (57 files / 839 tests) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (67 webkit, including shop buy + shop reload) · `npm run sim -- scenarios` ✔ (39/39)
+
+**Deviations from spec:**
+- Branch name is `cursor/19-shop-phase-and-flow-8f5d` (stacked-PR convention) rather than `task/19-shop-phase-and-flow`.
+- The wave-cleared overlay ▶ stays icon-only (`aria-label="Next"`), matching the pre-M3 overlay. The shop's ▶ carries the GDD §11.1 label *Next wave*.
+- `purchase-does-not-advance-the-wave-stream.scenario.yaml` pins wave-2 HP at `[7, 7]` and buys after `openShop`. A unit test in `tests/sim/commands/openShop.test.ts` compares the same seed with and without a purchase.
+- Ladder wave-2/3 reward-tile reachability tests are removed (comment only); the unlosable-M2 worst-case test and the wave-1 sensible-player test remain. End-Turn-only and termination bots now `openShop` then `nextWave` between waves.
+
+**Architectural decisions made:**
+- `buyOffer` returns events itself (`ApplyCommandResult`); `openShop` uses the no-events planning path.
+- Store `dispatch` skips playback when `result.state.phase === 'shop'` (events still exist for tests/scenarios). `lastTurn` is kept because purchases do not rewrite `lastTurnEvents`.
+- `continueRun` maps phase `shop` → `screen: 'shop'`, everything else resumable → `'game'`.
+- Placeholder `ShopScreen` disables a buy button when the slot is already bought or the cannon is `available: false`. Task 20 replaces the screen.
+
+**Design questions raised:**
+- None.
+
+**Known issues / follow-up:**
+- None beyond task 20's wholesale shop UI (NEW stickers, seen log, card layout).
+
+**Files created:** `sim/commands/openShop.ts`, `sim/commands/buyOffer.ts`, `game/state/shopFlow.ts`, `game/ui/ShopScreen.tsx`, `e2e/shop.spec.ts`, `tests/sim/commands/{openShop,buyOffer}.test.ts`, `tests/game/shopFlow.test.ts`, `scenarios/shop/*.scenario.yaml` (8 files)
+**Files modified:** `data/{economy,waves}.json`, `sim/core/types.ts`, `sim/data/schemas.ts`, `sim/resolve/resolveTurn.ts`, `sim/commands/{applyCommand,index,nextWave}.ts`, `sim/scenario/{parse,run}.ts`, `game/state/{store,runFlow,waveFlow}.ts`, `game/ui/{App,WaveClearedOverlay,ui.css}`, `game/board/playback/timeline.ts`, run/wave/e2e specs and matching unit tests, `TASKS.md`, this file
+
+**Notes for next agent:**
+- Shop commands and run flow are live. Task 20 owns `shopNew`, `addSeenMany`, NEW stickers, and replacing `ShopScreen`. Do not roll offers again on render — they live on `RunState.shop` after `openShop`. `afterWave = waveIndex + 1`. `schemaVersion` is already 3. HUD is not on `screen === 'shop'`; Continue is the way back in. Wire seen-log writes in `openShopScreen`, not in `/sim`.
+

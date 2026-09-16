@@ -58,9 +58,10 @@ describe('isResumable', () => {
     nextIds: { robot: 0, piece: 0, ball: 0 },
   };
 
-  it('is true for a run in planning or waveCleared', () => {
+  it('is true for a run in planning, waveCleared, or shop', () => {
     expect(isResumable(base)).toBe(true);
     expect(isResumable({ ...base, phase: 'waveCleared' })).toBe(true);
+    expect(isResumable({ ...base, phase: 'shop' })).toBe(true);
   });
 
   it('is false for won, lost, or a level-mode state', () => {
@@ -162,6 +163,29 @@ describe('Continue', () => {
 
     expect(store.getState().run).toEqual(savedRun);
     expect(store.getState().screen).toBe('game');
+  });
+
+  it('restores a run saved in shop onto the shop screen, offers intact', () => {
+    const store = createStore();
+    startNewRun(store);
+    store.getState().finishPlayback();
+    const forced: RunState = {
+      ...store.getState().run!,
+      phase: 'shop',
+      shop: {
+        afterWave: 1,
+        offers: [
+          { slot: 'tile:0', kind: 'tile', tileId: 'add:1', price: 4, bought: true },
+        ],
+      },
+    };
+    store.setState({ run: forced, savedRun: forced, screen: 'menu' });
+
+    continueRun(store);
+
+    expect(store.getState().screen).toBe('shop');
+    expect(store.getState().run?.phase).toBe('shop');
+    expect(store.getState().run?.shop?.offers[0]).toMatchObject({ slot: 'tile:0', bought: true });
   });
 
   it('is ignored when nothing is resumable (no-op, no crash)', () => {

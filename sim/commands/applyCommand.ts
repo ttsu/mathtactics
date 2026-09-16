@@ -1,18 +1,20 @@
 // `applyCommand(state, cmd, data)` (TR §5): the single entry point for every player command.
-// Dispatches to the small per-command functions in `./planning.ts` and `./level.ts`; validation
-// and mutation live there, not here.
+// Dispatches to the small per-command functions in `./planning.ts`, `./openShop.ts`,
+// `./buyOffer.ts`, and `./level.ts`; validation and mutation live there, not here.
 //
-// `endTurn` requires phase `planning` (else `wrong_phase`) and otherwise delegates to task 07's
-// `resolveTurn`, returning its state and events directly. `newRun` (task 12) and `loadLevel` both
-// accept a null state or any phase. `buyOffer`/`leaveShop` are M3 shop features not yet
-// implemented, so they still return `wrong_phase` (task 06 ruling).
+// `endTurn` requires phase `planning` (else `wrong_phase`) and otherwise delegates to
+// `resolveTurn`, returning its state and events directly. `newRun` and `loadLevel` both
+// accept a null state or any phase. `nextWave` requires phase `shop` (M3; it was `waveCleared`
+// in M2, before the shop sat between them).
 
 import type { Command, CommandError, GameEvent, RunState } from '../core/types';
 import type { GameData } from '../data/schemas';
 import { resolveTurn } from '../resolve/resolveTurn';
+import { buyOffer } from './buyOffer';
 import { buildLevelState } from './level';
 import { buildNewRun } from './newRun';
 import { buildNextWave } from './nextWave';
+import { openShop } from './openShop';
 import { moveCannon, moveTile, placeTile, returnTile, undoCommand } from './planning';
 import type { CommandResult } from './types';
 
@@ -20,7 +22,7 @@ export type ApplyCommandResult =
   { ok: true; state: RunState; events: GameEvent[] } | { ok: false; error: CommandError };
 
 /** Planning commands never emit events (task 06 requirement 7) — only `resolveTurn` (task 07)
- * produces a real event list. */
+ * and `buyOffer` (task 19) produce a real event list. */
 function withNoEvents(result: CommandResult): ApplyCommandResult {
   if (!result.ok) return result;
   return { ok: true, state: result.state, events: [] };
@@ -66,13 +68,14 @@ export function applyCommand(
       const result = resolveTurn(state, data);
       return { ok: true, state: result.state, events: result.events };
     }
+    case 'openShop':
+      return withNoEvents(openShop(state, data));
+    case 'buyOffer':
+      return buyOffer(state, cmd);
     case 'nextWave': {
-      if (state.phase !== 'waveCleared') return { ok: false, error: 'wrong_phase' };
+      if (state.phase !== 'shop') return { ok: false, error: 'wrong_phase' };
       const result = buildNextWave(state, data);
       return { ok: true, state: result.state, events: result.events };
     }
-    case 'buyOffer':
-    case 'leaveShop':
-      return { ok: false, error: 'wrong_phase' };
   }
 }

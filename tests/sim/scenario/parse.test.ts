@@ -366,6 +366,48 @@ describe('parseScenario — task 13 (mode: run)', () => {
     const scenario = parseScenario(yamlText);
     expect(scenario.commands).toEqual([{ type: 'newRun', seed: 'my-seed' }]);
   });
+
+  it('parses openShop and buy shorthands plus a pinned shop', () => {
+    const yamlText = [
+      'name: t',
+      'mode: run',
+      'phase: shop',
+      'baseValue: 1',
+      'cannons: [true, false, false, false, false]',
+      'upgradesBought: 2',
+      'board:',
+      ...blankBoard().map((row) => `  - "${row}"`),
+      'shop:',
+      '  - { slot: "tile:0", kind: tile, tileId: "add:5", price: 4, bought: false }',
+      '  - { slot: cannon, kind: cannon, price: 10, bought: false, available: true }',
+      'commands:',
+      '  - openShop',
+      '  - { buy: "tile:0" }',
+      '  - { type: buyOffer, slot: cannon }',
+    ].join('\n');
+    const scenario = parseScenario(yamlText);
+    expect(scenario.phase).toBe('shop');
+    expect(scenario.cannons).toEqual([true, false, false, false, false]);
+    expect(scenario.upgradesBought).toBe(2);
+    expect(scenario.shop).toHaveLength(2);
+    expect(scenario.commands).toEqual([
+      { type: 'openShop' },
+      { type: 'buyOffer', slot: 'tile:0' },
+      { type: 'buyOffer', slot: 'cannon' },
+    ]);
+  });
+
+  it('rejects phase shop without a shop list', () => {
+    const yamlText = [
+      'name: t',
+      'phase: shop',
+      'baseValue: 1',
+      'board:',
+      ...blankBoard().map((row) => `  - "${row}"`),
+      'commands: []',
+    ].join('\n');
+    expect(() => parseScenario(yamlText)).toThrow('phase "shop" requires a "shop:" offer list');
+  });
 });
 
 describe('findPartialMismatch', () => {

@@ -48,12 +48,14 @@ function initialLevelDef(scenario: Scenario, data: GameData): LevelDef {
  * note): `coins`, `baseHp`, `seed`, `mode`, `waveIndex`, `turn`, `pendingSpawns`, `exactKills`
  * (task 13), `waiting` robots (`col: null`, each with its own `maxHp`).
  *
- * `buildLevelState` always sets `phase: 'planning'`, so a `mode: run` scenario with a `board`
- * starts in `planning` too (task 13 requirement 5) — nothing below touches `phase`.
+ * `buildLevelState` always sets `phase: 'planning'`. Task 19 then applies `phase`, `shop`,
+ * `cannons`, and `upgradesBought` overrides so a shop scenario can start already in the shop
+ * with pinned offers (TR §12).
  */
 export function buildScenarioState(scenario: Scenario, data: GameData): RunState {
   let state = buildLevelState(initialLevelDef(scenario, data), data);
 
+  const waveIndex = scenario.waveIndex ?? state.waveIndex;
   state = {
     ...state,
     coins: scenario.coins ?? state.coins,
@@ -61,10 +63,16 @@ export function buildScenarioState(scenario: Scenario, data: GameData): RunState
     seed: scenario.seed ?? state.seed,
     rng: scenario.seed !== undefined ? createStreams(scenario.seed) : state.rng,
     mode: scenario.mode,
-    waveIndex: scenario.waveIndex ?? state.waveIndex,
+    waveIndex,
     turn: scenario.turn ?? state.turn,
     pendingSpawns: scenario.pendingSpawns,
     exactKills: scenario.exactKills ?? state.exactKills,
+    phase: scenario.phase ?? state.phase,
+    upgradesBought: scenario.upgradesBought ?? state.upgradesBought,
+    shop:
+      scenario.shop !== undefined
+        ? { afterWave: waveIndex + 1, offers: scenario.shop }
+        : state.shop,
   };
 
   let nextIds = state.nextIds;
@@ -86,7 +94,11 @@ export function buildScenarioState(scenario: Scenario, data: GameData): RunState
   return {
     ...state,
     nextIds,
-    board: { ...state.board, robots: [...state.board.robots, ...waitingRobots] },
+    board: {
+      ...state.board,
+      cannons: scenario.cannons ?? state.board.cannons,
+      robots: [...state.board.robots, ...waitingRobots],
+    },
   };
 }
 

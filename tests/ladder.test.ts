@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { applyCommand } from '../sim/commands/applyCommand';
 import { parseGameData } from '../sim/data/load';
 import type { GameData, WaveDef } from '../sim/data/schemas';
-import type { Board, GameEvent, RunState, TileId } from '../sim/core/types';
+import type { Board, GameEvent, RunState } from '../sim/core/types';
 import type { Lane } from '../sim/core/coords';
 import { loadRawGameData } from './helpers/loadDataFiles';
 
@@ -45,81 +45,9 @@ describe('unlosable-M2 decision', () => {
   });
 });
 
-// --- Requirement: every wave-2 robot exact-killable in <=2 hits with wave-1 reward tiles (+
-// base value 1); every wave-3 robot likewise with wave-1 + wave-2 rewards ---
-
-/** Every ball value reachable in one shot from `base`, chaining any subset (in any order) of
- * `tileIds` — mirrors what a player can actually place in a lane's 7 tile cells. Small tile
- * counts (a wave's cumulative rewards) keep the permutation count tiny. */
-function reachableSingleShotValues(base: number, tileIds: TileId[]): Set<number> {
-  const tileDefs = tileIds.map((id) => {
-    const def = data.tiles.find((tile) => tile.id === id);
-    if (!def) throw new Error(`reachableSingleShotValues: unknown tile id "${id}"`);
-    return def;
-  });
-
-  const reachable = new Set<number>([base]);
-
-  function visit(remaining: typeof tileDefs, current: number) {
-    reachable.add(current);
-    for (let i = 0; i < remaining.length; i++) {
-      const tile = remaining[i]!;
-      const rest = [...remaining.slice(0, i), ...remaining.slice(i + 1)];
-      const next =
-        tile.kind === 'add' ? current + tile.n : tile.kind === 'sub' ? current - tile.n : current * tile.n;
-      visit(rest, next);
-    }
-  }
-
-  visit(tileDefs, base);
-  return reachable;
-}
-
-/** Whether `hp` can be exactly reduced to 0 in at most two hits (turns), each hit dealing one
- * `reachable` value of damage in sequence (the first hit must not overshoot). */
-function exactKillableInAtMostTwoHits(hp: number, reachable: Set<number>): boolean {
-  if (reachable.has(hp)) return true; // one hit
-  for (const first of reachable) {
-    if (first > 0 && first < hp && reachable.has(hp - first)) return true;
-  }
-  return false;
-}
-
-function waveHpRange(wave: WaveDef): { min: number; max: number } {
-  let min = Infinity;
-  let max = -Infinity;
-  for (const spawn of wave.spawns) {
-    min = Math.min(min, spawn.hp[0]);
-    max = Math.max(max, spawn.hp[1]);
-  }
-  return { min, max };
-}
-
-describe('exact-kill reachability (GDD §5.5 / task 17 requirement 2)', () => {
-  const [wave1, wave2, wave3] = data.waves.waves;
-  if (!wave1 || !wave2 || !wave3) {
-    throw new Error('ladder balance tests expect at least 3 waves (wave-1, wave-2, wave-3)');
-  }
-
-  const wave1Reward = wave1.reward?.tiles ?? [];
-  const wave2Reward = wave2.reward?.tiles ?? [];
-
-  it('every wave-2 HP value is exact-killable in at most 2 hits using wave-1 reward tiles + base value 1', () => {
-    const reachable = reachableSingleShotValues(1, wave1Reward);
-    const { min, max } = waveHpRange(wave2);
-    for (let hp = min; hp <= max; hp++) {
-      expect(exactKillableInAtMostTwoHits(hp, reachable), `hp ${hp}`).toBe(true);
-    }
-  });
-
-  it('every wave-3 HP value is exact-killable in at most 2 hits using wave-1 + wave-2 reward tiles + base value 1', () => {
-    const reachable = reachableSingleShotValues(1, [...wave1Reward, ...wave2Reward]);
-    const { min, max } = waveHpRange(wave3);
-    for (let hp = min; hp <= max; hp++) {
-      expect(exactKillableInAtMostTwoHits(hp, reachable), `hp ${hp}`).toBe(true);
-    }
-  });
-});
+// Task 19 removed authored wave-reward tiles, so the wave-2/3 "exact-killable with cumulative
+// reward tiles" checks no longer have a tile source. Task 21 replaces them with shop-aware
+// reachability once waves 4–7 and the shop ladder are authored.
 
 // --- Requirement: a "sensible player" bot (move the cannon to the front-most robot's lane;
 // fire; no tiles) finishes wave 1 with zero detonations for every seed ---
@@ -190,7 +118,12 @@ function playFullRunEndTurnOnly(seed: string): RunState {
     if (endTurns >= MAX_END_TURNS) {
       throw new Error(`seed ${seed}: run didn't finish within ${MAX_END_TURNS} End Turns`);
     }
-    const cmd = state.phase === 'waveCleared' ? { type: 'nextWave' as const } : { type: 'endTurn' as const };
+    const cmd =
+      state.phase === 'waveCleared'
+        ? { type: 'openShop' as const }
+        : state.phase === 'shop'
+          ? { type: 'nextWave' as const }
+          : { type: 'endTurn' as const };
     state = requireOk(applyCommand(state, cmd, data)).state;
     if (cmd.type === 'endTurn') endTurns++;
   }

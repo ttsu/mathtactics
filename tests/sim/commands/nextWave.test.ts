@@ -15,7 +15,6 @@ function twoWaveData(): GameData {
         {
           id: 'wave-1',
           spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }],
-          reward: { tiles: ['add:5'] },
         },
         {
           id: 'wave-2',
@@ -26,33 +25,39 @@ function twoWaveData(): GameData {
   });
 }
 
-function waveClearedState(overrides: Partial<RunState> = {}): RunState {
+function shopState(overrides: Partial<RunState> = {}): RunState {
   return fakeRunState({
     mode: 'run',
     levelId: undefined,
-    phase: 'waveCleared',
+    phase: 'shop',
     waveIndex: 0,
     turn: 12,
     coins: 7,
     baseHp: 88,
     exactKills: 4,
     pendingSpawns: [],
+    shop: {
+      afterWave: 1,
+      offers: [
+        { slot: 'tile:0', kind: 'tile', tileId: 'add:5', price: 4, bought: false },
+      ],
+    },
     ...overrides,
   });
 }
 
 describe('applyCommand — nextWave', () => {
-  it('requires phase waveCleared, else wrong_phase', () => {
+  it('requires phase shop, else wrong_phase', () => {
     const data = twoWaveData();
-    for (const phase of ['planning', 'won', 'lost', 'levelCleared', 'shop'] as const) {
-      const result = applyCommand(waveClearedState({ phase }), { type: 'nextWave' }, data);
+    for (const phase of ['planning', 'waveCleared', 'won', 'lost', 'levelCleared'] as const) {
+      const result = applyCommand(shopState({ phase }), { type: 'nextWave' }, data);
       expect(result).toEqual({ ok: false, error: 'wrong_phase' });
     }
   });
 
-  it('advances waveIndex, resets turn to 1, rolls the next wave, spawns, and returns to planning', () => {
+  it('advances waveIndex, resets turn to 1, rolls the next wave, clears shop, and returns to planning', () => {
     const data = twoWaveData();
-    const state = waveClearedState();
+    const state = shopState();
 
     const result = applyCommand(state, { type: 'nextWave' }, data);
     if (!result.ok) throw new Error(`expected ok, got "${result.error}"`);
@@ -60,6 +65,7 @@ describe('applyCommand — nextWave', () => {
     expect(result.state.waveIndex).toBe(1);
     expect(result.state.turn).toBe(1);
     expect(result.state.phase).toBe('planning');
+    expect(result.state.shop).toBeNull();
     expect(result.state.undo).toEqual([]);
     expect(result.state.lastTurnEvents).toEqual([]);
 
@@ -72,7 +78,7 @@ describe('applyCommand — nextWave', () => {
 
   it('carries board, tray, cannons, coins, baseHp, and exactKills over unchanged', () => {
     const data = twoWaveData();
-    const state = waveClearedState({
+    const state = shopState({
       coins: 7,
       baseHp: 88,
       exactKills: 4,
@@ -93,7 +99,7 @@ describe('applyCommand — nextWave', () => {
 
   it('does not mutate the state it starts from', () => {
     const data = twoWaveData();
-    const state = waveClearedState();
+    const state = shopState();
     const snapshot = structuredClone(state);
 
     applyCommand(state, { type: 'nextWave' }, data);
@@ -105,7 +111,7 @@ describe('applyCommand — nextWave', () => {
 describe('exactKills across waves (GDD §10.6)', () => {
   it('keeps counting after nextWave — carried over, not reset', () => {
     const data = twoWaveData();
-    const cleared = waveClearedState({ exactKills: 5 });
+    const cleared = shopState({ exactKills: 5 });
 
     const result = applyCommand(cleared, { type: 'nextWave' }, data);
     if (!result.ok) throw new Error(`expected ok, got "${result.error}"`);

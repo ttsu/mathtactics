@@ -1,0 +1,34 @@
+# GDD §8.5 / TR §8: rolling the shop (and buying) never advances the `wave` stream. Wave 2's
+# HP range is a singleton so the spawn is the same whether or not a purchase happened.
+name: purchase does not advance the wave stream
+mode: run
+phase: waveCleared
+seed: shop-vs-wave-stream
+baseValue: 1
+coins: 20
+board:
+  - "C . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+waves:
+  - id: wave-1
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+  - id: wave-2
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [7, 7] }
+commands:
+  - openShop
+  - { buy: "tile:0" }
+  - nextWave
+expectEvents:
+  - { type: OfferBought, kind: tile }
+  - { type: TilesGranted }
+  - { type: CoinsChanged, reason: purchase }
+  - { type: RobotSpawned, at: { lane: 0, col: 7 }, hp: 7, maxHp: 7 }
+expectState:
+  phase: planning
+  waveIndex: 1
+  shop: null

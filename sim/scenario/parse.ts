@@ -17,7 +17,17 @@ import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 import { COLS, LANES } from '../core/coords';
 import type { Col, Lane } from '../core/coords';
-import type { Command, CommandError, SpawnEntry, Trait, TileId, TileKind } from '../core/types';
+import type {
+  Command,
+  CommandError,
+  Phase,
+  ShopOffer,
+  ShopSlotId,
+  SpawnEntry,
+  Trait,
+  TileId,
+  TileKind,
+} from '../core/types';
 import { WavesFileSchema, type WaveDef } from '../data/schemas';
 import type { ExpectedEvent } from './match';
 
@@ -78,6 +88,15 @@ const CellRawSchema = z.object({
     .max(COLS - 1),
 });
 
+const ShopSlotIdSchema = z.union([
+  z
+    .string()
+    .regex(/^tile:\d+$/, 'must be a shop slot like "tile:0", "cannon", or "upgrade"')
+    .transform((slot) => slot as ShopSlotId),
+  z.literal('cannon'),
+  z.literal('upgrade'),
+]);
+
 const CommandObjectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('placeTile'), pieceId: z.string().min(1), to: CellRawSchema }),
   z.object({ type: z.literal('moveTile'), from: CellRawSchema, to: CellRawSchema }),
@@ -97,22 +116,66 @@ const CommandObjectSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('undo') }),
   z.object({ type: z.literal('endTurn') }),
+  z.object({ type: z.literal('openShop') }),
   z.object({ type: z.literal('nextWave') }),
+  z.object({ type: z.literal('buyOffer'), slot: ShopSlotIdSchema }),
+]);
+
+const TileOfferSchema = z.object({
+  slot: z
+    .string()
+    .regex(/^tile:\d+$/)
+    .transform((slot) => slot as `tile:${number}`),
+  kind: z.literal('tile'),
+  tileId: z
+    .string()
+    .regex(/^(add|sub|mul):\d+$/)
+    .transform((id) => id as TileId),
+  price: z.number().int().nonnegative(),
+  bought: z.boolean(),
+});
+
+const CannonOfferSchema = z.object({
+  slot: z.literal('cannon'),
+  kind: z.literal('cannon'),
+  price: z.number().int().nonnegative(),
+  bought: z.boolean(),
+  available: z.boolean(),
+});
+
+const UpgradeOfferSchema = z.object({
+  slot: z.literal('upgrade'),
+  kind: z.literal('upgrade'),
+  price: z.number().int().nonnegative(),
+  bought: z.boolean(),
+  fromValue: z.number().int(),
+  toValue: z.number().int(),
+});
+
+const ShopOfferSchema = z.discriminatedUnion('kind', [
+  TileOfferSchema,
+  CannonOfferSchema,
+  UpgradeOfferSchema,
 ]);
 
 /** Object shorthand for `newRun` (task 13 requirement 5): `{ newRun: <seed> }` instead of the
  * full `{ type: 'newRun', seed: <seed> }` command object. */
 const NewRunShorthandSchema = z.object({ newRun: z.string().min(1) });
 
-/** String shorthand ("endTurn", "undo", "nextWave") or the object form of any planning/
- * `endTurn`/`undo`/`nextWave` command, plus the `{ newRun: <seed> }` shorthand (task 08 ruling,
- * extended by task 13: `loadLevel` and the M3 shop commands still aren't meaningful here). */
+/** `{ buy: "tile:0" }` / `{ buy: "cannon" }` / `{ buy: "upgrade" }` (task 19). */
+const BuyShorthandSchema = z.object({ buy: ShopSlotIdSchema });
+
+/** String shorthand ("endTurn", "undo", "nextWave", "openShop") or the object form of any
+ * planning/`endTurn`/`undo`/`nextWave`/`openShop`/`buyOffer` command, plus `{ newRun: <seed> }`
+ * and `{ buy: <slot> }` (task 08 ruling, extended by tasks 13 and 19). */
 const RawCommandSchema = z.union([
   z.literal('endTurn'),
   z.literal('undo'),
   z.literal('nextWave'),
+  z.literal('openShop'),
   CommandObjectSchema,
   NewRunShorthandSchema,
+  BuyShorthandSchema,
 ]);
 
 const RawExpectedEventSchema = z.object({ type: z.string().min(1) }).passthrough();
@@ -179,6 +242,14 @@ const RawScenarioSchema = z.object({
   /** Task 13 requirement 5: an inline `waves.json`-shaped array replacing `data.waves.waves` for
    * this scenario only, so rule scenarios don't break when ladder content is tuned (TR §12). */
   waves: z.array(z.record(z.string(), z.unknown())).optional(),
+  /** Task 19: default `planning` for a `board` scenario. `phase: shop` requires `shop:`. */
+  phase: z.enum(['planning', 'waveCleared', 'shop', 'won', 'lost', 'levelCleared']).optional(),
+  /** Task 19: pinned `ShopOffer` list, installed as `RunState.shop`. */
+  shop: z.array(ShopOfferSchema).optional(),
+  /** Task 19: length-5 boolean array overriding `board.cannons`. */
+  cannons: z.array(z.boolean()).length(5).optional(),
+  /** Task 19: overrides `RunState.upgradesBought` (default 0). */
+  upgradesBought: z.number().int().nonnegative().optional(),
   commands: z.array(RawCommandSchema).default([]),
   expectEvents: z.array(RawExpectedEventSchema).default([]),
   expectState: z.record(z.string(), z.unknown()).optional(),
@@ -223,6 +294,14 @@ export interface Scenario {
   exactKills?: number;
   /** Task 13 requirement 5: replaces `data.waves.waves` for this scenario's run, when set. */
   waves?: WaveDef[];
+  /** Task 19: initial phase. Unset means `planning` for a `board` scenario. */
+  phase?: Phase;
+  /** Task 19: pinned shop offers. Required when `phase` is `shop`. */
+  shop?: ShopOffer[];
+  /** Task 19: overrides `board.cannons` when set. */
+  cannons?: boolean[];
+  /** Task 19: overrides `upgradesBought` (default 0 from `buildLevelState`). */
+  upgradesBought?: number;
   commands: Command[];
   expectEvents: ExpectedEvent[];
   expectState?: Record<string, unknown>;
@@ -396,11 +475,17 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
     waves = parsedWaves.data.waves;
   }
 
+  if (data.phase === 'shop' && data.shop === undefined) {
+    throw new Error('scenario: phase "shop" requires a "shop:" offer list');
+  }
+
   const commands: Command[] = data.commands.map((command) => {
     if (command === 'endTurn') return { type: 'endTurn' };
     if (command === 'undo') return { type: 'undo' };
     if (command === 'nextWave') return { type: 'nextWave' };
+    if (command === 'openShop') return { type: 'openShop' };
     if ('newRun' in command) return { type: 'newRun', seed: command.newRun };
+    if ('buy' in command) return { type: 'buyOffer', slot: command.buy };
     return command as Command;
   });
 
@@ -427,6 +512,10 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
     pendingSpawns,
     exactKills: data.exactKills,
     waves,
+    phase: data.phase,
+    shop: data.shop,
+    cannons: data.cannons,
+    upgradesBought: data.upgradesBought,
     commands,
     expectEvents,
     expectState: data.expectState,

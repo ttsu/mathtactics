@@ -413,6 +413,7 @@ describe('dispatch', () => {
       };
       store.setState({ run: waveCleared, display: displayFromRun(waveCleared) });
 
+      store.getState().dispatch({ type: 'openShop' });
       store.getState().dispatch({ type: 'nextWave' });
 
       expect(store.getState().playback.status).toBe('playing');
@@ -478,8 +479,8 @@ describe('dispatch', () => {
       store.getState().finishPlayback();
       const waveCleared = store.getState().run!;
       expect(waveCleared.phase).toBe('waveCleared');
-      expect(waveCleared.tray.length).toBeGreaterThan(0); // the reward tiles
 
+      store.getState().dispatch({ type: 'openShop' });
       store.getState().dispatch({ type: 'nextWave' });
 
       const { run, playback } = store.getState();
@@ -912,3 +913,64 @@ describe('Replay (task 10)', () => {
     expect(store.getState().lastTurn).toBeNull();
   });
 });
+
+describe('shop-phase dispatch (task 19)', () => {
+  it('buyOffer does not start playback and updates display.coins at once', () => {
+    const store = createAppStore({
+      data: realData,
+      applyCommand,
+      storage: createMemoryStorage(),
+      basePath: '/',
+    });
+    store.getState().dispatch({ type: 'newRun', seed: 'buy-no-playback' });
+    store.getState().finishPlayback();
+    const started = store.getState().run!;
+    const lastTurn = {
+      before: started,
+      events: [{ step: 0, group: 'end', type: 'WaveCleared' as const, waveIndex: 0 }],
+    };
+    const shopRun: RunState = {
+      ...started,
+      phase: 'shop',
+      coins: 20,
+      lastTurnEvents: lastTurn.events,
+      shop: {
+        afterWave: 1,
+        offers: [
+          { slot: 'tile:0', kind: 'tile', tileId: 'add:5', price: 4, bought: false },
+        ],
+      },
+    };
+    store.setState({
+      run: shopRun,
+      display: displayFromRun(shopRun),
+      playback: { ...store.getState().playback, status: 'idle', events: [], cursor: 0 },
+      lastTurn,
+    });
+
+    const result = store.getState().dispatch({ type: 'buyOffer', slot: 'tile:0' });
+    expect(result).toEqual({ ok: true });
+    expect(store.getState().playback.status).toBe('idle');
+    expect(store.getState().display.coins).toBe(16);
+    expect(store.getState().run?.coins).toBe(16);
+    expect(store.getState().lastTurn).toBe(lastTurn);
+  });
+
+  it('discards a schema-version-2 save when economy is version 3', () => {
+    const storage = createMemoryStorage();
+    const saved = fakeRunState({ schemaVersion: 2, mode: 'run' });
+    storage.setItem(
+      scopedKey('/', 'run'),
+      JSON.stringify({ schemaVersion: 2, savedAt: 1, state: saved }),
+    );
+    const store = createAppStore({
+      data: realData,
+      applyCommand: stubApplyCommand,
+      storage,
+      basePath: '/',
+    });
+    expect(realData.economy.schemaVersion).toBe(3);
+    expect(store.getState().run).toBeNull();
+  });
+});
+

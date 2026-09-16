@@ -1,0 +1,30 @@
+# GDD §8.6: a bought tile is appended to the end of the tray as a new piece.
+name: buying a tile offer appends a piece to the tray
+mode: run
+phase: shop
+baseValue: 1
+coins: 10
+board:
+  - "C . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+shop:
+  - { slot: "tile:0", kind: tile, tileId: "add:5", price: 4, bought: false }
+  - { slot: cannon, kind: cannon, price: 10, bought: false, available: true }
+  - { slot: upgrade, kind: upgrade, price: 12, bought: false, fromValue: 1, toValue: 2 }
+commands:
+  - { buy: "tile:0" }
+expectEvents:
+  - { type: OfferBought, slot: "tile:0", kind: tile, price: 4 }
+  - { type: TilesGranted, tiles: [{ pieceId: "piece:0", tileId: "add:5" }] }
+  - { type: CoinsChanged, delta: -4, total: 6, reason: purchase }
+expectState:
+  coins: 6
+  tray: ["piece:0"]
+  pieces:
+    "piece:0": { pieceId: "piece:0", tileId: "add:5" }
+  shop:
+    offers:
+      - { slot: "tile:0", bought: true }

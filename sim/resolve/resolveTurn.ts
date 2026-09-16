@@ -2,8 +2,7 @@
 // ADVANCE -> DETONATE -> END CHECK -> SPAWN. `mode: 'level'` (M1 puzzles) only ever runs FIRE
 // (TR §4.1). `mode: 'run'` (M2, task 13) runs the full turn below.
 
-import { allocatePieceId } from '../commands/ids';
-import type { GameEvent, RunState, TileId } from '../core/types';
+import type { GameEvent, RunState } from '../core/types';
 import type { GameData } from '../data/schemas';
 import { spawn } from '../waves/spawn';
 import { advance } from './advance';
@@ -89,30 +88,8 @@ export function resolveTurn(state: RunState, data: GameData): ResolveTurnResult 
         events.push({ step: events.length, group: 'end', type: 'RunWon' });
         nextState = { ...nextState, phase: 'won' };
       } else {
-        // M2 stand-in for the shop (GDD §10.5): reward tiles are appended to the tray as new
-        // pieces, in listed order. Emitted even when the reward is empty (or absent) so
-        // presentation always sees one event shape.
-        const waveDef = data.waves.waves[nextState.waveIndex]!;
-        const rewardTileIds = waveDef.reward?.tiles ?? [];
-
-        let nextIds = nextState.nextIds;
-        const pieces = { ...nextState.pieces };
-        const granted: { pieceId: string; tileId: TileId }[] = [];
-        for (const tileId of rewardTileIds) {
-          const [pieceId, updated] = allocatePieceId(nextIds);
-          nextIds = updated;
-          pieces[pieceId] = { pieceId, tileId };
-          granted.push({ pieceId, tileId });
-        }
-
-        nextState = {
-          ...nextState,
-          nextIds,
-          pieces,
-          tray: [...nextState.tray, ...granted.map((tile) => tile.pieceId)],
-          phase: 'waveCleared',
-        };
-        events.push({ step: events.length, group: 'end', type: 'TilesGranted', tiles: granted });
+        // The shop (opened from this overlay) is the only way tiles enter a run (GDD §10.5).
+        nextState = { ...nextState, phase: 'waveCleared' };
       }
     } else {
       // --- Continue: next turn, fast-forward, then SPAWN ---

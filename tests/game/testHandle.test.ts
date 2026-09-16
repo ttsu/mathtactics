@@ -246,8 +246,6 @@ describe('createTestHandle', () => {
       '  - id: first',
       '    spawns:',
       '      - { turn: 1, lane: 0, robot: basic, hp: [2, 2] }',
-      '    reward:',
-      '      tiles: ["add:5"]',
       '  - id: second',
       '    spawns:',
       '      - { turn: 1, lane: 1, robot: basic, hp: [3, 3] }',
