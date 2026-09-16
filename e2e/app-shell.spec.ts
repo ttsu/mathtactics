@@ -10,6 +10,10 @@ const LANDSCAPE_SIZES = [
   { width: 1366, height: 1024 },
   { width: 844, height: 390 },
 ];
+/** Landscape sizes where FIT fills the viewport width (no horizontal letterboxing). */
+const WIDTH_FILLING_LANDSCAPE_SIZES = LANDSCAPE_SIZES.filter(
+  (size) => size.width / size.height <= DESIGN_WIDTH / DESIGN_HEIGHT,
+);
 const ALIGN_TOLERANCE_PX = 2;
 
 async function canvasRect(page: Page) {
@@ -103,6 +107,50 @@ test('HUD re-aligns after a live resize', async ({ page }) => {
     .poll(async () => Math.max(...(await hudAnchorOffsets(page))))
     .toBeLessThanOrEqual(ALIGN_TOLERANCE_PX);
   expect((await canvasRect(page)).height).toBeCloseTo(390, 0);
+});
+
+test.describe('iOS frame backdrop', () => {
+  test.use({
+    userAgent:
+      'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+  });
+
+  test('stretches full width beside a height-limited canvas', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await gotoGame(page);
+
+    const canvas = await canvasRect(page);
+    const backdrop = page.getByTestId('frame-backdrop');
+    await expect(backdrop).toBeVisible();
+
+    const box = await backdrop.boundingBox();
+    expect(box).toEqual({
+      x: 0,
+      y: canvas.y,
+      width: 1600,
+      height: canvas.height,
+    });
+    await expect(backdrop).toHaveCSS('background-color', 'rgb(47, 62, 87)');
+  });
+
+  test('stays hidden when the canvas already fills the viewport width', async ({ page }) => {
+    for (const size of WIDTH_FILLING_LANDSCAPE_SIZES) {
+      await page.setViewportSize(size);
+      await gotoGame(page);
+      const canvas = await canvasRect(page);
+      expect(Math.abs(canvas.width - size.width)).toBeLessThan(1);
+      await expect(page.getByTestId('frame-backdrop')).toBeHidden();
+    }
+  });
+
+  test('shows at iPhone landscape where the canvas is height-limited', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await gotoGame(page);
+
+    const canvas = await canvasRect(page);
+    expect(canvas.width).toBeLessThan(844);
+    await expect(page.getByTestId('frame-backdrop')).toBeVisible();
+  });
 });
 
 test('rotate overlay covers the screen in portrait', async ({ page }) => {

@@ -198,11 +198,15 @@ test('legibility screenshots (advance, detonation mid-count, ghost robot, danger
 
 /** The HUD ♥ glyph's centre in design points (TR §11.2: the design space maps onto the canvas),
  * measured on the ♥ character itself — the point the detonation number should fly to. */
-const heartCenter = (page: Page) =>
-  page.evaluate((designWidth) => {
+const heartCenter = async (page: Page) => {
+  const heartStat = page.locator('[data-testid="hud-bar"] .hud-stat').filter({ hasText: '♥' });
+  await expect(heartStat).toBeVisible();
+  return page.evaluate((designWidth) => {
     const stats = [...document.querySelectorAll('[data-testid="hud-bar"] .hud-stat')];
-    const heart = stats.find((stat) => stat.textContent?.includes('♥'))!;
-    const text = [...heart.childNodes].find((node) => node.textContent?.includes('♥'))!;
+    const heart = stats.find((stat) => stat.textContent?.includes('♥'));
+    if (!heart) throw new Error('HUD heart stat not found');
+    const text = [...heart.childNodes].find((node) => node.textContent?.includes('♥'));
+    if (!text) throw new Error('HUD heart glyph not found');
     const index = text.textContent!.indexOf('♥');
     const range = document.createRange();
     range.setStart(text, index);
@@ -216,6 +220,7 @@ const heartCenter = (page: Page) =>
       idle: window.__GAME__!.isIdle(),
     };
   }, DESIGN_WIDTH);
+};
 
 test('the detonation number flies to where ♥ really is, and ♥ holds still during playback', async ({
   page,

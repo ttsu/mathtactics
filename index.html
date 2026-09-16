@@ -39,9 +39,20 @@
         overflow: clip;
       }
 
+      /* Full-width letterbox fill behind the canvas on iOS (positioned from game/main.tsx). */
+      #frame-backdrop {
+        display: none;
+        position: fixed;
+        left: 0;
+        width: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
       #board-root {
         position: absolute;
         inset: 0;
+        z-index: 1;
       }
 
       /* Sized and transformed from JS to track the canvas (game/main.tsx). */
@@ -49,6 +60,7 @@
         position: absolute;
         left: 0;
         top: 0;
+        z-index: 2;
         transform-origin: 0 0;
         pointer-events: none;
         visibility: hidden;
@@ -57,6 +69,7 @@
   </head>
   <body>
     <div id="app">
+      <div id="frame-backdrop" data-testid="frame-backdrop"></div>
       <div id="board-root"></div>
       <div id="ui-root"></div>
     </div>
