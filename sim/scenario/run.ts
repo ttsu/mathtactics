@@ -45,8 +45,11 @@ function initialLevelDef(scenario: Scenario, data: GameData): LevelDef {
 /**
  * Builds the scenario's initial `RunState`: `buildLevelState` (task 06) on the scenario's
  * starting `LevelDef` (see `initialLevelDef`), then scenario overrides applied in this order (task 08 interfaces
- * note): `coins`, `baseHp`, `seed`, `mode`, `waveIndex`, `turn`, `waiting` robots (`col: null`,
- * each with its own `maxHp`).
+ * note): `coins`, `baseHp`, `seed`, `mode`, `waveIndex`, `turn`, `pendingSpawns`, `exactKills`
+ * (task 13), `waiting` robots (`col: null`, each with its own `maxHp`).
+ *
+ * `buildLevelState` always sets `phase: 'planning'`, so a `mode: run` scenario with a `board`
+ * starts in `planning` too (task 13 requirement 5) — nothing below touches `phase`.
  */
 export function buildScenarioState(scenario: Scenario, data: GameData): RunState {
   let state = buildLevelState(initialLevelDef(scenario, data), data);
@@ -60,6 +63,8 @@ export function buildScenarioState(scenario: Scenario, data: GameData): RunState
     mode: scenario.mode,
     waveIndex: scenario.waveIndex ?? state.waveIndex,
     turn: scenario.turn ?? state.turn,
+    pendingSpawns: scenario.pendingSpawns,
+    exactKills: scenario.exactKills ?? state.exactKills,
   };
 
   let nextIds = state.nextIds;
@@ -116,8 +121,18 @@ export interface ScenarioRunResult {
  * command must succeed, and if `expectError` is absent every command, including the last, must
  * succeed).
  */
+/** The `GameData` a scenario actually runs against: `data` verbatim, unless `waves:` (task 13
+ * requirement 5) replaces `data.waves.waves` for this scenario alone — every command
+ * (`endTurn`, `nextWave`, `{ newRun }`) then sees the scenario's own wave list instead of the
+ * shipped `waves.json`, so rule scenarios don't break when ladder content is tuned. */
+function effectiveData(scenario: Scenario, data: GameData): GameData {
+  if (scenario.waves === undefined) return data;
+  return { ...data, waves: { waves: scenario.waves } };
+}
+
 export function runScenario(scenario: Scenario, data: GameData): ScenarioRunResult {
-  let state = buildScenarioState(scenario, data);
+  const runData = effectiveData(scenario, data);
+  let state = buildScenarioState(scenario, runData);
   const events: GameEvent[] = [];
   let commandFailure: ScenarioCommandFailure | null = null;
 
@@ -131,7 +146,7 @@ export function runScenario(scenario: Scenario, data: GameData): ScenarioRunResu
   for (let i = 0; i < scenario.commands.length; i++) {
     const command = scenario.commands[i]!;
     const isLast = i === scenario.commands.length - 1;
-    const result = applyCommand(state, command, data);
+    const result = applyCommand(state, command, runData);
 
     if (result.ok) {
       state = result.state;

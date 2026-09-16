@@ -1,0 +1,28 @@
+# GDD §4.1: "If the base falls on the same turn the wave would clear, the run is lost." A loss
+# is checked before wave clear, so it wins even when the board and schedule are both empty too.
+name: base HP <= 0 on the turn the wave would clear loses instead, with no WaveCleared
+mode: run
+baseValue: 0
+baseHp: 5
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". R8 . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+waves:
+  - id: only-wave
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+commands:
+  - endTurn
+expectEvents:
+  - { type: RobotDetonated, lane: 2, damage: 8 }
+  - { type: BaseDamaged, amount: 8, hpBefore: 5, hpAfter: -3 }
+  - { type: RunLost }
+expectState:
+  phase: lost
+  baseHp: -3
+  pendingSpawns: []
+  board:
+    robots: []

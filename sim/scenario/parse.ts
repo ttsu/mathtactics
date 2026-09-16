@@ -17,7 +17,8 @@ import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 import { COLS, LANES } from '../core/coords';
 import type { Col, Lane } from '../core/coords';
-import type { Command, CommandError, Trait, TileId, TileKind } from '../core/types';
+import type { Command, CommandError, SpawnEntry, Trait, TileId, TileKind } from '../core/types';
+import { WavesFileSchema, type WaveDef } from '../data/schemas';
 import type { ExpectedEvent } from './match';
 
 // --- Trait shorthand (board tokens and `waiting` entries share this) ---
@@ -65,8 +66,16 @@ const ROBOT_TOKEN_RE = /^R(\d+)(?:\[([^\]]*)\])?(?::([a-zA-Z0-9]+))?$/;
 // mistakes there can report a row/column, which zod's generic path-based errors can't). ---
 
 const CellRawSchema = z.object({
-  lane: z.number().int().min(0).max(LANES - 1),
-  col: z.number().int().min(0).max(COLS - 1),
+  lane: z
+    .number()
+    .int()
+    .min(0)
+    .max(LANES - 1),
+  col: z
+    .number()
+    .int()
+    .min(0)
+    .max(COLS - 1),
 });
 
 const CommandObjectSchema = z.discriminatedUnion('type', [
@@ -75,25 +84,62 @@ const CommandObjectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('returnTile'), from: CellRawSchema }),
   z.object({
     type: z.literal('moveCannon'),
-    fromLane: z.number().int().min(0).max(LANES - 1),
-    toLane: z.number().int().min(0).max(LANES - 1),
+    fromLane: z
+      .number()
+      .int()
+      .min(0)
+      .max(LANES - 1),
+    toLane: z
+      .number()
+      .int()
+      .min(0)
+      .max(LANES - 1),
   }),
   z.object({ type: z.literal('undo') }),
   z.object({ type: z.literal('endTurn') }),
+  z.object({ type: z.literal('nextWave') }),
 ]);
 
-/** String shorthand ("endTurn", "undo") or the object form of any planning/`endTurn`/`undo`
- * command (task 08 ruling: scenarios build state directly, so `loadLevel`/`newRun` and the M3
- * shop commands aren't meaningful here). */
-const RawCommandSchema = z.union([z.literal('endTurn'), z.literal('undo'), CommandObjectSchema]);
+/** Object shorthand for `newRun` (task 13 requirement 5): `{ newRun: <seed> }` instead of the
+ * full `{ type: 'newRun', seed: <seed> }` command object. */
+const NewRunShorthandSchema = z.object({ newRun: z.string().min(1) });
+
+/** String shorthand ("endTurn", "undo", "nextWave") or the object form of any planning/
+ * `endTurn`/`undo`/`nextWave` command, plus the `{ newRun: <seed> }` shorthand (task 08 ruling,
+ * extended by task 13: `loadLevel` and the M3 shop commands still aren't meaningful here). */
+const RawCommandSchema = z.union([
+  z.literal('endTurn'),
+  z.literal('undo'),
+  z.literal('nextWave'),
+  CommandObjectSchema,
+  NewRunShorthandSchema,
+]);
 
 const RawExpectedEventSchema = z.object({ type: z.string().min(1) }).passthrough();
 
 const RawWaitingRobotSchema = z.object({
-  lane: z.number().int().min(0).max(LANES - 1),
+  lane: z
+    .number()
+    .int()
+    .min(0)
+    .max(LANES - 1),
   hp: z.number().int().positive(),
   maxHp: z.number().int().positive().optional(),
   trait: z.string().min(1).optional(),
+});
+
+/** `pendingSpawns` entry (task 13 requirement 5, TR §12): a concrete `SpawnEntry` — `lane` is
+ * already a fixed lane (0-4), not a letter (those are resolved by `rollWave` before a wave's
+ * schedule ever reaches `pendingSpawns`). `robot` defaults to `basic`. */
+const RawPendingSpawnSchema = z.object({
+  turn: z.number().int().min(1),
+  lane: z
+    .number()
+    .int()
+    .min(0)
+    .max(LANES - 1),
+  hp: z.number().int().positive(),
+  robot: z.string().min(1).optional(),
 });
 
 const CommandErrorSchema = z.enum([
@@ -122,12 +168,17 @@ const RawScenarioSchema = z.object({
   baseHp: z.number().int().positive().optional(),
   waveIndex: z.number().int().nonnegative().optional(),
   turn: z.number().int().positive().optional(),
-  board: z
-    .array(z.string())
-    .length(5, 'board must have exactly 5 lane rows (GDD §3.1)')
-    .optional(),
+  board: z.array(z.string()).length(5, 'board must have exactly 5 lane rows (GDD §3.1)').optional(),
   tray: z.array(z.string()).optional(),
   waiting: z.array(RawWaitingRobotSchema).default([]),
+  /** Task 13 requirement 5: concrete spawn schedule entries, installed directly on the initial
+   * state (no `rollWave` — lanes are already fixed numbers, not letters). */
+  pendingSpawns: z.array(RawPendingSpawnSchema).default([]),
+  /** Task 13 requirement 5: overrides the initial `exactKills` (default 0). */
+  exactKills: z.number().int().nonnegative().optional(),
+  /** Task 13 requirement 5: an inline `waves.json`-shaped array replacing `data.waves.waves` for
+   * this scenario only, so rule scenarios don't break when ladder content is tuned (TR §12). */
+  waves: z.array(z.record(z.string(), z.unknown())).optional(),
   commands: z.array(RawCommandSchema).default([]),
   expectEvents: z.array(RawExpectedEventSchema).default([]),
   expectState: z.record(z.string(), z.unknown()).optional(),
@@ -166,6 +217,12 @@ export interface Scenario {
   tray: TileId[];
   /** Off-board robots (`col: null`), task 08 ruling. */
   waiting: { lane: Lane; hp: number; maxHp: number; trait: Trait }[];
+  /** Task 13 requirement 5: concrete spawn schedule entries, installed on the initial state. */
+  pendingSpawns: SpawnEntry[];
+  /** Task 13 requirement 5: overrides the initial `exactKills` (default 0). */
+  exactKills?: number;
+  /** Task 13 requirement 5: replaces `data.waves.waves` for this scenario's run, when set. */
+  waves?: WaveDef[];
   commands: Command[];
   expectEvents: ExpectedEvent[];
   expectState?: Record<string, unknown>;
@@ -231,7 +288,10 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
 
   (data.board ?? []).forEach((rowText, laneIndex) => {
     const lane = laneIndex as Lane;
-    const tokens = rowText.trim().split(/\s+/).filter((token) => token.length > 0);
+    const tokens = rowText
+      .trim()
+      .split(/\s+/)
+      .filter((token) => token.length > 0);
     if (tokens.length !== COLS) {
       throw new Error(
         `scenario board row ${lane + 1} (lane ${lane}): expected ${COLS} space-separated ` +
@@ -274,7 +334,10 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
           boardTiles.push({ lane, col: col as Col, tileId: tile.tileId });
         }
 
-        const trait = robotMatch[3] !== undefined ? traitFromCode(robotMatch[3], where) : { type: 'none' as const };
+        const trait =
+          robotMatch[3] !== undefined
+            ? traitFromCode(robotMatch[3], where)
+            : { type: 'none' as const };
         robots.push({ lane, col: col as Col, hp, trait });
         return;
       }
@@ -300,19 +363,44 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
   });
 
   const waiting: Scenario['waiting'] = data.waiting.map((entry, index) => {
-    const trait = entry.trait !== undefined ? traitFromCode(entry.trait, `scenario waiting[${index}]`) : { type: 'none' as const };
+    const trait =
+      entry.trait !== undefined
+        ? traitFromCode(entry.trait, `scenario waiting[${index}]`)
+        : { type: 'none' as const };
     const maxHp = entry.maxHp ?? entry.hp;
     if (maxHp < entry.hp) {
-      throw new Error(
-        `scenario waiting[${index}]: maxHp (${maxHp}) must be >= hp (${entry.hp})`,
-      );
+      throw new Error(`scenario waiting[${index}]: maxHp (${maxHp}) must be >= hp (${entry.hp})`);
     }
     return { lane: entry.lane as Lane, hp: entry.hp, maxHp, trait };
   });
 
+  const pendingSpawns: Scenario['pendingSpawns'] = data.pendingSpawns.map((entry) => ({
+    turn: entry.turn,
+    lane: entry.lane as Lane,
+    robotTemplateId: entry.robot ?? 'basic',
+    hp: entry.hp,
+  }));
+
+  let waves: WaveDef[] | undefined;
+  if (data.waves !== undefined) {
+    const parsedWaves = WavesFileSchema.safeParse({ waves: data.waves });
+    if (!parsedWaves.success) {
+      const issue = parsedWaves.error.issues[0]!;
+      // Drop the leading "waves" segment `WavesFileSchema`'s own shape adds — the scenario key
+      // is already `waves`, so the error should read `scenario waves[0]...`, not
+      // `scenario waves.waves[0]...`.
+      const path = formatZodPath(issue.path.slice(1));
+      const separator = path === '' || path.startsWith('[') ? '' : '.';
+      throw new Error(`scenario waves${separator}${path}: ${issue.message}`);
+    }
+    waves = parsedWaves.data.waves;
+  }
+
   const commands: Command[] = data.commands.map((command) => {
     if (command === 'endTurn') return { type: 'endTurn' };
     if (command === 'undo') return { type: 'undo' };
+    if (command === 'nextWave') return { type: 'nextWave' };
+    if ('newRun' in command) return { type: 'newRun', seed: command.newRun };
     return command as Command;
   });
 
@@ -336,6 +424,9 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
     robots,
     tray,
     waiting,
+    pendingSpawns,
+    exactKills: data.exactKills,
+    waves,
     commands,
     expectEvents,
     expectState: data.expectState,

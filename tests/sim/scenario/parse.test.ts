@@ -28,6 +28,12 @@ function scenarioYaml(fields: Record<string, unknown>): string {
       lines.push(`  - ${JSON.stringify(entry)}`);
     }
   }
+  // Any other scalar field (e.g. `exactKills`, `mode`) — passed through verbatim.
+  const HANDLED = new Set(['name', 'baseValue', 'board', 'tray', 'waiting']);
+  for (const [key, value] of Object.entries(fields)) {
+    if (HANDLED.has(key)) continue;
+    lines.push(`${key}: ${JSON.stringify(value)}`);
+  }
   lines.push('commands: []');
   return lines.join('\n');
 }
@@ -252,9 +258,113 @@ describe('parseScenario — errors', () => {
   });
 
   it('rejects a waiting robot whose maxHp is below its hp', () => {
-    expect(() =>
-      parseScenario(scenarioYaml({ waiting: [{ lane: 0, hp: 5, maxHp: 3 }] })),
-    ).toThrow('scenario waiting[0]: maxHp (3) must be >= hp (5)');
+    expect(() => parseScenario(scenarioYaml({ waiting: [{ lane: 0, hp: 5, maxHp: 3 }] }))).toThrow(
+      'scenario waiting[0]: maxHp (3) must be >= hp (5)',
+    );
+  });
+});
+
+describe('parseScenario — task 13 (mode: run)', () => {
+  it('parses pendingSpawns entries, defaulting robot to "basic"', () => {
+    const yamlText = [
+      'name: t',
+      'mode: run',
+      'baseValue: 1',
+      'board:',
+      ...blankBoard().map((row) => `  - "${row}"`),
+      'pendingSpawns:',
+      '  - { turn: 3, lane: 2, hp: 7 }',
+      '  - { turn: 5, lane: 1, hp: 4, robot: boss }',
+      'commands: []',
+    ].join('\n');
+    const scenario = parseScenario(yamlText);
+    expect(scenario.pendingSpawns).toEqual([
+      { turn: 3, lane: 2, robotTemplateId: 'basic', hp: 7 },
+      { turn: 5, lane: 1, robotTemplateId: 'boss', hp: 4 },
+    ]);
+  });
+
+  it('defaults pendingSpawns to an empty array', () => {
+    const scenario = parseScenario(scenarioYaml({}));
+    expect(scenario.pendingSpawns).toEqual([]);
+  });
+
+  it('parses an exactKills override', () => {
+    const scenario = parseScenario(scenarioYaml({ exactKills: 6 }));
+    expect(scenario.exactKills).toBe(6);
+  });
+
+  it('leaves exactKills undefined when not given', () => {
+    const scenario = parseScenario(scenarioYaml({}));
+    expect(scenario.exactKills).toBeUndefined();
+  });
+
+  it('parses an inline waves override', () => {
+    const yamlText = [
+      'name: t',
+      'mode: run',
+      'baseValue: 1',
+      'board:',
+      ...blankBoard().map((row) => `  - "${row}"`),
+      'waves:',
+      '  - id: only-wave',
+      '    spawns:',
+      '      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }',
+      'commands: []',
+    ].join('\n');
+    const scenario = parseScenario(yamlText);
+    expect(scenario.waves).toEqual([
+      { id: 'only-wave', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] },
+    ]);
+  });
+
+  it('rejects an inline waves override with no turn-1 spawn, same rule as waves.json', () => {
+    const yamlText = [
+      'name: t',
+      'mode: run',
+      'baseValue: 1',
+      'board:',
+      ...blankBoard().map((row) => `  - "${row}"`),
+      'waves:',
+      '  - id: bad-wave',
+      '    spawns:',
+      '      - { turn: 2, lane: 0, robot: basic, hp: [1, 1] }',
+      'commands: []',
+    ].join('\n');
+    expect(() => parseScenario(yamlText)).toThrow(
+      'scenario waves[0].spawns: a wave needs a spawn on turn 1',
+    );
+  });
+
+  it('leaves waves undefined when not given', () => {
+    const scenario = parseScenario(scenarioYaml({}));
+    expect(scenario.waves).toBeUndefined();
+  });
+
+  it('normalizes the "nextWave" string command shorthand', () => {
+    const yamlText = [
+      'name: t',
+      'baseValue: 1',
+      'board:',
+      ...blankBoard().map((row) => `  - "${row}"`),
+      'commands:',
+      '  - nextWave',
+    ].join('\n');
+    const scenario = parseScenario(yamlText);
+    expect(scenario.commands).toEqual([{ type: 'nextWave' }]);
+  });
+
+  it('normalizes the "{ newRun: <seed> }" object command shorthand', () => {
+    const yamlText = [
+      'name: t',
+      'baseValue: 1',
+      'board:',
+      ...blankBoard().map((row) => `  - "${row}"`),
+      'commands:',
+      '  - newRun: my-seed',
+    ].join('\n');
+    const scenario = parseScenario(yamlText);
+    expect(scenario.commands).toEqual([{ type: 'newRun', seed: 'my-seed' }]);
   });
 });
 

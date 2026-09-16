@@ -466,7 +466,13 @@ const WaveDefSchema = z
 /** One authored wave from `waves.json`. Rolled into concrete `SpawnEntry`s by `rollWave`. */
 export type WaveDef = z.infer<typeof WaveDefSchema>;
 
-const WavesFileSchema = z.strictObject({
+/** Exported for the scenario runner's `waves:` override (TR §12, task 13 requirement 5): an
+ * inline `waves.json`-shaped array replacing `data.waves.waves` for one scenario, structurally
+ * validated the same way a real `waves.json` is (per-wave rules, and "the last wave has no
+ * reward"). Cross-file checks against `robots.json`/`tiles.json` ids are not repeated here —
+ * scenario waves reference the real shipped `robots`/`tiles`, and an unknown id surfaces as its
+ * own clear runtime error where it's actually used (`rollWave`/`spawn`/the reward grant). */
+export const WavesFileSchema = z.strictObject({
   waves: z
     .array(WaveDefSchema)
     .min(1)
