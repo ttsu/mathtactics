@@ -126,7 +126,7 @@ case against 100 base HP). That is intended for Playtest 3.
 
 **Status:** Complete
 **Completed:** 2026-09-16
-**PR:** not opened (stacked branch `cursor/21-ladder-waves-4-7-8f5d` on `cursor/20-shop-screen-and-seen-log-8f5d`)
+**PR:** #36 · stacked on #35 (`cursor/20-shop-screen-and-seen-log-8f5d`)
 
 **Acceptance criteria:**
 - [x] Waves 1–3 revisited against Playtest 2 notes — Met: no change — Playtest 2 notes not yet written (`playtests/02.md` missing; `playtests/02-checklist.md` notes sections blank). Did not invent a playtest or retune 1–3.
@@ -177,7 +177,7 @@ End-Turn-only lost every seed. e2e `MAX_TURNS = 200`.
 Typical purchases: shop 1 two `add` tiles; shop 2 guaranteed `mul` (usually `mul:2`) plus leftover add/sub; shop 3 the **second cannon** (100/100 seeds); shops 4–6 mix of mul/add/sub and the third cannon (~42 seeds at shop 5, ~52 at shop 6). Raw counts: `/tmp/ladder-stats.json` from the balance test.
 
 **Deviations from spec:**
-- Branch name is `cursor/21-ladder-waves-4-7-8f5d` (stacked-PR convention) rather than `task/21-ladder-waves-4-7`. No PR opened, per session instructions.
+- Branch name is `cursor/21-ladder-waves-4-7-8f5d` (stacked-PR convention) rather than `task/21-ladder-waves-4-7`.
 - Sensible shop policy: if no mul is owned and a mul is affordable, buy the mul **before** a second cannon. Strict cannon-first spent the wave-2 `×2` guarantee and made the ≤2-hit assertion impossible for draft HP (two `+5`s cannot 2-hit 14). Second cannon still lands at the wave-3 shop.
 - Sensible planning: idle cannons move onto uncovered threatened lanes (front-most first), not only when *zero* armed lanes can reach. Required so 3-lane waves 6–7 stay above 40 HP.
 - Equal-price tile tie-break prefers add over sub, then higher N.
