@@ -26,12 +26,17 @@ first consumer. Tile chip rendering (operator glyph + number + category colour) 
 ## Requirements
 
 1. **Hoist tile-face rendering** to framework-free `/game/state/tileFace.ts` (`tileFace(tileId) → { glyph, n,
-   colorKey, starred }`) and have both `game/board/pieces.ts` and `/game/ui` use it. The shop needs chips in three
-   places (offer cards, owned strip, and task 19's overlay); a third copy is not acceptable. Colours keep coming
-   from `presentation.json` `tileColors`.
+   colorKey, starred }`) and have both `game/board/pieces.ts` and `/game/ui` use it. `colorKey` is the tile's
+   `tiles.json` `color` (`green` / `blue` / `orange`); callers still resolve the hex via `presentation.json`
+   `tileColors` — `tileFace` itself must not read presentation, so `/sim` tests and the board stay free of a
+   colour-table dependency. Keep `tileLabel` as a one-liner over `tileFace` if the board still wants a string.
+   The shop needs chips in three places (offer cards, owned strip, and the wave-cleared overlay); a third copy
+   is not acceptable.
 
 2. **Shop screen** (`game/ui/ShopScreen.tsx`, rendered for `screen === 'shop'` in `App.tsx`; the HUD does not
-   render here). Layout per GDD §8.3, left to right, positions **fixed** so they never move between visits:
+   render here). Replaces task 19's placeholder wholesale, keeping its testids (`shop-offer-<slot>`,
+   `shop-next`) so the task-19 e2e keeps passing. Layout per GDD §8.3, left to right, positions **fixed**
+   so they never move between visits:
 
    - **3 tile cards** — big operator and number (numbers are the largest element, GDD §11 pillar 2), category
      colour, a ★ for `×6`+ (`starred`), price below as a numeral **and** a coin stack (GDD §8.1).
@@ -39,7 +44,10 @@ first consumer. Tile chip rendering (operator glyph + number + category colour) 
      (5 owned) the card is dimmed and inert, keeping its slot (GDD v0.6 §0).
    - **1 upgrade card** — a cannon glyph with the base value written as **`1 → 2`** (`fromValue → toValue`), which
      reads without words and is itself a small piece of arithmetic (GDD v0.6 §0).
-   - **Wallet** — the coin total, large, as a numeral and a coin stack.
+   - **Wallet** — the coin total, large, as a numeral and a coin stack. The stack is a small overlapping
+     cluster of gold circles (a glyph, **not** one circle per coin — a 30-coin wallet must not grow). The
+     numeral is the source of truth (GDD §11 pillar 2). Reuse the same glyph next to each card's price.
+     Extract a `CoinStack` in `/game/ui` so the overlay, the cards, and the wallet share it.
    - **Owned tiles** — a read-only strip of the tiles he already has (`run.tray` plus tiles on the board), so
      "do I need another `+2`?" is answerable without leaving the screen. Scrolls or wraps; never pushes a card.
    - **▶ *Next wave*** — big, bottom-right, with the short label per GDD §11.1. Guarded against double taps.
@@ -54,9 +62,12 @@ first consumer. Tile chip rendering (operator glyph + number + category colour) 
    unavailable card does nothing. No dialog, no error text, no sentences (GDD §11 pillar 1).
 
 5. **Seen-tiles log** (GDD §8.7): when the shop **opens**, every offered tile type is written to the `seen` key
-   (`addSeenMany`), and the set of ids that were *not* already there is snapshotted into memory as
-   `AppState.shopNew`. The NEW sticker renders from that snapshot, so it stays put for the whole visit instead of
-   vanishing under his finger. Cleared when the shop closes.
+   (`addSeenMany` — add this helper next to `addSeen` in `storage.ts`; storage failure still never throws),
+   and the set of ids that were *not* already there is snapshotted into memory as `AppState.shopNew` (add the
+   field to the store; TR §10 already sketches it; default `[]`, and a stable empty-array constant for the
+   selector). Wire this in `openShopScreen` / `leaveShopToNextWave` (task 19's `shopFlow.ts`). The NEW sticker
+   renders from that snapshot, so it stays put for the whole visit instead of vanishing under his finger.
+   Cleared when the shop closes (`leaveShopToNextWave` sets `shopNew: []`).
    - Only **tile** offers are logged; the cannon and upgrade cards have no NEW state.
    - The log is additive, sorted, device-local, path-scoped, and survives runs and schema bumps (TR §13) — it is a
      discovery log, never power progression.
@@ -67,8 +78,20 @@ first consumer. Tile chip rendering (operator glyph + number + category colour) 
 6. **A browsable collection screen is out of scope** (deferred to M5 with the art pass, GDD v0.6 §0). Ship the log
    and the sticker only.
 
-7. **Timings in data** (`presentation.json` `screens`): card stagger on open, purchase pop, wallet count-down,
-   refusal shake, NEW sticker pop. No duration in a component (CLAUDE.md rule 3, TR §9).
+7. **Timings in data** (`presentation.json` `screens`). No duration in a component (CLAUDE.md rule 3, TR §9).
+   Ship these values (analogous to the existing screen timings — a recorded minor call, not a GDD number):
+
+   | Key | Value | Used for |
+   |---|---|---|
+   | `shopCardStaggerMs` | 80 | delay between each of the 5 cards popping in |
+   | `shopPurchasePopMs` | 220 | bought-card pop |
+   | `shopWalletCountMs` | 280 | wallet numeral counting down to the new total |
+   | `shopRefusalShakeMs` | 320 | unaffordable-card shake |
+   | `shopNewPopMs` | 180 | NEW sticker pop |
+
+   Keep `rewardStaggerMs` — the wave-cleared overlay still staggers the wallet pop with it (or reuse
+   `shopWalletCountMs` there; pick one and use it in both, recorded in Completion Notes). Add the new keys
+   to `PresentationFileSchema` and `fakeScreenSettings()`.
 
 8. **Touch targets ≥ 60 pt** for every card and button; drag is not involved here, but a 7-year-old's finger still
    is. No reading required to understand any card.

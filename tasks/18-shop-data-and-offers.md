@@ -28,9 +28,12 @@ wave never has a shop (GDD §8.3).
 
 ## Requirements
 
-1. **`shop.json`** in the shape below. `afterWave` is **1-based** — the number of the wave just cleared, matching
+1. **`shop.json`**. `afterWave` is **1-based** — the number of the wave just cleared, matching
    GDD §10.2's "Shop after this wave guarantees" column. The sim looks up `afterWave = waveIndex + 1`; say so in a
    comment wherever the conversion happens, since every other wave reference in the codebase is 0-based.
+
+   Ship **exactly** this file (tune only with a recorded reason). Tables use `kind` (`add`/`sub`/`mul`),
+   never `priceCategory` — price is looked up from the rolled tile's category after the draw.
 
    ```json
    {
@@ -43,21 +46,60 @@ wave never has a shop (GDD §8.3).
          "afterWave": 1,
          "guarantees": [],
          "table": [{ "kind": "add", "n": [1, 5], "weight": 10 }]
+       },
+       {
+         "afterWave": 2,
+         "guarantees": [{ "tileId": "mul:2" }],
+         "table": [
+           { "kind": "add", "n": [1, 10], "weight": 8 },
+           { "kind": "sub", "n": [1, 5], "weight": 3 },
+           { "kind": "mul", "n": [2, 3], "weight": 2 }
+         ]
+       },
+       {
+         "afterWave": 3,
+         "guarantees": [],
+         "table": [
+           { "kind": "add", "n": [1, 10], "weight": 7 },
+           { "kind": "sub", "n": [1, 8], "weight": 4 },
+           { "kind": "mul", "n": [2, 4], "weight": 3 }
+         ]
+       },
+       {
+         "afterWave": 4,
+         "guarantees": [{ "kind": "mul", "n": [2, 5] }],
+         "table": [
+           { "kind": "add", "n": [1, 10], "weight": 6 },
+           { "kind": "sub", "n": [1, 10], "weight": 4 },
+           { "kind": "mul", "n": [2, 5], "weight": 4 }
+         ]
+       },
+       {
+         "afterWave": 5,
+         "guarantees": [{ "kind": "sub" }],
+         "table": [
+           { "kind": "add", "n": [1, 10], "weight": 5 },
+           { "kind": "sub", "n": [1, 10], "weight": 5 },
+           { "kind": "mul", "n": [2, 10], "weight": 4 }
+         ]
+       },
+       {
+         "afterWave": 6,
+         "guarantees": [],
+         "table": [
+           { "kind": "add", "n": [1, 10], "weight": 5 },
+           { "kind": "sub", "n": [1, 10], "weight": 5 },
+           { "kind": "mul", "n": [2, 10], "weight": 4 }
+         ]
        }
      ]
    }
    ```
 
-   Draft tables for the six M3 shops, from GDD §10.2 (tune only with a recorded reason):
-
-   | afterWave | Guarantees | Table (`kind`, `n` range, weight) | Ladder intent |
-   |---|---|---|---|
-   | 1 | — | add [1,5] w10 | `+N` only, small N |
-   | 2 | `{ "tileId": "mul:2" }` | add [1,10] w8 · sub [1,5] w3 · mul [2,3] w2 | at least one `×2` |
-   | 3 | — | add [1,10] w7 · sub [1,8] w4 · mul [2,4] w3 | cannon affordable around here |
-   | 4 | `{ "kind": "mul", "n": [2, 5] }` | add [1,10] w6 · sub [1,10] w4 · mul [2,5] w4 | at least one `×N` |
-   | 5 | `{ "kind": "sub" }` | add [1,10] w5 · sub [1,10] w5 · mul [2,10] w4 | at least one `−N`; full range opens |
-   | 6 | — | add [1,10] w5 · sub [1,10] w5 · mul [2,10] w4 | everything available |
+   `waves.json` currently has **3** waves (task 21 adds 4–7). Ship all six tables now. Schema
+   validation (requirement 7) must require `{1 … waves.length − 1} ⊆ afterWave set` — extra tables
+   for waves that do not exist yet are allowed. Missing a table for a wave that *does* exist fails
+   loudly. Adding waves 8–10 in M4 without their tables still fails `npm test`.
 
 2. **Prices** (`/sim/shop/pricing.ts`, pure):
    - `tilePrice(tileId, data)` = `prices[tile.priceCategory]`. Price is by **category, not by N** (GDD §8.4).
@@ -68,14 +110,28 @@ wave never has a shop (GDD §8.3).
 
 3. **`rollShop(afterWave, runState, data) → { offers: ShopOffer[]; rng: RngState }`** (`/sim/shop/rollShop.ts`),
    pure, drawing **only** from the `shop` stream. `ShopOffer` per TR §4. Offers are ordered: the tile slots
-   `tile:0 … tile:<tileSlots-1>` in order, then `cannon`, then `upgrade`.
+   `tile:0 … tile:<tileSlots-1>` in order, then `cannon`, then `upgrade`. Every offer starts `bought: false`.
+   `cannonsOwned` is `runState.board.cannons.filter(Boolean).length`. `upgradesBought` and `cannonBaseValue`
+   are read from `runState`. If no `shops[]` entry has this `afterWave`, throw a readable `Error` naming it
+   (a missing table is a data bug, not an empty shop).
 
 4. **Draw order is normative** (saves and scenarios must be reproducible — write it in the TR and in a comment):
-   1. Guaranteed tile slots, left to right, filling `tile:0` onward: `pickWeighted` over the wave's table entries
-      **matching the guarantee**, then `nextInt` over that entry's `n` range. A `{ tileId }` guarantee consumes
-      **no** randomness.
-   2. Remaining tile slots, left to right: `pickWeighted` over the whole table, then `nextInt` over the `n` range.
+   1. Guaranteed tile slots, left to right, filling `tile:0` onward.
+   2. Remaining tile slots, left to right: `pickWeighted` over the **whole** table, then `nextInt` over that
+      entry's `n` range inclusive.
    3. The cannon and upgrade offers are computed, never drawn.
+
+   **Guarantee matching** (this is the rule the tests lock):
+   - `{ tileId }` — emit that exact tile in the next leftmost slot. Consume **no** randomness.
+   - `{ kind }` — `pickWeighted` over table entries whose `kind` equals the guarantee, then `nextInt` over
+     that entry's full `n` range.
+   - `{ kind, n: [lo, hi] }` — `pickWeighted` over table entries of that `kind` whose `n` range **overlaps**
+     `[lo, hi]` (`entry.n[0] ≤ hi && lo ≤ entry.n[1]`). Then `nextInt` over the **intersection**
+     `[max(entry.n[0], lo), min(entry.n[1], hi)]`. Drawing from the table entry's full range could miss the
+     guarantee (a `mul [2, 10]` entry rolling `×8` against a `[2, 5]` guarantee).
+
+   The resulting `tileId` is `` `${kind}:${n}` `` and `price` is `tilePrice(tileId, data)` — never a number
+   written in `/sim`.
 
    Guarantees therefore always occupy the leftmost cards — a deliberate legibility call (GDD v0.6 §0): the
    guaranteed-useful card is where the player looks first.
@@ -88,9 +144,13 @@ wave never has a shop (GDD §8.3).
 6. **Duplicates are unrestricted** (GDD §8.5): the same tile id may fill two slots of one shop and may reappear in
    later shops. No dedupe anywhere.
 
-7. **Schema validation** (`sim/data/schemas.ts`), each with a readable message and a test:
-   - exactly one `shops` entry per non-final wave — the set of `afterWave` values is exactly `1 … waves.length − 1`,
-     no duplicates, no gaps. Adding waves 8–10 in M4 without their tables must fail `npm test` loudly.
+7. **Schema validation** (`sim/data/schemas.ts`), each with a readable message and a test. Per-file checks
+   live on `ShopFileSchema`; the waves-coverage check lives on `GameDataSchema.superRefine` (both files
+   must have parsed first), reported as `shop.json: …` via an issue path that starts with `'shop'`.
+   - `afterWave` values are unique positive integers. `{1 … waves.length − 1} ⊆ afterWave set` — every
+     non-final wave has a table. Extra tables (afterWave ≥ `waves.length`) are allowed so this task can
+     ship six M3 shops while `waves.json` still has three waves. Duplicates and gaps *inside* 1 … waves.length−1
+     fail. Adding waves 8–10 in M4 without their tables must fail `npm test` loudly.
    - `prices` has a key for every `priceCategory` used in `tiles.json`.
    - every table is non-empty; `weight` is a positive integer; `n` is `[min, max]` with `min ≤ max` inside the kind's
      legal range (`add`/`sub` 1–10, `mul` 2–10) and **every** id in that range exists in `tiles.json`.
@@ -100,7 +160,13 @@ wave never has a shop (GDD §8.3).
 
 8. **No behaviour beyond the roll.** This task must not touch `applyCommand`, `RunState.phase`, or anything in
    `/game`. `ShopState`/`ShopOffer`/`ShopSlotId` types are updated in `/sim/core/types.ts` (TR §4) so task 19 can
-   consume them, but nothing constructs a `ShopState` yet.
+   consume them, but nothing constructs a `ShopState` yet. Do **not** bump `economy.json` `schemaVersion` —
+   that is task 19, when `RunState.shop` and wave `reward` actually change.
+
+9. **Fixture helper.** `ShopFileSchema` will reject `shop: {}`. Add `fakeShop()` in `/tests/helpers` (same
+   pattern as `fakeScreenSettings`) returning a valid shop file, and replace every `shop: {}` in:
+   `tests/sim/data/{load,waves,levels}.test.ts`, `tests/sim/commands/{fixtures.ts,loadLevel.test.ts}`,
+   `tests/game/{store,testHandle}.test.ts`. A one-wave fixture may use `shops: []` (no non-final wave).
 
 ## Tests
 
