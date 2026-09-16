@@ -124,4 +124,80 @@ case against 100 base HP). That is intended for Playtest 3.
 
 ## Completion Notes
 
-_(filled in by `/finish-task`)_
+**Status:** Complete
+**Completed:** 2026-09-16
+**PR:** not opened (stacked branch `cursor/21-ladder-waves-4-7-8f5d` on `cursor/20-shop-screen-and-seen-log-8f5d`)
+
+**Acceptance criteria:**
+- [x] Waves 1–3 revisited against Playtest 2 notes — Met: no change — Playtest 2 notes not yet written (`playtests/02.md` missing; `playtests/02-checklist.md` notes sections blank). Did not invent a playtest or retune 1–3.
+- [x] Waves 4–7 authored within requirement 2's constraints, all untraited — Met (see waves.json changes)
+- [x] Balance tests pass for seeds 1–100: sensible player always wins above 40 base HP, End-Turn-only always loses, every shop affordable, second cannon by the wave-3 shop, ≤ 2-hit exact kills reachable — Met (`tests/ladder.test.ts`)
+- [x] e2e plays a full 7-wave run through the real menus, screens and shop, including a reload inside a shop — Met (`e2e/run.spec.ts`; `MAX_TURNS = 200` over measured max 51)
+- [x] `playtests/03-checklist.md` exists — Met
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e`, `npm run sim -- scenarios` pass — Met
+
+**Verification:** npm test ✔ (59 files / 655 tests) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (70 webkit) · sim scenarios ✔ (39/39)
+
+**waves.json changes (or no change) + reasons:**
+- Waves 1–3: **no change — Playtest 2 notes not yet written.**
+- Waves 4–7: all `robot: "basic"`, 3 letters max, turn gaps ≥ 5, 4–6 robots, last wave `wave-7`.
+- Draft HP kept for waves 5–6.
+- Wave 4 lowered *inside* draft ranges so every seed's owned tiles 2-hit (cannon-first + cheap subs left holes at 10/15/19–22): T1 A/B `[10,16]` → `[12,14]`; T6 A/C `[12,20]` → `[12,14]`; T11 B `[14,22]` → `[16,16]`.
+- Wave 7 T8 A/B/C `[30,45]` → `[30,38]` so HP 43–45 is not required when the bot's max shot is ~24.
+- `economy.json` income.waveCleared left at **3** (every shop had an affordable item; did not raise to 4).
+
+**Run-length stats (seeds 1–100, sensible player):**
+
+| | min | median | max |
+|---|---|---|---|
+| Wave 1 turns | 3 | 6 | 9 |
+| Wave 2 turns | 3 | 6 | 14 |
+| Wave 3 turns | 4 | 4 | 11 |
+| Wave 4 turns | 4 | 6 | 10 |
+| Wave 5 turns | 2 | 4 | 6 |
+| Wave 6 turns | 3 | 5 | 7 |
+| Wave 7 turns | 3 | 5 | 8 |
+| Full-run End Turns | 29 | 36 | 51 |
+| Final base HP | 100 | 100 | 100 |
+| Min base HP during run | 100 | 100 | 100 |
+
+End-Turn-only lost every seed. e2e `MAX_TURNS = 200`.
+
+**Coins / shops (sensible player, min/median/max across seeds):**
+
+| Shop after wave | earned | spent | leftover | coins on enter |
+|---|---|---|---|---|
+| 1 | 9 / 9 / 9 | 8 / 8 / 8 | 1 / 1 / 1 | 9 / 9 / 9 |
+| 2 | 9 / 9 / 9 | 6 / 10 / 10 | 0 / 0 / 4 | 10 / 10 / 10 |
+| 3 | 11 / 11 / 11 | 10 / 10 / 14 | 1 / 1 / 1 | 11 / 11 / 15 |
+| 4 | 13 / 13 / 13 | 10 / 12 / 14 | 0 / 2 / 4 | 14 / 14 / 14 |
+| 5 | 11 / 11 / 11 | 4 / 8 / 15 | 0 / 3 / 7 | 11 / 13 / 15 |
+| 6 | 13 / 13 / 13 | 8 / 15 / 19 | 0 / 1 / 6 | 13 / 16 / 20 |
+
+Typical purchases: shop 1 two `add` tiles; shop 2 guaranteed `mul` (usually `mul:2`) plus leftover add/sub; shop 3 the **second cannon** (100/100 seeds); shops 4–6 mix of mul/add/sub and the third cannon (~42 seeds at shop 5, ~52 at shop 6). Raw counts: `/tmp/ladder-stats.json` from the balance test.
+
+**Deviations from spec:**
+- Branch name is `cursor/21-ladder-waves-4-7-8f5d` (stacked-PR convention) rather than `task/21-ladder-waves-4-7`. No PR opened, per session instructions.
+- Sensible shop policy: if no mul is owned and a mul is affordable, buy the mul **before** a second cannon. Strict cannon-first spent the wave-2 `×2` guarantee and made the ≤2-hit assertion impossible for draft HP (two `+5`s cannot 2-hit 14). Second cannon still lands at the wave-3 shop.
+- Sensible planning: idle cannons move onto uncovered threatened lanes (front-most first), not only when *zero* armed lanes can reach. Required so 3-lane waves 6–7 stay above 40 HP.
+- Equal-price tile tie-break prefers add over sub, then higher N.
+- `presentation.json` `heartTargetX` 295 → 397: seven wave dots shift ♥; detonation fly-to follows (e2e heart-target test).
+- Wave-1 follow-bot remains, as one loop over seeds 1–100 rather than 100 `it`s.
+
+**Architectural decisions made:**
+- Shared driver in `tests/helpers/sensiblePlayer.ts` (used by vitest and Playwright). Ball values use `applyTile`. Every mutation is `applyCommand`.
+- Unlosable-M2 worst-case test deleted; End-Turn-only must `lost`.
+
+**Design questions raised:**
+- None. H2 still not written; waves 1–3 untouched.
+
+**Known issues / follow-up:**
+- H3 is ready (`playtests/03-checklist.md`). Human iPad check for shop UI (task 20) still pending.
+- The sensible bot never dropped below 100 HP on seeds 1–100 — Playtest 3 should watch whether a 7-year-old leaks; the End-Turn-only bot proves a loss is possible.
+
+**Files created:** `tests/helpers/sensiblePlayer.ts`, `playtests/03-checklist.md`
+**Files modified:** `data/waves.json`, `data/presentation.json`, `tests/ladder.test.ts`, `tests/sim/data/waves.test.ts`, `e2e/run.spec.ts`, `TASKS.md`, this file
+
+**Notes for next agent:**
+- Run length is `waves.json` length (7). Do not retune 1–3 until H2 notes exist. Shop tables afterWave 1–6 already cover six shops. Traits stay off until M4. `heartTargetX` is for a 7-dot HUD — changing wave count means moving it again.
+
