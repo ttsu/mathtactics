@@ -18,10 +18,11 @@ v0.7 records the decisions made while writing the M4 task specs, after Playtest 
 Playtest 3 (checklist notes): the run was **fun but too easy**; he asked for **armor** on
 waves 9/10 — a second HP, shown separately, that must be destroyed first.
 
-- **Hardness comes from the GDD ladder, not invented HP bumps.** Traits on waves 4/6/7, mixed
-  procedural waves 8–9, and the Boss are the difficulty. Waves 1–3 are unchanged (Playtest 2
-  notes were empty). Do not retune 1–7 HP in the specs; task 27 may retune later-wave numbers
-  only if balance tests fail, with a recorded reason.
+- **Hardness: one teaching trait plus a 4–7 HP bump.** Waves 4/6/7 still get a single teaching
+  trait; remaining robots on those waves stay `basic`; wave 5 stays untraited. HP on waves
+  4–7 is raised so the 7-wave stretch can hurt (Playtest 3: too easy). Waves 1–3 are unchanged
+  (Playtest 2 notes empty). Concrete 4–7 ranges follow the leftover-HP target (v0.7 grill).
+  Waves 8–10 are a further step up, not the first time the run can hurt.
 - **Armor is deferred to v1.1+.** It is a new rule (a second number on the robot), not a trait.
   It fights §11.2 (HP is the largest element) and is closer to Barrier (§19) than to Weakness /
   Bounce-back / parity. Not in M4, M5, or v1.
@@ -960,6 +961,8 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Wave 4's Weakness is `n = 5` (skip-counting by fives). Waves 8–9 mix 2/5/10.
 - Wave 7's first parity robot is Odd-only (cannon base value 1 is odd). Even-only enters in 8–9.
 - Wave 5 stays fully `basic` — subtraction is the lesson, not a new trait.
+- Waves 4–7 HP are raised (Playtest 3 too easy); one teaching trait stays on 4/6/7. Waves 1–3
+  HP unchanged. Concrete ranges follow the leftover-HP target.
 - The Settings gear on the main menu is labelled *Settings* (one extra word beyond the §11.1
   navigation list). Hints and Sound toggles are icon + one word each.
 - The sound toggle persists and does nothing to playback until M5 ships Web Audio.

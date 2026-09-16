@@ -20,9 +20,9 @@ acceptable for this PR; do not invent placeholder glyphs here.
 ## Context
 
 M3 shipped seven untraited waves and a `robots.json` with a single `basic` template. Playtest 3
-found the run fun but too easy. GDD v0.7 answers that with the ladder, not invented HP on waves
-1–7: one teaching trait on waves 4, 6 and 7; wave 5 stays `basic` (subtraction). Armor is
-deferred to v1.1+.
+found the run fun but too easy. GDD v0.7 answers that with **one teaching trait** on waves 4, 6
+and 7 **and a HP bump on waves 4–7** (wave 5 stays `basic` — subtraction). Waves 1–3 unchanged.
+Armor is deferred to v1.1+.
 
 Scenario files already exercise every trait (`:bb`, `:odd`, `:even`, `:w2`, `:w5`, `:w10` in
 `sim/scenario/parse.ts`). This task does not change those codes.
@@ -43,25 +43,25 @@ Scenario files already exercise every trait (`:bb`, `:odd`, `:even`, `:w2`, `:w5
 
    No `boss` template yet (task 26). Do not add visual keys — those are M5.
 
-2. **Ladder swap** in `waves.json`. Keep every spawn's turn, lane letter, and HP range. Change
-   **one** `robot` id per wave, as follows:
+2. **Ladder swap** in `waves.json`. Keep every spawn's turn, lane letter, and robot count.
+   Change **one** `robot` id per teaching wave, as follows. **Also raise HP on waves 4–7**
+   (Playtest 3: too easy; grill decision C). Exact ranges are set by the leftover-HP target
+   in GDD v0.7; do not invent them. Waves 1–3 HP and spawns stay as shipped.
 
    | Wave | Which spawn | New `robot` | Why |
    |---|---|---|---|
    | 4 | first spawn in file order | `weakness-5` | First Weakness; `n = 5` (GDD v0.7 §18.2) |
-   | 5 | — | unchanged (`basic`) | Teaches subtraction |
+   | 5 | — | still all `basic`; HP up | Teaches subtraction |
    | 6 | first spawn in file order | `bounce-back` | First Bounce-back |
    | 7 | first spawn in file order | `odd-only` | First Odd-only (base value 1 is odd) |
-
-   Waves 1–3 unchanged.
 
 3. **Tests** (shipped data, not fixtures of a parallel universe):
    - `robots.json` contains exactly the seven ids above, with those traits.
    - After `rollWave` of shipped wave-4/6/7, **at least one** pending spawn uses the teaching
      template; every other spawn on that wave is `basic`. Wave 5 is all `basic` for seeds 1–20.
    - Existing `tests/ladder.test.ts` still passes: sensible player wins seeds 1–100 above 40
-     base HP; End-Turn-only loses. If traits make the sensible player lose or drop below 40,
-     **stop and raise it** — do not silently raise HP or remove the trait.
+     base HP; End-Turn-only loses. If the HP bump makes the sensible player lose or drop
+     below 40, **stop and raise it** — do not silently undo the teaching trait.
    - A sim scenario (new file under `scenarios/`) that loads shipped wave 4, puts a `×5` in
      front of the Weakness-5 robot, and asserts `RobotDamaged.doubled === true` on the event
      list (gameplay change → event-list test, CLAUDE.md rule 2).
@@ -77,7 +77,8 @@ Trait silhouette / shield / chest-n (23). Procedural 8–9 (25). Boss (26). Sett
 ## Acceptance Criteria
 
 - [ ] `robots.json` has the seven templates above
-- [ ] Waves 4/6/7 each have exactly one teaching-trait spawn; wave 5 and 1–3 unchanged
+- [ ] Waves 4/6/7 each have exactly one teaching-trait spawn; wave 5 all `basic`; waves 1–3 unchanged
+- [ ] Waves 4–7 HP raised vs M3 shipped ranges; 1–3 HP unchanged
 - [ ] Ladder balance tests still pass for seeds 1–100
 - [ ] Scenario asserts doubled damage against shipped Weakness-5
 - [ ] `npm test`, `typecheck`, `lint` pass

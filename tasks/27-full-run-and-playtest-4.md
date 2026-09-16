@@ -21,7 +21,8 @@ Tasks 22–26 stacked: traits on 4/6/7, telegraph, settings, waves 8–10, Boss.
 too easy. If after 22–26 the sensible player still finishes seeds 1–100 with a min base HP
 **above 70**, that is evidence the stretch is still soft — you may raise wave 8–9 HP or
 `count` **inside §6.6** (≤ 99, ≤ 4 lanes) with a recorded reason. Do **not** retune waves 1–3
-(Playtest 2 notes empty). Do **not** add armor. Do **not** drop the 40 HP floor.
+(Playtest 2 notes empty). Waves 4–7 HP are task 22's job. Do **not** add armor. Do **not**
+drop the 40 HP floor.
 
 Settings/hints are not part of the sensible-player bot (hints off is the default a kid gets).
 
