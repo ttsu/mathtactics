@@ -5,6 +5,7 @@ import {
   createAppStore,
   isPlaybackActive,
   displayFromRun,
+  sequenceStart,
   stubApplyCommand,
   type ApplyCommandFn,
   type Playback,
@@ -252,6 +253,8 @@ describe('dispatch', () => {
       status: 'playing',
       events: [...events],
       cursor: 0,
+      // A normal turn's board starts from the run as it was before it.
+      before: run,
     });
   });
 
@@ -415,6 +418,139 @@ describe('dispatch', () => {
       expect(store.getState().display).toEqual({ baseHp: 61, coins: 9, waveIndex: 1 });
     });
   });
+
+  describe('playback.before — where the board starts a sequence (New Run over an old board)', () => {
+    const puzzleRows = [
+      '. . . . . . . .',
+      'C +2 R5 . . . . .',
+      '. . . . R3 . . .',
+      '. . . . . . . .',
+      '. . . . . . . .',
+    ];
+
+    it('newRun over a puzzle starts from the new run with none of the old robots or tiles', () => {
+      const store = createAppStore({
+        data: realData,
+        applyCommand,
+        storage: createMemoryStorage(),
+        basePath: '/',
+      });
+      const puzzle = boardState(puzzleRows, ['mul:2', 'add:5']);
+      store.setState({ run: puzzle, display: displayFromRun(puzzle) });
+      // The old board really has a `robot:0` — the id the new run's first robot reuses.
+      expect(puzzle.board.robots.map((robot) => robot.robotId)).toContain('robot:0');
+
+      store.getState().dispatch({ type: 'newRun', seed: 'over-a-puzzle' });
+
+      const { run, playback } = store.getState();
+      const before = playback.before!;
+      expect(playback.events.some((event) => event.type === 'RobotSpawned')).toBe(true);
+      // Empty wave start: no robots at all (so no leftover `robot:0` for the spawn to slide from),
+      // and the new run's own (empty) tiles, tray and cannons — nothing from the puzzle.
+      expect(before.board.robots).toEqual([]);
+      expect(before.board.cells).toEqual(run!.board.cells);
+      expect(before.board.cannons).toEqual(run!.board.cannons);
+      expect(before.tray).toEqual(run!.tray);
+      expect(before.pieces).toEqual(run!.pieces);
+      expect(before.mode).toBe('run');
+      expect(before).not.toBe(puzzle);
+    });
+
+    it('nextWave starts from exactly the wave-cleared board (verified, not assumed)', () => {
+      const store = createAppStore({
+        data: realData,
+        applyCommand,
+        storage: createMemoryStorage(),
+        basePath: '/',
+      });
+      store.getState().dispatch({ type: 'newRun', seed: 'next-wave-start' });
+      store.getState().finishPlayback();
+      // Clear wave 1 for real: no robots left and nothing pending, then End Turn.
+      const started = store.getState().run!;
+      const lastTurnOfWave: RunState = {
+        ...started,
+        board: { ...started.board, robots: [] },
+        pendingSpawns: [],
+      };
+      store.setState({ run: lastTurnOfWave });
+      store.getState().dispatch({ type: 'endTurn' });
+      store.getState().finishPlayback();
+      const waveCleared = store.getState().run!;
+      expect(waveCleared.phase).toBe('waveCleared');
+      expect(waveCleared.tray.length).toBeGreaterThan(0); // the reward tiles
+
+      store.getState().dispatch({ type: 'nextWave' });
+
+      const { run, playback } = store.getState();
+      const before = playback.before!;
+      expect(playback.status).toBe('playing');
+      expect(before.board).toEqual(waveCleared.board);
+      expect(before.tray).toEqual(waveCleared.tray);
+      expect(before.pieces).toEqual(waveCleared.pieces);
+      // …while the run itself already holds the new wave's robots.
+      expect(run!.board.robots.length).toBeGreaterThan(0);
+    });
+
+    it('sequenceStart keeps waiting robots out too, and a normal turn starts from the previous run', () => {
+      const previous = boardState(puzzleRows);
+      const next: RunState = {
+        ...previous,
+        board: {
+          ...previous.board,
+          robots: [
+            ...previous.board.robots,
+            {
+              robotId: 'robot:8',
+              lane: 4,
+              col: 7,
+              hp: 2,
+              maxHp: 2,
+              trait: { type: 'none' },
+              isBoss: false,
+            },
+            {
+              robotId: 'robot:9',
+              lane: 4,
+              col: null,
+              hp: 3,
+              maxHp: 3,
+              trait: { type: 'none' },
+              isBoss: false,
+            },
+          ],
+        },
+      };
+      const events: GameEvent[] = [
+        {
+          step: 0,
+          group: 'spawn',
+          type: 'RobotSpawned',
+          robotId: 'robot:8',
+          at: { lane: 4, col: 7 },
+          hp: 2,
+          maxHp: 2,
+          trait: { type: 'none' },
+          isBoss: false,
+        },
+        {
+          step: 1,
+          group: 'spawn',
+          type: 'RobotWaiting',
+          robotId: 'robot:9',
+          lane: 4,
+          hp: 3,
+          maxHp: 3,
+          trait: { type: 'none' },
+        },
+      ];
+
+      expect(sequenceStart(previous, next, events, true)!.board.robots).toEqual(
+        previous.board.robots,
+      );
+      expect(sequenceStart(previous, next, events, false)).toBe(previous);
+      expect(sequenceStart(null, next, events, false)).toBeUndefined();
+    });
+  });
 });
 
 describe('commitEvent', () => {
@@ -471,6 +607,26 @@ describe('commitEvent', () => {
     expect(store.getState().display.baseHp).toBe(32);
   });
 
+  it('clamps display.baseHp at 0 for a negative BaseDamaged hpAfter (task 15 req. 3)', () => {
+    const store = createAppStore({
+      data: fakeGameData(),
+      applyCommand: stubApplyCommand,
+      storage: createMemoryStorage(),
+      basePath: '/',
+    });
+
+    store.getState().commitEvent({
+      step: 0,
+      group: 'detonate:2',
+      type: 'BaseDamaged',
+      amount: 30,
+      hpBefore: 10,
+      hpAfter: -20,
+    });
+
+    expect(store.getState().display.baseHp).toBe(0);
+  });
+
   it('is a no-op for other event types', () => {
     const store = createAppStore({
       data: fakeGameData(),
@@ -515,6 +671,26 @@ describe('finishPlayback', () => {
     expect(store.getState().playback).toEqual({ status: 'idle', events: [], cursor: 0 });
   });
 
+  it('clamps a negative run.baseHp to 0 (task 15 req. 3)', () => {
+    const storage = createMemoryStorage();
+    const run = fakeRunState({ baseHp: -15 });
+    storage.setItem(
+      scopedKey('/', 'run'),
+      JSON.stringify({ schemaVersion: 1, savedAt: 1, state: run }),
+    );
+    const store = createAppStore({
+      data: fakeGameData(),
+      applyCommand: stubApplyCommand,
+      storage,
+      basePath: '/',
+    });
+    store.setState({ playback: { status: 'playing', events: [], cursor: 0 } });
+
+    store.getState().finishPlayback();
+
+    expect(store.getState().display.baseHp).toBe(0);
+  });
+
   describe('end of run (task 14 req. 2)', () => {
     for (const phase of ['won', 'lost'] as const) {
       it(`switches to the '${phase}' screen and clears the save once its playback finishes`, () => {
@@ -548,6 +724,39 @@ describe('finishPlayback', () => {
         expect(storage.getItem(scopedKey('/', 'run'))).toBeNull();
       });
     }
+
+    it('clamps display.baseHp at 0 for a lost run whose final blow took it negative (tasks 14+15 integration)', () => {
+      // Neither task's own tests covered this combination: task 14's won/lost fixtures used
+      // `baseHp: 0`; task 15's clamp test used a phase that isn't `won`/`lost`. The merged
+      // `finishPlayback` runs the same `displayFromRun` clamp on both branches, so a run that
+      // lost by taking `baseHp` negative must still show ♥ 0, not a negative number, once the
+      // won/lost screen switch and `clearRun` fire.
+      const storage = createMemoryStorage();
+      const store = createAppStore({
+        data: fakeGameData(),
+        applyCommand: stubApplyCommand,
+        storage,
+        basePath: '/',
+      });
+      const run = fakeRunState({ mode: 'run', phase: 'lost', baseHp: -12 });
+      storage.setItem(
+        scopedKey('/', 'run'),
+        JSON.stringify({ schemaVersion: 1, savedAt: 1, state: run }),
+      );
+      store.setState({
+        run,
+        savedRun: run,
+        screen: 'game',
+        playback: { status: 'playing', events: [], cursor: 0 },
+      });
+
+      store.getState().finishPlayback();
+
+      expect(store.getState().screen).toBe('lost');
+      expect(store.getState().display.baseHp).toBe(0);
+      expect(store.getState().savedRun).toBeNull();
+      expect(storage.getItem(scopedKey('/', 'run'))).toBeNull();
+    });
 
     it('leaves the screen and save alone for any other phase', () => {
       const storage = createMemoryStorage();
@@ -674,6 +883,7 @@ describe('Replay (task 10)', () => {
       status: 'replaying',
       events: lastTurn!.events,
       cursor: 0,
+      before: lastTurn!.before,
     });
     expect(isPlaybackActive(store.getState())).toBe(true);
 

@@ -12,6 +12,8 @@ export interface BoardGame {
   skipAnimation(): void;
   /** True while the playback Director has a sequence, tweens or timers pending. */
   isAnimating(): boolean;
+  /** What the board draws right now, in design points (test handle `renderedBoard`, TR §14). */
+  drawn(): { robots: { robotId: string; x: number; y: number }[]; tiles: string[] };
 }
 
 export interface BoardGameOptions {
@@ -56,5 +58,6 @@ export function createBoardGame(options: BoardGameOptions): BoardGame {
     game,
     skipAnimation: () => scene.director?.skipAll(),
     isAnimating: () => scene.director?.busy ?? false,
+    drawn: () => scene.boardView?.drawn() ?? { robots: [], tiles: [] },
   };
 }

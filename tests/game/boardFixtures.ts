@@ -19,3 +19,18 @@ export function boardState(rows: string[], tray: string[] = []): RunState {
   ].join('\n');
   return buildScenarioState(parseScenario(yaml), realData);
 }
+
+/** Builds a `mode: run` planning state (task 15) from board rows, with extra raw scenario YAML
+ * lines (e.g. `pendingSpawns:`, `waves:`, `baseHp:`) appended so a run-mode turn (advance,
+ * detonate, spawn) can be resolved from it. */
+export function runState(rows: string[], extraYaml: string[] = []): RunState {
+  const yaml = [
+    'name: run board fixture',
+    'mode: run',
+    'baseValue: 3',
+    'board:',
+    ...rows.map((row) => `  - "${row}"`),
+    ...extraYaml,
+  ].join('\n');
+  return buildScenarioState(parseScenario(yaml), realData);
+}

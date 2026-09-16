@@ -66,4 +66,93 @@ board evolving event by event (never recompute rules — everything shown comes 
 
 ## Completion Notes
 
-_To be filled in by `/finish-task`._
+**Status:** Complete (iPad check pending)
+**Completed:** 2026-09-15
+
+**Acceptance criteria:**
+- [x] Advance, detonation (with ♥ count-down), spawn and waiting ghosts play from event payloads only — Met
+  (`SegmentPlayer` beat handlers; `detonatingRobots(events)` derives who lurches)
+- [x] No overlapping robots during the advance/detonate beats — Met by construction (every mover and detonator shares
+  one `advance` beat starting at 0 ms); frame-level check is part of the iPad review
+- [x] Danger glow shows during planning for col-1 lanes only — Met (`dangerLanes(run)`, `tests/game/danger.test.ts`)
+- [x] HUD base HP never shows post-turn values before its event plays; never shows below 0 — Met (e2e
+  `a col-1 detonation counts the HUD base HP down…`; store clamps in `commitEvent` and `displayFromRun`)
+- [x] All new timings/visual numbers in `presentation.json` — Met (`playback.beats.detonateMs/baseCountDownMs/spawnMs/
+  endMs`, `playback.detonate.*`, `playback.spawn.*`, `danger.*`), except the flash colour (see Deviations)
+- [ ] Legible and paced on the iPad preview (human check) — **Pending human check.** Screenshots from the
+  `legibility screenshots` e2e go to `test-results/` (advance beat, detonation mid-count, ghost robot, danger glow).
+- [x] `npm test` (558 tests), `typecheck`, `lint`, `build`, `test:e2e` (53) pass — Met
+
+**Deviations from spec:**
+- **HUD ♥ count-down commits per tick** (req. 3's choice): `baseDamaged` ticks `commitEvent` every frame with the
+  rounded value, and `finish()` always re-commits the exact clamped final value, so a skip can't leave a stale number.
+  No `Hud.tsx` change needed for the count-down.
+- **`displayFromRun` clamps `baseHp` at 0.** Every "derive display from run" path goes through it; without the clamp a
+  naturally finished detonation snapped the HUD to the raw negative value. The integration with task 14 removed the
+  HUD's own render clamp, so the store is the single clamp source.
+- **An `advance` segment is synthesised** before the first `detonate:<lane>` when nothing moved (every robot already on
+  col 1), so the lurch into the base still has a beat.
+- **Flash colour** `PLACEHOLDER.detonateFlash` stays in `game/board/views/palette.ts` with the other placeholder effect
+  colours (M5 art pass), not in `presentation.json`.
+- **Ghost fit:** `waitingGhostCenter(lane)` is one cell right of col 7 (x = 1080 design pt, robot spans 1042–1118,
+  grid edge 1030, design width 1180). Letterboxing never rescales the design space (TR §11.2), so it always fits.
+- **Every sequence starts from `playback.before` (final review fix).** New Run played its spawn over the previous
+  run's or puzzle's board: nothing re-synced the board because `lastTurn` is null for `newRun`, so old robots and tray
+  tiles stayed drawn, and a leftover `robot:0` made the new `robot:0` slide in from the old cell. The store now sets
+  `Playback.before` for every sequence: the previous run for a normal turn, `lastTurn.before` for Replay, and for
+  `newRun`/`nextWave` `sequenceStart(...)` = the new run minus the robots its own spawn events introduce. `BoardScene`
+  syncs to it before playing. This replaces the old `lastTurn.events === playback.events` check. For `nextWave` the
+  result was verified equal to the wave-cleared board (a unit test), so its behaviour is unchanged.
+- **`detonate.heartTargetX/Y` retuned to (295, 44)** — the ♥ glyph's measured centre (e2e) now that task 14's ⌂ Home
+  no longer unmounts during playback. It was (200, 40), tuned to the shifted row. **No fixed ♥ slot:** the wave dots
+  sit left of ♥, so ♥ moves if `waves.json` changes length (each dot is 26 pt). Instead of reserving width for 10
+  waves (a wide empty gap during M2's 3), an e2e test measures the ♥ glyph and fails if it is more than 6 pt from the
+  target, so a wave-count change flags the retune.
+- **Test handle gains `renderedBoard()`** (robot view centres in client coordinates, tile piece ids) so e2e can
+  inspect the board mid-playback. Documented in TR §14.
+
+**Architectural decisions made:**
+- New exports: `detonatingRobots(events)` (`segments.ts`), `dangerLanes(run)` (`playback/danger.ts`), `DangerGlow`
+  (`playback/DangerGlow.ts`), `BoardRenderer.ensureRobotView(robotId)` and `BoardRenderer.drawn()`,
+  `baseStripRect/baseStripCenter/waitingGhostCenter` and `designToClient` (`layout.ts`), `sequenceStart(previous,
+  next, events, freshPhase)` and `Playback.before?` (`game/state/store.ts`).
+- `BoardRenderer.syncRobots` draws every robot, including waiting ones (`col: null`) as ghosts, so planning after a
+  resume shows ghosts without special handling.
+- `DangerGlow.sync(run)` recomputes from `run` each call; `BoardScene` passes `null` during playback/Replay. It restarts
+  tweens only when the lane set changes.
+- The Phaser number can't target the React ♥ directly (TR §11.1), so the target is a design point in data.
+
+**Pacing (req. 9, measured with `planPlayback` on real data):**
+- 3 armed lanes (one a 3-tile chain) + an unarmed lane's detonation + a spawn: **8.51 s**.
+- Single-lane early-wave exact kill, no detonation or spawn: **2.88 s**.
+
+**Known issues / follow-up needed:**
+- iPad check pending: legibility of the advance beat, detonation mid-count and ghosts; no frame-level robot overlap.
+- `PLACEHOLDER.detonateFlash` lives in `palette.ts`, not `presentation.json` (M5 art pass).
+- `DangerGlow.sync` returns early when the lane set is unchanged, including right after a `loadState` that swaps in
+  different robots on the same lanes (the wobble stays on the old views until the set changes).
+- `SegmentPlayer.finish()`'s `BaseDamaged` re-commit clamps again, which is redundant with the store clamp (harmless).
+- If `waves.json` changes length, retune `heartTargetX` (the ♥ e2e will fail and say so).
+
+**Files created:**
+- `game/board/playback/danger.ts`, `game/board/playback/DangerGlow.ts`
+- `tests/game/danger.test.ts`, `e2e/run-playback.spec.ts`
+
+**Files modified:**
+- `game/board/playback/segments.ts`, `game/board/playback/timeline.ts`, `game/board/playback/SegmentPlayer.ts`
+- `game/board/BoardRenderer.ts`, `game/board/BoardScene.ts`, `game/board/layout.ts`, `game/board/index.ts`,
+  `game/board/createBoardGame.ts`, `game/board/views/palette.ts`, `game/main.tsx`
+- `game/state/store.ts`, `game/state/testHandle.ts`, `game/ui/Hud.tsx` (render clamp removed at integration)
+- `sim/data/schemas.ts`, `data/presentation.json`
+- `tests/game/boardFixtures.ts`, `tests/game/playbackSegments.test.ts`, `tests/game/playbackTimeline.test.ts`,
+  `tests/game/store.test.ts`, `tests/game/testHandle.test.ts`, `tests/helpers/playbackSettings.ts`
+- `tests/sim/commands/fixtures.ts`, `tests/sim/commands/loadLevel.test.ts`, `tests/sim/data/{load,levels,waves}.test.ts`
+  (`danger: fakeDangerSettings()` in hand-built presentation fixtures)
+- `TECHNICAL_REFERENCE.md` (§10 `playback.before` and flow step 2, §11.4, §14 `renderedBoard`), `TASKS.md`
+
+**Notes for next agent:**
+- Any new command that starts a playback must set `playback.before` to where the board should start; otherwise the
+  board plays over whatever it last drew.
+- `run.tray` already holds `TilesGranted` pieces when the turn resolves; the tray only shows them once playback ends
+  because `renderer.sync(run)` runs only when idle. Keep that gate.
+- Use `renderedBoard()` for mid-playback e2e assertions; screenshots stay for legibility only.

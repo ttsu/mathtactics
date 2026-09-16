@@ -164,6 +164,18 @@ const PresentationFileSchema = z.object({
       coinsMs: ms(),
       exitMs: ms(),
       laneEndMs: ms(),
+      /** A queued robot's flash+shake+HP-fly-out beat, in its own `detonate:<lane>` segment
+       * (task 15, GDD §12.2 step 5). */
+      detonateMs: ms(),
+      /** How long the HUD base HP takes to count from `hpBefore` to `max(0, hpAfter)`, right
+       * after the `detonateMs` beat (task 15 req. 3). */
+      baseCountDownMs: ms(),
+      /** A `RobotSpawned`/`RobotWaiting` beat — drop into column 7, or pop in as a ghost
+       * (task 15, GDD §12.2 step 6). */
+      spawnMs: ms(),
+      /** Trailing pause on a run-mode `"end"` segment (wave cleared / won / lost) — no board beat
+       * of its own, just a short hold before playback finishes (task 15 req. 5). */
+      endMs: ms(),
     }),
     /** Fractions of a beat's duration given to its sub-animations (e.g. the damage number fades
      * for the last `fade` of the impact beat, after `most` of it has passed). */
@@ -234,6 +246,27 @@ const PresentationFileSchema = z.object({
     }),
     coins: z.object({ floatPt: z.number().nonnegative() }),
     exit: z.object({ rollPt: z.number().nonnegative(), rollSpinDeg: z.number() }),
+    /** A detonation's flash/shake and its HP-to-HUD flying number (task 15, GDD §12.2 step 5). */
+    detonate: z.object({
+      shakeMs: ms(),
+      shake: shakeIntensity(),
+      /** Design-point target the robot's flying HP number tweens toward — approximately the
+       * HUD's ♥ (Phaser can't target the React DOM element itself, TR §11.1). */
+      heartTargetX: z.number(),
+      heartTargetY: z.number(),
+      /** Scale the flying number shrinks to as it nears the HUD. */
+      heartLabelScale: scale(),
+    }),
+    /** A robot entering the board, solid or as a waiting ghost (task 15, GDD §12.2 step 6). */
+    spawn: z.object({
+      /** How far above column 7 a newly spawned robot drops in from. */
+      dropFromPt: z.number().nonnegative(),
+      dropFromScale: scale(),
+      /** Alpha of a waiting robot's ghost, just right of column 7. */
+      ghostAlpha: z.number().min(0).max(1),
+      /** Scale a ghost pops in from when it first appears. */
+      ghostPopFromScale: scale(),
+    }),
   }),
   tileColors: z.record(TileColorSchema, z.string().min(1)),
   /** Board drag-and-drop feel (task 09). Presentation only — never changes an outcome. */
@@ -254,6 +287,19 @@ const PresentationFileSchema = z.object({
   screens: z.object({
     /** How long a screen's celebration art and big button take to pop in. */
     popInMs: ms(),
+  }),
+  /** Planning-phase danger glow (task 15, GDD §12.2 "Planning-phase cues"): a lane whose robot
+   * sits on column 1 pulses red at the base strip and that robot wobbles. Derived from `run`
+   * fresh every frame — never an event, never cached. */
+  danger: z.object({
+    /** One full pulse cycle (dim → bright → dim). */
+    pulseMs: ms(),
+    minAlpha: z.number().min(0).max(1),
+    maxAlpha: z.number().min(0).max(1),
+    color: z.string().min(1),
+    /** How far the at-risk robot rocks side to side (degrees, one way). */
+    wobbleDeg: z.number().nonnegative(),
+    wobbleMs: ms(),
   }),
 });
 

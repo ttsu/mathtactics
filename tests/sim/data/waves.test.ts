@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { parseGameData } from '../../../sim/data/load';
 import { loadRawGameData } from '../../helpers/loadDataFiles';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
-import { fakePacingSettings, fakePlaybackSettings } from '../../helpers/playbackSettings';
+import {
+  fakeDangerSettings,
+  fakePacingSettings,
+  fakePlaybackSettings,
+} from '../../helpers/playbackSettings';
 
 function spawnDef(overrides: Record<string, unknown> = {}) {
   return { turn: 1, lane: 'A', robot: 'basic', hp: [1, 3], ...overrides };
@@ -36,6 +40,7 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
       tileColors: { green: '#0f0', blue: '#00f', orange: '#f80' },
       drag: fakeDragSettings(),
       screens: fakeScreenSettings(),
+      danger: fakeDangerSettings(),
     },
   };
 }

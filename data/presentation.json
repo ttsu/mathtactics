@@ -18,7 +18,11 @@
       "exactKillMs": 1000,
       "coinsMs": 220,
       "exitMs": 240,
-      "laneEndMs": 150
+      "laneEndMs": 150,
+      "detonateMs": 500,
+      "baseCountDownMs": 550,
+      "spawnMs": 350,
+      "endMs": 500
     },
     "beatShares": {
       "quick": 0.25,
@@ -108,6 +112,19 @@
     "exit": {
       "rollPt": 160,
       "rollSpinDeg": 360
+    },
+    "detonate": {
+      "shakeMs": 220,
+      "shake": 0.01,
+      "heartTargetX": 295,
+      "heartTargetY": 44,
+      "heartLabelScale": 0.55
+    },
+    "spawn": {
+      "dropFromPt": 90,
+      "dropFromScale": 0.5,
+      "ghostAlpha": 0.45,
+      "ghostPopFromScale": 0.6
     }
   },
   "tileColors": {
@@ -125,5 +142,13 @@
   },
   "screens": {
     "popInMs": 450
+  },
+  "danger": {
+    "pulseMs": 700,
+    "minAlpha": 0.2,
+    "maxAlpha": 0.6,
+    "color": "#e53935",
+    "wobbleDeg": 6,
+    "wobbleMs": 320
   }
 }

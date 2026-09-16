@@ -25,6 +25,10 @@ export function fakePlaybackSettings() {
       coinsMs: 80,
       exitMs: 90,
       laneEndMs: 5,
+      detonateMs: 100,
+      baseCountDownMs: 110,
+      spawnMs: 70,
+      endMs: 120,
     },
     beatShares: { quick: 0.25, grow: 0.4, half: 0.5, most: 0.7, fade: 0.3 },
     lane: { dimAlpha: 0.3 },
@@ -92,5 +96,30 @@ export function fakePlaybackSettings() {
     },
     coins: { floatPt: 60 },
     exit: { rollPt: 160, rollSpinDeg: 360 },
+    detonate: {
+      shakeMs: 100,
+      shake: 0.01,
+      heartTargetX: 200,
+      heartTargetY: 40,
+      heartLabelScale: 0.55,
+    },
+    spawn: {
+      dropFromPt: 90,
+      dropFromScale: 0.5,
+      ghostAlpha: 0.45,
+      ghostPopFromScale: 0.6,
+    },
+  };
+}
+
+/** The `presentation.json` `danger` block (task 15) for hand-built fake `GameData` fixtures. */
+export function fakeDangerSettings() {
+  return {
+    pulseMs: 100,
+    minAlpha: 0.2,
+    maxAlpha: 0.6,
+    color: '#e53935',
+    wobbleDeg: 6,
+    wobbleMs: 80,
   };
 }

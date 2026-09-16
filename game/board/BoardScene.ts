@@ -12,11 +12,13 @@ import { BoardRenderer } from './BoardRenderer';
 import { bindStore } from './bindStore';
 import { DragController } from './DragController';
 import { drawBoardBackground } from './drawBoardBackground';
+import { DangerGlow } from './playback/DangerGlow';
 import { Director } from './playback/Director';
 import { boardSliceChanged } from './pieces';
 
 export class BoardScene extends Phaser.Scene {
   private playback: Director | null = null;
+  private boardRenderer: BoardRenderer | null = null;
 
   constructor(private readonly store: StoreApi<AppStore>) {
     super('board');
@@ -27,26 +29,35 @@ export class BoardScene extends Phaser.Scene {
     return this.playback;
   }
 
+  /** The board renderer, once the scene has been created (test handle `renderedBoard`). */
+  get boardView(): BoardRenderer | null {
+    return this.boardRenderer;
+  }
+
   create(): void {
     drawBoardBackground(this);
     const renderer = new BoardRenderer(this, this.store.getState().data);
+    this.boardRenderer = renderer;
     const drag = new DragController(this.store, renderer);
     drag.attach(this);
     const director = new Director(this, renderer, this.store);
     this.playback = director;
-    // A new sequence — a just-resolved turn, or a Replay. Either way the board first shows the run
-    // as it was before that turn, then the Director performs the events on it.
+    const dangerGlow = new DangerGlow(this, renderer);
+    const dangerSettings = () => this.store.getState().data.presentation.danger;
+    // A new sequence — a just-resolved turn, a fresh run/wave's spawns, or a Replay. Either way the
+    // board first shows where the sequence starts (`playback.before`: the pre-turn run, or an
+    // empty wave start), then the Director performs the events on it.
     const startPlayback = (state: AppStore) => {
       drag.cancel();
-      const { lastTurn } = state;
-      if (lastTurn !== null && lastTurn.events === state.playback.events) {
-        renderer.sync(lastTurn.before);
-      }
+      dangerGlow.sync(null, dangerSettings());
+      const { before } = state.playback;
+      if (before !== undefined) renderer.sync(before);
       director.play(state.playback.events);
     };
 
     const initial = this.store.getState();
     renderer.sync(initial.run);
+    dangerGlow.sync(isPlaybackActive(initial) ? null : initial.run, dangerSettings());
     // Playback may already be under way if a turn was dispatched before this scene existed.
     if (isPlaybackActive(initial)) startPlayback(initial);
 
@@ -62,9 +73,11 @@ export class BoardScene extends Phaser.Scene {
       if (!playbackEnded && !boardSliceChanged(previous.run, state.run)) return;
       drag.cancel();
       renderer.sync(state.run);
+      dangerGlow.sync(state.run, dangerSettings());
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.playback = null;
+      this.boardRenderer = null;
     });
   }
 }

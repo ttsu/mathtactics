@@ -3,7 +3,7 @@
 // on behalf of the framework-free /game/state modules (TR §13, task 05 decision).
 import { createRoot } from 'react-dom/client';
 import { applyCommand } from '../sim/commands';
-import { cellToClient, createBoardGame } from './board';
+import { cellToClient, createBoardGame, designToClient } from './board';
 import { safeStorage } from './safeStorage';
 import { gameData } from './state/gameData';
 import { getAudioContext, installAudioUnlock } from './state/audio';
@@ -72,6 +72,17 @@ if (import.meta.env.DEV || import.meta.env.VITE_TEST_HANDLE === '1') {
       cellToClient: (cell) => cellToClient(board.game.canvas.getBoundingClientRect(), cell),
       skipAnimation: board.skipAnimation,
       isAnimating: board.isAnimating,
+      renderedBoard: () => {
+        const canvas = board.game.canvas.getBoundingClientRect();
+        const { robots, tiles } = board.drawn();
+        return {
+          robots: robots.map(({ robotId, ...point }) => ({
+            robotId,
+            ...designToClient(canvas, point),
+          })),
+          tiles,
+        };
+      },
     }),
   );
 }

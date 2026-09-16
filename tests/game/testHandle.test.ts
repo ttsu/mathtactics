@@ -239,17 +239,21 @@ describe('createTestHandle', () => {
       storage: createMemoryStorage(),
       basePath: '/',
     });
+    const drawn = { robots: [{ robotId: 'robot:0', x: 5, y: 6 }], tiles: ['piece:1'] };
     const handle = createTestHandle(store, {
       cellToClient: (cell) => ({ x: cell.col * 10, y: cell.lane * 10 }),
       skipAnimation: () => {},
       isAnimating: () => false,
+      renderedBoard: () => drawn,
     });
     expect(handle.cellToClient({ lane: 2, col: 3 })).toEqual({ x: 30, y: 20 });
+    expect(handle.renderedBoard()).toBe(drawn);
   });
 
-  it('cellToClient throws when no board is mounted', () => {
+  it('cellToClient and renderedBoard throw when no board is mounted', () => {
     const { handle } = buildHandle();
     expect(() => handle.cellToClient({ lane: 0, col: 0 })).toThrow('no board mounted');
+    expect(() => handle.renderedBoard()).toThrow('no board mounted');
   });
 
   it('skipAnimation without a board finishes playback directly', () => {
@@ -275,6 +279,7 @@ describe('createTestHandle', () => {
       // The Director finishes by calling finishPlayback itself.
       skipAnimation: vi.fn(() => store.getState().finishPlayback()),
       isAnimating: () => false,
+      renderedBoard: () => ({ robots: [], tiles: [] }),
     };
     const handle = createTestHandle(store, board);
 
@@ -291,6 +296,7 @@ describe('createTestHandle', () => {
       cellToClient: () => ({ x: 0, y: 0 }),
       skipAnimation: () => {},
       isAnimating: () => animating,
+      renderedBoard: () => ({ robots: [], tiles: [] }),
     });
     expect(store.getState().playback.status).toBe('idle');
     expect(handle.isIdle()).toBe(false);

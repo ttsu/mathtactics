@@ -1,8 +1,10 @@
 // HUD (task 03 req. 5 placeholder, task 05 req. 6: reads coins/base HP from `display` via the
 // store; task 09 req. 4: End Turn and Undo dispatch real commands; task 10 req. 6: Replay; task 11
 // req. 3: in level mode the level dots replace the wave, and base HP is hidden — levels never
-// damage the base, TR §4.1; task 14 req. 4: in run mode the wave dots replace the "Wave N" text
-// and base HP is clamped at 0 for display; task 14 req. 5: ⌂ Home, hidden in place).
+// damage the base, TR §4.1; task 14 req. 4: in run mode the wave dots replace the "Wave N" text;
+// task 14 req. 5: ⌂ Home, hidden in place. `display.baseHp` is clamped at 0 by the store (task 15
+// req. 3: `displayFromRun`/`commitEvent`'s `BaseDamaged` case), the single source for the clamp —
+// the HUD renders it as-is).
 import { HUD_BAR, MIN_TOUCH_TARGET } from '../state/designSpace';
 import { levelPosition } from '../state/levelFlow';
 import { goHome } from '../state/runFlow';
@@ -28,8 +30,6 @@ export function Hud() {
   const levelCount = useAppStore((state) => state.data.levels.levels.length);
   const waveIndex = useAppStore((state) => state.run?.waveIndex ?? 0);
   const waveCount = useAppStore((state) => state.data.waves.waves.length);
-  // ♥ is clamped at 0 here, at HUD render, only (TR §7: `baseHp` itself is never clamped).
-  const baseHp = useAppStore((state) => Math.max(0, state.display.baseHp));
 
   return (
     <div
@@ -57,7 +57,7 @@ export function Hud() {
       ) : (
         <>
           <LevelDots index={waveIndex} count={waveCount} />
-          <span className="hud-stat">♥ {baseHp}</span>
+          <span className="hud-stat">♥ {display.baseHp}</span>
         </>
       )}
       <span className="hud-stat">🪙 {display.coins}</span>

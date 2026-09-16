@@ -48,6 +48,11 @@ export interface Playback {
   status: 'idle' | 'playing' | 'replaying';
   events: GameEvent[];
   cursor: number;
+  /** The run the board shows as this sequence starts, before any of `events` is performed — set
+   * for every sequence the store starts (`sequenceStart` for a dispatch, `lastTurn.before` for a
+   * Replay); absent when idle. The board syncs to it first, so nothing from whatever it showed
+   * earlier (a previous run, a puzzle) stays on screen during the sequence. */
+  before?: RunState;
 }
 
 /** The last resolved turn, with the run as it was just before it — the snapshot Replay plays
@@ -126,9 +131,39 @@ export interface CreateAppStoreOptions {
   now?: () => number;
 }
 
-/** `display` derived from the committed run (TR §10 flow step 4/5). */
+/** Where the board starts for a dispatch's playback. A normal turn starts from the run as it was
+ * (`previous`). A fresh phase (`newRun`/`nextWave`) has no meaningful previous board — `newRun`
+ * replaces whatever was shown (a lost run, a puzzle), and its robot ids restart at `robot:0` — so
+ * it starts from the new run minus the robots its own spawn events bring in: the empty wave start
+ * those events then fill. Derived from event payloads only; no rules are re-run. */
+export function sequenceStart(
+  previous: RunState | null,
+  next: RunState,
+  events: readonly GameEvent[],
+  freshPhase: boolean,
+): RunState | undefined {
+  if (!freshPhase) return previous ?? undefined;
+  const introduced = new Set(
+    events.flatMap((event) =>
+      event.type === 'RobotSpawned' || event.type === 'RobotWaiting' ? [event.robotId] : [],
+    ),
+  );
+  return {
+    ...next,
+    board: {
+      ...next.board,
+      robots: next.board.robots.filter((robot) => !introduced.has(robot.robotId)),
+    },
+  };
+}
+
+/** `display` derived from the committed run (TR §10 flow step 4/5). `baseHp` may go negative in
+ * `run` (TR §6, task 15 req. 3) — the display never shows below 0, so every path that derives
+ * `display` straight from `run` (not through a ticked `BaseDamaged` commit) clamps here too:
+ * `finishPlayback`, the no-events branch of `dispatch`, initial load, and the test handle's
+ * `loadState`/`loadScenario`. */
 export function displayFromRun(run: RunState): Display {
-  return { coins: run.coins, baseHp: run.baseHp, waveIndex: run.waveIndex };
+  return { coins: run.coins, baseHp: Math.max(0, run.baseHp), waveIndex: run.waveIndex };
 }
 
 /** `display` derived from `data.economy` before any run exists (task 05 decision: satisfies the
@@ -201,7 +236,12 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
           // base HP — so `display` jumps to the new state now. Without this, New Run after a lost
           // run (or a puzzle) would keep showing the old ♥/🪙 (♥ 0) until playback ends.
           ...(freshPhase ? { display: displayFromRun(result.state) } : {}),
-          playback: { status: 'playing', events: result.events, cursor: 0 },
+          playback: {
+            status: 'playing',
+            events: result.events,
+            cursor: 0,
+            before: sequenceStart(state.run, result.state, result.events, freshPhase),
+          },
           // Replay's snapshot: the board as it was before this turn (task 10 req. 6).
           lastTurn: !freshPhase && state.run ? { before: state.run, events: result.events } : null,
         });
@@ -233,7 +273,10 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
           case 'CoinsChanged':
             return { display: { ...state.display, coins: event.total } };
           case 'BaseDamaged':
-            return { display: { ...state.display, baseHp: event.hpAfter } };
+            // `baseHp` may go negative in `run` (TR §6); the display never shows below 0 (task
+            // 15 req. 3) — clamped here, the one place a `BaseDamaged` event reaches `display`,
+            // whether committed once or ticked through a count-down.
+            return { display: { ...state.display, baseHp: Math.max(0, event.hpAfter) } };
           default:
             return {};
         }
@@ -265,7 +308,14 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     startReplay() {
       const state = get();
       if (!canReplay(state) || state.lastTurn === null) return false;
-      set({ playback: { status: 'replaying', events: state.lastTurn.events, cursor: 0 } });
+      set({
+        playback: {
+          status: 'replaying',
+          events: state.lastTurn.events,
+          cursor: 0,
+          before: state.lastTurn.before,
+        },
+      });
       return true;
     },
 

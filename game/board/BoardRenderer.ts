@@ -21,7 +21,9 @@ import {
   cellCenter,
   cellRect,
   designToWorld,
+  worldToDesign,
   traySlotCenter,
+  waitingGhostCenter,
   type Point,
 } from './layout';
 import { pieceHomes, tileColor, type PieceHome } from './pieces';
@@ -97,6 +99,32 @@ export class BoardRenderer {
 
   robotView(robotId: string): RobotView | undefined {
     return this.robots.get(robotId);
+  }
+
+  /** Creates (if needed) and returns the view for `robotId` — for the playback Director to bring
+   * a robot onto the board mid-sequence (task 15: a `RobotSpawned`/`RobotWaiting` beat introduces
+   * one that wasn't in the pre-turn snapshot). The next `sync()` reconciles it against `run`
+   * normally. */
+  ensureRobotView(robotId: string): RobotView {
+    let view = this.robots.get(robotId);
+    if (view === undefined) {
+      view = new RobotView(this.scene).setDepth(DEPTH.robot);
+      this.robots.set(robotId, view);
+    }
+    return view;
+  }
+
+  /** What the board draws right now, for the test handle (TR §14): every robot view with its
+   * current centre in design points (mid-tween included), and every tile view's piece id. */
+  drawn(): { robots: { robotId: string; x: number; y: number }[]; tiles: string[] } {
+    return {
+      robots: [...this.robots].map(([robotId, view]) => ({
+        robotId,
+        x: worldToDesign(view.x),
+        y: worldToDesign(view.y),
+      })),
+      tiles: [...this.tiles.keys()],
+    };
   }
 
   cannonView(lane: Lane): CannonView | undefined {
@@ -199,17 +227,21 @@ export class BoardRenderer {
     }
   }
 
+  /** Renders every robot — on-board and waiting. A waiting robot (`col: null`) has no cell of its
+   * own, so it shows as a translucent ghost just right of column 7 (task 15 req. 4, GDD §12.2
+   * step 6) — including on a fresh sync (e.g. after resume), not only mid-playback. */
   private syncRobots(run: RunState | null): void {
-    const onBoard = (run?.board.robots ?? []).filter((robot) => robot.col !== null);
+    const robots = run?.board.robots ?? [];
     const diff = diffKeys(
       this.robots.keys(),
-      onBoard.map((robot) => robot.robotId),
+      robots.map((robot) => robot.robotId),
     );
     for (const robotId of diff.removed) {
       this.destroy(this.robots.get(robotId));
       this.robots.delete(robotId);
     }
-    for (const robot of onBoard) {
+    const { ghostAlpha } = this.data.presentation.playback.spawn;
+    for (const robot of robots) {
       let view = this.robots.get(robot.robotId);
       const created = view === undefined;
       if (view === undefined) {
@@ -217,7 +249,10 @@ export class BoardRenderer {
         this.robots.set(robot.robotId, view);
       }
       view.setHp(robot.hp, robot.maxHp);
-      this.place(view, cellCenter(robot.lane, robot.col!), 1, !created);
+      view.setAlpha(robot.col === null ? ghostAlpha : 1);
+      const center =
+        robot.col === null ? waitingGhostCenter(robot.lane) : cellCenter(robot.lane, robot.col);
+      this.place(view, center, 1, !created);
     }
   }
 

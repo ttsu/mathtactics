@@ -361,7 +361,10 @@ interface AppState {
     baseHp: number;
     waveIndex: number;
   };
-  playback: { status: 'idle' | 'playing' | 'replaying'; events: GameEvent[]; cursor: number };
+  playback: {
+    status: 'idle' | 'playing' | 'replaying'; events: GameEvent[]; cursor: number;
+    before?: RunState;           // where the board starts this sequence (absent when idle) — see flow step 2
+  };
   lastTurn: { before: RunState; events: GameEvent[] } | null;  // Replay snapshot, memory only
   screen: 'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect' | 'allDone';
   // the wave-cleared overlay is derived (run.phase === 'waveCleared' && playback idle), like level-cleared
@@ -380,7 +383,11 @@ interface AppActions {
 
 Flow:
 1. UI/board issues `dispatch(cmd)` → `applyCommand` (pure) → on success: `run = newState`, **persist**.
-2. If the command produced resolution events: `playback = { playing, events }`.
+2. If the command produced resolution events: `playback = { playing, events, before }`. `before` is the
+   run as it was for a normal turn; for `newRun`/`nextWave` (`sequenceStart`) it is the new run minus
+   the robots its own spawn events introduce — so New Run never plays over the previous run's or
+   puzzle's board (robot ids restart at `robot:0`), and `nextWave` starts from the wave-cleared board.
+   Those two commands also set `display` from the new run at once (their spawns carry no HUD events).
 3. The Phaser **Director** plays events; for each HUD-relevant event (`CoinsChanged`, `BaseDamaged`,
    `WaveCleared`, …) it calls `commitEvent`, updating `display`.
 4. At the end (or on skip-to-end) → `finishPlayback()`; screens advance (e.g. to shop).
@@ -475,8 +482,10 @@ React interactive elements set `pointer-events: auto`. Everything else passes th
 - Groups events by `group`; plays groups sequentially; highlights the active lane for `fire:lane:*`.
 - Tap during playback → finish the current group instantly; next tap skips the next group.
 - `skipAll()` (test handle) → apply all remaining events instantly.
+- Every sequence starts by syncing the board to `playback.before` (flow step 2 in §10), then plays.
 - Replay → re-run `lastTurnEvents` against a snapshot of the pre-turn board (visual only):
-  the store keeps `lastTurn.before` when a dispatch yields events; `commitEvent` is ignored while
+  the store keeps `lastTurn.before` when a dispatch yields events and a Replay's
+  `playback.before` is that snapshot; `commitEvent` is ignored while
   `playback.status === 'replaying'`. After a reload there is no snapshot, so Replay is disabled.
 - Beat timing is computed Phaser-free in `playback/timeline.ts` (from `presentation.json`
   `pacing` + `playback`); `playback/SegmentPlayer.ts` draws one segment's beats and its final
@@ -564,6 +573,10 @@ window.__GAME__ = {
   skipAnimation(): void;                    // finish playback instantly
   isIdle(): boolean;                        // no playback, no tweens pending
   cellToClient(cell: Cell): { x: number; y: number };  // for real pointer-drag e2e tests
+  renderedBoard(): {                        // what the board draws now (e.g. mid-playback)
+    robots: { robotId: string; x: number; y: number }[];  // view centres, client coords
+    tiles: string[];                        // piece ids with a tile view
+  };
 };
 ```
 
