@@ -1,17 +1,51 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.5
+**Version:** 0.6
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
-**Status:** M1 built; M2 decisions recorded (v0.4); navigation labels allowed (v0.5, §11.1).
-This document is the single source of truth for *design*.
+**Status:** M2 built (Playtest 2 pending); M3 decisions recorded (v0.6); navigation labels allowed
+(v0.5, §11.1). This document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
 
-## 0. Changes in v0.4
+## 0. Changes in v0.6
+
+v0.6 records the decisions made while writing the M3 task specs. M3 replaces the M2 wave-reward
+stand-in with the real economy, so most of these refine §8:
+
+- **Wave rewards are gone.** The shop is the only way tiles enter a run (§10.5).
+- **Between waves:** the wave-cleared screen stays as the celebration — star, wave dots, and the
+  wallet with the wave-clear bonus popping in — and its ▶ opens the shop. The shop's
+  ▶ *Next wave* starts the next wave. Two taps between waves (§8.3).
+- **The shop is a full screen and one-way.** No board interaction while it is open; bought tiles
+  wait in the tray for the next planning phase; leaving is final and unbought offers vanish.
+- **Offers are rolled once**, when the shop opens, and stored with the run. Closing and reopening
+  the app shows the same offers with the same slots already bought — no reroll by reload (§8.5).
+- **Guarantees fill the leftmost cards** (§8.5). Card positions never move between visits: the
+  guaranteed-useful card is where the player looks first.
+- **The cannon card keeps its slot at 5 cannons**, dimmed and inert, instead of disappearing and
+  reflowing the row (§8.3). Stable positions beat a tidy row at this age.
+- **The upgrade card shows the resulting base value** as `1 → 2` (§8.3) — legible without words,
+  and a small piece of arithmetic in itself.
+- **One purchase per slot per visit.** A bought card dims with a tick; the upgrade cannot be
+  bought twice in one shop (§8.6).
+- **A tap he cannot afford** shakes the card and flashes the price. No dialog, no words (§8.6).
+- **NEW is logged when the shop opens**, for tile offers only, so the sticker stays put for the
+  whole visit (§8.7).
+- **The browsable seen-tiles gallery is deferred to M5** with the art pass. M3 ships the log and
+  the sticker (§8.7).
+- **Waves 4–7 ship untraited in M3.** Trait *rules* already work, but §6.2–6.4 require a loud
+  visual telegraph, and those visuals are M4 — an untelegraphed Bounce-back robot reads as a bug.
+  M4 swaps the trait templates into these waves (§10.2).
+- **An M3 run (7 waves) is losable** — the first one that is. Balance target: a sensible player
+  wins without dropping below 40 base HP; a player who only taps End Turn loses.
+- **Purchases are not animated across renderers.** Nothing flies from the React shop into the
+  Phaser tray in M3; the purchase beat is local to the card. Full juice is M5 (§12.3).
+
+## 0.1 Changes in v0.4
 
 v0.4 records the decisions made while writing the M2 task specs (before Playtest 1):
 
@@ -29,7 +63,7 @@ v0.4 records the decisions made while writing the M2 task specs (before Playtest
 - **Main menu:** ▶ Continue · New Run · Puzzles (the M1 levels are kept). A **Home** button in
   the HUD returns to the menu without confirmation (§10.4).
 
-## 0.1 Changes in v0.3
+## 0.2 Changes in v0.3
 
 v0.3 is the result of a structured design review. Every former `[OPEN DECISION]` is
 resolved or explicitly deferred. Major changes from v0.2:
@@ -418,14 +452,24 @@ starts with **0 coins**.
 
 ### 8.3 Shop Timing and Layout
 
-The shop appears **after every wave except the last**. Never mid-wave. Layout:
+The shop appears **after every wave except the last**. Never mid-wave. It is reached from the
+wave-cleared screen (§10.5) and is a **full screen**: the board is not interactive while it is open.
 
-- **3 tile offers**
-- **1 cannon offer** — only shown while the player owns fewer than 5 cannons
-- **1 upgrade offer** — all cannons' base value +1
-- A big **"Next wave →"** button
+```
+wave clears → wave-cleared screen (star, wave dots, wallet) → ▶ → SHOP → ▶ Next wave
+```
 
-Unbought offers vanish when the shop closes; coins carry over.
+Layout, with **fixed positions** that never move between visits:
+
+- **3 tile offers** — guaranteed offers (§8.5) always fill the leftmost cards
+- **1 cannon offer** — a cannon glyph with 5 pips showing how many are owned. At 5 cannons the card
+  stays in its slot, dimmed and inert, rather than vanishing and reflowing the row
+- **1 upgrade offer** — all cannons' base value +1, shown as the resulting value: `1 → 2`
+- The **wallet**, as a numeral and a coin stack
+- The **tiles already owned**, read-only, so "do I need another `+2`?" is answerable here
+- A big **▶ *Next wave*** button
+
+Leaving is final: unbought offers vanish, coins carry over, and there is no way back in.
 **No rerolls, no interest, no selling** in v1.
 
 ### 8.4 Pricing (placeholder values, in data)
@@ -445,23 +489,36 @@ Bigger numbers are not strictly better in this game, so prices are by category, 
 
 - Tile offers are drawn from **per-wave weighted tables** in data (categories, N ranges, weights).
 - The **concept ladder** (§10.2) adds guaranteed slots (e.g. "after wave 4, at least one `×N`").
+  Guaranteed offers fill the **leftmost** cards.
 - Early tables favor small N; the full range opens by around wave 5.
 - **Duplicates are allowed**, within and across shop visits.
 - Offers use a **dedicated seeded RNG stream**, separate from wave generation, so
   purchases never affect which robots come next.
+- Offers are rolled **once, when the shop opens**, and stored with the run. Reopening the app
+  inside a shop shows the same offers and the same already-bought slots.
 
 ### 8.6 Purchases
 
-- Bought tiles go to the **tray**.
+- Bought tiles go to the **tray**, and are placed during the next planning phase.
 - A bought cannon is **auto-placed in the topmost empty cannon slot**. Cannons are never in
   the tray.
 - An upgrade takes effect immediately for all cannons.
+- **One purchase per slot per visit.** A bought card dims with a tick; the upgrade cannot be
+  bought twice in the same shop.
+- A tap on an unaffordable card **shakes the card and flashes its price** — no dialog, no words.
+  A bought or unavailable card does nothing.
+- Purchases cannot be undone (§4.3).
 
 ### 8.7 Seen-Tiles Log and NEW Badge
 
 The game tracks which tile types have ever been **offered** on this device. A never-offered
 type shows a "NEW" sticker in the shop. This log is the only data persisted across runs.
 It is a discovery log, not power progression.
+
+- A type is logged when the shop **opens**, so a sticker stays put for the whole visit rather than
+  vanishing under the player's finger. Only tile offers are logged.
+- A **browsable collection screen** is deferred to the M5 art pass; M3 ships the log and the
+  sticker only.
 
 ---
 
@@ -531,6 +588,9 @@ shop slots are seeded-random within each rung.
 
 No tutorial mode and no text popups: wave design does the teaching.
 
+Waves 4–7 ship **untraited** in M3 and gain their traits in M4, alongside the visuals that
+telegraph them (§6.2–6.4). A robot whose trait is invisible reads as a bug, not a puzzle.
+
 ### 10.3 Waves as Spawn Schedules
 
 - A wave is a list of spawn entries: `(turn, lane, robot template)`, where the template
@@ -562,17 +622,16 @@ No tutorial mode and no text popups: wave design does the teaching.
 - Saves carry a schema version. A mismatched save is silently discarded (no migrations in v1).
 - The seen-tiles log is stored separately, is additive, and survives version bumps.
 
-### 10.5 M2 Stand-ins (removed in M3)
+### 10.5 The Wave-Cleared Screen
 
-M2 builds a run before the shop exists. Without tiles, wave 2 (HP 4–10) is unplayable, so:
+Clearing a non-final wave shows a **wave-cleared** screen: a star, the wave dots with the cleared
+wave filled, the wallet with the wave-clear bonus popping in, and a big ▶ labelled *Next* that
+opens the shop (§8.3, §11.1).
 
-- Each wave in `waves.json` may list a **reward**: tile ids granted to the end of the tray,
-  in listed order, when the wave clears. The final wave has no reward.
-- Clearing a non-final wave shows a **wave-cleared** screen: a star, the reward tiles popping
-  in, a big ▶ labelled *Next* that starts the next wave (§11.1). This screen is where the shop
-  goes in M3.
-- No cannons are granted in M2; runs play waves 1–3 with one cannon.
-- Coins are still earned and shown (kills, exact kills, wave cleared) but cannot be spent.
+**Removed in M3:** during M2 the shop did not exist, so each wave in `waves.json` listed a
+**reward** of tile ids granted to the tray when it cleared, and this screen popped those tiles in.
+M3 deleted rewards from the data and the schema — the shop is now the only way tiles enter a run —
+and the reward chips became the wallet beat above.
 
 ### 10.6 Win and Lose Screens
 
@@ -831,8 +890,9 @@ questions**, not blockers for M0/M1:
 | Concrete HP curves, prices, income values | Tuned in data during M2–M4 playtests |
 | Playback pacing values | Tuned after Playtest 1 |
 | Ladder waves 1–3 authored content | Drafted in task 12; finalized after Playtest 1 (task 17) |
-| Ladder waves 4–7 authored templates | M3/M4 task specs |
+| Ladder waves 4–7 authored templates | Drafted and balanced untraited in M3 (task 21); traits in M4 |
 | Waves 8–9 procedural table design | M4 task spec |
+| Browsable seen-tiles gallery | M5, with the art pass (§8.7) |
 | Sound sourcing (library vs generated) | M5 |
 | Kid-facing title and art style | M5 |
 | v1.1 direction: path tiles/loops vs Splitter/division | After v1 playtesting |
@@ -865,6 +925,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 | **Stacked traits** | Use §6.5 order. |
 | **Piercing balls** | Upgrade idea. |
 | **Rerolls, interest, selling** | Excluded from v1 economy. |
+| **Next-wave preview in the shop** | Showing the incoming robots would make purchases more purposeful, but it is new design and needs its own legibility pass. |
 | **Tuned iPhone layout** | 4×6 grid or panning camera. |
 | **"Start at wave N"** | If replaying early ladder waves gets boring. |
 | **Base HP shop item** | Data-only fix if base HP proves too punishing. |
