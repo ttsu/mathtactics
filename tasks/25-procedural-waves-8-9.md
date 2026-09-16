@@ -96,5 +96,5 @@ Boss (26). Trait visuals (23). Armor. Retuning waves 1–7.
 - [ ] `rollWave` supports procedural groups; authored path unchanged
 - [ ] Waves 8–9 ship as procedural tables; shops 7–9 exist
 - [ ] Schema rejects a wave with both `spawns` and `procedural`
-- [ ] Ladder tests pass for seeds 1–100 on the 9-wave run
+- [ ] Ladder tests pass for seeds 1–100 on the 9-wave run (leftover min ≥ 40, median 50–70)
 - [ ] `npm test`, `typecheck`, `lint`, `npm run sim -- scenarios` pass

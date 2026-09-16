@@ -71,7 +71,7 @@ Armor. M5 juice, sound playback, art pass. Changing the 40 HP floor. Kid-facing 
 
 ## Acceptance Criteria
 
-- [ ] Sensible player wins seeds 1–100 above 40 HP on the 10-wave run; End-Turn-only loses
+- [ ] Sensible player wins seeds 1–100: leftover min ≥ 40 and ≤ 55, median 50–70; End-Turn-only loses
 - [ ] e2e plays a full 10-wave run through menus, shop, and a mid-shop reload
 - [ ] Settings/hints e2e covers the task-24 hook
 - [ ] `playtests/04-checklist.md` exists

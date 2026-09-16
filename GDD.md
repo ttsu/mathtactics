@@ -32,7 +32,7 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   It fights §11.2 (HP is the largest element) and is closer to Barrier (§19) than to Weakness /
   Bounce-back / parity. Not in M4, M5, or v1.
 - **Waves 4, 6, 7 gain their first teaching trait.** Wave 4: one Weakness (`n = 5`). Wave 6:
-  one Bounce-back. Wave 7: one Odd-only (base value 1 is odd, so the first contact can hurt
+  one Bounce-back. Wave 7: one Odd-only (grill A: base value 1 is odd, so the first contact
   without a tile). Wave 5 stays untraited — it teaches subtraction. Remaining robots on those
   waves stay `basic`.
 - **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
@@ -963,8 +963,8 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 
 ### 18.2 Minor calls made while writing v0.7
 
-- Wave 4's Weakness is `n = 5` (skip-counting by fives). Waves 8–9 mix 2/5/10.
-- Wave 7's first parity robot is Odd-only (cannon base value 1 is odd). Even-only enters in 8–9.
+- Wave 4's Weakness is `n = 5` (skip-counting by fives; still grilling). Waves 8–9 mix 2/5/10.
+- Wave 7's first parity robot is Odd-only (cannon base value 1 is odd; grill A). Even-only enters in 8–9.
 - Wave 5 stays fully `basic` — subtraction is the lesson, not a new trait.
 - Waves 4–7 leftover after wave 7: sensible-player min ≥ 80, and not every seed at 100.
 - 10-wave leftover after the Boss: sensible-player min near 40 (still ≥ 40), median 50–70.
