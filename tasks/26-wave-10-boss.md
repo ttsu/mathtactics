@@ -46,9 +46,10 @@ contain the Boss (schema: `isBoss` templates illegal in `procedural.pool`).
    | 7 | `B` | `basic` | `[30, 50]` |
    | 7 | `C` | `basic` | `[30, 50]` |
 
-The Boss detonates for remaining HP like any robot — leaking it is a loss, not a chip
-   (grill A). Escort stays light so a sensible player who is aiming at the Boss does not
-   get bled by extras. No shop after wave 10 (it is last).
+   Locked (grill B). The T7 pair is a kid-facing trap if he only stares at the Boss. A
+   sensible player kills them, so they must not be what drops leftover HP into the 40–70
+   band — that remains waves 8–9. The Boss detonates for remaining HP; leaking it is a
+   loss. No shop after wave 10.
 
 4. **Oversized sprite** — `presentation.json` `boss.scale` (e.g. `1.55`). `RobotView` (or
    reconcile) applies it when `robot.isBoss`. The sprite may overflow into neighbouring
