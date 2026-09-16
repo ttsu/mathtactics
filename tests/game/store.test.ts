@@ -11,7 +11,7 @@ import {
 } from '../../game/state/store';
 import { scopedKey, type StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
-import type { RunState } from '../../sim/core/types';
+import type { GameEvent, RunState } from '../../sim/core/types';
 import { fakeDragSettings, fakeScreenSettings } from '../helpers/dragSettings';
 import { boardState, realData } from './boardFixtures';
 import { fakePacingSettings, fakePlaybackSettings } from '../helpers/playbackSettings';
@@ -91,6 +91,7 @@ describe('createAppStore — initial state', () => {
       basePath: '/',
     });
     expect(store.getState().run).toBeNull();
+    expect(store.getState().savedRun).toBeNull();
     expect(store.getState().display).toEqual({ coins: 0, baseHp: 100, waveIndex: 0 });
   });
 
@@ -108,7 +109,28 @@ describe('createAppStore — initial state', () => {
       basePath: '/',
     });
     expect(store.getState().run).toEqual(savedRun);
+    expect(store.getState().savedRun).toEqual(savedRun);
     expect(store.getState().display).toEqual(displayFromRun(savedRun));
+  });
+
+  it('clears a won/lost saved run on boot and treats it as not resumable (task 14 req. 2)', () => {
+    for (const phase of ['won', 'lost'] as const) {
+      const storage = createMemoryStorage();
+      const finished = fakeRunState({ mode: 'run', phase });
+      storage.setItem(
+        scopedKey('/', 'run'),
+        JSON.stringify({ schemaVersion: 1, savedAt: 1, state: finished }),
+      );
+      const store = createAppStore({
+        data: fakeGameData(),
+        applyCommand: stubApplyCommand,
+        storage,
+        basePath: '/',
+      });
+      expect(store.getState().run).toBeNull();
+      expect(store.getState().savedRun).toBeNull();
+      expect(storage.getItem(scopedKey('/', 'run'))).toBeNull();
+    }
   });
 
   it('starts with idle playback and default settings', () => {
@@ -139,7 +161,7 @@ describe('dispatch', () => {
 
   it('bootstraps a run from a null state on newRun/loadLevel success (finding 1, final review)', () => {
     const storage = createMemoryStorage();
-    const bootstrapped = fakeRunState({ coins: 3 });
+    const bootstrapped = fakeRunState({ coins: 3, mode: 'run' });
     const applyCommand: ApplyCommandFn = (state) => {
       if (state !== null) {
         throw new Error('expected applyCommand to receive a null state for a fresh boot');
@@ -158,6 +180,7 @@ describe('dispatch', () => {
 
     expect(result).toEqual({ ok: true });
     expect(store.getState().run).toEqual(bootstrapped);
+    expect(store.getState().savedRun).toEqual(bootstrapped);
     expect(store.getState().display).toEqual(displayFromRun(bootstrapped));
     const saved = JSON.parse(storage.getItem(scopedKey('/', 'run')) ?? 'null');
     expect(saved).toEqual({ schemaVersion: 1, savedAt: 777, state: bootstrapped });
@@ -183,12 +206,12 @@ describe('dispatch', () => {
 
   it('persists the new run and updates state on success', () => {
     const storage = createMemoryStorage();
-    const run = fakeRunState();
+    const run = fakeRunState({ mode: 'run' });
     storage.setItem(
       scopedKey('/', 'run'),
       JSON.stringify({ schemaVersion: 1, savedAt: 1, state: run }),
     );
-    const nextRun = fakeRunState({ coins: 99 });
+    const nextRun = fakeRunState({ coins: 99, mode: 'run' });
     const applyCommand: ApplyCommandFn = () => ({ ok: true, state: nextRun, events: [] });
     const store = createAppStore({
       data: fakeGameData(),
@@ -202,6 +225,7 @@ describe('dispatch', () => {
 
     expect(result).toEqual({ ok: true });
     expect(store.getState().run).toEqual(nextRun);
+    expect(store.getState().savedRun).toEqual(nextRun);
     expect(store.getState().display).toEqual(displayFromRun(nextRun));
     const saved = JSON.parse(storage.getItem(scopedKey('/', 'run')) ?? 'null');
     expect(saved).toEqual({ schemaVersion: 1, savedAt: 555, state: nextRun });
@@ -272,6 +296,124 @@ describe('dispatch', () => {
     store.getState().dispatch({ type: 'placeTile', pieceId: 'p1', to: { lane: 0, col: 1 } });
 
     expect(store.getState().display).toEqual(staleDisplay);
+  });
+
+  describe('persistence scoping (task 14 req. 1)', () => {
+    it('never writes to storage for a level-mode result — a Puzzle can never overwrite a saved run', () => {
+      const storage = createMemoryStorage();
+      const savedRun = fakeRunState({ mode: 'run', coins: 7 });
+      storage.setItem(
+        scopedKey('/', 'run'),
+        JSON.stringify({ schemaVersion: 1, savedAt: 1, state: savedRun }),
+      );
+      const levelResult = fakeRunState({ mode: 'level', coins: 0 });
+      // Stands in for `loadLevel`: applyCommand succeeds with a fresh level-mode state.
+      const applyCommand: ApplyCommandFn = () => ({ ok: true, state: levelResult, events: [] });
+      const store = createAppStore({ data: fakeGameData(), applyCommand, storage, basePath: '/' });
+
+      store.getState().dispatch({ type: 'loadLevel', levelId: 'level-1' });
+
+      expect(store.getState().run).toEqual(levelResult);
+      // Storage — and the in-memory mirror of it — are untouched: still the saved run.
+      const stillSaved = JSON.parse(storage.getItem(scopedKey('/', 'run')) ?? 'null');
+      expect(stillSaved).toEqual({ schemaVersion: 1, savedAt: 1, state: savedRun });
+      expect(store.getState().savedRun).toEqual(savedRun);
+    });
+
+    it('never removes a saved run for a level-mode result either (no save existed)', () => {
+      const storage = createMemoryStorage();
+      const applyCommand: ApplyCommandFn = () => ({
+        ok: true,
+        state: fakeRunState({ mode: 'level' }),
+        events: [],
+      });
+      const store = createAppStore({ data: fakeGameData(), applyCommand, storage, basePath: '/' });
+
+      store.getState().dispatch({ type: 'loadLevel', levelId: 'level-1' });
+
+      expect(storage.getItem(scopedKey('/', 'run'))).toBeNull();
+      expect(store.getState().savedRun).toBeNull();
+    });
+  });
+
+  describe('lastTurn stays off for a fresh phase (task 14 req. 2)', () => {
+    it('does not set a Replay snapshot for newRun, even though a run already existed', () => {
+      const storage = createMemoryStorage();
+      const previousRun = fakeRunState({ mode: 'level' }); // e.g. a Puzzle played this session
+      const freshRun = fakeRunState({ mode: 'run', coins: 0 });
+      const events: GameEvent[] = [{ step: 0, group: 'spawn', type: 'LaneStarted', lane: 0 }];
+      const applyCommand: ApplyCommandFn = () => ({ ok: true, state: freshRun, events });
+      const store = createAppStore({ data: fakeGameData(), applyCommand, storage, basePath: '/' });
+      store.setState({ run: previousRun });
+
+      store.getState().dispatch({ type: 'newRun', seed: 'abc' });
+
+      expect(store.getState().playback.status).toBe('playing');
+      expect(store.getState().lastTurn).toBeNull();
+    });
+
+    it('does not set a Replay snapshot for nextWave, even though it continues the same run', () => {
+      const storage = createMemoryStorage();
+      const beforeWave = fakeRunState({ mode: 'run', phase: 'waveCleared' });
+      const afterWave = fakeRunState({ mode: 'run', phase: 'planning', waveIndex: 1 });
+      const events: GameEvent[] = [{ step: 0, group: 'spawn', type: 'LaneStarted', lane: 0 }];
+      const applyCommand: ApplyCommandFn = () => ({ ok: true, state: afterWave, events });
+      const store = createAppStore({ data: fakeGameData(), applyCommand, storage, basePath: '/' });
+      store.setState({ run: beforeWave });
+
+      store.getState().dispatch({ type: 'nextWave' });
+
+      expect(store.getState().lastTurn).toBeNull();
+    });
+  });
+
+  describe('display on a fresh phase (New Run must not show the previous run’s ♥/🪙)', () => {
+    function startedRunStore() {
+      const storage = createMemoryStorage();
+      const store = createAppStore({ data: realData, applyCommand, storage, basePath: '/' });
+      store.getState().dispatch({ type: 'newRun', seed: 'earlier' });
+      store.getState().finishPlayback();
+      return store;
+    }
+
+    it('newRun from a lost run shows the new run’s ♥ and 🪙 at once, not after playback', () => {
+      const store = startedRunStore();
+      const lostRun: RunState = { ...store.getState().run!, phase: 'lost', baseHp: -7, coins: 23 };
+      store.setState({ run: lostRun, display: displayFromRun(lostRun), screen: 'lost' });
+      expect(store.getState().display.coins).toBe(23);
+
+      store.getState().dispatch({ type: 'newRun', seed: 'fresh' });
+
+      const { run, display, playback } = store.getState();
+      // The spawn events are still to play — and carry no HUD events — yet the HUD already
+      // reads the new run, not the lost one.
+      expect(playback.status).toBe('playing');
+      expect(run?.phase).toBe('planning');
+      expect(display).toEqual(displayFromRun(run!));
+      expect(display).toMatchObject({
+        baseHp: realData.economy.baseHp,
+        coins: realData.economy.startCoins,
+      });
+    });
+
+    it('nextWave keeps ♥ and 🪙 (they carry over) while its spawns play', () => {
+      const store = startedRunStore();
+      const started = store.getState().run!;
+      const waveCleared: RunState = {
+        ...started,
+        phase: 'waveCleared',
+        board: { ...started.board, robots: [] },
+        pendingSpawns: [],
+        baseHp: 61,
+        coins: 9,
+      };
+      store.setState({ run: waveCleared, display: displayFromRun(waveCleared) });
+
+      store.getState().dispatch({ type: 'nextWave' });
+
+      expect(store.getState().playback.status).toBe('playing');
+      expect(store.getState().display).toEqual({ baseHp: 61, coins: 9, waveIndex: 1 });
+    });
   });
 });
 
@@ -371,6 +513,68 @@ describe('finishPlayback', () => {
 
     expect(store.getState().display).toEqual({ coins: 5, baseHp: 80, waveIndex: 3 });
     expect(store.getState().playback).toEqual({ status: 'idle', events: [], cursor: 0 });
+  });
+
+  describe('end of run (task 14 req. 2)', () => {
+    for (const phase of ['won', 'lost'] as const) {
+      it(`switches to the '${phase}' screen and clears the save once its playback finishes`, () => {
+        const storage = createMemoryStorage();
+        const store = createAppStore({
+          data: fakeGameData(),
+          applyCommand: stubApplyCommand,
+          storage,
+          basePath: '/',
+        });
+        // Simulate the moment right after `dispatch({ type: 'endTurn' })` resolved the run to
+        // `phase` — already saved (dispatch persists immediately), still playing back the final
+        // beats.
+        const run = fakeRunState({ mode: 'run', phase, baseHp: 0 });
+        storage.setItem(
+          scopedKey('/', 'run'),
+          JSON.stringify({ schemaVersion: 1, savedAt: 1, state: run }),
+        );
+        store.setState({
+          run,
+          savedRun: run,
+          screen: 'game',
+          playback: { status: 'playing', events: [], cursor: 0 },
+        });
+
+        store.getState().finishPlayback();
+
+        expect(store.getState().screen).toBe(phase);
+        expect(store.getState().playback).toEqual({ status: 'idle', events: [], cursor: 0 });
+        expect(store.getState().savedRun).toBeNull();
+        expect(storage.getItem(scopedKey('/', 'run'))).toBeNull();
+      });
+    }
+
+    it('leaves the screen and save alone for any other phase', () => {
+      const storage = createMemoryStorage();
+      const store = createAppStore({
+        data: fakeGameData(),
+        applyCommand: stubApplyCommand,
+        storage,
+        basePath: '/',
+      });
+      const run = fakeRunState({ mode: 'run', phase: 'waveCleared' });
+      storage.setItem(
+        scopedKey('/', 'run'),
+        JSON.stringify({ schemaVersion: 1, savedAt: 1, state: run }),
+      );
+      store.setState({
+        run,
+        savedRun: run,
+        screen: 'game',
+        playback: { status: 'playing', events: [], cursor: 0 },
+      });
+
+      store.getState().finishPlayback();
+
+      expect(store.getState().screen).toBe('game');
+      expect(store.getState().savedRun).toEqual(run);
+      expect(storage.getItem(scopedKey('/', 'run'))).not.toBeNull();
+    });
   });
 });
 

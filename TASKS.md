@@ -40,7 +40,7 @@ ladder content is finalized after it (task 17). Tasks 14, 15 and 16 may run in p
 |---|---|---|---|---|
 | 12 | [Wave data & spawning](tasks/12-wave-data-and-spawning.md) | sim / data | — | Complete |
 | 13 | [Full turn loop: advance, detonation, waves, win/lose](tasks/13-full-turn-loop.md) | sim | 12 | Complete |
-| 14 | [Save/resume, main menu & Home](tasks/14-save-resume-and-menu.md) | state / ui | 13 | Not Started |
+| 14 | [Save/resume, main menu & Home](tasks/14-save-resume-and-menu.md) | state / ui | 13 | Complete (iPad check pending) |
 | 15 | [Run playback: spawn, advance, detonation, danger glow](tasks/15-run-playback.md) | presentation | 13 | Not Started |
 | 16 | [Wave-cleared, win & lose screens](tasks/16-wave-and-end-screens.md) | ui | 13 | Not Started |
 | 17 | [Ladder waves 1–3 & Playtest 2 checklist](tasks/17-ladder-waves-1-3.md) | data / e2e | 14, 15, 16, H1 | Not Started |

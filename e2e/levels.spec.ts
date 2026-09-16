@@ -61,7 +61,7 @@ test('there is a solution file for 8 levels', () => {
 for (const { levelId, commands } of SOLUTIONS) {
   test(`${levelId} is solved through the test handle`, async ({ page }) => {
     await openMenu(page);
-    await page.getByTestId('menu-play').click();
+    await page.getByTestId('menu-puzzles').click();
 
     await page.evaluate(
       (id) => window.__GAME__!.dispatch({ type: 'loadLevel', levelId: id }),
@@ -89,10 +89,10 @@ test('menu → play → clear → next, and after the last level → all done �
   await expect(page.getByTestId('hud-bar')).toHaveCount(0);
   await page.waitForTimeout(600); // let the pop-in finish (it scales the button)
   await page.screenshot({ path: testInfo.outputPath('menu.png') });
-  await expectTouchTarget(page, 'menu-play');
+  await expectTouchTarget(page, 'menu-puzzles');
 
   // ▶ Play → level 1 on the board, level dots in the HUD, no base HP.
-  await page.getByTestId('menu-play').click();
+  await page.getByTestId('menu-puzzles').click();
   expect(await getScreen(page)).toBe('game');
   expect((await getState(page)).levelId).toBe('level-1');
   const hud = page.getByTestId('hud-bar');

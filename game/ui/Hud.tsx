@@ -1,20 +1,24 @@
 // HUD (task 03 req. 5 placeholder, task 05 req. 6: reads coins/base HP from `display` via the
 // store; task 09 req. 4: End Turn and Undo dispatch real commands; task 10 req. 6: Replay; task 11
 // req. 3: in level mode the level dots replace the wave, and base HP is hidden — levels never
-// damage the base, TR §4.1).
+// damage the base, TR §4.1; task 14 req. 4: in run mode the wave dots replace the "Wave N" text
+// and base HP is clamped at 0 for display; task 14 req. 5: ⌂ Home, hidden in place).
 import { HUD_BAR, MIN_TOUCH_TARGET } from '../state/designSpace';
 import { levelPosition } from '../state/levelFlow';
+import { goHome } from '../state/runFlow';
 import { hudButtons } from './hudButtons';
 import { LevelDots } from './LevelDots';
-import { useAppStore } from './StoreContext';
+import { useAppStore, useAppStoreApi } from './StoreContext';
 
 const touchTarget = { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET };
 
 export function Hud() {
+  const store = useAppStoreApi();
   const display = useAppStore((state) => state.display);
   const canEndTurn = useAppStore((state) => hudButtons(state).endTurn);
   const canUndo = useAppStore((state) => hudButtons(state).undo);
   const canReplay = useAppStore((state) => hudButtons(state).replay);
+  const canHome = useAppStore((state) => hudButtons(state).home);
   const dispatch = useAppStore((state) => state.dispatch);
   const startReplay = useAppStore((state) => state.startReplay);
   const levelMode = useAppStore((state) => state.run?.mode === 'level');
@@ -22,6 +26,10 @@ export function Hud() {
     (state) => levelPosition(state.data, state.run?.levelId)?.index ?? null,
   );
   const levelCount = useAppStore((state) => state.data.levels.levels.length);
+  const waveIndex = useAppStore((state) => state.run?.waveIndex ?? 0);
+  const waveCount = useAppStore((state) => state.data.waves.waves.length);
+  // ♥ is clamped at 0 here, at HUD render, only (TR §7: `baseHp` itself is never clamped).
+  const baseHp = useAppStore((state) => Math.max(0, state.display.baseHp));
 
   return (
     <div
@@ -29,12 +37,27 @@ export function Hud() {
       data-testid="hud-bar"
       style={{ left: HUD_BAR.x, top: HUD_BAR.y, width: HUD_BAR.width, height: HUD_BAR.height }}
     >
+      {/* Hidden, not unmounted: the button keeps its slot so the dots, ♥ and 🪙 never slide
+          sideways when playback starts or ends (and ♥ stays where the detonation number flies). */}
+      <button
+        type="button"
+        className="hud-button hud-button-icon hud-button-home"
+        data-testid="home"
+        aria-label="Home"
+        aria-hidden={!canHome}
+        tabIndex={canHome ? undefined : -1}
+        style={{ ...touchTarget, visibility: canHome ? 'visible' : 'hidden' }}
+        disabled={!canHome}
+        onClick={() => goHome(store)}
+      >
+        <HomeIcon />
+      </button>
       {levelMode ? (
         levelIndex !== null && <LevelDots index={levelIndex} count={levelCount} />
       ) : (
         <>
-          <span className="hud-stat">Wave {display.waveIndex + 1}</span>
-          <span className="hud-stat">♥ {display.baseHp}</span>
+          <LevelDots index={waveIndex} count={waveCount} />
+          <span className="hud-stat">♥ {baseHp}</span>
         </>
       )}
       <span className="hud-stat">🪙 {display.coins}</span>
@@ -75,6 +98,30 @@ export function Hud() {
         </button>
       </div>
     </div>
+  );
+}
+
+/** A bold house outline — ⌂ Home (task 14 req. 5). SVG rather than the `⌂` font glyph for the
+ * same reason as `/game/ui/icons.tsx`'s glyphs: thin and faint at a distance. */
+function HomeIcon() {
+  return (
+    <svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true">
+      <path
+        d="M6 24 L24 8 L42 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 20 V40 H36 V20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

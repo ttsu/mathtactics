@@ -9,6 +9,7 @@ import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { Command, CommandError, GameEvent, RunState } from '../../sim/core/types';
 import type { GameData } from '../../sim/data/schemas';
 import {
+  clearRun,
   loadRun,
   loadSettings,
   saveRun,
@@ -61,6 +62,12 @@ export interface AppState {
   /** Committed simulation truth (already includes the resolved turn), or `null` before any run
    * exists / is loaded. */
   run: RunState | null;
+  /** A memory copy of the `run` storage key — task 14's `runFlow.ts` reads this (not `run`) to
+   * decide whether ▶ Continue is offered, so it still reflects the saved run after Puzzles has
+   * replaced `run` for the current session. Kept in lock-step with storage: every `dispatch`
+   * whose result is `mode: 'run'` updates both together; a level-mode dispatch touches neither
+   * (task 14 req. 1). `null` once a run ends (`clearRun`) or on boot for a save already ended. */
+  savedRun: RunState | null;
   /** What the HUD shows; lags `run` during playback (TR §10). */
   display: Display;
   playback: Playback;
@@ -130,21 +137,35 @@ function displayFromEconomy(data: GameData): Display {
   return { coins: data.economy.startCoins, baseHp: data.economy.baseHp, waveIndex: 0 };
 }
 
+/** A run that has reached its end screen (GDD §10.1/§10.4): not resumable, and its save is
+ * cleared once this is true — on boot for a save found already ended, or when playback finishes
+ * on this phase (`finishPlayback` below). Level mode never reaches `won`/`lost` (TR §4.1), but
+ * the `mode` check is kept for clarity/defence. */
+function isFinishedRun(run: RunState): run is RunState & { phase: 'won' | 'lost' } {
+  return run.mode === 'run' && (run.phase === 'won' || run.phase === 'lost');
+}
+
 export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStore> {
   const { data, applyCommand, storage, basePath } = options;
   const now = options.now ?? Date.now;
 
-  const initialRun = loadRun(storage, basePath, data.economy.schemaVersion);
+  let initialRun = loadRun(storage, basePath, data.economy.schemaVersion);
+  if (initialRun && isFinishedRun(initialRun)) {
+    // Task 14 req. 2: a save found with phase `won`/`lost` on boot is not resumable and is
+    // cleared — the same treatment `finishPlayback` gives a run that just finished.
+    clearRun(storage, basePath);
+    initialRun = null;
+  }
   const initialSettings = loadSettings(storage, basePath);
 
   return createStore<AppStore>()((set, get) => ({
     data,
     run: initialRun,
+    savedRun: initialRun,
     display: initialRun ? displayFromRun(initialRun) : displayFromEconomy(data),
     playback: { ...IDLE_PLAYBACK },
     lastTurn: null,
-    // Task 11: the app opens on the main menu. A run restored from storage is kept in `run` but
-    // not resumed by the menu in M1 (▶ Play always starts the first level).
+    // Task 11/14: the app always opens on the main menu, never auto-resuming a saved run.
     screen: 'menu',
     settings: initialSettings,
 
@@ -158,13 +179,31 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
         return { ok: false, error: result.error };
       }
 
-      saveRun(storage, basePath, result.state, now());
+      // Task 14 req. 1: only a `mode: 'run'` result is saved — a level-mode dispatch (Puzzles)
+      // never writes (or removes) the `run` key, so it can never overwrite a saved run.
+      // `savedRun` is the in-memory mirror of that same key (see its doc comment above).
+      const persists = result.state.mode === 'run';
+      if (persists) {
+        saveRun(storage, basePath, result.state, now());
+      }
+      const savedRun = persists ? result.state : state.savedRun;
+
+      // `newRun`/`nextWave` start a fresh planning phase; Replay must stay off until the first
+      // End Turn of that phase (task 14 req. 2), even though both commands produce resolution
+      // events (the wave's turn-1 spawns) that play back like any other turn.
+      const freshPhase = cmd.type === 'newRun' || cmd.type === 'nextWave';
+
       if (result.events.length > 0) {
         set({
           run: result.state,
+          savedRun,
+          // A fresh phase's events are spawns only — no HUD event will ever commit its coins or
+          // base HP — so `display` jumps to the new state now. Without this, New Run after a lost
+          // run (or a puzzle) would keep showing the old ♥/🪙 (♥ 0) until playback ends.
+          ...(freshPhase ? { display: displayFromRun(result.state) } : {}),
           playback: { status: 'playing', events: result.events, cursor: 0 },
           // Replay's snapshot: the board as it was before this turn (task 10 req. 6).
-          lastTurn: state.run ? { before: state.run, events: result.events } : null,
+          lastTurn: !freshPhase && state.run ? { before: state.run, events: result.events } : null,
         });
       } else {
         // No resolution events to play back, so `display` won't be refreshed by `commitEvent`/
@@ -173,12 +212,13 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
         // race ahead of what's still animating.
         set({
           run: result.state,
+          savedRun,
           display: isPlaybackActive(state) ? state.display : displayFromRun(result.state),
           // A snapshot only belongs to the run whose last turn it recorded — a command that
           // installs a different run (e.g. `loadLevel`) drops it. Planning commands carry
           // `lastTurnEvents` over unchanged, so they keep it.
           lastTurn:
-            state.lastTurn && result.state.lastTurnEvents === state.lastTurn.events
+            !freshPhase && state.lastTurn && result.state.lastTurnEvents === state.lastTurn.events
               ? state.lastTurn
               : null,
         });
@@ -201,10 +241,25 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     },
 
     finishPlayback() {
-      set((state) => ({
-        display: state.run ? displayFromRun(state.run) : state.display,
-        playback: { ...IDLE_PLAYBACK },
-      }));
+      set((state) => {
+        const { run } = state;
+        if (run && isFinishedRun(run)) {
+          // Task 14 req. 2: the run's playback (the final detonation/base-damage beats) has now
+          // finished on a `won`/`lost` phase — show the matching screen and clear the save. The
+          // actual won/lost screens are task 16's; this only switches `screen`.
+          clearRun(storage, basePath);
+          return {
+            display: displayFromRun(run),
+            playback: { ...IDLE_PLAYBACK },
+            screen: run.phase,
+            savedRun: null,
+          };
+        }
+        return {
+          display: run ? displayFromRun(run) : state.display,
+          playback: { ...IDLE_PLAYBACK },
+        };
+      });
     },
 
     startReplay() {

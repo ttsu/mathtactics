@@ -55,6 +55,17 @@ export function saveRun(
   }
 }
 
+/** Removes the saved run (task 14 req. 1, GDD §10.4): called once a run ends (`won`/`lost`) and
+ * its screen shows, and on boot for a save that's found already ended. Never called for a
+ * level-mode dispatch — Puzzles never touch this key, in either direction. */
+export function clearRun(storage: StorageLike, basePath: string): void {
+  try {
+    storage.removeItem(scopedKey(basePath, 'run'));
+  } catch {
+    // Storage failure must never break play (TR §13).
+  }
+}
+
 /** Loads the saved run, or `null` if there is none, it's corrupt, or its `schemaVersion` does
  * not match `expectedSchemaVersion` — a mismatched save is discarded silently, no migration
  * (TR §13, GDD §10.4). */

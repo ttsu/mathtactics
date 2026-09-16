@@ -57,6 +57,10 @@
   background: #3f9e8f;
 }
 
+.hud-button-home {
+  background: #6b5b95;
+}
+
 .hud-button:disabled {
   opacity: 0.55;
 }
@@ -262,10 +266,12 @@
   pointer-events: auto;
   box-sizing: border-box;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   width: 260px;
-  height: 150px;
+  height: 180px;
   border: none;
   border-radius: 40px;
   background: #ff8c42;
@@ -276,6 +282,59 @@
 .big-button:active {
   transform: translateY(8px);
   box-shadow: 0 2px 0 #c8621f;
+}
+
+/* --- Task 14: main menu ▶ Continue / New Run / Puzzles --- */
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.menu-buttons-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.small-button {
+  pointer-events: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 160px;
+  height: 124px;
+  border: none;
+  border-radius: 28px;
+  background: #4f86c6;
+  color: #ffffff;
+  box-shadow: 0 8px 0 #35618f;
+}
+
+.small-button:active {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 #35618f;
+}
+
+/* Short label under a navigation button's icon (GDD §11.1, v0.5). Heavy weight and generous
+   letter-spacing: an emerging reader decodes letter by letter, so the glyphs must not crowd.
+   `pointer-events: none` keeps the label from swallowing taps meant for the button. */
+.button-label {
+  pointer-events: none;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.button-label-small {
+  font-size: 19px;
 }
 
 .all-done-stars {
