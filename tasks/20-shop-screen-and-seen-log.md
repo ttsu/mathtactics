@@ -123,4 +123,45 @@ first consumer. Tile chip rendering (operator glyph + number + category colour) 
 
 ## Completion Notes
 
-_(filled in by `/finish-task`)_
+**Status:** Complete
+**Completed:** 2026-09-16
+**PR:** not opened (stacked branch; do not `gh pr create`) · branch `cursor/20-shop-screen-and-seen-log-8f5d` on `cursor/19-shop-phase-and-flow-8f5d`
+
+**Acceptance criteria:**
+- [x] Five fixed-position cards, wallet, owned-tiles strip and ▶ *Next wave*, all icon-led and ≥ 60 pt — Met (e2e touch targets; owned strip empty until a tile is bought or already on the board)
+- [x] Buying works from the real screen; refusals shake and change nothing — Met (`e2e/shop.spec.ts`)
+- [x] The upgrade card reads `1 → 2`; the cannon card keeps its slot dimmed at 5 cannons — Met (upgrade shows live `cannonBaseValue → cannonBaseValue + 1`; cannon `available: false` is `unavailable` / disabled and keeps its slot). Wave-1 e2e fixtures with `baseValue: 5` therefore read `5 → 6`.
+- [x] NEW stickers appear only for never-offered tile types and persist for the whole visit — Met
+- [x] Tile-face rendering exists in exactly one place — Met (`game/state/tileFace.ts`; `tileLabel` / board colour are one-liners over it)
+- [x] Timings in `presentation.json` — Met
+- [ ] Legibility on the iPad preview — Not met: awaiting human check on preview
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass — Met
+
+**Verification:** npm test ✔ (59 files / 853 tests) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (70 webkit)
+
+**Deviations from spec:**
+- Branch name is `cursor/20-shop-screen-and-seen-log-8f5d` (stacked-PR convention) rather than `task/20-shop-screen-and-seen-log`.
+- Wave-cleared overlay wallet uses `CoinStack` instead of the 🪙 emoji; `e2e/waves.spec.ts` now asserts `+3` (the numeral), not `+3 🪙`. Overlay bonus delay still uses `rewardStaggerMs`; shop wallet count-down uses `shopWalletCountMs` (not reused on the overlay).
+- Upgrade card shows live `run.cannonBaseValue → cannonBaseValue + 1` rather than the frozen offer `fromValue → toValue`, so the from-value updates after a purchase.
+- `loadScenario` / `loadState` for phase `shop` now set `screen: 'shop'` (was always `'game'`) so a pinned 0-coin shop is tappable in e2e.
+- Bought-card second tap in e2e uses `click({ force: true })` because the card is `disabled` (Playwright otherwise waits for enabled).
+
+**Architectural decisions made:**
+- Seen-log wiring: storage stays closed over in `createAppStore`. Added store action `recordShopVisit(tileIds)` which `loadSeen`s, snapshots unseen ids into `shopNew` (`NO_SHOP_NEW` when none), then `addSeenMany`. `openShopScreen` calls that action after a successful `openShop`. `leaveShopToNextWave` sets `shopNew: NO_SHOP_NEW`. `/sim` never imports storage.
+- `buyOffer` in `shopFlow.ts` returns the dispatch result so unaffordable taps can shake on `insufficient_coins` without disabling the card.
+- Card interaction state is `shopCardStatus(offer, coins)` in `game/state/shopCard.ts` (pure, no React).
+
+**Design questions raised:**
+- None.
+
+**Known issues / follow-up:**
+- Reloading inside the shop loses NEW stickers (`shopNew` is memory-only; types are already in `seen`). Acceptable v1; do not put `shopNew` on `RunState`.
+- Browsable collection screen remains M5.
+- Human iPad legibility check still needed (numbers are large; NEW is a yellow corner sticker; cannon glyph is a simple side-on shape).
+
+**Files created:** `game/state/tileFace.ts`, `game/state/shopCard.ts`, `game/ui/CoinStack.tsx`, `game/ui/TileFaceChip.tsx`, `tests/game/tileFace.test.ts`, `tests/game/shopCard.test.ts`
+**Files modified:** `game/ui/{ShopScreen,WaveClearedOverlay,icons,ui.css}.tsx/.css`, `game/board/pieces.ts`, `game/state/{store,shopFlow,storage,testHandle,index}.ts`, `data/presentation.json`, `sim/data/schemas.ts`, `tests/helpers/dragSettings.ts`, `tests/game/{storage,shopFlow,testHandle}.test.ts`, `e2e/{shop,waves}.spec.ts`, `TECHNICAL_REFERENCE.md`, `TASKS.md`, this file
+
+**Notes for next agent:**
+- Shop UI is live. Task 21 authors ladder waves 4–7 and the Playtest 3 checklist; do not reroll offers on render — they live on `RunState.shop`. `schemaVersion` is 3. `shopNew` is store-only. Overlay bonus stagger is still `rewardStaggerMs`. Keep testids `shop`, `shop-offer-<slot>`, `shop-next`, `shop-wallet`. NEW testids are `shop-new-<slot>` (slot, not tile id — duplicate `+1` offers would collide). H2 is still Not Started and is a task-21 dependency.
+
