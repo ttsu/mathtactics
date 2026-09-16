@@ -6,6 +6,12 @@
 // No optimistic state: on release the piece is handed back to the renderer, which settles it
 // home from the last synced state; a successful command then re-syncs it to its new home.
 // Only one pointer is tracked — any other pointer is ignored until the drag ends (multi-touch).
+//
+// Phaser 4's default touch pool is a single Pointer. If a touchend/touchcancel is lost (iOS
+// Control Center, a React overlay stealing the event, Safari identifier reuse), that Pointer
+// stays `active` and every later touchstart is dropped — tiles and cannons freeze. iOS may also
+// fire a ghost mousedown after a tap and never mouseup, latching `gesture`. Native touch
+// listeners keep the pool in sync with the real surface; `decidePointerDown` recovers the latch.
 
 import type Phaser from 'phaser';
 import type { StoreApi } from 'zustand/vanilla';
@@ -19,14 +25,27 @@ import {
   type DropResolution,
 } from './dragTargets';
 import { TRAY, rectContains, worldToDesign, type Point } from './layout';
+import {
+  decidePointerDown,
+  pointersToReleaseAfterTouchEnd,
+  pointersToReleaseOnTouchStart,
+  touchIdentifiers,
+  type PointerSnapshot,
+} from './pointerSync';
 import { classifyTrayGesture, scrollAfterDrag, trayOverflows } from './trayScroll';
 
 type Gesture =
   | { mode: 'piece' | 'pending'; pointerId: number; start: Point; source: DragSource }
   | { mode: 'scroll'; pointerId: number; start: Point; startScroll: number };
 
+/** Same strings as `Phaser.Core.Events.HIDDEN` / `BLUR` — value-importing Phaser crashes vitest. */
+const GAME_HIDDEN = 'hidden';
+const GAME_BLUR = 'blur';
+const SCENE_SHUTDOWN = 'shutdown';
+
 export class DragController {
   private gesture: Gesture | null = null;
+  private scene: Phaser.Scene | null = null;
 
   constructor(
     private readonly store: StoreApi<AppStore>,
@@ -35,10 +54,33 @@ export class DragController {
 
   /** Wires scene-level pointer events. Phaser's own input plugin removes them on shutdown. */
   attach(scene: Phaser.Scene): void {
+    this.scene = scene;
     scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onDown(pointer));
     scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => this.onMove(pointer));
     scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
     scene.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => this.onUp(pointer));
+
+    const onTouchStart = (event: TouchEvent) => this.syncTouchStart(event);
+    const onTouchEnd = (event: TouchEvent) => this.syncTouchEnd(event);
+    const onLost = () => this.releaseLostPointers();
+    // Capture start runs before Phaser assigns the touch, so a stale slot can be freed first.
+    // Bubble end runs after Phaser's canvas handler, so a missed up is cleaned up rather than
+    // racing the real pointerup.
+    const touchOpts: AddEventListenerOptions = { capture: true };
+    window.addEventListener('touchstart', onTouchStart, touchOpts);
+    window.addEventListener('touchend', onTouchEnd);
+    window.addEventListener('touchcancel', onTouchEnd);
+    scene.game.events.on(GAME_HIDDEN, onLost);
+    scene.game.events.on(GAME_BLUR, onLost);
+
+    scene.events.once(SCENE_SHUTDOWN, () => {
+      window.removeEventListener('touchstart', onTouchStart, touchOpts);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
+      scene.game.events.off(GAME_HIDDEN, onLost);
+      scene.game.events.off(GAME_BLUR, onLost);
+      this.scene = null;
+    });
   }
 
   /** Abandons any drag in progress (e.g. the store changed under it): the piece settles home. */
@@ -52,7 +94,10 @@ export class DragController {
   }
 
   private onDown(pointer: Phaser.Input.Pointer): void {
-    if (this.gesture !== null) return;
+    const decision = decidePointerDown(this.gesture, pointer, this.trackedPointer());
+    if (decision === 'ignore') return;
+    if (decision === 'restart') this.cancel();
+
     const state = this.store.getState();
     const { run } = state;
     if (run === null || run.phase !== 'planning' || isPlaybackActive(state)) return;
@@ -155,6 +200,57 @@ export class DragController {
     if (run === null) return null;
     return resolveDrop(source, finger, run, this.config.snapRadiusCells);
   }
+
+  private syncTouchStart(event: TouchEvent): void {
+    this.releasePointers(
+      pointersToReleaseOnTouchStart(
+        this.pointerSnapshots(),
+        touchIdentifiers(event.touches),
+        touchIdentifiers(event.changedTouches),
+      ),
+    );
+  }
+
+  private syncTouchEnd(event: TouchEvent): void {
+    this.releasePointers(
+      pointersToReleaseAfterTouchEnd(this.pointerSnapshots(), touchIdentifiers(event.touches)),
+    );
+  }
+
+  private releaseLostPointers(): void {
+    this.cancel();
+    this.scene?.input.resetPointers();
+  }
+
+  private releasePointers(ids: readonly number[]): void {
+    if (ids.length === 0) return;
+    const stale = new Set(ids);
+    for (const pointer of this.scene?.input.manager.pointers ?? []) {
+      if (stale.has(pointer.id)) pointer.reset();
+    }
+    if (this.gesture !== null && stale.has(this.gesture.pointerId)) this.cancel();
+  }
+
+  private trackedPointer(): PointerSnapshot | undefined {
+    const id = this.gesture?.pointerId;
+    if (id === undefined) return undefined;
+    const pointer = this.scene?.input.manager.pointers[id];
+    return pointer === undefined ? undefined : snapshot(pointer);
+  }
+
+  private pointerSnapshots(): PointerSnapshot[] {
+    return (this.scene?.input.manager.pointers ?? []).map(snapshot);
+  }
+}
+
+function snapshot(pointer: Phaser.Input.Pointer): PointerSnapshot {
+  return {
+    id: pointer.id,
+    identifier: pointer.identifier,
+    active: pointer.active,
+    isDown: pointer.isDown,
+    wasTouch: pointer.wasTouch,
+  };
 }
 
 function designPoint(pointer: Phaser.Input.Pointer): Point {
