@@ -93,6 +93,12 @@ SVG glyphs, `screens.popInMs`, double-tap guard). Task 14 owns switching `screen
   the store's `data`. `loadState` restores the shipped data. Before this, a scenario's `waves:` was silently ignored in
   e2e. Verified by re-running both with a modified `waves.json` (4 waves, different wave-1 reward), then restoring it.
   The resume test still needs the shipped file to have ≥ 2 waves, because a reload drops the scenario's waves.
+- **⌂ Home in `waveCleared` reverts to hidden (rebase onto main).** Task 14 shipped Home *visible* there as a deliberate
+  stopgap: without this overlay nothing dispatched `nextWave`, so hiding Home stranded the player on a cleared wave.
+  That is exactly the condition this task removes, so the original rule is restored and `hudButtons.home` delegates to
+  `showWaveCleared`. Task 14's e2e regression test (`e2e/run-flow.spec.ts`, "never stranded in waveCleared") asserted
+  the stopgap and so failed on the rebase; it was rewritten to guard the invariant that outlives both rules — a cleared
+  wave always offers one live control — now the overlay's ▶, with Home asserted hidden in place.
 
 **Architectural decisions made:**
 - `game/state/waveFlow.ts`: `waveCount(data)`, `showWaveCleared(state)`, `waveRewardTiles(run)`,
