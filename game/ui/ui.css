@@ -61,21 +61,21 @@
 
 @keyframes go-nudge {
   0%,
-  14%,
+  28%,
   100% {
     transform: rotate(0deg);
   }
-  3% {
-    transform: rotate(calc(-1 * var(--go-nudge-wiggle-deg, 5deg)));
-  }
   6% {
-    transform: rotate(var(--go-nudge-wiggle-deg, 5deg));
-  }
-  9% {
-    transform: rotate(calc(-0.6 * var(--go-nudge-wiggle-deg, 5deg)));
+    transform: rotate(calc(-1 * var(--go-nudge-wiggle-deg, 8deg)));
   }
   12% {
-    transform: rotate(calc(0.35 * var(--go-nudge-wiggle-deg, 5deg)));
+    transform: rotate(var(--go-nudge-wiggle-deg, 8deg));
+  }
+  18% {
+    transform: rotate(calc(-0.6 * var(--go-nudge-wiggle-deg, 8deg)));
+  }
+  24% {
+    transform: rotate(calc(0.3 * var(--go-nudge-wiggle-deg, 8deg)));
   }
 }
 

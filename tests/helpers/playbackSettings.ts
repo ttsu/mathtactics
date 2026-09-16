@@ -130,6 +130,6 @@ export function fakeHudSettings() {
     goColor: '#43a047',
     goNudgeIdleMs: 30000,
     goNudgeWiggleMs: 2400,
-    goNudgeWiggleDeg: 5,
+    goNudgeWiggleDeg: 8,
   };
 }
