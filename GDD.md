@@ -1,15 +1,44 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.6.1
+**Version:** 0.7
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
-**Status:** M3 built (Playtest 2–3 pending); HUD fire control is ▶ Go (v0.6.1, §11.1). This
-document is the single source of truth for *design*.
+**Status:** M4 specs written after Playtest 3 (not yet built). This document is the single source
+of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.7
+
+v0.7 records the decisions made while writing the M4 task specs, after Playtest 3.
+
+Playtest 3 (checklist notes): the run was **fun but too easy**; he asked for **armor** on
+waves 9/10 — a second HP, shown separately, that must be destroyed first.
+
+- **Hardness comes from the GDD ladder, not invented HP bumps.** Traits on waves 4/6/7, mixed
+  procedural waves 8–9, and the Boss are the difficulty. Waves 1–3 are unchanged (Playtest 2
+  notes were empty). Do not retune 1–7 HP in the specs; task 27 may retune later-wave numbers
+  only if balance tests fail, with a recorded reason.
+- **Armor is deferred to v1.1+.** It is a new rule (a second number on the robot), not a trait.
+  It fights §11.2 (HP is the largest element) and is closer to Barrier (§19) than to Weakness /
+  Bounce-back / parity. Not in M4, M5, or v1.
+- **Waves 4, 6, 7 gain their first teaching trait.** Wave 4: one Weakness (`n = 5`). Wave 6:
+  one Bounce-back. Wave 7: one Odd-only (base value 1 is odd, so the first contact can hurt
+  without a tile). Wave 5 stays untraited — it teaches subtraction. Remaining robots on those
+  waves stay `basic`.
+- **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
+  already follow `waves.json` length.
+- **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
+  wave start on the `wave` stream. Mixed traits, up to 4 simultaneous lanes, HP inside §6.6.
+- **Wave 10 is authored:** one Boss (100–150 HP, no trait, oversized sprite) plus a light
+  `basic` escort.
+- **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
+  without words (§6.2–6.4). Bounce-back bar refill and blocked clonk already play (task 10).
+- **Settings and planning hints ship.** Gear on the main menu; hints off by default; sound
+  on/off persists. Web Audio is M5 — the sound toggle is a real setting with no playback yet.
 
 ## 0. Changes in v0.6.1
 
@@ -595,8 +624,9 @@ shop slots are seeded-random within each rung.
 
 No tutorial mode and no text popups: wave design does the teaching.
 
-Waves 4–7 ship **untraited** in M3 and gain their traits in M4, alongside the visuals that
-telegraph them (§6.2–6.4). A robot whose trait is invisible reads as a bug, not a puzzle.
+Waves 4–7 shipped **untraited** in M3. M4 swaps in the first teaching trait on waves 4, 6
+and 7 (wave 5 stays untraited) and adds the visuals that telegraph them (§6.2–6.4). A robot
+whose trait is invisible reads as a bug, not a puzzle.
 
 ### 10.3 Waves as Spawn Schedules
 
@@ -858,7 +888,7 @@ Work is tracked in `TASKS.md` with one spec per task in `tasks/`.
 | **M1 Core loop** | Sim (lanes, `±×` tiles, per-ball impact, exact kill), scenario runner, board + tray drag, End Turn, lane playback, hand-authored puzzle levels | **Playtest 1** — is building an equation fun? |
 | **M2 A run** | Waves & spawn schedules, advance, base HP & detonation, wave rewards (shop stand-in), win/lose, save/resume, main menu, ladder waves 1–3 | Playtest 2 — does a run hold together? |
 | **M3 Economy** | Shop, coins, cannons & upgrades, seen-tiles log, ladder waves 1–7 | Playtest 3 |
-| **M4 Traits & finale** | Weakness, Bounce-back, Odd/Even-only, waves 8–10 + Boss, hints toggle, settings | Playtest 4 — complete v1 run |
+| **M4 Traits & finale** | Trait telegraph, ladder swap on 4/6/7, waves 8–10 + Boss, hints toggle, settings | Playtest 4 — complete v1 run |
 | **M5 Juice & art** | Escalation, celebrations, sound, AI art pass | v1 |
 
 Task specs are written one milestone at a time; later milestones may change after playtests.
@@ -904,8 +934,8 @@ questions**, not blockers for M0/M1:
 | Concrete HP curves, prices, income values | Tuned in data during M2–M4 playtests |
 | Playback pacing values | Tuned after Playtest 1 |
 | Ladder waves 1–3 authored content | Drafted in task 12; finalized after Playtest 1 (task 17) |
-| Ladder waves 4–7 authored templates | Drafted and balanced untraited in M3 (task 21); traits in M4 |
-| Waves 8–9 procedural table design | M4 task spec |
+| Ladder waves 4–7 authored templates | Drafted untraited in M3 (task 21); first teaching trait swapped in M4 (task 22) |
+| Waves 8–9 procedural table design | Specified in task 25 (`waves.json` `procedural` groups) |
 | Browsable seen-tiles gallery | M5, with the art pass (§8.7) |
 | Sound sourcing (library vs generated) | M5 |
 | Kid-facing title and art style | M5 |
@@ -925,6 +955,18 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Tiles may be placed in unarmed lanes (so layouts survive moving the cannon).
 - Settings contains planning hints and sound toggles.
 
+### 18.2 Minor calls made while writing v0.7
+
+- Wave 4's Weakness is `n = 5` (skip-counting by fives). Waves 8–9 mix 2/5/10.
+- Wave 7's first parity robot is Odd-only (cannon base value 1 is odd). Even-only enters in 8–9.
+- Wave 5 stays fully `basic` — subtraction is the lesson, not a new trait.
+- The Settings gear on the main menu is labelled *Settings* (one extra word beyond the §11.1
+  navigation list). Hints and Sound toggles are icon + one word each.
+- The sound toggle persists and does nothing to playback until M5 ships Web Audio.
+- Procedural groups draw distinct lanes with `nextInt` into the remaining lanes, then pick a
+  template from the pool (with replacement) and roll HP — file order, `wave` stream only.
+- The Boss is authored in lane 2 (center), matching the starting cannon.
+
 ---
 
 ## 19. Deferred to v1.1+
@@ -934,6 +976,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 | **Path tiles** (Redirect, Bounce) | Ship with `transformationCount` cap (~20) and the §14.4 tie-break in the same change. Loops lean "feature". |
 | **Splitter / division** | Splits a ball; remainder becomes splash. Division enters spatially, never as `÷`. |
 | **Count tiles** (`+1 ball`) | Cut from v1. If revived: copies cannot make copies (additive stacking). |
+| **Armor** (separate HP destroyed first) | Playtest 3 idea for waves 9/10. A second number on the robot fights §11.2. Closer to Barrier than to existing traits. |
 | **Barrier / Slow tile** | Revisit if playtests show a need to stall. Would reintroduce robot `attack`. |
 | **Robot speed > 1** | Interacts with locked cells and equation shrinking. |
 | **Stacked traits** | Use §6.5 order. |

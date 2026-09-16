@@ -249,10 +249,10 @@ emits the first turn's spawns.
   with `turn ≤ state.turn` (in order, removed from `pendingSpawns`). Each enters col 7 of its lane if
   no robot is there (`RobotSpawned`), else waits with `col: null` (`RobotWaiting`, new robots only). A
   waiting robot that enters emits `RobotSpawned` with its existing `robotId`.
-- **Rolling a wave** (`/sim/waves/rollWave.ts`, `wave` stream): letters in order of first appearance
-  each take `nextInt` over the lanes still free (not fixed in this wave, not already taken); then each
-  entry's HP in file order. Result sorted by `turn` (stable). Exact draw order is normative so saves
-  and scenarios are reproducible.
+- **Rolling a wave** (`/sim/waves/rollWave.ts`, `wave` stream): authored waves assign letters then
+  HP (TR §9). Procedural waves (M4) draw each group's distinct lanes, then per lane a pool template
+  and HP. Result sorted by `turn` (stable). Exact draw order is normative so saves and scenarios
+  are reproducible.
 
 Impact rules are implemented once in `/sim/resolve/impact.ts` as a pure function
 `resolveImpact(robot, ballValue) → ImpactOutcome`, exactly per GDD §5.4.
@@ -346,12 +346,12 @@ fails `npm test`.
 | File | Contents |
 |---|---|
 | `tiles.json` | 29 tile definitions: id, kind, n, priceCategory, color key |
-| `robots.json` | Robot templates: id, trait, visual key, boss flag (M2 ships one: `basic`, no trait) |
+| `robots.json` | Robot templates: id, trait, boss flag. M4 ships `basic`, `weakness-2/5/10`, `bounce-back`, `odd-only`, `even-only`, `boss` |
 | `economy.json` | Starting state (base HP, coins, cannon lane, base value), income values, max cannons, schema version (3 from M3) |
 | `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees (below) |
-| `waves.json` | Waves in run order (run length = array length): authored spawn schedules (below); procedural tables for 8–9 arrive in M4 |
+| `waves.json` | Waves in run order (run length = array length): authored spawn schedules (waves 1–7, 10) and procedural tables (waves 8–9) |
 | `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
-| `presentation.json` | Pacing (ball cell duration, per-tile pause, lane gap, advance duration), escalation curves, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`) |
+| `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss sprite scale (`boss.scale`, M4) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.
 
@@ -372,12 +372,37 @@ fails `npm test`.
 }
 ```
 
-Validation: at least one wave; each wave has ≥ 1 spawn and one with `turn: 1`; `lane` is 0–4 or
-`A`–`E`; distinct letters ≤ lanes not fixed in that wave; `hp` is `[min, max]` with
-`1 ≤ min ≤ max ≤ 99`; `robot` names a `robots.json` id.
+Validation: at least one wave; each wave is **either** authored (`spawns`) **or** procedural
+(`procedural`), never both; authored: ≥ 1 spawn and one with `turn: 1`; `lane` is 0–4 or `A`–`E`;
+distinct letters ≤ lanes not fixed in that wave; `hp` is `[min, max]` with `1 ≤ min ≤ max ≤ 99`
+(Boss template may go to 150); `robot` / procedural `pool` ids name a `robots.json` id.
 
 M2's `reward` key (tile ids granted to the tray on wave clear) was removed in M3 along with its
 validation — the shop is the only tile source.
+
+`waves.json` procedural wave (M4, task 25):
+
+```json
+{
+  "id": "wave-8",
+  "procedural": {
+    "groups": [
+      {
+        "turn": 1,
+        "count": 3,
+        "hp": [30, 50],
+        "pool": ["weakness-5", "bounce-back", "odd-only", "basic"]
+      }
+    ]
+  }
+}
+```
+
+`rollWave` draw order for a procedural group (normative, `wave` stream only): pick `count`
+distinct lanes by `nextInt` into the remaining lanes (ascending, same as letter assignment),
+then for each drawn lane in that order: `nextInt` into the pool (with replacement) and
+`nextInt` HP in `[min, max]`. Groups in file order. Same-turn groups are forbidden (`turn`
+values unique within a wave). `count` is 1–5; `pool` non-empty.
 
 `shop.json` (M3, task 18). `afterWave` is **1-based** — the number of the wave just cleared, which
 is `waveIndex + 1`; every other wave reference in the codebase is 0-based, so conversions are

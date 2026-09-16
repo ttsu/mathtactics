@@ -1,0 +1,96 @@
+# 25 — Shop 7–9 & Procedural Waves 8–9
+
+**Milestone:** M4 · **Layer:** sim / data · **Depends on:** 22 · **Branch:** `task/25-procedural-waves-8-9`
+
+## Task
+
+Extend the run past wave 7: shop tables after waves 7–9, and procedural waves 8–9 rolled from
+data tables. The run length becomes 9 until task 26 adds the Boss; **this task must add waves 8
+and 9** so `waves.json` is 9 long and every non-final wave has a shop (schema already requires
+that). Task 26 appends wave 10.
+
+## References
+
+- GDD v0.7 §0, §6.6, §10.2–10.3 · TR §6 (rolling a wave), §9 (procedural wave JSON)
+- `sim/waves/rollWave.ts`, `sim/data/schemas.ts`, `data/shop.json`, `data/waves.json`
+- Task 22's templates (`weakness-*`, `bounce-back`, `odd-only`, `even-only`, `basic`)
+
+## Context
+
+`rollWave` only understands authored `spawns`. Shop schema already demands
+`{1 … waves.length − 1} ⊆ afterWave set`. Adding waves 8–9 without shops 7–8 will fail load;
+adding wave 9 as last means shop after 9 is **not** required until task 26 adds wave 10 — so
+**this task ships `afterWave` 7 and 8**, and **also ships `afterWave` 9** (allowed extra table
+today; required once wave 10 exists). That way task 26 does not touch `shop.json`.
+
+Playtest 3 asked for hardness. These waves are the stretch: mixed traits, more simultaneous
+lanes (up to 4), HP inside §6.6 (≤ 99). Armor is deferred to v1.1+.
+
+## Requirements
+
+1. **Schema.** A wave is **either** `{ id, spawns }` **or** `{ id, procedural }`, never both
+   (strict). Procedural shape **exactly** TR §9. Cross-file: every `pool` id exists in
+   `robots.json`. `count` 1–5; `hp` `1 ≤ min ≤ max ≤ 99`; `turn` values unique in the wave;
+   at least one group with `turn: 1`; `pool` non-empty. Authored waves unchanged.
+
+2. **`rollWave`** — if `procedural` is present, use the TR §9 draw order (normative). Authored
+   path stays byte-identical (existing `tests/sim` rollWave tests must still pass). Procedural
+   result is still `SpawnEntry[]` sorted by `turn`.
+
+   Tests: same seed → same lanes, templates, HP; drawing from `shop` does not change a
+   procedural wave; `count: 3` always yields 3 distinct lanes; pool-with-replacement can
+   repeat a template.
+
+3. **Ship waves 8–9** (tune only with a recorded reason). Draft:
+
+   | Wave | Groups | Teaches |
+   |---|---|---|
+   | 8 | T1 `count: 3` hp `[30, 50]` pool `weakness-5`, `bounce-back`, `odd-only`, `basic` · T8 `count: 3` hp `[40, 65]` pool `weakness-2`, `weakness-10`, `even-only`, `bounce-back` | Mix; Even-only appears |
+   | 9 | T1 `count: 4` hp `[45, 70]` pool `weakness-5`, `bounce-back`, `odd-only`, `even-only` · T8 `count: 4` hp `[60, 90]` pool same, no `basic` | Four lanes; no freebies |
+
+   Constraints: ≥ 5 turn gap between groups; HP ≤ 99; `count` ≤ 4 (5 lanes is Boss-escort
+   territory, not these waves); at least one of `odd-only` and one of `even-only` **possible**
+   in wave 8's pools (not guaranteed every seed).
+
+4. **Shop tables** — append `afterWave` 7, 8, 9. Prices unchanged. Draft (tune with reason):
+
+   ```json
+   { "afterWave": 7, "guarantees": [{ "kind": "mul", "n": [2, 5] }], "table": [
+     { "kind": "add", "n": [1, 10], "weight": 4 },
+     { "kind": "sub", "n": [1, 10], "weight": 5 },
+     { "kind": "mul", "n": [2, 10], "weight": 5 }
+   ]},
+   { "afterWave": 8, "guarantees": [], "table": [
+     { "kind": "add", "n": [1, 10], "weight": 4 },
+     { "kind": "sub", "n": [1, 10], "weight": 5 },
+     { "kind": "mul", "n": [2, 10], "weight": 5 }
+   ]},
+   { "afterWave": 9, "guarantees": [{ "kind": "sub" }], "table": [
+     { "kind": "add", "n": [1, 10], "weight": 3 },
+     { "kind": "sub", "n": [1, 10], "weight": 6 },
+     { "kind": "mul", "n": [2, 10], "weight": 5 }
+   ]}
+   ```
+
+   After-wave 9 exists so task 26 can append the Boss without a shop PR. Schema already
+   allows extra tables.
+
+5. **Scenarios:** at least one procedural-wave scenario (`mode: run`, inline `waves:` with a
+   tiny `procedural` group) asserting spawn count, distinct lanes, and a traited
+   `RobotSpawned`. Gameplay change → event list (CLAUDE.md rule 2).
+
+6. **Ladder tests:** extend `tests/ladder.test.ts` to the new `waves.json` length. Sensible
+   player still wins seeds 1–100 above 40 base HP; End-Turn-only still loses. If the draft
+   numbers break that, retune **waves 8–9 only** (not 1–7) and record why.
+
+## Out of Scope
+
+Boss (26). Trait visuals (23). Armor. Retuning waves 1–7.
+
+## Acceptance Criteria
+
+- [ ] `rollWave` supports procedural groups; authored path unchanged
+- [ ] Waves 8–9 ship as procedural tables; shops 7–9 exist
+- [ ] Schema rejects a wave with both `spawns` and `procedural`
+- [ ] Ladder tests pass for seeds 1–100 on the 9-wave run
+- [ ] `npm test`, `typecheck`, `lint`, `npm run sim -- scenarios` pass
