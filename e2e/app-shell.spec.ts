@@ -10,6 +10,10 @@ const LANDSCAPE_SIZES = [
   { width: 1366, height: 1024 },
   { width: 844, height: 390 },
 ];
+/** Landscape sizes where FIT fills the viewport width (no horizontal letterboxing). */
+const WIDTH_FILLING_LANDSCAPE_SIZES = LANDSCAPE_SIZES.filter(
+  (size) => size.width / size.height <= DESIGN_WIDTH / DESIGN_HEIGHT,
+);
 const ALIGN_TOLERANCE_PX = 2;
 
 async function canvasRect(page: Page) {
@@ -130,11 +134,22 @@ test.describe('iOS frame backdrop', () => {
   });
 
   test('stays hidden when the canvas already fills the viewport width', async ({ page }) => {
-    for (const size of LANDSCAPE_SIZES) {
+    for (const size of WIDTH_FILLING_LANDSCAPE_SIZES) {
       await page.setViewportSize(size);
       await gotoGame(page);
+      const canvas = await canvasRect(page);
+      expect(Math.abs(canvas.width - size.width)).toBeLessThan(1);
       await expect(page.getByTestId('frame-backdrop')).toBeHidden();
     }
+  });
+
+  test('shows at iPhone landscape where the canvas is height-limited', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await gotoGame(page);
+
+    const canvas = await canvasRect(page);
+    expect(canvas.width).toBeLessThan(844);
+    await expect(page.getByTestId('frame-backdrop')).toBeVisible();
   });
 });
 
