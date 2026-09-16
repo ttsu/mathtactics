@@ -1,0 +1,17 @@
+{
+  "name": "Math Tactics",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "dev",
+      "command": "bash .cursor/dev.sh",
+      "description": "Vite dev server for the Math Tactics game (http://localhost:5173, test handle enabled). Restart it here to pick up config changes."
+    }
+  ],
+  "ports": [
+    {
+      "name": "vite",
+      "port": 5173
+    }
+  ]
+}
