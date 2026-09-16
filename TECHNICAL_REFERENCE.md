@@ -590,7 +590,8 @@ Recovery (rules in Phaser-free `/game/board/pointerSync.ts`, wired from `DragCon
 - bubble-phase `touchend`/`touchcancel` frees any Pointer Phaser still has `active` after the
   surface is empty;
 - a new `pointerdown` restarts the gesture when the tracked pointer is stale, the same slot is
-  reused, or a real touch preempts a latched mouse;
+  reused, or a real touch preempts a *stationary* latched mouse (iOS ghost mousedown; a mouse
+  that has already moved is a live drag, so extra fingers stay ignored);
 - Phaser `hidden`/`blur` cancel the drag and `resetPointers()`.
 
 ### 11.4 Playback Director

@@ -14,6 +14,7 @@ const mouse = (over: Partial<PointerSnapshot> = {}): PointerSnapshot => ({
   active: true,
   isDown: false,
   wasTouch: false,
+  moved: false,
   ...over,
 });
 
@@ -23,6 +24,7 @@ const touch = (id: number, over: Partial<Omit<PointerSnapshot, 'id'>> = {}): Poi
   active: false,
   isDown: false,
   wasTouch: true,
+  moved: false,
   ...over,
 });
 
@@ -95,15 +97,15 @@ describe('decidePointerDown', () => {
       decidePointerDown(
         { pointerId: 1 },
         { id: 2, wasTouch: true },
-        { isDown: true, wasTouch: true },
+        { isDown: true, wasTouch: true, moved: true },
       ),
     ).toBe('ignore');
   });
 
   it('restarts when the same pointer slot presses again (missed up)', () => {
-    expect(decidePointerDown({ pointerId: 1 }, finger, { isDown: true, wasTouch: true })).toBe(
-      'restart',
-    );
+    expect(
+      decidePointerDown({ pointerId: 1 }, finger, { isDown: true, wasTouch: true, moved: true }),
+    ).toBe('restart');
   });
 
   it('restarts when the tracked pointer is no longer down', () => {
@@ -111,7 +113,7 @@ describe('decidePointerDown', () => {
       decidePointerDown(
         { pointerId: 1 },
         { id: 2, wasTouch: true },
-        { isDown: false, wasTouch: true },
+        { isDown: false, wasTouch: true, moved: true },
       ),
     ).toBe('restart');
   });
@@ -120,15 +122,29 @@ describe('decidePointerDown', () => {
     expect(decidePointerDown({ pointerId: 1 }, finger, undefined)).toBe('restart');
   });
 
-  it('lets a touch preempt a latched mouse (iOS ghost mousedown)', () => {
+  it('lets a touch preempt a stationary latched mouse (iOS ghost mousedown)', () => {
     expect(
-      decidePointerDown({ pointerId: MOUSE_POINTER_ID }, finger, { isDown: true, wasTouch: false }),
+      decidePointerDown({ pointerId: MOUSE_POINTER_ID }, finger, {
+        isDown: true,
+        wasTouch: false,
+        moved: false,
+      }),
     ).toBe('restart');
   });
 
+  it('ignores a second pointer once the mouse drag has actually moved', () => {
+    expect(
+      decidePointerDown({ pointerId: MOUSE_POINTER_ID }, finger, {
+        isDown: true,
+        wasTouch: false,
+        moved: true,
+      }),
+    ).toBe('ignore');
+  });
+
   it('ignores a mouse press while a real touch drag is in progress', () => {
-    expect(decidePointerDown({ pointerId: 1 }, mousePtr, { isDown: true, wasTouch: true })).toBe(
-      'ignore',
-    );
+    expect(
+      decidePointerDown({ pointerId: 1 }, mousePtr, { isDown: true, wasTouch: true, moved: true }),
+    ).toBe('ignore');
   });
 });

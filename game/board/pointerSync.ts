@@ -15,6 +15,8 @@ export interface PointerSnapshot {
   active: boolean;
   isDown: boolean;
   wasTouch: boolean;
+  /** True once this pointer has moved from its down position — a live drag, not a tap. */
+  moved: boolean;
 }
 
 export type PointerDownDecision = 'start' | 'ignore' | 'restart';
@@ -71,16 +73,17 @@ export function pointersToReleaseAfterTouchEnd(
  * What a new `pointerdown` should do given an existing drag gesture.
  *
  * `ignore` is a live second finger (task 09 multi-touch). `restart` means the tracked pointer is
- * stale — missed up, same slot reused, or a real touch preempting an iOS ghost mouse.
+ * stale — missed up, same slot reused, or a real touch preempting a stationary iOS ghost mouse
+ * (a mouse that has already moved is a live drag, so extra fingers stay ignored).
  */
 export function decidePointerDown(
   gesture: { pointerId: number } | null,
   incoming: Pick<PointerSnapshot, 'id' | 'wasTouch'>,
-  tracked: Pick<PointerSnapshot, 'isDown' | 'wasTouch'> | undefined,
+  tracked: Pick<PointerSnapshot, 'isDown' | 'wasTouch' | 'moved'> | undefined,
 ): PointerDownDecision {
   if (gesture === null) return 'start';
   if (incoming.id === gesture.pointerId) return 'restart';
   if (tracked === undefined || !tracked.isDown) return 'restart';
-  if (incoming.wasTouch && !tracked.wasTouch) return 'restart';
+  if (incoming.wasTouch && !tracked.wasTouch && !tracked.moved) return 'restart';
   return 'ignore';
 }

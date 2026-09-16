@@ -250,6 +250,7 @@ function snapshot(pointer: Phaser.Input.Pointer): PointerSnapshot {
     active: pointer.active,
     isDown: pointer.isDown,
     wasTouch: pointer.wasTouch,
+    moved: pointer.x !== pointer.downX || pointer.y !== pointer.downY,
   };
 }
 

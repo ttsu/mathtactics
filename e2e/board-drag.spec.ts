@@ -281,10 +281,12 @@ test('a second pointer is ignored while a drag is in progress', async ({ page })
   const before = await getState(page);
   const first = before.tray[0]!;
 
-  // Mouse holds tray tile 0; meanwhile a touch tries to drag tray tile 1 elsewhere.
+  // Mouse starts a real drag of tray tile 0 (moved off the press point); meanwhile a
+  // touch tries to drag tray tile 1 elsewhere and must be ignored.
   const start = await trayPoint(page, 0);
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
+  await page.mouse.move(start.x + 20, start.y + 20, { steps: 4 });
   await touchDrag(page, await trayPoint(page, 1), await cellPoint(page, { lane: 3, col: 3 }));
   const target = await cellPoint(page, { lane: 2, col: 2 });
   await page.mouse.move(target.x, target.y, { steps: 8 });
