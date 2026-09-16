@@ -26,7 +26,8 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'VITE_TEST_HANDLE=1 npx vite build && npx vite preview --port 4173',
+      command:
+        'VITE_TEST_HANDLE=1 VITE_BUILD_ID=e2e-local npx vite build && npx vite preview --port 4173',
       url: 'http://localhost:4173',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
