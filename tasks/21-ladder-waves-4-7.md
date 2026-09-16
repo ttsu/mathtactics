@@ -114,13 +114,13 @@ case against 100 base HP). That is intended for Playtest 3.
 
 ## Acceptance Criteria
 
-- [ ] Waves 1–3 revisited against Playtest 2 notes; every change (or the decision not to change) justified
-- [ ] Waves 4–7 authored within requirement 2's constraints, all untraited
-- [ ] Balance tests pass for seeds 1–100: sensible player always wins above 40 base HP, End-Turn-only always loses,
+- [x] Waves 1–3 revisited against Playtest 2 notes; every change (or the decision not to change) justified
+- [x] Waves 4–7 authored within requirement 2's constraints, all untraited
+- [x] Balance tests pass for seeds 1–100: sensible player always wins above 40 base HP, End-Turn-only always loses,
       every shop affordable, second cannon by the wave-3 shop, ≤ 2-hit exact kills reachable
-- [ ] e2e plays a full 7-wave run through the real menus, screens and shop, including a reload inside a shop
-- [ ] `playtests/03-checklist.md` exists
-- [ ] `npm test`, `typecheck`, `lint`, `build`, `test:e2e`, `npm run sim -- scenarios` pass
+- [x] e2e plays a full 7-wave run through the real menus, screens and shop, including a reload inside a shop
+- [x] `playtests/03-checklist.md` exists
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e`, `npm run sim -- scenarios` pass
 
 ## Completion Notes
 
