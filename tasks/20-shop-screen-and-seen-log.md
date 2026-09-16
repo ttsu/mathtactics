@@ -125,7 +125,7 @@ first consumer. Tile chip rendering (operator glyph + number + category colour) 
 
 **Status:** Complete
 **Completed:** 2026-09-16
-**PR:** not opened (stacked branch; do not `gh pr create`) · branch `cursor/20-shop-screen-and-seen-log-8f5d` on `cursor/19-shop-phase-and-flow-8f5d`
+**PR:** #35 · stacked on #34 (`cursor/19-shop-phase-and-flow-8f5d`)
 
 **Acceptance criteria:**
 - [x] Five fixed-position cards, wallet, owned-tiles strip and ▶ *Next wave*, all icon-led and ≥ 60 pt — Met (e2e touch targets; owned strip empty until a tile is bought or already on the board)
