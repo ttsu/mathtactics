@@ -1,11 +1,12 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.4
+**Version:** 0.5
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
-**Status:** M1 built; M2 decisions recorded (v0.4). This document is the single source of truth for *design*.
+**Status:** M1 built; M2 decisions recorded (v0.4); navigation labels allowed (v0.5, §11.1).
+This document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
@@ -551,8 +552,9 @@ No tutorial mode and no text popups: wave design does the teaching.
 - The run **autosaves after every command** (placement, move, End Turn, purchase).
 - On End Turn, the resolved result is saved **immediately**, before playback finishes.
   Reopening mid-playback lands in the next planning phase: no lost progress, no reload exploit.
-- Launch screen: big **▶ Continue** if a run exists; smaller **New Run**; smaller **Puzzles**
-  (the M1 hand-authored levels). No confirmation dialogs. New Run replaces any saved run.
+- Launch screen: big **▶ *Keep Going*** if a run exists; smaller **🤖 *New Game***; smaller
+  **🧩 *Puzzles*** (the M1 hand-authored levels). Each is an icon with its label beneath
+  (§11.1). No confirmation dialogs. New Game replaces any saved run.
 - A small **Home** button in the HUD (hidden during playback) returns to the launch screen with
   no confirmation. A run is already saved; a puzzle session is simply dropped.
 - **Puzzles are never saved** and never overwrite the saved run.
@@ -566,14 +568,16 @@ M2 builds a run before the shop exists. Without tiles, wave 2 (HP 4–10) is unp
 
 - Each wave in `waves.json` may list a **reward**: tile ids granted to the end of the tray,
   in listed order, when the wave clears. The final wave has no reward.
-- Clearing a non-final wave shows a text-free **wave-cleared** screen: a star, the reward
-  tiles popping in, a big ▶ that starts the next wave. This screen is where the shop goes in M3.
+- Clearing a non-final wave shows a **wave-cleared** screen: a star, the reward tiles popping
+  in, a big ▶ labelled *Next* that starts the next wave (§11.1). This screen is where the shop
+  goes in M3.
 - No cannons are granted in M2; runs play waves 1–3 with one cannon.
 - Coins are still earned and shown (kills, exact kills, wave cleared) but cannot be spent.
 
 ### 10.6 Win and Lose Screens
 
-- Both are cheerful and text-free, with one big ▶ back to the launch screen.
+- Both are cheerful, with one big ▶ labelled *Home* back to the launch screen (§11.1). No
+  sentences on either screen — the celebration and the exact-kill row carry the meaning.
 - Both show the run's **exact-kill count** as a row of icons (celebrating the core skill even
   on a loss). `RunState` tracks `exactKills`.
 
@@ -582,7 +586,22 @@ M2 builds a run before the shop exists. Without tiles, wave 2 (HP 4–10) is unp
 ## 11. UX Requirements for the Target Age
 
 1. **No reading required for core play.** Traits, tile functions, and state must be
-   legible from shape and color. Text is supplementary.
+   legible from shape and color — a player who cannot read a word must still be able to play
+   a whole run. Text is supplementary, never load-bearing.
+
+   **Short labels are allowed and encouraged on navigation** (v0.5). Icon-only buttons proved
+   ambiguous in practice: nothing on the main menu said what ▶ or 🤖 would do. So any button
+   that *navigates* — menu entries, screen buttons — pairs its icon with a short label beneath.
+   Rules for that label:
+   - One or two words, grade-1 decodable, from the kid's spoken vocabulary
+     (*Keep Going*, *New Game*, *Puzzles*, *Home*, *Next*). Never *Continue*, *Resume*,
+     *Proceed*, *Select*.
+   - It **repeats** what the icon already says; it never adds information the icon lacks.
+     Cover the text and the screen must still be usable.
+   - In-play HUD controls (End Turn, Undo, Replay) stay icon-only — they are used dozens of
+     times a run and are learned by doing, not by reading.
+   - Still no sentences, no instructions, no explanations of rules, and no words carrying math
+     meaning. Wave design does the teaching (§9).
 2. **Numbers are the largest UI element.** Ball values and robot HP beat art for priority.
 3. **Every state change is animated and slow enough to follow.** Never resolve a turn instantly.
 4. **No fail-state shaming.** Losing returns cheerfully to the menu.

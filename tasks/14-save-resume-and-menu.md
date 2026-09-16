@@ -36,10 +36,11 @@ must work with placeholder screens if 16 isn't merged (switching `screen` to `'w
    - End of run: when playback finishes and `run.phase` is `won`/`lost` → `screen: 'won'`/`'lost'` and `clearRun`.
      A save found with phase `won`/`lost` on boot is not resumable and is cleared.
    - On boot the app opens on `menu` (unchanged); never auto-resumes.
-3. **Main menu** (React): big **▶ Continue** only when resumable; **New Run** (big ▶ when there is nothing to continue,
-   smaller otherwise); smaller **Puzzles** → existing level flow. Text-free glyphs (SVG, as task 11), all ≥ 60 pt.
-   Distinguish New Run from Continue and Puzzles by shape/icon, not words (e.g. ▶ with a robot vs ✚ vs a tile chip);
-   note the choice.
+3. **Main menu** (React): big **▶ *Keep Going*** only when resumable; **New Game** (big ▶ when there is nothing to
+   continue, smaller otherwise); smaller **Puzzles** → existing level flow. SVG glyphs (as task 11), all ≥ 60 pt.
+   Distinguish the three by shape/icon first (e.g. ▶ with a robot vs ✚ vs a tile chip); note the choice.
+   Each also carries a short label under its icon per GDD §11.1 (v0.5) — *Keep Going* / *New Game* / *Puzzles*.
+   The label repeats the icon and never replaces it: covered up, the menu must still be usable.
 4. **HUD in run mode:** wave shown as dots (reuse `LevelDots`; count = `waves.json` length, current = `waveIndex`)
    instead of "Wave N" text; ♥ base HP clamped at 0 for display. Level mode unchanged.
 5. **⌂ Home button** in a HUD corner, ≥ 60 pt, shown in both run and level mode during planning; hidden during
@@ -63,7 +64,7 @@ must work with placeholder screens if 16 isn't merged (switching `screen` to `'w
 - [ ] Reload at any point (planning, mid-playback, wave-cleared) resumes without lost progress
 - [ ] Won/lost runs are cleared; Continue disappears
 - [ ] ⌂ Home returns to the menu from a run or a puzzle
-- [ ] Text-free, ≥ 60 pt buttons, verified on the iPad preview
+- [ ] Icon-led buttons with short labels (GDD §11.1), ≥ 60 pt, verified on the iPad preview
 - [ ] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass
 
 ## Completion Notes
@@ -81,8 +82,9 @@ must work with placeholder screens if 16 isn't merged (switching `screen` to `'w
   the resume-into-overlay e2e lands with task 16)
 - [x] Won/lost runs are cleared; Continue disappears — Met (`finishPlayback` + boot check; e2e "a lost run is cleared")
 - [x] ⌂ Home returns to the menu from a run or a puzzle — Met (e2e)
-- [ ] Text-free, ≥ 60 pt buttons, verified on the iPad preview — **Pending human check.** All menu/HUD buttons are SVG
-  glyphs and e2e-measured ≥ 60 pt (`big-button` 260×150, `small-button` 140×100, HUD 96×68).
+- [ ] Icon-led buttons with short labels (GDD §11.1), ≥ 60 pt, verified on the iPad preview — **Pending human check.**
+  All menu/HUD buttons are SVG glyphs and e2e-measured ≥ 60 pt (`big-button` 260×180, `small-button` 160×124,
+  HUD 96×68). Menu buttons gained short labels under the icon (see the post-review fixes below).
 - [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass — Met
 
 **Deviations from spec:**
@@ -93,16 +95,19 @@ must work with placeholder screens if 16 isn't merged (switching `screen` to `'w
 - **Continue-after-Puzzles uses a memory copy, not a storage read.** `AppState.savedRun` mirrors the `run` storage key:
   every `mode: 'run'` dispatch updates both; a level-mode dispatch touches neither; it is nulled when a run ends.
   Reading storage from `runFlow.ts` would have meant exposing `storage`/`basePath` outside the store.
-- **Home's hide condition is `run.mode === 'run' && run.phase === 'waveCleared'` (plus playback).** Level mode's
-  `levelCleared` isn't included; task 11's overlay already paints over the whole HUD there.
+- **Home hides during playback only (revised after playtest).** It originally also hid in `waveCleared`, on the
+  assumption that task 16's overlay would be up with its own ▶. Task 16 isn't built, and nothing in `/game`
+  dispatches `nextWave`, so clearing wave 1 stranded the run: End Turn/Undo are off outside `planning` and no robots
+  remain to touch. See the post-review fixes below.
 - **⌂ Home hides in place (final review fix).** It was unmounted during playback, which slid the dots/♥/🪙 about 136 pt
   left at every End Turn and back at the end. It now stays in the row with `visibility: hidden`, `disabled`,
   `aria-hidden` and `tabIndex -1`.
 - **`display` is set from the new state for `newRun`/`nextWave` (final review fix).** Their spawn-only events carry no
   HUD events, so after a lost run the HUD kept showing ♥ 0 and the old 🪙 until playback finished. For `nextWave` the
   values are unchanged except `waveIndex`.
-- **Menu glyphs (req. 3):** Continue = plain ▶ `PlayIcon`; New Run = `RobotPlayIcon` (▶ with a robot head); Puzzles =
-  `TileChipIcon` (colour chip with "×"). New Run is the big standalone button when there is nothing to continue.
+- **Menu glyphs (req. 3):** Keep Going = plain ▶ `PlayIcon`; New Game = `RobotPlayIcon` (▶ with a robot head);
+  Puzzles = `TileChipIcon` (colour chip with "×"). New Game is the big standalone button when there is nothing to
+  continue. Each glyph now sits above a short label (below).
 - **Seed format:** `` `run:${Date.now()}:${random}` `` (`crypto.randomUUID()`, falling back to `Math.random`), made in
   `runFlow.ts`. The GDD doesn't specify a format.
 
@@ -115,6 +120,19 @@ must work with placeholder screens if 16 isn't merged (switching `screen` to `'w
 - `HudButtons.home: boolean` in `hudButtons.ts`; `HomeIcon` in `Hud.tsx`; `RobotPlayIcon`, `TileChipIcon` in `icons.tsx`.
 - e2e test ids: `menu-continue`, `menu-new-run`, `menu-puzzles` (replacing `menu-play`), `home`.
 - `loadState`/`loadScenario` stay storage-free and never touch `savedRun` (documented in TR §14).
+
+**Post-review fixes (after the human played the PR preview):**
+- **⌂ Home stays live in `waveCleared`** (`hudButtons.ts`). Clearing a non-final wave froze the run — every HUD button
+  was dead and the board was empty, so the only way out was a reload. `home` is now simply `idle`. Covered by a unit
+  test and an e2e (`⌂ Home still works on a cleared wave…`) that was confirmed to fail against the old condition.
+  Task 16 may revisit this once its overlay actually exists and offers ▶.
+  *This is a workaround, not the real fix:* a run still cannot advance past wave 1 until task 16 ships `nextWave`.
+- **Menu buttons carry short labels** (*Keep Going* / *New Game* / *Puzzles*). The icons alone did not say what they
+  did. This follows a GDD change — §11.1 pillar 1 now permits one- or two-word, grade-1-decodable labels on
+  *navigation* buttons, which must repeat what the icon already says; in-play HUD controls stay icon-only.
+  GDD bumped to v0.5; §10.4, §10.5 and §10.6 and task 16's spec updated to match.
+  New CSS: `.button-label` / `.button-label-small`; `big-button` and `small-button` became column flex and grew
+  (260×180 / 160×124) to fit the label.
 
 **Known issues / follow-up needed:**
 - On this branch alone, New Run still plays its spawn over the previous board (robots and tray tiles from the last
