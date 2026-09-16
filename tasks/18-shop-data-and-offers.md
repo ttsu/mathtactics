@@ -201,7 +201,7 @@ wave never has a shop (GDD §8.3).
 
 **Status:** Complete
 **Completed:** 2026-09-16
-**PR:** none (branch `cursor/18-shop-data-and-offers-8f5d` from `cursor/m3-spec-clarifications-8f5d`; no PR per request)
+**PR:** #33 · stacked on #32 (`cursor/m3-spec-clarifications-8f5d`)
 
 **Acceptance criteria:**
 - [x] `shop.json` ships prices, formulas and six per-wave tables with guarantees matching GDD §10.2 — Met
