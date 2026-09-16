@@ -28,11 +28,11 @@
     {
       "id": "wave-4",
       "spawns": [
-        { "turn": 1, "lane": "A", "robot": "basic", "hp": [10, 16] },
-        { "turn": 1, "lane": "B", "robot": "basic", "hp": [10, 16] },
-        { "turn": 6, "lane": "A", "robot": "basic", "hp": [12, 20] },
-        { "turn": 6, "lane": "C", "robot": "basic", "hp": [12, 20] },
-        { "turn": 11, "lane": "B", "robot": "basic", "hp": [14, 22] }
+        { "turn": 1, "lane": "A", "robot": "basic", "hp": [12, 14] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [12, 14] },
+        { "turn": 6, "lane": "A", "robot": "basic", "hp": [12, 14] },
+        { "turn": 6, "lane": "C", "robot": "basic", "hp": [12, 14] },
+        { "turn": 11, "lane": "B", "robot": "basic", "hp": [16, 16] }
       ]
     },
     {
@@ -60,9 +60,9 @@
         { "turn": 1, "lane": "A", "robot": "basic", "hp": [20, 30] },
         { "turn": 1, "lane": "B", "robot": "basic", "hp": [20, 30] },
         { "turn": 1, "lane": "C", "robot": "basic", "hp": [20, 30] },
-        { "turn": 8, "lane": "A", "robot": "basic", "hp": [30, 45] },
-        { "turn": 8, "lane": "B", "robot": "basic", "hp": [30, 45] },
-        { "turn": 8, "lane": "C", "robot": "basic", "hp": [30, 45] }
+        { "turn": 8, "lane": "A", "robot": "basic", "hp": [30, 38] },
+        { "turn": 8, "lane": "B", "robot": "basic", "hp": [30, 38] },
+        { "turn": 8, "lane": "C", "robot": "basic", "hp": [30, 38] }
       ]
     }
   ]

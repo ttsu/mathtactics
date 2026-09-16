@@ -25,10 +25,10 @@ careless run can now lose.
 | 1 | ~3 robots (HP 1–3), one at a time, one lane at a time | Moving the cannon; exact kills are automatic (ball value 1) |
 | 2 | ~3 robots (HP 4–10), one at a time | Placing tiles; addition; first shop after this |
 | 3 | 2 robots at once (HP 4–10), then 2 more (HP 5–12) | Lane choice; shop tradeoffs; a second cannon should be in reach |
-| 4 | Two lanes, then a third; HP ~10–22 | Using a second cannon; bigger numbers |
-| 5 | Two lanes; HP ~14–30 | Trimming a big number; subtraction as a tool |
-| 6 | Three lanes at once; HP ~16–34 | Everything at once |
-| 7 | Three lanes, then three more; HP ~20–45 | The whole kit, before M4's Boss |
+| 4 | Two lanes, then a third; HP 12–16 | Using a second cannon; bigger numbers |
+| 5 | Two lanes; HP 14–30 | Trimming a big number; subtraction as a tool |
+| 6 | Three lanes at once; HP 16–34 | Everything at once |
+| 7 | Three lanes, then three more; HP 20–38 | The whole kit, before M4's Boss |
 
 ## What to watch for
 

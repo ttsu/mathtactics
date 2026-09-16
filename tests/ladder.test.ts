@@ -91,7 +91,7 @@ describe('authored ladder waves 4–7 (task 21)', () => {
     ]);
     expect(data.robots).toEqual([{ id: 'basic', trait: { type: 'none' }, isBoss: false }]);
 
-    for (const wave of data.waves.waves) {
+    for (const [index, wave] of data.waves.waves.entries()) {
       expect(wave.spawns.length).toBeGreaterThanOrEqual(3);
       expect(wave.spawns.length).toBeLessThanOrEqual(6);
       expect(wave.spawns.every((spawn) => spawn.robot === 'basic')).toBe(true);
@@ -100,9 +100,11 @@ describe('authored ladder waves 4–7 (task 21)', () => {
         wave.spawns.map((spawn) => spawn.lane).filter((lane) => typeof lane === 'string'),
       );
       expect(letters.size).toBeLessThanOrEqual(3);
-      const turns = [...new Set(wave.spawns.map((spawn) => spawn.turn))].sort((a, b) => a - b);
-      for (let i = 1; i < turns.length; i++) {
-        expect(turns[i]! - turns[i - 1]!).toBeGreaterThanOrEqual(5);
+      if (index >= 3) {
+        const turns = [...new Set(wave.spawns.map((spawn) => spawn.turn))].sort((a, b) => a - b);
+        for (let i = 1; i < turns.length; i++) {
+          expect(turns[i]! - turns[i - 1]!).toBeGreaterThanOrEqual(5);
+        }
       }
     }
   });

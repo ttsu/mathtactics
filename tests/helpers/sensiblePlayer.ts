@@ -181,20 +181,48 @@ function returnBoardTiles(state: RunState, data: GameData): { state: RunState; c
   return { state: next, commands };
 }
 
-function maybeMoveCannon(state: RunState, data: GameData): { state: RunState; commands: Command[] } {
-  const reachable = lanes().some(
-    (lane) => state.board.cannons[lane] && frontRobotInLane(state, lane) !== null,
-  );
-  if (reachable) return { state, commands: [] };
+/** Cover threatened lanes with idle cannons; if none are covering anyone, park one
+ * on the front-most robot (task 21 sensible-player move rule). */
+function reassignCannons(state: RunState, data: GameData): { state: RunState; commands: Command[] } {
+  const commands: Command[] = [];
+  let next = state;
 
-  const target = frontmostRobotLane(state);
-  if (target === null || state.board.cannons[target]) return { state, commands: [] };
+  const threatened = lanes()
+    .map((lane) => {
+      const robot = frontRobotInLane(next, lane);
+      return robot ? { lane, col: robot.col! } : null;
+    })
+    .filter((row): row is { lane: Lane; col: Col } => row !== null)
+    .sort((a, b) => a.col - b.col || a.lane - b.lane);
 
-  const fromLane = lanes().find((lane) => state.board.cannons[lane]);
-  if (fromLane === undefined) return { state, commands: [] };
+  const idleCannons = () =>
+    lanes().filter((lane) => next.board.cannons[lane] && frontRobotInLane(next, lane) === null);
 
-  const cmd: Command = { type: 'moveCannon', fromLane, toLane: target };
-  return { state: applyOk(state, cmd, data), commands: [cmd] };
+  for (const row of threatened) {
+    if (next.board.cannons[row.lane]) continue;
+    const fromLane = idleCannons()[0];
+    if (fromLane === undefined) break;
+    const cmd: Command = { type: 'moveCannon', fromLane, toLane: row.lane };
+    next = applyOk(next, cmd, data);
+    commands.push(cmd);
+  }
+
+  if (commands.length === 0) {
+    const reachable = lanes().some(
+      (lane) => next.board.cannons[lane] && frontRobotInLane(next, lane) !== null,
+    );
+    const target = frontmostRobotLane(next);
+    if (!reachable && target !== null && !next.board.cannons[target]) {
+      const fromLane = lanes().find((lane) => next.board.cannons[lane]);
+      if (fromLane !== undefined) {
+        const cmd: Command = { type: 'moveCannon', fromLane, toLane: target };
+        next = applyOk(next, cmd, data);
+        commands.push(cmd);
+      }
+    }
+  }
+
+  return { state: next, commands };
 }
 
 function placeForArmedLanes(
@@ -240,7 +268,7 @@ function placeForArmedLanes(
 export function planningCommands(state: RunState, data: GameData): Command[] {
   if (state.phase !== 'planning') return [];
   const returned = returnBoardTiles(state, data);
-  const moved = maybeMoveCannon(returned.state, data);
+  const moved = reassignCannons(returned.state, data);
   const placed = placeForArmedLanes(moved.state, data);
   return [...returned.commands, ...moved.commands, ...placed.commands];
 }
@@ -272,18 +300,34 @@ export function nextShopChoice(state: RunState): ShopChoice {
   if (state.phase !== 'shop' || state.shop === null) return { kind: 'done' };
   const affordable = unboughtAffordable(state);
 
+  const tiles = affordable.filter((offer) => offer.kind === 'tile');
+  const affordableMul = tiles.some((offer) => offer.kind === 'tile' && offer.tileId.startsWith('mul:'));
   const cannon = affordable.find((offer) => offer.kind === 'cannon');
-  if (cannon && cannonCount(state) < 3) {
+  // Pick up a first ×N before a second cannon when both are on sale — otherwise
+  // cannon-first spends the wave-2 ×2 guarantee and wave 4–7 cannot 2-hit.
+  if (cannon && cannonCount(state) < 3 && (ownsMul(state) || !affordableMul)) {
     return { kind: 'buy', slot: cannon.slot };
   }
 
-  const tiles = affordable.filter((offer) => offer.kind === 'tile');
   if (tiles.length > 0) {
-    const pool =
-      !ownsMul(state) && tiles.some((offer) => offer.kind === 'tile' && offer.tileId.startsWith('mul:'))
-        ? tiles.filter((offer) => offer.kind === 'tile' && offer.tileId.startsWith('mul:'))
-        : tiles;
-    pool.sort((a, b) => a.price - b.price || a.slot.localeCompare(b.slot));
+    const wantMul = !ownsMul(state) && affordableMul;
+    const pool = wantMul
+      ? tiles.filter((offer) => offer.kind === 'tile' && offer.tileId.startsWith('mul:'))
+      : tiles;
+    pool.sort((a, b) => {
+      if (a.price !== b.price) return a.price - b.price;
+      const kindRank = (offer: ShopOffer) => {
+        if (offer.kind !== 'tile') return 9;
+        if (offer.tileId.startsWith('add:')) return 0;
+        if (offer.tileId.startsWith('mul:')) return 1;
+        return 2;
+      };
+      if (kindRank(a) !== kindRank(b)) return kindRank(a) - kindRank(b);
+      const nA = a.kind === 'tile' ? Number(a.tileId.split(':')[1]) : 0;
+      const nB = b.kind === 'tile' ? Number(b.tileId.split(':')[1]) : 0;
+      if (nA !== nB) return nB - nA;
+      return a.slot.localeCompare(b.slot);
+    });
     return { kind: 'buy', slot: pool[0]!.slot };
   }
 
