@@ -133,6 +133,60 @@ test('a lost run is cleared: Continue disappears after its playback finishes', a
   await expect(page.getByTestId('menu-continue')).toHaveCount(0);
 });
 
+// Regression: clearing a non-final wave left the run with every HUD button dead. End Turn and
+// Undo are correctly off outside `planning`, ⌂ Home was hidden for a wave-cleared overlay that
+// task 16 has not built yet, and no robots remain to touch — the run was unrecoverable without a
+// reload. Home must stay live in `waveCleared` until that overlay exists.
+test('⌂ Home still works on a cleared wave, so a run is never stranded in waveCleared', async ({
+  page,
+}) => {
+  await openMenu(page);
+  const yaml = [
+    'name: e2e wave cleared',
+    'mode: run',
+    'baseValue: 5',
+    'board:',
+    '  - ". . . . . . . ."',
+    '  - ". . . . . . . ."',
+    '  - "C R5 . . . . . ."',
+    '  - ". . . . . . . ."',
+    '  - ". . . . . . . ."',
+    'waves:',
+    '  - id: wave-1',
+    '    spawns:',
+    '      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }',
+    '  - id: wave-2',
+    '    spawns:',
+    '      - { turn: 1, lane: 0, robot: basic, hp: [4, 4] }',
+  ].join('\n');
+  await page.evaluate((text) => window.__GAME__!.loadScenario(text), yaml);
+  await page.evaluate(() => window.__GAME__!.dispatch({ type: 'endTurn' }));
+  await page.evaluate(() => window.__GAME__!.skipAnimation());
+  await waitIdle(page);
+
+  // The wave is cleared and the board is empty — nothing on it can be tapped.
+  const cleared = await getState(page);
+  expect(cleared?.phase).toBe('waveCleared');
+  expect(cleared?.board.robots.length).toBe(0);
+
+  // End Turn and Undo are legitimately off here, but Home must not be.
+  await expect(page.getByTestId('end-turn')).toBeDisabled();
+  await expect(page.getByTestId('home')).toBeEnabled();
+  await expectTouchTarget(page, 'home');
+  expect(
+    await page.evaluate(
+      () => getComputedStyle(document.querySelector('[data-testid="home"]')!).visibility,
+    ),
+  ).toBe('visible');
+
+  await page.getByTestId('home').click();
+  expect(await getScreen(page)).toBe('menu');
+  // And the cleared wave is resumable, so the run is not lost by going Home.
+  await expect(page.getByTestId('menu-continue')).toBeVisible();
+  await page.getByTestId('menu-continue').click();
+  expect((await getState(page))?.phase).toBe('waveCleared');
+});
+
 test('every menu and HUD button is at least 60pt in both dimensions', async ({ page }) => {
   await openMenu(page);
   await page.waitForTimeout(600);

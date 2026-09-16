@@ -74,21 +74,30 @@ describe('hudButtons', () => {
   });
 
   describe('home (task 14 req. 5)', () => {
-    it('hides Home while the run-mode wave-cleared overlay is up (phase waveCleared, idle)', () => {
+    // ⌂ Home is the only way out of `waveCleared` until task 16's overlay ships its ▶. Hiding it
+    // here stranded the player: the wave is dead so no robot can be tapped, End Turn/Undo are
+    // already off outside `planning`, and nothing else dispatches `nextWave`. Home stays shown in
+    // every idle phase; only playback hides it.
+    it('shows Home while a run sits in waveCleared (idle) — nothing else can leave that phase', () => {
       const run = { ...boardState(rows), mode: 'run' as const, phase: 'waveCleared' as const };
-      expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null }).home).toBe(false);
+      expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null }).home).toBe(true);
     });
 
-    it('shows Home for a level-mode waveCleared-shaped phase (never happens, but not the run condition)', () => {
-      // Level mode never reaches `waveCleared` in practice, but Home's condition is `mode ===
-      // 'run'` specifically, not the phase alone — documented via this direct check.
+    it('shows Home for a level-mode waveCleared-shaped phase too', () => {
       const run = { ...boardState(rows), mode: 'level' as const, phase: 'waveCleared' as const };
       expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null }).home).toBe(true);
     });
 
-    it('shows Home again once the wave-cleared overlay is gone and phase moves back to planning', () => {
+    it('shows Home in planning', () => {
       const run = { ...boardState(rows), mode: 'run' as const, phase: 'planning' as const };
       expect(hudButtons({ run, playback: IDLE_PLAYBACK, lastTurn: null }).home).toBe(true);
+    });
+
+    it('hides Home only while playback is active, whatever the phase', () => {
+      const run = { ...boardState(rows), mode: 'run' as const, phase: 'waveCleared' as const };
+      expect(hudButtons({ run, playback: { status: 'playing', events, cursor: 0 }, lastTurn: null }).home).toBe(
+        false,
+      );
     });
   });
 });

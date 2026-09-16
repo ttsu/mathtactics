@@ -6,11 +6,14 @@ export interface HudButtons {
   endTurn: boolean;
   undo: boolean;
   replay: boolean;
-  /** ⌂ Home: hidden during playback and while the run-mode wave-cleared overlay is up — the one
-   * moment, absent a shop, where a run is otherwise idle but not actionable (task 14 req. 5).
-   * The HUD hides it in place (`visibility: hidden`, disabled) so the row never shifts. Task 16's
-   * own `showWaveCleared` names the same condition for its overlay; kept local here rather than
-   * shared, per the task boundary. */
+  /** ⌂ Home: shown in every idle phase, hidden only during playback so a tap can't jump away from
+   * an animation still in flight (task 14 req. 5). The HUD hides it in place (`visibility:
+   * hidden`, disabled) so the row never shifts.
+   *
+   * It used to be hidden in `waveCleared` too, on the assumption that task 16's overlay would be
+   * up and offering its own ▶. Task 16 isn't built yet, and nothing else in `/game` dispatches
+   * `nextWave` — so hiding Home stranded the player on a cleared wave with no live button and no
+   * robots left to touch. Home stays available; task 16 may revisit this once its overlay exists. */
   home: boolean;
 }
 
@@ -18,12 +21,10 @@ export function hudButtons(state: Pick<AppState, 'run' | 'playback' | 'lastTurn'
   const { run } = state;
   const idle = !isPlaybackActive(state);
   const planning = run !== null && run.phase === 'planning' && idle;
-  const waveClearedOverlayUp =
-    run !== null && run.mode === 'run' && run.phase === 'waveCleared' && idle;
   return {
     endTurn: planning,
     undo: planning && run.undo.length > 0,
     replay: canReplay(state),
-    home: idle && !waveClearedOverlayUp,
+    home: idle,
   };
 }
