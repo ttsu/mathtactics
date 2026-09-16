@@ -404,21 +404,26 @@ commented at the boundary:
 ```
 
 A guarantee is `{ tileId }` or `{ kind, n? }`. Prices: `tilePrice` = `prices[priceCategory]`,
-`cannonPrice` = `cannon.base + cannon.step × (cannonsOwned − 1)`, `upgradePrice` =
+`cannonPrice` = `cannon.base + cannon.step × (cannonsOwned − 1)` where `cannonsOwned` is
+`board.cannons.filter(Boolean).length`, `upgradePrice` =
 `upgrade.base + upgrade.step × upgradesBought`.
 
-Validation: exactly one `shops` entry per non-final wave (the `afterWave` set is exactly
-`1 … waves.length − 1`, no gaps or duplicates — so adding waves without their tables fails loudly);
+Validation: `afterWave` values are unique; `{1 … waves.length − 1} ⊆ afterWave set` so every
+non-final wave has a table (adding waves 8–10 without their tables fails loudly). Extra tables
+for waves that do not exist yet are allowed (M3 ships six shops before waves 4–7 exist).
 `prices` covers every `priceCategory` in `tiles.json`; tables non-empty with positive integer
 weights; `n` ranges inside the kind's legal range (`add`/`sub` 1–10, `mul` 2–10) and every id in
 range present in `tiles.json`; `guarantees.length ≤ tileSlots`; every guarantee satisfiable by its
 own table.
 
 **`rollShop` draw order is normative** (saves and scenarios must reproduce): guaranteed tile slots
-left to right (`pickWeighted` over the table entries matching the guarantee, then `nextInt` over
-that entry's `n` range; a `{ tileId }` guarantee consumes no randomness), then the remaining tile
-slots left to right from the whole table, then the cannon and upgrade offers, which are computed
-rather than drawn. Only the `shop` stream is ever touched.
+left to right, then remaining tile slots left to right from the whole table, then the cannon and
+upgrade offers, which are computed rather than drawn. Only the `shop` stream is ever touched.
+Guarantee matching: `{ tileId }` emits that tile and consumes no randomness; `{ kind }`
+`pickWeighted`s over table entries of that kind, then `nextInt` over the entry's full `n` range;
+`{ kind, n: [lo, hi] }` `pickWeighted`s over overlapping entries of that kind, then `nextInt` over
+the **intersection** of the entry's range and `[lo, hi]`. Every offer starts `bought: false`. An
+unknown `afterWave` throws.
 
 ---
 
@@ -631,9 +636,12 @@ Optional keys: `seed`, `baseHp`, `tray` (list of tile ids), `waiting` (off-board
 shipped waves for that scenario, so rule scenarios don't break when ladder content is tuned).
 Commands gain `nextWave` and `{ newRun: <seed> }`.
 
-M3 (task 19) adds `phase: shop`, an inline `shop:` offers block (pinning exact offers so a shop scenario
-doesn't depend on the RNG), `cannons`, `upgradesBought`, the `openShop` and `{ buy: tile:0 }` commands,
-and `expectState.shop`.
+M3 (task 19) adds `phase: shop` (a `phase: shop` scenario without `shop:` is an error), an inline `shop:`
+list of `ShopOffer` objects (installed as `RunState.shop = { afterWave: waveIndex + 1, offers }`, pinning
+exact offers so a shop scenario doesn't depend on the RNG), `cannons` (length-5 boolean array overriding
+`board.cannons`), `upgradesBought`, the string command `openShop`, the shorthand `{ buy: "tile:0" }` /
+`{ buy: "cannon" }` / `{ buy: "upgrade" }` (and the full `{ type: 'buyOffer', slot }` object), and
+`expectState.shop`.
 
 The parser lives in `/sim/scenario` (pure); the CLI in `/scripts/sim.ts`.
 

@@ -30,6 +30,10 @@ case against 100 base HP). That is intended for Playtest 3.
    (CLAUDE.md rule 5). "No change, because the notes don't justify a specific number" is an acceptable and
    precedented outcome — do not invent difficulty.
 
+   **If H2 has not been written yet** (`playtests/02.md` missing, and the notes sections of
+   `playtests/02-checklist.md` empty): do **not** retune waves 1–3. Record "no change — Playtest 2 notes not
+   yet written" and proceed with GDD draft numbers for waves 4–7. Do not invent a playtest.
+
 2. **Author waves 4–7** in `waves.json`, all `robot: "basic"`. Design intent comes from GDD §10.2; because traits
    are M4, each of these waves ships as the **untraited** version of its ladder rung and M4 swaps in the trait
    template (GDD v0.6 §0).
@@ -71,6 +75,13 @@ case against 100 base HP). That is intended for Playtest 3.
      entering that wave (the M3 equivalent of task 17's reachability test);
    - record in Completion Notes: turns per wave (min/median/max), full-run End Turns, coins earned and spent per
      shop, purchases made, and final base HP — the numbers the next tuning pass will want.
+
+   **Delete or invert** task 17's `unlosable-M2 decision` test (worst-case full-run detonation total < 100).
+   That claim is false for a 7-wave run and is replaced by the End-Turn-only-loses assertion above. Wave-2/3
+   reachability tests that assume M2 *reward tiles* also go — they are replaced by the shop-aware ≤ 2-hit
+   check. Task 18 already ships `shop.json` tables for afterWave 1–6; adding waves 4–7 makes the coverage
+   check (`{1 … waves.length − 1} ⊆ afterWave`) pass for six shops without new tables. Do not retune shop
+   prices unless requirement 4's income edge forces it.
 
 4. **Note the income/price edge** flagged when M3 was specced: wave-clear income (3) alone cannot buy the cheapest
    tile (4). Kills always pay, so requirement 3's "at least one affordable item" assertion should hold regardless —

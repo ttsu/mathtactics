@@ -48,10 +48,12 @@ requires phase `shop` instead of `waveCleared`.
    already use inline `waves:` fixtures (task 16), so retuning is safe — but the reward assertions in them go.
 
 2. **`openShop`** (`/sim/commands/openShop.ts`): requires phase `waveCleared` (else `wrong_phase`). Calls
-   `rollShop(waveIndex + 1, state, data)`, stores `shop: { afterWave, offers }`, sets phase `shop`, advances
-   `rng.shop`, and emits **no events** (like a planning command — there is nothing for the board to play).
-   Offers are rolled **once, here**, so a reopened app shows the same offers with the same slots already bought
-   (GDD §8.5; no reroll-by-reload).
+   `rollShop(waveIndex + 1, state, data)` — `afterWave` is 1-based (`waveIndex + 1`); comment the conversion.
+   Stores `shop: { afterWave, offers }`, sets phase `shop`, writes the returned `rng` back onto `state.rng`
+   (only the `shop` stream has changed), and emits **no events** (like a planning command — there is nothing
+   for the board to play). Offers are rolled **once, here**, so a reopened app shows the same offers with the
+   same slots already bought (GDD §8.5; no reroll-by-reload). Add `{ type: 'openShop' }` to the `Command`
+   union; remove `{ type: 'leaveShop' }`.
 
 3. **`buyOffer { slot }`** (`/sim/commands/buyOffer.ts`): requires phase `shop`. Errors:
    - `offer_unavailable` — unknown slot, slot already `bought`, or the cannon slot with `available: false`.
@@ -65,16 +67,23 @@ requires phase `shop` instead of `waveCleared`.
 
    | Slot | Effect | Effect event |
    |---|---|---|
-   | `tile:N` | a new `TilePiece` appended to the end of `tray` (GDD §8.6), id from `nextIds.piece` | `TilesGranted { tiles: [{ pieceId, tileId }] }` |
-   | `cannon` | `cannons[lane] = true` for the **topmost empty** slot (lowest lane index, GDD §8.6/§18.1) | `CannonPlaced { lane }` |
+   | `tile:N` | a new `TilePiece` appended to the end of `tray` (GDD §8.6), id from `allocatePieceId` (`piece:${nextIds.piece}`) and also inserted into `pieces` | `TilesGranted { tiles: [{ pieceId, tileId }] }` |
+   | `cannon` | `board.cannons[lane] = true` for the **topmost empty** slot (lowest lane index with `false`, GDD §8.6/§18.1) | `CannonPlaced { lane }` |
    | `upgrade` | `cannonBaseValue += 1`, `upgradesBought += 1`, applies to every cannon at once (GDD §5.1) | `BaseValueChanged { from, to }` |
+
+   Add `OfferBought`, `CannonPlaced`, and `BaseValueChanged` to the `GameEvent` union (TR §7) — they are
+   sketched in the TR but missing from `sim/core/types.ts`. `CoinsChanged.reason: 'purchase'` already exists.
+   Event `step` starts at 0 per purchase; all three events share `group: "shop"`.
 
    A bought cannon never enters the tray. Buying a cannon when every slot is full is impossible (requirement 3's
    `available: false` covers it) — assert it, don't handle it silently.
 
-5. **`nextWave` now leaves the shop**: requires phase `shop`, clears `shop: null`, and otherwise behaves exactly as
+5. **`nextWave` now leaves the shop**: requires phase `shop` (change the guard in `applyCommand`; today it
+   requires `waveCleared`), clears `shop: null` inside `buildNextWave`, and otherwise behaves exactly as
    today (`waveIndex += 1`, roll the wave from the `wave` stream, `turn = 1`, spawn turn 1, phase `planning`,
-   `undo: []`, `lastTurnEvents: []`). Unbought offers vanish (GDD §8.3); coins carry over.
+   `undo: []`, `lastTurnEvents: []`). Unbought offers vanish (GDD §8.3); coins, tray, pieces, cannons,
+   `cannonBaseValue`, `upgradesBought`, `exactKills`, and `baseHp` carry over. The last wave never reaches
+   `waveCleared` (it goes to `won`), so `openShop`/`nextWave` are never called after it.
 
 6. **Undo never reverts a purchase** (GDD §4.3): `undo` is refused outside phase `planning`, and `buyOffer` pushes
    nothing onto `undo`. Add a test — this is a rule, not an accident of the current guard.
@@ -85,9 +94,12 @@ requires phase `shop` instead of `waveCleared`.
 8. **Store wiring** (`/game/state`):
    - **A dispatch whose result phase is `shop` never starts playback.** `buyOffer` returns events for tests and
      scenarios, but there is no board animation for a purchase and the board is behind a modal screen — so the
-     store commits `display` from the new run immediately, exactly as it already does for `newRun`/`nextWave`
-     (`playsBack = result.events.length > 0 && result.state.phase !== 'shop'`). `lastTurnEvents` is untouched by a
-     purchase, so the Replay snapshot survives a shop visit.
+     store commits `display` from the new run immediately, exactly as it already does for `newRun`/`nextWave`.
+     In `store.ts` `dispatch`, the current `if (result.events.length > 0)` branch starts playback; change it to
+     also skip when `result.state.phase === 'shop'` (and still update `display` from the new run, and **keep**
+     the existing `lastTurn` snapshot — a purchase must not clear Replay). `openShop` already takes the
+     no-events branch. `lastTurnEvents` on `RunState` is untouched by a purchase, so the Replay snapshot
+     survives a shop visit.
    - **`/game/state/shopFlow.ts`** (framework-free, unit-tested, mirroring `waveFlow.ts`): `openShopScreen(store)`
      (guard phase `waveCleared` → dispatch `openShop` → `setScreen('shop')`), `buyOffer(store, slot)`,
      `leaveShopToNextWave(store)` (guard phase `shop` → dispatch `nextWave` → `setScreen('game')`), and
@@ -107,8 +119,11 @@ requires phase `shop` instead of `waveCleared`.
    lesson: a fresh `[]` from a Zustand selector loops React forever).
 
 10. **A placeholder `ShopScreen`** so `main` is never stranded: wallet, the offer list as plain text rows with a
-    buy button each, and a big ▶ *Next wave*. Task 20 replaces it wholesale. Without this, clearing a wave lands in
-    phase `shop` with nothing rendered — the exact stranding bug tasks 14 and 16 each hit once.
+    buy button each (`data-testid="shop-offer-<slot>"`, e.g. `shop-offer-tile:0`), and a big ▶ *Next wave*
+    (`data-testid="shop-next"`, label *Next wave* per GDD §11.1). Render it from `App.tsx` when
+    `screen === 'shop'`. Task 20 replaces it wholesale. Without this, clearing a wave lands in phase `shop`
+    with nothing rendered — the exact stranding bug tasks 14 and 16 each hit once. Do **not** implement
+    `shopNew`, NEW stickers, or `addSeenMany` — those are task 20.
 
 ## Tests
 
@@ -121,9 +136,23 @@ requires phase `shop` instead of `waveCleared`.
   `nextWave`, then `endTurn` and assert `BallFired.value`), `insufficient-coins-expect-error`,
   `already-bought-expect-error`, `cannon-offer-unavailable-at-max`, `unbought-offers-vanish-on-next-wave`,
   `purchase-does-not-advance-the-wave-stream` (same wave rolled with and without a purchase → identical spawns).
-  Extend the scenario parser (TR §12) with `phase: shop`, an inline `shop:` offers block (so a scenario can pin
-  exact offers without depending on RNG), `cannons`, `upgradesBought`, the `openShop` / `{ buy: tile:0 }` commands,
-  and `expectState.shop`.
+  Extend the scenario parser (TR §12). Grammar, so task 19 and the scenarios agree:
+
+  - `phase: shop` (and still `planning` / `waveCleared` / etc. when needed). Default remains `planning` for a
+    `board` scenario.
+  - `shop:` — an inline list of `ShopOffer` objects (the TR §4 discriminated union). When present, installed
+    as `RunState.shop = { afterWave: waveIndex + 1, offers }` so a scenario can pin exact offers without RNG.
+    A `phase: shop` scenario without `shop:` is an error.
+  - `cannons:` — length-5 boolean array, overrides `board.cannons` (so "topmost empty slot" and "at max" are
+    pin-able without encoding five `C` tokens).
+  - `upgradesBought:` — integer, default 0.
+  - Commands: string `'openShop'`; shorthand `{ buy: "tile:0" }` / `{ buy: "cannon" }` / `{ buy: "upgrade" }`
+    (slot is a `ShopSlotId` string). Full `{ type: 'buyOffer', slot }` objects also parse.
+  - `expectState.shop` — partial match, same helper as the rest of `expectState`.
+
+  A typical shop scenario starts `phase: shop` with a pinned `shop:` block and a `buy` command — it never
+  calls `openShop`. The `purchase-does-not-advance-the-wave-stream` scenario *does* call `openShop` from
+  `waveCleared` so it exercises the roll.
 - Store/unit: a `buyOffer` dispatch does not start playback and updates `display.coins` at once; `shopFlow` guards;
   `isResumable`/`continueRun` for a shop-phase save; a schema-version-2 save is discarded.
 - e2e (WebKit iPad): clear a non-final wave (inline `waves:` fixture, as task 16 established) → overlay ▶ → shop
