@@ -184,7 +184,7 @@ test('Go button is green, labelled, has a play icon, and is at least 60pt', asyn
   });
   // `#43a047` → rgb(67, 160, 71)
   expect(painted.color).toBe('rgb(67, 160, 71)');
-  expect(parseFloat(painted.delay)).toBe(30);
+  expect(parseFloat(painted.delay)).toBe(10);
 });
 
 test('web shell metas and manifest are present, with relative start_url and scope', async ({

@@ -128,7 +128,7 @@ export function fakeDangerSettings() {
 export function fakeHudSettings() {
   return {
     goColor: '#43a047',
-    goNudgeIdleMs: 30000,
+    goNudgeIdleMs: 10000,
     goNudgeWiggleMs: 2400,
     goNudgeWiggleDeg: 8,
   };

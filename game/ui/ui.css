@@ -55,7 +55,7 @@
 }
 
 .hud-button-go.is-planning:not(:disabled) {
-  animation: go-nudge var(--go-nudge-wiggle-ms, 2400ms) ease-in-out var(--go-nudge-idle-ms, 30000ms)
+  animation: go-nudge var(--go-nudge-wiggle-ms, 2400ms) ease-in-out var(--go-nudge-idle-ms, 10000ms)
     infinite;
 }
 

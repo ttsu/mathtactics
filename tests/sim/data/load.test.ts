@@ -171,9 +171,9 @@ describe('presentation.json hud Go nudge', () => {
     expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
   });
 
-  it('ships a 30s idle before the Go wiggle', () => {
+  it('ships a 10s idle before the Go wiggle', () => {
     const data = parseGameData(loadRawGameData());
-    expect(data.presentation.hud.goNudgeIdleMs).toBe(30000);
+    expect(data.presentation.hud.goNudgeIdleMs).toBe(10000);
     expect(data.presentation.hud.goColor).toMatch(/^#/);
   });
 });
