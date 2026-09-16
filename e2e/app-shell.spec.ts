@@ -130,7 +130,7 @@ test.describe('iOS frame backdrop', () => {
       width: 1600,
       height: canvas.height,
     });
-    await expect(backdrop).toHaveCSS('background-image', /linear-gradient/);
+    await expect(backdrop).toHaveCSS('background-color', 'rgb(47, 62, 87)');
   });
 
   test('stays hidden when the canvas already fills the viewport width', async ({ page }) => {

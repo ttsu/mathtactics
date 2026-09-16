@@ -7,10 +7,7 @@ import { cellToClient, createBoardGame, designToClient } from './board';
 import { safeStorage } from './safeStorage';
 import { gameData } from './state/gameData';
 import { getAudioContext, installAudioUnlock } from './state/audio';
-import {
-  frameBackdropGradient,
-  frameBackdropPlacement,
-} from './state/frameBackdrop';
+import { FRAME_BACKDROP_COLOR, frameBackdropPlacement } from './state/frameBackdrop';
 import { DESIGN_HEIGHT, DESIGN_WIDTH, placementOverCanvas } from './state/designSpace';
 import { isIOS } from './state/platform';
 import { createAppStore } from './state/store';
@@ -47,7 +44,7 @@ function placeFrameBackdrop(canvas: HTMLCanvasElement): void {
   frameBackdrop.style.display = 'block';
   frameBackdrop.style.top = `${placement.top}px`;
   frameBackdrop.style.height = `${placement.height}px`;
-  frameBackdrop.style.background = frameBackdropGradient(placement);
+  frameBackdrop.style.background = FRAME_BACKDROP_COLOR;
 }
 
 function placeUiRoot(canvas: HTMLCanvasElement): void {

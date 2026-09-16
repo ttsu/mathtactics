@@ -1,20 +1,9 @@
-import { DESIGN_HEIGHT, HUD_BAR } from './designSpace';
-
-/** Shell colours for the full-width iOS letterbox fill (matches HUD bar and Phaser clear colour). */
-export const FRAME_BACKDROP = {
-  hud: '#2f3e57',
-  board: '#fbf7ee',
-} as const;
+/** Shell colour for the full-width iOS letterbox fill (HUD bar, main menu, end screens). */
+export const FRAME_BACKDROP_COLOR = '#2f3e57';
 
 export interface FrameBackdropPlacement {
   readonly top: number;
   readonly height: number;
-  /** Where the HUD band ends as a percentage of backdrop height. */
-  readonly hudStopPercent: number;
-}
-
-export function hudBandPercent(): number {
-  return (HUD_BAR.height / DESIGN_HEIGHT) * 100;
 }
 
 /**
@@ -29,12 +18,5 @@ export function frameBackdropPlacement(
   return {
     top: canvas.top,
     height: canvas.height,
-    hudStopPercent: hudBandPercent(),
   };
-}
-
-export function frameBackdropGradient(placement: FrameBackdropPlacement): string {
-  const { hud, board } = FRAME_BACKDROP;
-  const stop = placement.hudStopPercent;
-  return `linear-gradient(to bottom, ${hud} ${stop}%, ${board} ${stop}%)`;
 }
