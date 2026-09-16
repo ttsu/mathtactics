@@ -34,7 +34,7 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
     ],
     robots: robots ?? [{ id: 'basic', trait: { type: 'none' }, isBoss: false }],
     economy: {
-      schemaVersion: 2,
+      schemaVersion: 3,
       baseHp: 100,
       startCoins: 0,
       startCannonLane: 2,
@@ -78,12 +78,11 @@ describe('robots.json schema', () => {
 });
 
 describe('waves.json schema', () => {
-  it('accepts a wave with fixed lanes, letters and a reward before the last wave', () => {
+  it('accepts a wave with fixed lanes and letters before the last wave', () => {
     const data = parseGameData(
       validRaw([
         waveDef({
           spawns: [spawnDef({ lane: 'A' }), spawnDef({ turn: 3, lane: 4, hp: [5, 5] })],
-          reward: { tiles: ['add:1'] },
         }),
         waveDef({ id: 'wave-2' }),
       ]),
@@ -94,7 +93,6 @@ describe('waves.json schema', () => {
       robot: 'basic',
       hp: [5, 5],
     });
-    expect(data.waves.waves[0]?.reward).toEqual({ tiles: ['add:1'] });
   });
 
   it('rejects an empty wave list', () => {
@@ -143,19 +141,12 @@ describe('waves.json schema', () => {
     );
   });
 
-  it('rejects an unknown reward tile id', () => {
+  it('rejects a reward key (wave rewards were removed in M3)', () => {
     const raw = validRaw([
-      waveDef({ reward: { tiles: ['add:1', 'mul:7'] } }),
+      waveDef({ reward: { tiles: ['add:1'] } }),
       waveDef({ id: 'wave-2' }),
     ]);
-    expect(() => parseGameData(raw)).toThrow(
-      /^waves\.json: waves\[0\]\.reward\.tiles\[1\]: unknown tile id "mul:7"/,
-    );
-  });
-
-  it('rejects a reward on the last wave', () => {
-    const raw = validRaw([waveDef(), waveDef({ id: 'wave-2', reward: { tiles: ['add:1'] } })]);
-    expect(() => parseGameData(raw)).toThrow(/^waves\.json: waves\[1\]\.reward: the last wave/);
+    expect(() => parseGameData(raw)).toThrow(/^waves\.json: waves\[0\]:/);
   });
 
   it('rejects more lane letters than lanes not fixed in the wave', () => {
@@ -201,8 +192,6 @@ describe('draft ladder content (task 12)', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.robots).toEqual([{ id: 'basic', trait: { type: 'none' }, isBoss: false }]);
     expect(data.waves.waves.map((wave) => wave.id)).toEqual(['wave-1', 'wave-2', 'wave-3']);
-    expect(data.waves.waves[0]?.reward?.tiles).toEqual(['add:1', 'add:2', 'add:3']);
-    expect(data.waves.waves[1]?.reward?.tiles).toEqual(['mul:2', 'add:4']);
-    expect(data.waves.waves[2]?.reward).toBeUndefined();
+    expect(data.waves.waves.every((wave) => !('reward' in wave))).toBe(true);
   });
 });

@@ -25,7 +25,7 @@ describe('applyCommand — wrong_phase', () => {
       { type: 'undo' },
       { type: 'endTurn' },
       { type: 'buyOffer', slot: 'cannon' },
-      { type: 'leaveShop' },
+      { type: 'openShop' },
     ];
     for (const cmd of commands) {
       expect(applyCommand(null, cmd, data)).toEqual({ ok: false, error: 'wrong_phase' });
@@ -42,9 +42,9 @@ describe('applyCommand — wrong_phase', () => {
     expect(result).toEqual({ ok: false, error: 'wrong_phase' });
   });
 
-  it('rejects buyOffer, leaveShop even during planning (not implemented until M3)', () => {
+  it('rejects buyOffer and openShop during planning', () => {
     const state = fakeRunState({ phase: 'planning' });
-    const commands: Command[] = [{ type: 'buyOffer', slot: 'cannon' }, { type: 'leaveShop' }];
+    const commands: Command[] = [{ type: 'buyOffer', slot: 'cannon' }, { type: 'openShop' }];
     for (const cmd of commands) {
       expect(applyCommand(state, cmd, data)).toEqual({ ok: false, error: 'wrong_phase' });
     }

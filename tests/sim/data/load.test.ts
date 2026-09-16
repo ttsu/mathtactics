@@ -132,7 +132,7 @@ describe('parseGameData on the real /data directory', () => {
   it('matches the economy values from the task spec', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.economy).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       baseHp: 100,
       startCoins: 0,
       startCannonLane: 2,

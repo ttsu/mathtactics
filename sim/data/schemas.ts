@@ -286,7 +286,7 @@ const PresentationFileSchema = z.object({
   screens: z.object({
     /** How long a screen's celebration art and big button take to pop in. */
     popInMs: ms(),
-    /** Delay between each wave-cleared reward tile's pop-in (task 16 req. 5). */
+    /** Delay between each wave-cleared wallet bonus pop-in (task 16; reused in task 19). */
     rewardStaggerMs: ms(),
     /** Delay between each exact-kill icon's pop-in on the win/lose screens (task 16 req. 5). */
     iconStaggerMs: ms(),
@@ -619,8 +619,6 @@ const WaveDefSchema = z
   .strictObject({
     id: z.string().min(1),
     spawns: z.array(WaveSpawnSchema).min(1),
-    /** M2 stand-in for the shop (GDD §10.5): tiles appended to the tray when this wave clears. */
-    reward: z.strictObject({ tiles: z.array(TileIdRefSchema) }).optional(),
   })
   .superRefine((wave, ctx) => {
     if (!wave.spawns.some((spawn) => spawn.turn === 1)) {
@@ -652,10 +650,9 @@ export type WaveDef = z.infer<typeof WaveDefSchema>;
 
 /** Exported for the scenario runner's `waves:` override (TR §12, task 13 requirement 5): an
  * inline `waves.json`-shaped array replacing `data.waves.waves` for one scenario, structurally
- * validated the same way a real `waves.json` is (per-wave rules, and "the last wave has no
- * reward"). Cross-file checks against `robots.json`/`tiles.json` ids are not repeated here —
- * scenario waves reference the real shipped `robots`/`tiles`, and an unknown id surfaces as its
- * own clear runtime error where it's actually used (`rollWave`/`spawn`/the reward grant). */
+ * validated the same way a real `waves.json` is. Cross-file checks against `robots.json` ids are
+ * not repeated here — scenario waves reference the real shipped `robots`, and an unknown id
+ * surfaces as its own clear runtime error where it's actually used (`rollWave`/`spawn`). */
 export const WavesFileSchema = z.strictObject({
   waves: z
     .array(WaveDefSchema)
@@ -672,14 +669,6 @@ export const WavesFileSchema = z.strictObject({
         }
         seen.add(wave.id);
       });
-      const lastIndex = waves.length - 1;
-      if (waves[lastIndex]?.reward !== undefined) {
-        ctx.addIssue({
-          code: 'custom',
-          path: [lastIndex, 'reward'],
-          message: 'the last wave cannot have a reward (the run is won)',
-        });
-      }
     }),
 });
 
@@ -707,15 +696,6 @@ export const GameDataSchema = z
             code: 'custom',
             path: ['waves', 'waves', waveIndex, 'spawns', spawnIndex, 'robot'],
             message: `unknown robot id "${spawn.robot}"`,
-          });
-        }
-      });
-      wave.reward?.tiles.forEach((tileId, tileIndex) => {
-        if (!tileIds.has(tileId)) {
-          ctx.addIssue({
-            code: 'custom',
-            path: ['waves', 'waves', waveIndex, 'reward', 'tiles', tileIndex],
-            message: `unknown tile id "${tileId}"`,
           });
         }
       });

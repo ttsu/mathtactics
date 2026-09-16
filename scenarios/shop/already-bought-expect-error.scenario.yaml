@@ -1,0 +1,20 @@
+# GDD §8.6: one purchase per slot per visit.
+name: buying an already-bought slot is offer_unavailable
+mode: run
+phase: shop
+baseValue: 1
+coins: 20
+board:
+  - "C . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+shop:
+  - { slot: "tile:0", kind: tile, tileId: "add:5", price: 4, bought: false }
+  - { slot: cannon, kind: cannon, price: 10, bought: false, available: true }
+  - { slot: upgrade, kind: upgrade, price: 12, bought: false, fromValue: 1, toValue: 2 }
+commands:
+  - { buy: "tile:0" }
+  - { buy: "tile:0" }
+expectError: offer_unavailable

@@ -11,7 +11,7 @@ export function fakeDragSettings() {
   };
 }
 
-/** The `presentation.json` `screens` block (task 11; task 16 adds the reward/icon staggers and
+/** The `presentation.json` `screens` block (task 11; task 16 adds the wallet/icon staggers and
  * the lose screen's dance timing) for hand-built fake `GameData` fixtures. */
 export function fakeScreenSettings() {
   return {

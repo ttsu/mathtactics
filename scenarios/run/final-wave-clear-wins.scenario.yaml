@@ -1,6 +1,6 @@
 # GDD §10.1, §10.6; TR §6: clearing the last wave in the (scenario's own) wave list wins the run
-# instead of granting a reward — no shop/reward slot after the final wave.
-name: the final wave clear wins the run, with no TilesGranted
+# — no shop after the final wave.
+name: the final wave clear wins the run, with no shop
 mode: run
 baseValue: 5
 board:

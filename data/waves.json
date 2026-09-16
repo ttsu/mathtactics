@@ -6,8 +6,7 @@
         { "turn": 1, "lane": "A", "robot": "basic", "hp": [1, 3] },
         { "turn": 4, "lane": "B", "robot": "basic", "hp": [1, 3] },
         { "turn": 7, "lane": "C", "robot": "basic", "hp": [1, 3] }
-      ],
-      "reward": { "tiles": ["add:1", "add:2", "add:3"] }
+      ]
     },
     {
       "id": "wave-2",
@@ -15,8 +14,7 @@
         { "turn": 1, "lane": "A", "robot": "basic", "hp": [4, 10] },
         { "turn": 5, "lane": "B", "robot": "basic", "hp": [4, 10] },
         { "turn": 9, "lane": "C", "robot": "basic", "hp": [4, 10] }
-      ],
-      "reward": { "tiles": ["mul:2", "add:4"] }
+      ]
     },
     {
       "id": "wave-3",

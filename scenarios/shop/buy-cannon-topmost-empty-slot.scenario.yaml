@@ -1,0 +1,27 @@
+# GDD §8.6 / §18.1: a bought cannon fills the topmost empty slot (lowest lane index with false).
+name: buying a cannon fills the topmost empty slot
+mode: run
+phase: shop
+baseValue: 1
+coins: 20
+cannons: [true, false, true, false, false]
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+shop:
+  - { slot: "tile:0", kind: tile, tileId: "add:1", price: 4, bought: false }
+  - { slot: cannon, kind: cannon, price: 15, bought: false, available: true }
+  - { slot: upgrade, kind: upgrade, price: 12, bought: false, fromValue: 1, toValue: 2 }
+commands:
+  - { buy: cannon }
+expectEvents:
+  - { type: OfferBought, slot: cannon, kind: cannon, price: 15 }
+  - { type: CannonPlaced, lane: 1 }
+  - { type: CoinsChanged, delta: -15, total: 5, reason: purchase }
+expectState:
+  coins: 5
+  board:
+    cannons: [true, true, true, false, false]

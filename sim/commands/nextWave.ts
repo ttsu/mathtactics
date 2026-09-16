@@ -1,8 +1,9 @@
-// `nextWave` (GDD §4 step 5, §10.5, TR §5/§6): starts the wave after the one that just cleared.
+// `nextWave` (GDD §4 step 5, §8.3, TR §5/§6): leaves the shop and starts the next wave.
 // Pure, mirrors `newRun.ts`'s shape but carries the run forward instead of building one from
-// scratch — board tiles, tray, cannons, coins, base HP, and `exactKills` all carry over unchanged.
+// scratch — board tiles, tray, cannons, coins, base HP, `cannonBaseValue`, `upgradesBought`,
+// and `exactKills` all carry over unchanged. Unbought offers vanish with `shop: null`.
 //
-// `applyCommand` (TR §5) checks the `waveCleared` phase guard before calling this.
+// `applyCommand` (TR §5) checks the `shop` phase guard before calling this.
 
 import type { GameEvent, RunState } from '../core/types';
 import type { GameData } from '../data/schemas';
@@ -30,6 +31,7 @@ export function buildNextWave(
     pendingSpawns: rolled.spawns,
     undo: [],
     lastTurnEvents: [],
+    shop: null,
   };
 
   return spawn(nextState, data);

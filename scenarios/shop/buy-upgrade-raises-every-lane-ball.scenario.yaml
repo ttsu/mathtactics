@@ -1,0 +1,35 @@
+# GDD §5.1 / §8.6: an upgrade raises cannonBaseValue for every cannon at once.
+name: buying an upgrade raises every lane's ball value
+mode: run
+phase: shop
+baseValue: 1
+coins: 12
+board:
+  - "C . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+waves:
+  - id: wave-1
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [1, 1] }
+  - id: wave-2
+    spawns:
+      - { turn: 1, lane: 0, robot: basic, hp: [4, 4] }
+shop:
+  - { slot: "tile:0", kind: tile, tileId: "add:1", price: 4, bought: false }
+  - { slot: cannon, kind: cannon, price: 10, bought: false, available: true }
+  - { slot: upgrade, kind: upgrade, price: 12, bought: false, fromValue: 1, toValue: 2 }
+commands:
+  - { buy: upgrade }
+  - nextWave
+  - endTurn
+expectEvents:
+  - { type: OfferBought, slot: upgrade, kind: upgrade, price: 12 }
+  - { type: BaseValueChanged, from: 1, to: 2 }
+  - { type: CoinsChanged, delta: -12, total: 0, reason: purchase }
+  - { type: BallFired, value: 2 }
+expectState:
+  cannonBaseValue: 2
+  upgradesBought: 1

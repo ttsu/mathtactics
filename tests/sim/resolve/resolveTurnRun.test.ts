@@ -27,8 +27,7 @@ function runState(overrides: Partial<RunState> = {}): RunState {
   return fakeRunState({ mode: 'run', levelId: undefined, ...overrides });
 }
 
-/** A tiny 2-wave `GameData` for END CHECK / wave-clear / win tests. Wave 0 has a reward; wave 1
- * (the last) has none, per `waves.json`'s own rule (GDD §10.3, TR §9). */
+/** A tiny 2-wave `GameData` for END CHECK / wave-clear / win tests. */
 function twoWaveData(overrides: Partial<GameData> = {}): GameData {
   return fakeGameData({
     robots: [{ id: 'basic', trait: { type: 'none' }, isBoss: false }],
@@ -37,7 +36,6 @@ function twoWaveData(overrides: Partial<GameData> = {}): GameData {
         {
           id: 'wave-1',
           spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }],
-          reward: { tiles: ['add:5'] },
         },
         { id: 'wave-2', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] },
       ],
@@ -280,7 +278,7 @@ describe('resolveTurn — mode: run — wave clear, tiles, win, lose (GDD §10.5
     });
   }
 
-  it('a non-final wave clear pays coins and grants reward tiles, phase waveCleared', () => {
+  it('a non-final wave clear pays coins, phase waveCleared, and grants no tiles', () => {
     const data = twoWaveData();
     const state = clearingState(data);
 
@@ -290,34 +288,11 @@ describe('resolveTurn — mode: run — wave clear, tiles, win, lose (GDD §10.5
       { type: 'RobotDefeated', exact: true },
       { type: 'WaveCleared', waveIndex: 0 },
       { type: 'CoinsChanged', reason: 'waveCleared', delta: data.economy.income.waveCleared },
-      { type: 'TilesGranted', tiles: [{ tileId: 'add:5' }] },
     ]);
+    expect(events.some((e) => e.type === 'TilesGranted')).toBe(false);
     expect(next.phase).toBe('waveCleared');
     // The exact kill's coin (FIRE) plus the wave-cleared coin (END CHECK), both this same turn.
     expect(next.coins).toBe(data.economy.income.exactKill + data.economy.income.waveCleared);
-    expect(next.tray).toHaveLength(1);
-    const grantedPieceId = next.tray[0]!;
-    expect(next.pieces[grantedPieceId]).toEqual({ pieceId: grantedPieceId, tileId: 'add:5' });
-  });
-
-  it('emits TilesGranted with an empty list even when a non-final wave has no reward', () => {
-    // wave-2 (index 1) has no reward but isn't the last wave here — hits the "absent" branch
-    // without also winning the run.
-    const threeWave = twoWaveData({
-      waves: {
-        waves: [
-          { id: 'w1', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] },
-          { id: 'w2', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] },
-          { id: 'w3', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] },
-        ],
-      },
-    });
-    const state = clearingState(threeWave, { waveIndex: 1 });
-
-    const { events, state: next } = resolveTurn(state, threeWave);
-
-    expectEventSequence(events, [{ type: 'TilesGranted', tiles: [] }]);
-    expect(next.phase).toBe('waveCleared');
     expect(next.tray).toEqual([]);
   });
 
