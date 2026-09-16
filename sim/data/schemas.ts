@@ -3,9 +3,7 @@
 // error on the first failure — so a broken data file is a loud, precise failure, not a
 // mysterious runtime bug three layers away.
 //
-// `shop.json` is not needed until M3 — its schema accepts only the minimal placeholder shape
-// shipped in `/data` today, marked below. Expanding it is the job of the milestone that adds its
-// real content.
+// `shop.json` (M3, task 18): prices, cannon/upgrade formulas, per-wave tables, ladder guarantees.
 
 import { z } from 'zod';
 import { COLS, LANES } from '../core/coords';
@@ -312,19 +310,150 @@ const PresentationFileSchema = z.object({
   }),
 });
 
-// --- shop.json — expanded in M3 (price table, cannon/upgrade formulas, offer tables, ladder) ---
-
-const ShopFileSchema = z.object({}).passthrough();
-
-// --- levels.json — expanded in task 06 (hand-authored puzzle levels, M1) ---
-
-/** References an existing tile definition by id (e.g. `"add:5"`) — used by a level's
- * pre-placed board tiles and tray, not a full `TileDefSchema` (a level names tiles, it doesn't
- * redefine them). Same narrowing rationale as `TileDefSchema`'s `.transform` above. */
+/** References an existing tile definition by id (e.g. `"add:5"`) — used by shop guarantees,
+ * a level's pre-placed board tiles and tray, not a full `TileDefSchema` (a shop/level names
+ * tiles, it doesn't redefine them). Same narrowing rationale as `TileDefSchema`'s `.transform`. */
 const TileIdRefSchema = z
   .string()
   .regex(/^(add|sub|mul):\d+$/, 'must be a tile id like "add:5"')
   .transform((id) => id as TileId);
+
+// --- shop.json (GDD §8.3–8.5, §10.2, TR §9) ---
+
+/** Legal N range for a table `kind` — the same bounds as `TileDefSchema` (GDD §9.1). */
+function nRangeForKind(kind: 'add' | 'sub' | 'mul'): [number, number] {
+  return kind === 'mul' ? [2, 10] : [1, 10];
+}
+
+function rangesOverlap(a: readonly [number, number], b: readonly [number, number]): boolean {
+  return a[0] <= b[1] && b[0] <= a[1];
+}
+
+const NRangeSchema = z.tuple([z.number().int(), z.number().int()]);
+
+const ShopTableEntrySchema = z
+  .strictObject({
+    kind: TileKindSchema,
+    /** Inclusive `[min, max]` drawn with `nextInt` after `pickWeighted` (TR §9). */
+    n: NRangeSchema,
+    weight: z.number().int().positive(),
+  })
+  .superRefine((entry, ctx) => {
+    const [min, max] = entry.n;
+    if (min > max) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['n'],
+        message: `n min ${min} is greater than max ${max}`,
+      });
+    }
+    const [lo, hi] = nRangeForKind(entry.kind);
+    if (min < lo || max > hi) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['n'],
+        message: `${entry.kind} n must be ${lo}-${hi}`,
+      });
+    }
+  });
+
+const ShopGuaranteeSchema = z.union([
+  z.strictObject({ tileId: TileIdRefSchema }),
+  z
+    .strictObject({
+      kind: TileKindSchema,
+      n: NRangeSchema.optional(),
+    })
+    .superRefine((guarantee, ctx) => {
+      if (!guarantee.n) return;
+      const [min, max] = guarantee.n;
+      if (min > max) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['n'],
+          message: `n min ${min} is greater than max ${max}`,
+        });
+      }
+      const [lo, hi] = nRangeForKind(guarantee.kind);
+      if (min < lo || max > hi) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['n'],
+          message: `${guarantee.kind} n must be ${lo}-${hi}`,
+        });
+      }
+    }),
+]);
+
+const ShopVisitSchema = z
+  .strictObject({
+    /** 1-based: the wave just cleared (`= waveIndex + 1`). Unique across `shops`. */
+    afterWave: z.number().int().positive(),
+    guarantees: z.array(ShopGuaranteeSchema),
+    table: z.array(ShopTableEntrySchema).min(1),
+  })
+  .superRefine((visit, ctx) => {
+    visit.guarantees.forEach((guarantee, index) => {
+      if ('tileId' in guarantee) return;
+      const matches = visit.table.filter((entry) => {
+        if (entry.kind !== guarantee.kind) return false;
+        if (!guarantee.n) return true;
+        return rangesOverlap(entry.n, guarantee.n);
+      });
+      if (matches.length === 0) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['guarantees', index],
+          message: 'guarantee is not satisfiable by this table',
+        });
+      }
+    });
+  });
+
+export const ShopFileSchema = z
+  .strictObject({
+    tileSlots: z.number().int().min(1),
+    prices: z.strictObject({
+      add: z.number().int().nonnegative(),
+      sub: z.number().int().nonnegative(),
+      mulLow: z.number().int().nonnegative(),
+      mulHigh: z.number().int().nonnegative(),
+    }),
+    cannon: z.strictObject({
+      base: z.number().int().nonnegative(),
+      step: z.number().int().nonnegative(),
+    }),
+    upgrade: z.strictObject({
+      base: z.number().int().nonnegative(),
+      step: z.number().int().nonnegative(),
+    }),
+    shops: z.array(ShopVisitSchema),
+  })
+  .superRefine((shop, ctx) => {
+    const seen = new Set<number>();
+    shop.shops.forEach((visit, index) => {
+      if (seen.has(visit.afterWave)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['shops', index, 'afterWave'],
+          message: `duplicate afterWave ${visit.afterWave}`,
+        });
+      }
+      seen.add(visit.afterWave);
+      if (visit.guarantees.length > shop.tileSlots) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['shops', index, 'guarantees'],
+          message: `guarantees.length ${visit.guarantees.length} exceeds tileSlots ${shop.tileSlots}`,
+        });
+      }
+    });
+  });
+
+/** Validated `shop.json` (TR §9). */
+export type ShopFile = z.infer<typeof ShopFileSchema>;
+
+// --- levels.json — expanded in task 06 (hand-authored puzzle levels, M1) ---
 
 /** Narrows a validated lane/col number to its branded `Lane`/`Col` type (TR §3), the same way
  * `TileDefSchema` narrows `id` to `TileId` — callers get `Lane`/`Col` directly instead of a bare
@@ -591,6 +720,58 @@ export const GameDataSchema = z
         }
       });
     });
+
+    const usedCategories = new Set(data.tiles.map((tile) => tile.priceCategory));
+    for (const category of usedCategories) {
+      if (!(category in data.shop.prices)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['shop', 'prices'],
+          message: `missing priceCategory "${category}" used by tiles.json`,
+        });
+      }
+    }
+
+    data.shop.shops.forEach((visit, shopIndex) => {
+      visit.table.forEach((entry, entryIndex) => {
+        const [min, max] = entry.n;
+        for (let n = min; n <= max; n += 1) {
+          const tileId = `${entry.kind}:${n}`;
+          if (!tileIds.has(tileId)) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['shop', 'shops', shopIndex, 'table', entryIndex, 'n'],
+              message: `no tiles.json entry for "${tileId}"`,
+            });
+          }
+        }
+      });
+      visit.guarantees.forEach((guarantee, guaranteeIndex) => {
+        if (!('tileId' in guarantee)) return;
+        if (!tileIds.has(guarantee.tileId)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['shop', 'shops', shopIndex, 'guarantees', guaranteeIndex, 'tileId'],
+            message: `unknown tile id "${guarantee.tileId}"`,
+          });
+        }
+      });
+    });
+
+    // Coverage: every non-final wave must have a shop table. Extra tables for waves that
+    // do not exist yet (afterWave ≥ waves.length) are allowed so M3 can ship six shops
+    // while waves.json still has three waves.
+    const afterWaves = new Set(data.shop.shops.map((visit) => visit.afterWave));
+    const lastShopWave = data.waves.waves.length - 1;
+    for (let afterWave = 1; afterWave <= lastShopWave; afterWave += 1) {
+      if (!afterWaves.has(afterWave)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['shop', 'shops'],
+          message: `missing table for afterWave ${afterWave} (waves.json has ${data.waves.waves.length} waves; every non-final wave needs a shop)`,
+        });
+      }
+    }
   });
 
 /** The validated shape of everything in `/data`, combined. `applyCommand` (TR §5, task 06) and

@@ -75,13 +75,28 @@ export interface SpawnEntry {
   hp: number;
 }
 
-/** Identifies one shop offer slot (GDD §8.3: 3 tile offers, 1 cannon offer, 1 upgrade offer).
- * Expanded in M3, once the shop exists. */
+/** Identifies one shop offer slot (GDD §8.3: 3 tile offers, 1 cannon offer, 1 upgrade offer). */
 export type ShopSlotId = `tile:${number}` | 'cannon' | 'upgrade';
 
-/** Active shop offers for the current shop visit. Expanded in M3. */
+/** One shop card. `price` is fixed at roll time (TR §4). */
+export type ShopOffer =
+  | { slot: `tile:${number}`; kind: 'tile'; tileId: TileId; price: number; bought: boolean }
+  | { slot: 'cannon'; kind: 'cannon'; price: number; bought: boolean; available: boolean }
+  | {
+      slot: 'upgrade';
+      kind: 'upgrade';
+      price: number;
+      bought: boolean;
+      fromValue: number;
+      toValue: number;
+    };
+
+/** Active shop offers for the current shop visit. */
 export interface ShopState {
-  offers: unknown[];
+  /** 1-based: the wave just cleared (`= waveIndex + 1`), keyed to `shop.json`. */
+  afterWave: number;
+  /** Tile slots in order, then `'cannon'`, then `'upgrade'`. */
+  offers: ShopOffer[];
 }
 
 /** Snapshot pushed onto `RunState.undo` by planning commands (TR §5): board cells, tray, and

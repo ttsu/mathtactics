@@ -1,1 +1,58 @@
-{}
+{
+  "tileSlots": 3,
+  "prices": { "add": 4, "sub": 4, "mulLow": 6, "mulHigh": 9 },
+  "cannon": { "base": 10, "step": 5 },
+  "upgrade": { "base": 12, "step": 6 },
+  "shops": [
+    {
+      "afterWave": 1,
+      "guarantees": [],
+      "table": [{ "kind": "add", "n": [1, 5], "weight": 10 }]
+    },
+    {
+      "afterWave": 2,
+      "guarantees": [{ "tileId": "mul:2" }],
+      "table": [
+        { "kind": "add", "n": [1, 10], "weight": 8 },
+        { "kind": "sub", "n": [1, 5], "weight": 3 },
+        { "kind": "mul", "n": [2, 3], "weight": 2 }
+      ]
+    },
+    {
+      "afterWave": 3,
+      "guarantees": [],
+      "table": [
+        { "kind": "add", "n": [1, 10], "weight": 7 },
+        { "kind": "sub", "n": [1, 8], "weight": 4 },
+        { "kind": "mul", "n": [2, 4], "weight": 3 }
+      ]
+    },
+    {
+      "afterWave": 4,
+      "guarantees": [{ "kind": "mul", "n": [2, 5] }],
+      "table": [
+        { "kind": "add", "n": [1, 10], "weight": 6 },
+        { "kind": "sub", "n": [1, 10], "weight": 4 },
+        { "kind": "mul", "n": [2, 5], "weight": 4 }
+      ]
+    },
+    {
+      "afterWave": 5,
+      "guarantees": [{ "kind": "sub" }],
+      "table": [
+        { "kind": "add", "n": [1, 10], "weight": 5 },
+        { "kind": "sub", "n": [1, 10], "weight": 5 },
+        { "kind": "mul", "n": [2, 10], "weight": 4 }
+      ]
+    },
+    {
+      "afterWave": 6,
+      "guarantees": [],
+      "table": [
+        { "kind": "add", "n": [1, 10], "weight": 5 },
+        { "kind": "sub", "n": [1, 10], "weight": 5 },
+        { "kind": "mul", "n": [2, 10], "weight": 4 }
+      ]
+    }
+  ]
+}

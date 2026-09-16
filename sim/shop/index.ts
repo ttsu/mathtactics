@@ -1,2 +1,2 @@
-// Placeholder for task 01 scaffolding. Real content lands in later tasks.
-export {};
+export { cannonPrice, tilePrice, upgradePrice } from './pricing';
+export { rollShop, type RolledShop } from './rollShop';

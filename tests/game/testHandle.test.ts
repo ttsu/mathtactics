@@ -6,6 +6,7 @@ import type { StorageLike } from '../../game/state/storage';
 import type { GameData } from '../../sim/data/schemas';
 import type { GameEvent, RunState } from '../../sim/core/types';
 import { fakeDragSettings, fakeScreenSettings } from '../helpers/dragSettings';
+import { fakeShop } from '../helpers/shop';
 import { fakePacingSettings, fakePlaybackSettings } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
@@ -34,7 +35,7 @@ function fakeGameData(): GameData {
       maxCannons: 5,
       income: { kill: 1, exactKill: 2, waveCleared: 3 },
     },
-    shop: {},
+    shop: fakeShop(),
     waves: { waves: [] },
     levels: { levels: [] },
     presentation: {
