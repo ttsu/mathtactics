@@ -48,12 +48,13 @@ deferred to v1.1+.
 
    | Wave | Groups | Teaches |
    |---|---|---|
-   | 8 | T1 `count: 3` hp `[30, 50]` pool `weakness-5`, `bounce-back`, `odd-only`, `basic` · T8 `count: 3` hp `[40, 65]` pool `weakness-2`, `weakness-10`, `even-only`, `bounce-back` | Mix; Even-only appears |
-   | 9 | T1 `count: 4` hp `[45, 70]` pool `weakness-5`, `bounce-back`, `odd-only`, `even-only` · T8 `count: 4` hp `[60, 90]` pool same, no `basic` | Four lanes; no freebies |
+   | 8 | T1 `count: 3` hp `[30, 50]` pool `weakness-5`, `bounce-back`, `odd-only`, `basic` · T8 `count: 3` hp `[40, 65]` pool `weakness-2`, `weakness-10`, `even-only`, `bounce-back`, `basic` | Mix; Even-only appears; rest lanes exist |
+   | 9 | T1 `count: 4` hp `[45, 70]` pool `weakness-5`, `bounce-back`, `odd-only`, `even-only`, `basic` · T8 `count: 4` hp `[60, 90]` pool same | Same mix, **more robots** (8 vs 6) |
 
-   Constraints: ≥ 5 turn gap between groups; HP ≤ 99; `count` ≤ 4 (5 lanes is Boss-escort
-   territory, not these waves); at least one of `odd-only` and one of `even-only` **possible**
-   in wave 8's pools (not guaranteed every seed).
+   Constraints: ≥ 5 turn gap between groups; HP ≤ 99; wave 9 total robots **>** wave 8;
+   `count` ≤ 4; at least one of `odd-only` and one of `even-only` **possible** in wave 8's
+   pools (not guaranteed every seed). Simultaneous `count` (3 vs 4 lanes) still matches this
+   draft until grilled.
 
 4. **Shop tables** — append `afterWave` 7, 8, 9. Prices unchanged. Draft (tune with reason):
 

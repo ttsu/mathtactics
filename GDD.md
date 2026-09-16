@@ -40,7 +40,8 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
 - **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
   already follow `waves.json` length.
 - **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
-  wave start on the `wave` stream. Mixed traits, up to 4 simultaneous lanes, HP inside §6.6.
+  wave start on the `wave` stream. Mixed traits, HP inside §6.6. Both waves may spawn `basic`
+  (grill C). Wave 9 has **more robots overall** than wave 8.
 - **Wave 10 is authored:** one Boss (100–150 HP, no trait, oversized sprite) plus escort
   `basic`s at T1 (one) and T7 (two). Leaking the Boss is a loss.
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
@@ -980,6 +981,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - The Boss is authored in lane 2 (center), matching the starting cannon. Escort is T1 one
   `basic` in a letter lane plus T7 two more `basic`s (grill: keep the draft, not a single escort).
 - A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.
+- Both waves 8 and 9 may spawn `basic`. Wave 9 has more robots overall than wave 8 (grill C).
 
 ---
 
