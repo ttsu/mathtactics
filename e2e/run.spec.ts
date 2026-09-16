@@ -1,59 +1,64 @@
 import { expect, test, type Page } from '@playwright/test';
-import type { Lane } from '../sim/core/coords';
+import { parseGameData } from '../sim/data/load';
+import type { Command, RunState, ShopOffer } from '../sim/core/types';
+import { loadRawGameData } from '../tests/helpers/loadDataFiles';
+import { nextShopChoice, planningCommands } from '../tests/helpers/sensiblePlayer';
 
-// Task 17 requirement 3: a full run through the real menus and screens (menu → New Run (real
-// button) → waves 1–3 → win screen → menu), driving planning turns with `dispatch` (moving the
-// cannon to the front-most robot's lane, no tiles) and `skipAnimation` — plus a reload in the
-// middle of wave 2 that resumes via ▶ Continue and finishes the run. Asserts on structured state
-// (TR §14); screenshots are for the human legibility check only.
+// Task 21: a full 7-wave run through the real menus, screens and shop. Planning turns use the
+// sensible-player policy via `dispatch` plus `skipAnimation`. Shop visits tap a real affordable
+// card (same buy priority as the balance bot) then ▶ Next wave. A reload inside a mid-run shop
+// resumes via ▶ Continue with the same offers.
 //
-// The real New Run button seeds the run randomly (`runFlow.ts`), so this can't pin a seed —
-// `MAX_TURNS` is generous headroom over the shipped ladder's measured worst case (task 17
-// Completion Notes: a cannon-follows-the-front-robot, no-tiles bot never needs more than 36 End
-// Turns for a full 3-wave run across seeds 1–100).
-const MAX_TURNS = 80;
+// The real New Run button seeds randomly, so `MAX_TURNS` is headroom over the measured
+// sensible-player worst case (task 21 Completion Notes).
+const MAX_TURNS = 200;
+const data = parseGameData(loadRawGameData());
 
 const getState = (page: Page) => page.evaluate(() => window.__GAME__!.getState());
 const getScreen = (page: Page) => page.evaluate(() => window.__GAME__!.getScreen());
 const waitIdle = (page: Page) =>
   page.waitForFunction(() => window.__GAME__!.isIdle(), undefined, { timeout: 20_000 });
 
-/** One planning-phase turn: move the cannon (via `dispatch`) to the front-most on-board robot's
- * lane if it isn't already there, fire (End Turn), then skip playback. No tiles are ever placed. */
+async function dispatchAll(page: Page, commands: Command[]) {
+  for (const cmd of commands) {
+    const result = await page.evaluate((command) => window.__GAME__!.dispatch(command), cmd);
+    expect(result.ok, `dispatch ${cmd.type} failed: ${JSON.stringify(result)}`).toBe(true);
+  }
+}
+
 async function playOneTurn(page: Page) {
-  await page.evaluate(() => {
-    const game = window.__GAME__!;
-    const state = game.getState()!;
-    const onBoard = state.board.robots.filter((robot) => robot.col !== null);
-    if (onBoard.length > 0) {
-      onBoard.sort((a, b) => a.col! - b.col! || a.lane - b.lane);
-      const targetLane = onBoard[0]!.lane;
-      const currentLane = state.board.cannons.findIndex(Boolean) as Lane;
-      if (targetLane !== currentLane) {
-        game.dispatch({ type: 'moveCannon', fromLane: currentLane, toLane: targetLane });
-      }
-    }
-    game.dispatch({ type: 'endTurn' });
-  });
+  const state = await getState(page);
+  expect(state).not.toBeNull();
+  const commands = planningCommands(state!, data);
+  await dispatchAll(page, commands);
+  const end = await page.evaluate(() => window.__GAME__!.dispatch({ type: 'endTurn' }));
+  expect(end.ok).toBe(true);
   await page.evaluate(() => window.__GAME__!.skipAnimation());
   await waitIdle(page);
 }
 
-test('a full run plays through the real menus and screens: New Run -> waves 1-3 -> win -> menu', async ({
-  page,
-}, testInfo) => {
-  await page.goto('/');
-  await page.waitForFunction(() => window.__GAME__ !== undefined);
-  await expect(page.getByTestId('main-menu')).toBeVisible();
+function shopSnapshot(state: RunState): ShopOffer[] {
+  return state.shop?.offers ?? [];
+}
 
-  await page.getByTestId('menu-new-run').click();
-  expect(await getScreen(page)).toBe('game');
-  await waitIdle(page);
+async function buyAffordableCards(page: Page) {
+  for (let i = 0; i < 8; i++) {
+    const state = await getState(page);
+    expect(state).not.toBeNull();
+    const choice = nextShopChoice(state!);
+    if (choice.kind === 'done') break;
+    await page.getByTestId(`shop-offer-${choice.slot}`).click();
+    const after = await getState(page);
+    expect(after?.shop?.offers.find((offer) => offer.slot === choice.slot)?.bought).toBe(true);
+  }
+}
 
-  let turns = 0;
-  while ((await getScreen(page)) !== 'won') {
+async function playUntilWon(page: Page, turnsStart: number, reloadAfterWave?: number) {
+  let turns = turnsStart;
+  let reloaded = reloadAfterWave === undefined;
+
+  while ((await getScreen(page)) !== 'won' && (await getScreen(page)) !== 'lost') {
     expect(turns, 'ran out of turns before the run won').toBeLessThan(MAX_TURNS);
-    turns++;
 
     const screen = await getScreen(page);
     const state = await getState(page);
@@ -64,21 +69,55 @@ test('a full run plays through the real menus and screens: New Run -> waves 1-3 
     }
     if (state?.phase === 'shop' || screen === 'shop') {
       await expect(page.getByTestId('shop')).toBeVisible();
+      const afterWave = state?.shop?.afterWave;
+      if (!reloaded && afterWave === reloadAfterWave) {
+        const beforeReload = await getState(page);
+        expect(beforeReload?.phase).toBe('shop');
+        const offers = shopSnapshot(beforeReload!);
+
+        await page.reload();
+        await page.waitForFunction(() => window.__GAME__ !== undefined);
+        expect(await getScreen(page)).toBe('menu');
+        await expect(page.getByTestId('menu-continue')).toBeVisible();
+        await page.getByTestId('menu-continue').click();
+        expect(await getScreen(page)).toBe('shop');
+        const resumed = await getState(page);
+        expect(resumed?.phase).toBe('shop');
+        expect(shopSnapshot(resumed!)).toEqual(offers);
+        reloaded = true;
+      }
+      await buyAffordableCards(page);
       await page.getByTestId('shop-next').click();
       await waitIdle(page);
       continue;
     }
     expect(state?.phase).toBe('planning');
     await playOneTurn(page);
+    turns++;
   }
+
+  return turns;
+}
+
+test('a full run plays through the real menus and screens: New Run -> 7 waves -> win -> menu', async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(120_000);
+  await page.goto('/');
+  await page.waitForFunction(() => window.__GAME__ !== undefined);
+  await expect(page.getByTestId('main-menu')).toBeVisible();
+
+  await page.getByTestId('menu-new-run').click();
+  expect(await getScreen(page)).toBe('game');
+  await waitIdle(page);
+
+  await playUntilWon(page, 0);
 
   const finalState = await getState(page);
   expect(finalState?.phase).toBe('won');
-  // The win screen itself is proof every wave was played (only the last wave's clear wins);
-  // `waveIndex` also stayed at the wave that won, 0-based.
-  expect(finalState?.waveIndex).toBeGreaterThanOrEqual(2);
+  expect(finalState?.waveIndex).toBe(6);
   await expect(page.getByTestId('won')).toBeVisible();
-  await page.waitForTimeout(700); // let the staggered pop-ins finish
+  await page.waitForTimeout(700);
   await page.screenshot({ path: testInfo.outputPath('run-won.png') });
 
   await page.getByTestId('won-menu').click();
@@ -86,61 +125,14 @@ test('a full run plays through the real menus and screens: New Run -> waves 1-3 
   await expect(page.getByTestId('menu-continue')).toHaveCount(0);
 });
 
-test('reloading mid wave 2 resumes via Continue and the run completes', async ({ page }) => {
+test('reloading inside a shop resumes the same offers and the run completes', async ({ page }) => {
+  test.setTimeout(120_000);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__ !== undefined);
   await page.getByTestId('menu-new-run').click();
   await waitIdle(page);
 
-  let turns = 0;
-  // Play until wave 2 (index 1) is reached and at least one of its turns has resolved, so the
-  // reload lands mid-wave rather than at its very first planning phase.
-  while (true) {
-    expect(turns, 'ran out of turns before reaching wave 2').toBeLessThan(MAX_TURNS);
-    const state = await getState(page);
-    if (state?.waveIndex === 1 && state.phase === 'planning' && state.turn > 1) break;
-
-    if (state?.phase === 'waveCleared') {
-      await page.getByTestId('wave-next').click();
-    } else if (state?.phase === 'shop' || (await getScreen(page)) === 'shop') {
-      await page.getByTestId('shop-next').click();
-      await waitIdle(page);
-    } else {
-      await playOneTurn(page);
-      turns++;
-    }
-  }
-
-  const beforeReload = await getState(page);
-  expect(beforeReload?.waveIndex).toBe(1);
-
-  await page.reload();
-  await page.waitForFunction(() => window.__GAME__ !== undefined);
-  expect(await getScreen(page)).toBe('menu');
-  await expect(page.getByTestId('menu-continue')).toBeVisible();
-
-  await page.getByTestId('menu-continue').click();
-  expect(await getScreen(page)).toBe('game');
-  expect(await getState(page)).toEqual(beforeReload);
-  await waitIdle(page);
-
-  // Finish the run from here.
-  while ((await getScreen(page)) !== 'won') {
-    expect(turns, 'ran out of turns before the run won').toBeLessThan(MAX_TURNS);
-    turns++;
-    const screen = await getScreen(page);
-    const state = await getState(page);
-    if (state?.phase === 'waveCleared') {
-      await page.getByTestId('wave-next').click();
-      continue;
-    }
-    if (state?.phase === 'shop' || screen === 'shop') {
-      await page.getByTestId('shop-next').click();
-      await waitIdle(page);
-      continue;
-    }
-    await playOneTurn(page);
-  }
+  await playUntilWon(page, 0, 3);
 
   expect((await getState(page))?.phase).toBe('won');
   await expect(page.getByTestId('won')).toBeVisible();

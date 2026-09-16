@@ -187,11 +187,19 @@ describe('waves.json schema', () => {
   });
 });
 
-describe('draft ladder content (task 12)', () => {
-  it('ships the basic robot and waves 1-3', () => {
+describe('draft ladder content (task 12 / 21)', () => {
+  it('ships the basic robot and waves 1-7', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.robots).toEqual([{ id: 'basic', trait: { type: 'none' }, isBoss: false }]);
-    expect(data.waves.waves.map((wave) => wave.id)).toEqual(['wave-1', 'wave-2', 'wave-3']);
+    expect(data.waves.waves.map((wave) => wave.id)).toEqual([
+      'wave-1',
+      'wave-2',
+      'wave-3',
+      'wave-4',
+      'wave-5',
+      'wave-6',
+      'wave-7',
+    ]);
     expect(data.waves.waves.every((wave) => !('reward' in wave))).toBe(true);
   });
 });
