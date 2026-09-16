@@ -105,7 +105,20 @@ interface Board {
 }
 
 type Phase = 'planning' | 'waveCleared' | 'shop' | 'won' | 'lost' | 'levelCleared';
-// 'waveCleared' = between waves in M2 (reward screen); M3's shop takes this slot.
+// 'waveCleared' = the celebration screen between waves; its ▶ runs `openShop` (M3) to reach 'shop'.
+
+type ShopSlotId = `tile:${number}` | 'cannon' | 'upgrade';
+
+type ShopOffer =                                   // M3 (task 18); `price` is fixed at roll time
+  | { slot: `tile:${number}`; kind: 'tile'; tileId: TileId; price: number; bought: boolean }
+  | { slot: 'cannon'; kind: 'cannon'; price: number; bought: boolean; available: boolean }
+  | { slot: 'upgrade'; kind: 'upgrade'; price: number; bought: boolean;
+      fromValue: number; toValue: number }
+
+interface ShopState {
+  afterWave: number;        // 1-based: the wave just cleared (= waveIndex + 1), keyed to shop.json
+  offers: ShopOffer[];      // tile slots in order, then 'cannon', then 'upgrade'
+}
 
 interface SpawnEntry {                        // rolled at wave start (GDD §10.3) — concrete
   turn: number;                               // 1-based turn within the wave
@@ -142,6 +155,9 @@ interface RunState {
 All state is plain JSON-serializable data (no classes, Maps, or functions) so it can be
 saved, diffed, and installed by the test handle.
 
+`ShopOffer` deliberately carries **no** NEW flag: the seen-tiles log is device-local storage
+(§13), not run state, so the badge is computed at the edge in `/game/state` (§10).
+
 ### 4.1 Mode `level` (M1)
 
 M1 ships hand-authored puzzle levels before waves exist. A level installs a fixed board,
@@ -164,9 +180,9 @@ type Command =
   | { type: 'moveCannon'; fromLane: Lane; toLane: Lane }   // to empty slot only
   | { type: 'undo' }
   | { type: 'endTurn' }
-  | { type: 'buyOffer'; slot: ShopSlotId }
-  | { type: 'leaveShop' }                                   // M3
-  | { type: 'nextWave' }                                    // M2: waveCleared → next wave's planning
+  | { type: 'openShop' }                                    // M3: waveCleared → shop (rolls offers)
+  | { type: 'buyOffer'; slot: ShopSlotId }                  // M3
+  | { type: 'nextWave' }                                    // M3: shop → next wave's planning
   | { type: 'newRun'; seed: string }
   | { type: 'loadLevel'; levelId: string };
 
@@ -188,9 +204,18 @@ function applyCommand(state: RunState | null, cmd: Command, data: GameData):
 - `newRun` builds the starting state from `economy.json` (GDD §10.1), seeds both RNG streams from
   `seed`, starts wave 0 and returns its turn-1 spawn events. The seed is chosen at the edge
   (`/game/state`), never in `/sim`.
-- `nextWave` requires phase `waveCleared`: `waveIndex += 1`, `turn = 1`, roll the wave, spawn turn 1,
-  phase `planning`, returns the spawn events. `newRun` and `nextWave` set `lastTurnEvents: []`, so
-  Replay is off until the wave's first End Turn.
+- `openShop` requires phase `waveCleared`: rolls this visit's offers once (`rollShop`, `shop` stream),
+  stores them in `state.shop`, phase `shop`, and returns **no events** — there is nothing for the board
+  to play. Rolling once here is what makes a reopened app show the same offers (GDD §8.5).
+- `buyOffer` requires phase `shop`. `offer_unavailable` for an unknown slot, an already-bought slot, or
+  the cannon slot at `maxCannons`; `insufficient_coins` below the offer's price. On success it deducts
+  coins, marks the slot `bought`, applies the effect (§7), and never advances `rng.shop`.
+- `nextWave` requires phase `shop` (M3; it was `waveCleared` in M2, before the shop sat between them):
+  `shop: null`, `waveIndex += 1`, `turn = 1`, roll the wave, spawn turn 1, phase `planning`, returns the
+  spawn events. Unbought offers vanish with the `ShopState`. `newRun` and `nextWave` set
+  `lastTurnEvents: []`, so Replay is off until the wave's first End Turn.
+- **`leaveShop` was removed** (it appeared in the M2 sketch): leaving the shop *is* starting the next
+  wave in v1, and two commands for one job drift apart.
 
 ---
 
@@ -215,8 +240,9 @@ emits the first turn's spawns.
   Group `"detonate:<lane>"`. `baseHp` may go negative in state; displays clamp at 0.
 - **END CHECK** (group `"end"`): `baseHp ≤ 0` → `RunLost`, phase `lost`. Else if `pendingSpawns` and
   `board.robots` (including waiting) are both empty → `WaveCleared`, `CoinsChanged(waveCleared)`; then
-  if it was the last wave in `waves.json` → `RunWon`, phase `won`; else `TilesGranted` (reward tiles
-  appended to the tray as new pieces), phase `waveCleared`. Else continue.
+  if it was the last wave in `waves.json` → `RunWon`, phase `won`; else phase `waveCleared`. Else
+  continue. (M2 also emitted `TilesGranted` here for the wave's authored reward tiles; M3 removed
+  rewards — the shop is the only tile source.)
 - **Continue:** `turn += 1`. **Fast-forward** (GDD §4.4): if `board.robots` is empty and the first
   pending entry's `turn` is later, set `turn` to it.
 - **SPAWN** (group `"spawn"`): first waiting robots (in `board.robots` order), then pending entries
@@ -272,7 +298,10 @@ type GameEvent = EventBase & (
       trait: Trait; isBoss: boolean }
   | { type: 'RobotWaiting'; robotId: string; lane: Lane; hp: number; maxHp: number; trait: Trait }
   | { type: 'WaveCleared'; waveIndex: number }
-  | { type: 'TilesGranted'; tiles: { pieceId: string; tileId: TileId }[] }   // M2 wave reward
+  | { type: 'TilesGranted'; tiles: { pieceId: string; tileId: TileId }[] }   // tiles entered the tray
+  | { type: 'OfferBought'; slot: ShopSlotId; kind: 'tile' | 'cannon' | 'upgrade'; price: number }
+  | { type: 'CannonPlaced'; lane: Lane }
+  | { type: 'BaseValueChanged'; from: number; to: number }
   | { type: 'LevelCleared'; levelId: string }
   | { type: 'RunWon' }
   | { type: 'RunLost' }
@@ -280,6 +309,11 @@ type GameEvent = EventBase & (
 ```
 
 Notes:
+- One `buyOffer` emits, in group `"shop"`: `OfferBought` → the effect event (`TilesGranted` for a tile,
+  `CannonPlaced` for a cannon, `BaseValueChanged` for an upgrade) → `CoinsChanged(purchase)`. These are
+  for tests and scenarios; the store does **not** play them back (§10).
+- `TilesGranted` is the one event for "tiles entered the tray". It carried M2's wave rewards and now
+  carries shop purchases.
 - `BallMoved` is emitted per cell. Presentation interpolates between cell centers.
 - `RobotDamaged` precedes `RobotBouncedBack` / `RobotDefeated` for the same hit.
 - For Bounce-back, `RobotDamaged.hpAfter` is the post-bounce HP; `RobotBouncedBack` is emitted only
@@ -313,15 +347,15 @@ fails `npm test`.
 |---|---|
 | `tiles.json` | 29 tile definitions: id, kind, n, priceCategory, color key |
 | `robots.json` | Robot templates: id, trait, visual key, boss flag (M2 ships one: `basic`, no trait) |
-| `economy.json` | Starting state (base HP, coins, cannon lane, base value), income values, max cannons, schema version (2 from M2) |
-| `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees |
-| `waves.json` | Waves in run order (run length = array length): authored spawn schedules and M2 rewards (below); procedural tables for 8–9 arrive in M4 |
+| `economy.json` | Starting state (base HP, coins, cannon lane, base value), income values, max cannons, schema version (3 from M3) |
+| `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees (below) |
+| `waves.json` | Waves in run order (run length = array length): authored spawn schedules (below); procedural tables for 8–9 arrive in M4 |
 | `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
 | `presentation.json` | Pacing (ball cell duration, per-tile pause, lane gap, advance duration), escalation curves, colors, drag feel, React screen pop-in (`screens`) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.
 
-`waves.json` authored wave (M2):
+`waves.json` authored wave:
 
 ```json
 {
@@ -332,8 +366,7 @@ fails `npm test`.
         { "turn": 1, "lane": "A", "robot": "basic", "hp": [4, 10] },
         { "turn": 1, "lane": "B", "robot": "basic", "hp": [4, 10] },
         { "turn": 6, "lane": 0,   "robot": "basic", "hp": [5, 12] }
-      ],
-      "reward": { "tiles": ["add:4", "mul:2"] }
+      ]
     }
   ]
 }
@@ -341,8 +374,51 @@ fails `npm test`.
 
 Validation: at least one wave; each wave has ≥ 1 spawn and one with `turn: 1`; `lane` is 0–4 or
 `A`–`E`; distinct letters ≤ lanes not fixed in that wave; `hp` is `[min, max]` with
-`1 ≤ min ≤ max ≤ 99`; `robot` names a `robots.json` id; reward tile ids exist in `tiles.json`;
-the **last** wave has no `reward`.
+`1 ≤ min ≤ max ≤ 99`; `robot` names a `robots.json` id.
+
+M2's `reward` key (tile ids granted to the tray on wave clear) was removed in M3 along with its
+validation — the shop is the only tile source.
+
+`shop.json` (M3, task 18). `afterWave` is **1-based** — the number of the wave just cleared, which
+is `waveIndex + 1`; every other wave reference in the codebase is 0-based, so conversions are
+commented at the boundary:
+
+```json
+{
+  "tileSlots": 3,
+  "prices": { "add": 4, "sub": 4, "mulLow": 6, "mulHigh": 9 },
+  "cannon": { "base": 10, "step": 5 },
+  "upgrade": { "base": 12, "step": 6 },
+  "shops": [
+    {
+      "afterWave": 2,
+      "guarantees": [{ "tileId": "mul:2" }],
+      "table": [
+        { "kind": "add", "n": [1, 10], "weight": 8 },
+        { "kind": "sub", "n": [1, 5],  "weight": 3 },
+        { "kind": "mul", "n": [2, 3],  "weight": 2 }
+      ]
+    }
+  ]
+}
+```
+
+A guarantee is `{ tileId }` or `{ kind, n? }`. Prices: `tilePrice` = `prices[priceCategory]`,
+`cannonPrice` = `cannon.base + cannon.step × (cannonsOwned − 1)`, `upgradePrice` =
+`upgrade.base + upgrade.step × upgradesBought`.
+
+Validation: exactly one `shops` entry per non-final wave (the `afterWave` set is exactly
+`1 … waves.length − 1`, no gaps or duplicates — so adding waves without their tables fails loudly);
+`prices` covers every `priceCategory` in `tiles.json`; tables non-empty with positive integer
+weights; `n` ranges inside the kind's legal range (`add`/`sub` 1–10, `mul` 2–10) and every id in
+range present in `tiles.json`; `guarantees.length ≤ tileSlots`; every guarantee satisfiable by its
+own table.
+
+**`rollShop` draw order is normative** (saves and scenarios must reproduce): guaranteed tile slots
+left to right (`pickWeighted` over the table entries matching the guarantee, then `nextInt` over
+that entry's `n` range; a `{ tileId }` guarantee consumes no randomness), then the remaining tile
+slots left to right from the whole table, then the cannon and upgrade offers, which are computed
+rather than drawn. Only the `shop` stream is ever touched.
 
 ---
 
@@ -366,6 +442,7 @@ interface AppState {
     before?: RunState;           // where the board starts this sequence (absent when idle) — see flow step 2
   };
   lastTurn: { before: RunState; events: GameEvent[] } | null;  // Replay snapshot, memory only
+  shopNew: TileId[];             // tile types this shop visit offered for the first time (M3, §13)
   screen: 'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect' | 'allDone';
   // the wave-cleared overlay is derived (run.phase === 'waveCleared' && playback idle), like level-cleared
   settings: { hints: boolean; sound: boolean };
@@ -383,10 +460,12 @@ interface AppActions {
 
 Flow:
 1. UI/board issues `dispatch(cmd)` → `applyCommand` (pure) → on success: `run = newState`, **persist**.
-2. If the command produced resolution events: `playback = { playing, events, before }`. `before` is the
+2. If the command produced resolution events **and the resulting phase is not `shop`**:
+   `playback = { playing, events, before }`. `before` is the
    run as it was for a normal turn; for `newRun`/`nextWave` (`sequenceStart`) it is the new run minus
    the robots its own spawn events introduce — so New Run never plays over the previous run's or
-   puzzle's board (robot ids restart at `robot:0`), and `nextWave` starts from the wave-cleared board.
+   puzzle's board (robot ids restart at `robot:0`), and `nextWave` starts from the board as the cleared
+   wave left it (tiles and cannons in place, no robots).
    Those two commands also set `display` from the new run at once (their spawns carry no HUD events).
 3. The Phaser **Director** plays events; for each HUD-relevant event (`CoinsChanged`, `BaseDamaged`,
    `WaveCleared`, …) it calls `commitEvent`, updating `display`.
@@ -394,6 +473,20 @@ Flow:
 5. During planning, Phaser renders the board directly from `run.board`/`run.tray`.
 
 `commitEvent` never touches `run`. Presentation never reports back to the simulation.
+
+**M3 shop flow (task 19, `/game/state/shopFlow.ts`):** `openShopScreen` (guards phase `waveCleared`,
+dispatches `openShop`, `screen: 'shop'`), `buyOffer(store, slot)`, `leaveShopToNextWave` (guards phase
+`shop`, dispatches `nextWave`, `screen: 'game'`), `shopOffers(state)`. Every entry point guards on phase
+so a double tap cannot open two shops or start two waves — the UI never relies on `wrong_phase` for its
+own state (task 16's rule). A dispatch whose **result phase is `shop`** never starts playback: a purchase
+has no board beat and the board is behind a full screen, so `display` is committed from the new run at
+once, as it already is for `newRun`/`nextWave`. A purchase leaves `lastTurnEvents` alone, so the Replay
+snapshot survives a shop visit. `isResumable` (`runFlow.ts`) accepts phase `shop`, and `continueRun` lands
+on `screen: 'shop'` for such a run — the same offers, the same bought slots. There is no ⌂ Home in the
+shop (the HUD renders only on `screen: 'game'`); the run is saved in phase `shop`, so ▶ Continue returns
+to it. `shopNew` is filled when the shop opens — the offered tile ids not already in the `seen` log (§13),
+which are written to that log at the same moment — and cleared when the shop closes. It is memory-only, so
+a reload inside the shop loses the NEW stickers; device-local state must not enter `RunState`.
 
 **M1 level flow (task 11, `/game/state/levelFlow.ts`):** the app opens on `screen: 'menu'`. ▶ Play and
 ▶ Play again → `loadLevel` (first level) + `'game'`. The level-cleared overlay shows when
@@ -536,7 +629,13 @@ Optional keys: `seed`, `baseHp`, `tray` (list of tile ids), `waiting` (off-board
 `mode: run`, `waveIndex`, `turn`. M2 (task 13) adds `pendingSpawns` (concrete entries:
 `{ turn, lane, hp, robot? }`), `exactKills`, and `waves` (an inline `waves.json` array replacing the
 shipped waves for that scenario, so rule scenarios don't break when ladder content is tuned).
-Commands gain `nextWave` and `{ newRun: <seed> }`. The parser lives in `/sim/scenario` (pure); the CLI in `/scripts/sim.ts`.
+Commands gain `nextWave` and `{ newRun: <seed> }`.
+
+M3 (task 19) adds `phase: shop`, an inline `shop:` offers block (pinning exact offers so a shop scenario
+doesn't depend on the RNG), `cannons`, `upgradesBought`, the `openShop` and `{ buy: tile:0 }` commands,
+and `expectState.shop`.
+
+The parser lives in `/sim/scenario` (pure); the CLI in `/scripts/sim.ts`.
 
 ---
 
@@ -550,8 +649,9 @@ Commands gain `nextWave` and `{ newRun: <seed> }`. The parser lives in `/sim/sce
 - Saved after **every successful command** in `mode: 'run'`, including `endTurn` (state already includes the
   resolved turn). **Level-mode (Puzzles) state is never saved** and never overwrites `run`.
 - A run whose phase is `won` or `lost` is not resumable; the key is removed once its end screen shows
-  (and ignored by Continue if the app closed first).
-- `seen` = sorted array of `TileId`, additive; unaffected by schema version.
+  (and ignored by Continue if the app closed first). Phases `planning`, `waveCleared` and `shop` resume.
+- `seen` = sorted array of `TileId`, additive; unaffected by schema version. Written when a shop opens,
+  for its tile offers only (GDD §8.7); read by `/game/state` to decide NEW stickers (§10).
 - All access wrapped in try/catch; storage failure never breaks play.
 
 ---

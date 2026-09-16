@@ -46,17 +46,27 @@ ladder content is finalized after it (task 17). Tasks 14, 15 and 16 may run in p
 | 17 | [Ladder waves 1–3 & Playtest 2 checklist](tasks/17-ladder-waves-1-3.md) | data / e2e | 14, 15, 16, H1 | Complete |
 | H2 | **Human: Playtest 2** — play a full run with your son; record notes in `playtests/02.md` | human | 17 | Not Started — ready |
 
-## M3 — Economy *(specs written after Playtest 2)*
+## M3 — Economy
 
-Coins & income · shop screen & offer generation (separate RNG stream) · cannons & upgrades ·
-seen-tiles log & NEW badge · ladder waves 4–7 (untraited versions until M4) · **Playtest 3**
+Gate: **Playtest 3** — is the shop a real choice? Specs written before Playtest 2 (GDD v0.6);
+the M2 wave-reward stand-in is removed in task 19, and ladder content (task 21) is authored after H2.
+A run becomes 7 waves and losable for the first time.
+
+| # | Task | Layer | Depends on | Status |
+|---|---|---|---|---|
+| 18 | [Shop data, pricing & offer generation](tasks/18-shop-data-and-offers.md) | sim / data | — | Not Started |
+| 19 | [Shop phase, commands & run flow](tasks/19-shop-phase-and-flow.md) | sim / state | 18 | Not Started |
+| 20 | [Shop screen, seen-tiles log & NEW badge](tasks/20-shop-screen-and-seen-log.md) | ui / state | 19 | Not Started |
+| 21 | [Ladder waves 4–7, balance, full-run e2e & Playtest 3 checklist](tasks/21-ladder-waves-4-7.md) | data / e2e | 19, 20, H2 | Not Started |
+| H3 | **Human: Playtest 3** — play a 7-wave run with your son; record notes in `playtests/03.md` | human | 21 | Not Started |
 
 ## M4 — Traits & Finale *(specs written after Playtest 3)*
 
-Weakness · Bounce-back · Odd-only / Even-only (visuals included) · waves 8–9 procedural ·
-wave 10 Boss · settings screen & planning hints · **Playtest 4 (complete v1 run)**
+Weakness · Bounce-back · Odd-only / Even-only (visuals included, swapped into ladder waves 4–7) ·
+waves 8–9 procedural · wave 10 Boss · settings screen & planning hints ·
+**Playtest 4 (complete v1 run)**
 
 ## M5 — Juice & Art *(specs written after Playtest 4)*
 
-Chain escalation · exact-kill celebration · bounce-back & clonk beats · sound (Web Audio) ·
-AI-generated art pass · kid-facing title decision · **v1**
+Chain escalation · exact-kill celebration · bounce-back & clonk beats · purchase juice ·
+seen-tiles gallery · sound (Web Audio) · AI-generated art pass · kid-facing title decision · **v1**
