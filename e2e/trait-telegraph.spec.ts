@@ -106,6 +106,9 @@ test('getRobotChrome telegraphs each trait and HP stays on the board', async ({ 
 
   expect(byType.weakness?.chrome?.hpFontSize).toBeGreaterThan(WEAKNESS_N_FONT_SIZE);
 
+  await page.waitForFunction(() => window.__GAME__!.isIdle());
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+
   await page.screenshot({
     path: '/opt/cursor/artifacts/23-trait-telegraph.png',
     fullPage: true,
