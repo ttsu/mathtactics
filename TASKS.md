@@ -96,7 +96,7 @@ detonation `heartTargetX` — both specs carry the fallout list.
 | 23 | [Trait telegraph on the board](tasks/23-trait-telegraph.md) | presentation | 22 | Complete (iPad check pending) |
 | 24 | [Settings screen & planning hints](tasks/24-settings-and-hints.md) | ui / board | — | Not Started |
 | 25 | [Shop 7–9 & procedural waves 8–9](tasks/25-procedural-waves-8-9.md) | sim / data | 22 | Partial (leftover median 99, not 50–70) |
-| 26 | [Wave 10 Boss](tasks/26-wave-10-boss.md) | data / presentation | 22, 23, 25 | Not Started |
+| 26 | [Wave 10 Boss](tasks/26-wave-10-boss.md) | data / presentation | 22, 23, 25 | Complete (iPad check pending) |
 | 27 | [10-wave balance, e2e & Playtest 4 checklist](tasks/27-full-run-and-playtest-4.md) | data / e2e | 23, 24, 25, 26 | Not Started |
 | H4 | **Human: Playtest 4** — play a complete run with your son; record notes in `playtests/04.md` | human | 27 | Not Started |
 
