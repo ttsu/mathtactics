@@ -733,6 +733,19 @@ window.__GAME__ = {
     robots: { robotId: string; x: number; y: number }[];  // view centres, client coords
     tiles: string[];                        // piece ids with a tile view
   };
+  // M4. The board is a canvas, so trait chrome and hint numerals have no DOM to assert on and
+  // may not grow a DOM overlay just for tests (GDD §11.2). Both are board-side, injected from
+  // game/main.tsx like `renderedBoard`, and describe what is drawn now — never a re-derivation
+  // from `run`.
+  getRobotChrome(robotId: string): {        // task 23
+    trait: Trait['type'];
+    n: number | null;                       // Weakness chest number, else null
+    pairCount: number;                      // unpaired (1) vs paired (2) features
+    coiled: boolean;
+    shieldColor: string | null;
+    hpFontSize: number;                     // design pt, for the "HP stays largest" assertion
+  } | null;
+  getHints(): { lane: number; col: number; value: number }[];   // task 24; empty when hints off
 };
 ```
 
