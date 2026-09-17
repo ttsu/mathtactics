@@ -118,6 +118,10 @@ export const WEAKNESS_N_FONT_SIZE = 22;
 export const ROBOT_ANTENNA_SPREAD = 14;
 export const CANNON_VALUE_FONT_SIZE = 26;
 export const TILE_STAR_FONT_SIZE = 18;
+/** Planning-hint running totals under tiles (task 24). Must stay smaller than the tile numeral. */
+export const HINT_FONT_SIZE = 22;
+/** Vertical offset from the cell centre down to the hint numeral (overlaps the tile's bottom). */
+export const HINT_OFFSET_Y = PIECE_SIZE / 2 - 4;
 /** Robot HP bar, drawn just under the robot block (task 10: bounce-back refills it). */
 export const HP_BAR_WIDTH = ROBOT_SIZE - 8;
 export const HP_BAR_HEIGHT = 8;

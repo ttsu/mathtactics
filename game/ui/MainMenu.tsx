@@ -1,6 +1,7 @@
-// Main menu (task 11 req. 2, task 14 req. 3): ▶ Keep Going (big, only when a run is resumable),
-// New Game (big when there is nothing to continue, smaller otherwise), and Puzzles (always
-// smaller) → the existing level flow. The title and the tile chips are decoration only.
+// Main menu (task 11 req. 2, task 14 req. 3, task 24): ▶ Keep Going (big, only when a run is
+// resumable), New Game (big when there is nothing to continue, smaller otherwise), Puzzles
+// (always smaller), and Settings (always smaller). The title and the tile chips are decoration
+// only.
 //
 // Each button carries a short label under its icon (GDD §11.1, v0.5). The icons alone were
 // ambiguous — nothing said what ▶ versus 🤖 would do. The labels only repeat what the icon
@@ -8,7 +9,7 @@
 import type { CSSProperties } from 'react';
 import { playFromStart } from '../state/levelFlow';
 import { canContinue, continueRun, startNewRun } from '../state/runFlow';
-import { PlayIcon, RobotPlayIcon, TileChipIcon } from './icons';
+import { GearIcon, PlayIcon, RobotPlayIcon, TileChipIcon } from './icons';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
 export function MainMenu() {
@@ -82,6 +83,16 @@ export function MainMenu() {
           >
             <TileChipIcon size={56} />
             <span className="button-label button-label-small">Puzzles</span>
+          </button>
+          <button
+            type="button"
+            className="small-button pop-in"
+            data-testid="menu-settings"
+            aria-label="Settings"
+            onClick={() => store.getState().setScreen('settings')}
+          >
+            <GearIcon size={56} />
+            <span className="button-label button-label-small">Settings</span>
           </button>
         </div>
       </div>

@@ -140,6 +140,50 @@ export function CannonIcon({ size }: { size: number }) {
   );
 }
 
+/** A chunky cog — Settings on the main menu (task 24, GDD §18.2). */
+export function GearIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M19.2 4.2 h9.6 l1.4 6.2 5.4-2.2 4.8 4.8-2.2 5.4 6.2 1.4 v9.6 l-6.2 1.4 2.2 5.4-4.8 4.8-5.4-2.2-1.4 6.2 h-9.6 l-1.4-6.2-5.4 2.2-4.8-4.8 2.2-5.4 L4.2 28.8 v-9.6 l6.2-1.4-2.2-5.4 4.8-4.8 5.4 2.2 L19.2 4.2 z M24 16 a8 8 0 1 0 0 16 a8 8 0 0 0 0-16 z"
+      />
+    </svg>
+  );
+}
+
+/** A tile with a running total under it — the Hints toggle (task 24, GDD §5.7). */
+export function HintsIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
+      <rect x="10" y="2" width="28" height="28" rx="7" fill="#4caf50" />
+      <text
+        x="24"
+        y="22"
+        textAnchor="middle"
+        fill="#1a1a1a"
+        fontSize="16"
+        fontWeight="800"
+        fontFamily="system-ui, -apple-system, sans-serif"
+      >
+        +4
+      </text>
+      <text
+        x="24"
+        y="44"
+        textAnchor="middle"
+        fill="currentColor"
+        fontSize="11"
+        fontWeight="800"
+        fontFamily="system-ui, -apple-system, sans-serif"
+      >
+        1 → 4
+      </text>
+    </svg>
+  );
+}
+
 /** A fat tick for a bought shop card. */
 export function CheckIcon({ size }: { size: number }) {
   return (

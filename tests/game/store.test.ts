@@ -22,6 +22,7 @@ import {
   fakeHudSettings,
   fakeTraitSettings,
   fakeBossSettings,
+  fakeHintsSettings,
 } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
@@ -63,6 +64,7 @@ function fakeGameData(overrides: Partial<GameData['economy']> = {}): GameData {
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
+      hints: fakeHintsSettings(),
     },
   } as unknown as GameData;
 }

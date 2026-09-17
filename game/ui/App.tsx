@@ -4,6 +4,7 @@ import { LevelClearedOverlay } from './LevelClearedOverlay';
 import { LoseScreen } from './LoseScreen';
 import { MainMenu } from './MainMenu';
 import { RotateOverlay } from './RotateOverlay';
+import { SettingsScreen } from './SettingsScreen';
 import { ShopScreen } from './ShopScreen';
 import { UpdateBanner } from './UpdateBanner';
 import { useAppStore } from './StoreContext';
@@ -25,6 +26,7 @@ export function App() {
         </>
       )}
       {screen === 'shop' && <ShopScreen />}
+      {screen === 'settings' && <SettingsScreen />}
       {screen === 'allDone' && <AllDoneScreen />}
       {screen === 'won' && <WinScreen />}
       {screen === 'lost' && <LoseScreen />}

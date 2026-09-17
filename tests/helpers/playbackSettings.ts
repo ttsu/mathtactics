@@ -148,3 +148,10 @@ export function fakeTraitSettings() {
 export function fakeBossSettings() {
   return { scale: 1.55 };
 }
+
+/** The `presentation.json` `hints` block (task 24) for hand-built fake `GameData` fixtures. */
+export function fakeHintsSettings() {
+  return {
+    color: '#2f3e57',
+  };
+}
