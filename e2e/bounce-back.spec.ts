@@ -27,16 +27,8 @@ async function load(page: Page, yaml: string) {
 
 test('bounce-back overshoot keeps the robot and lands on the remainder HP', async ({ page }) => {
   await load(page, BOUNCE_BACK_OVERSHOOT);
-  const start = Date.now();
   const events = await page.evaluate(() => window.__GAME__!.endTurn());
   expect(events.some((event) => event.type === 'RobotBouncedBack')).toBe(true);
-
-  // Cannon thump + roll onto +3 + pause + roll to the robot + impact drain (~1.0 s),
-  // then the remainder refill with green pluses (bounceBackMs 850).
-  await page.waitForTimeout(Math.max(0, 1_050 - (Date.now() - start)));
-  await page.screenshot({ path: '/opt/cursor/artifacts/bounce_back_hp_drained.png' });
-  await page.waitForTimeout(Math.max(0, 1_450 - (Date.now() - start)));
-  await page.screenshot({ path: '/opt/cursor/artifacts/bounce_back_green_pluses.png' });
 
   await page.waitForFunction(() => window.__GAME__!.isIdle(), undefined, { timeout: 20_000 });
 
