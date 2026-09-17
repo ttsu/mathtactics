@@ -42,6 +42,7 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
 - **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
   wave start on the `wave` stream. Mixed traits, HP inside §6.6. Both waves may spawn `basic`.
   Wave 9 has more robots overall **and** more at once: packs of 4 plus an extra pack (grill C).
+  Even-only can roll on wave 8 from T1 (grill B) — first-ball clonk is the lesson.
 - **Wave 10 is authored:** one Boss (100–150 HP, **no trait**, grill A) plus escort `basic`s
   at T1 (one) and T7 (two). Leaking the Boss is a loss. The three-digit HP is the puzzle.
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
@@ -628,7 +629,7 @@ shop slots are seeded-random within each rung.
 | 4 | First **Weakness** robot | at least one `×N` | Multiples |
 | 5 | All **basic**, larger HP (~10–30) | at least one `−N` | Subtraction as a tool |
 | 6 | First **Bounce-back** robot (grill A) | — | Trimming to exact |
-| 7 | First **Odd-only / Even-only** robot | — | Odd and even |
+| 7 | First **Odd-only** robot | — | Odd and even |
 | 8–9 | Procedural mix, HP ~30–99, more simultaneous lanes, mixed traits across robots | procedural | Combining everything |
 | 10 | **Boss** (100–150 HP, no trait) + light escort | — (no shop; win) | The big number |
 
@@ -969,7 +970,8 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 ### 18.2 Minor calls made while writing v0.7
 
 - Wave 4's Weakness is `n = 5` (skip-counting by fives; grill A). Waves 8–9 mix 2/5/10.
-- Wave 7's first parity robot is Odd-only (cannon base value 1 is odd; grill A). Even-only enters in 8–9.
+- Wave 7's first parity robot is Odd-only (cannon base value 1 is odd; grill A). Even-only
+  can appear from wave 8 T1 (grill B); first-ball clonk is the lesson.
 - Wave 5 stays fully `basic` (grill A) — subtraction is the lesson, not a new trait.
 - Wave 6's first teaching trait is Bounce-back (grill A). The −N shop after 5 is the exam.
 - Waves 4–7 leftover after wave 7: sensible-player min ≥ 80, and not every seed at 100.
