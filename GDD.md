@@ -41,6 +41,7 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   already follow `waves.json` length.
 - **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
   wave start on the `wave` stream. Mixed traits, HP inside §6.6. Both waves may spawn `basic`.
+  Wave 8 is **3+3** (grill A): T1 three, T8 three — mix traits without four-lane panic.
   Wave 9 has more robots overall **and** more at once: packs of 4 plus an extra pack (grill C).
   Even-only can roll on wave 8 from T1 (grill B) — first-ball clonk is the lesson.
 - **Wave 10 is authored:** one Boss (100–150 HP, **no trait**, grill A) plus escort `basic`s
@@ -631,7 +632,8 @@ shop slots are seeded-random within each rung.
 | 5 | All **basic**, larger HP (~10–30) | at least one `−N` | Subtraction as a tool |
 | 6 | First **Bounce-back** robot (grill A) | — | Trimming to exact |
 | 7 | First **Odd-only** robot | — | Odd and even |
-| 8–9 | Procedural mix, HP ~30–99, more simultaneous lanes, mixed traits across robots | procedural | Combining everything |
+| 8 | Procedural **3+3** (grill A), HP ~30–65, mixed traits | procedural | Combining; Even-only at T1 |
+| 9 | Procedural **4+4+3** (grill C), HP ~45–99 | procedural | Four lanes and an extra pack |
 | 10 | **Boss** (100–150 HP, no trait) + light escort | — (no shop; win) | The big number |
 
 No tutorial mode and no text popups: wave design does the teaching.
@@ -990,8 +992,8 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - The Boss is untraited (grill A): 100–150 HP, authored in lane 2 (center, matching the
   starting cannon). Escort is T1 one `basic` plus T7 two more `basic`s (grill B).
 - A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.
-- Both waves 8 and 9 may spawn `basic`. Wave 9 has more robots overall **and** four at once
-  plus an extra pack (grill C).
+- Both waves 8 and 9 may spawn `basic`. Wave 8 is 3+3 (grill A). Wave 9 has more robots
+  overall **and** four at once plus an extra pack (grill C).
 
 ---
 

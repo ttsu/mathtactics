@@ -72,9 +72,9 @@ Playtest 3: fun but too easy. Waves 4–7 get a HP bump and one teaching trait e
 7-wave run still ends at 80–100 HP. Waves 8–9 do the real chipping (10-wave leftover min
 near 40, median 50–70). The Boss is untraited (100–150 HP, grill A). Wave 10 escort is T1
 one + T7 two. Leaking the Boss is a loss. A sloppy run can lose on 8–9 and never see the
-Boss. Waves 8–9 may spawn `basic`; Even-only can roll at wave 8 T1 (grill B). Wave 9 has more
-robots than 8 (four at once **and** an extra pack). Waves 1–3 unchanged. Armor is **deferred to
-v1.1+**.
+Boss. Waves 8–9 may spawn `basic`; Even-only can roll at wave 8 T1 (grill B). Wave 8 is 3+3
+(grill A). Wave 9 has more robots than 8 (four at once **and** an extra pack). Waves 1–3
+unchanged. Armor is **deferred to v1.1+**.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
