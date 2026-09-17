@@ -4,13 +4,14 @@ import type { Command, RunState, ShopOffer } from '../sim/core/types';
 import { loadRawGameData } from '../tests/helpers/loadDataFiles';
 import { nextShopChoice, planningCommands } from '../tests/helpers/sensiblePlayer';
 
-// Task 21: a full 9-wave run through the real menus, screens and shop. Planning turns use the
+// Task 21: a full 10-wave run through the real menus, screens and shop. Planning turns use the
 // sensible-player policy via `dispatch` plus `skipAnimation`. Shop visits tap a real affordable
 // card (same buy priority as the balance bot) then ▶ Next wave. A reload inside a mid-run shop
 // resumes via ▶ Continue with the same offers.
 //
 // The real New Run button seeds randomly, so `MAX_TURNS` is headroom over the measured
 // sensible-player worst case (task 21: 51 End Turns on 7 waves; task 25: 87 on 9 waves).
+// Task 27 remeasures for 10 waves; keep passing here.
 const MAX_TURNS = 200;
 const data = parseGameData(loadRawGameData());
 
@@ -99,7 +100,7 @@ async function playUntilWon(page: Page, turnsStart: number, reloadAfterWave?: nu
   return turns;
 }
 
-test('a full run plays through the real menus and screens: New Run -> 9 waves -> win -> menu', async ({
+test('a full run plays through the real menus and screens: New Run -> 10 waves -> win -> menu', async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
@@ -113,7 +114,7 @@ test('a full run plays through the real menus and screens: New Run -> 9 waves ->
 
   const dots = page.getByTestId('level-dots');
   await expect(dots).toBeVisible();
-  expect(await dots.locator('.level-dot').count()).toBe(9);
+  expect(await dots.locator('.level-dot').count()).toBe(10);
   const barBox = await page.getByTestId('hud-bar').boundingBox();
   const dotsBox = await dots.boundingBox();
   expect(barBox).not.toBeNull();
@@ -124,7 +125,7 @@ test('a full run plays through the real menus and screens: New Run -> 9 waves ->
 
   const finalState = await getState(page);
   expect(finalState?.phase).toBe('won');
-  expect(finalState?.waveIndex).toBe(8);
+  expect(finalState?.waveIndex).toBe(9);
   await expect(page.getByTestId('won')).toBeVisible();
   await page.waitForTimeout(700);
   await page.screenshot({ path: testInfo.outputPath('run-won.png') });

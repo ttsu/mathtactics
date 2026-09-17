@@ -351,7 +351,11 @@ export class BoardRenderer {
   }
 
   private createRobotView(): RobotView {
-    return new RobotView(this.scene, this.data.presentation.traits).setDepth(DEPTH.robot);
+    return new RobotView(
+      this.scene,
+      this.data.presentation.traits,
+      this.data.presentation.boss.scale,
+    ).setDepth(DEPTH.robot);
   }
 
   private destroy(view: Phaser.GameObjects.Container | undefined): void {

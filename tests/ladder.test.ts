@@ -30,6 +30,7 @@ const SHIPPED_ROBOTS = [
   { id: 'bounce-back', trait: { type: 'bounceBack' as const }, isBoss: false },
   { id: 'odd-only', trait: { type: 'oddOnly' as const }, isBoss: false },
   { id: 'even-only', trait: { type: 'evenOnly' as const }, isBoss: false },
+  { id: 'boss', trait: { type: 'none' as const }, isBoss: true },
 ];
 
 /** 0-based wave index → teaching template id. Wave 5 (index 4) stays all `basic`. */
@@ -122,7 +123,7 @@ const WAVE_9_POOL = [
 ];
 
 describe('authored ladder waves 4–7 (task 22)', () => {
-  it('ships seven robot templates and nine waves; teaching traits on 4/6/7 only', () => {
+  it('ships eight robot templates and ten waves; teaching traits on 4/6/7 only', () => {
     expect(data.waves.waves.map((wave) => wave.id)).toEqual([
       'wave-1',
       'wave-2',
@@ -133,11 +134,21 @@ describe('authored ladder waves 4–7 (task 22)', () => {
       'wave-7',
       'wave-8',
       'wave-9',
+      'wave-10',
     ]);
     expect(data.robots).toEqual(SHIPPED_ROBOTS);
 
     for (const [index, wave] of data.waves.waves.entries()) {
       if (!('spawns' in wave)) continue;
+      if (wave.id === 'wave-10') {
+        expect(wave.spawns).toEqual([
+          { turn: 1, lane: 2, robot: 'boss', hp: [100, 150] },
+          { turn: 1, lane: 'A', robot: 'basic', hp: [20, 40] },
+          { turn: 7, lane: 'B', robot: 'basic', hp: [30, 50] },
+          { turn: 7, lane: 'C', robot: 'basic', hp: [30, 50] },
+        ]);
+        continue;
+      }
       expect(wave.spawns.length).toBeGreaterThanOrEqual(3);
       expect(wave.spawns.length).toBeLessThanOrEqual(6);
       expect(wave.spawns.every((spawn) => spawn.hp[1] <= 99)).toBe(true);
@@ -228,6 +239,32 @@ describe('authored ladder waves 4–7 (task 22)', () => {
       ).toBe(true);
     }
   });
+
+  it('rollWave of shipped wave 10 is one Boss in lane 2 plus basic escort', () => {
+    const samples = SEEDS.slice(0, 20);
+    for (const seed of samples) {
+      const spawns = rollShippedWave(seed, 9);
+      const bosses = spawns.filter((spawn) => spawn.robotTemplateId === 'boss');
+      expect(bosses, `seed ${seed} exactly one Boss`).toHaveLength(1);
+      expect(bosses[0]?.lane, `seed ${seed} Boss lane`).toBe(2);
+      expect(bosses[0]?.hp, `seed ${seed} Boss HP`).toBeGreaterThanOrEqual(100);
+      expect(bosses[0]?.hp, `seed ${seed} Boss HP`).toBeLessThanOrEqual(150);
+      expect(
+        data.robots.find((robot) => robot.id === bosses[0]?.robotTemplateId)?.isBoss,
+        `seed ${seed} Boss isBoss`,
+      ).toBe(true);
+      const escort = spawns.filter((spawn) => spawn.robotTemplateId !== 'boss');
+      expect(escort).toHaveLength(3);
+      expect(
+        escort.every((spawn) => spawn.robotTemplateId === 'basic'),
+        `seed ${seed} escort basic`,
+      ).toBe(true);
+      expect(
+        escort.every((spawn) => spawn.hp <= 99),
+        `seed ${seed} escort ≤ 99 HP`,
+      ).toBe(true);
+    }
+  });
 });
 
 describe('sensible-player bot clears wave 1 with zero detonations (task 17 requirement 2)', () => {
@@ -240,7 +277,7 @@ describe('sensible-player bot clears wave 1 with zero detonations (task 17 requi
   });
 });
 
-describe('9-wave ladder balance (task 25)', () => {
+describe('10-wave ladder balance (task 25 / 26)', () => {
   it(
     'sensible player wins seeds 1–100 with leftover min ≥ 40 and median ≥ 50; shops are live; End-Turn-only loses',
     { timeout: LADDER_TIMEOUT_MS },
@@ -285,7 +322,7 @@ describe('9-wave ladder balance (task 25)', () => {
       const perWave = Array.from({ length: waveCount }, (_, wave) =>
         summarize(records.map((rec) => rec.turnsPerWave[wave] ?? 0)),
       );
-      const shopSummaries = [1, 2, 3, 4, 5, 6, 7, 8].map((afterWave) => {
+      const shopSummaries = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((afterWave) => {
         const visits = records.flatMap((rec) => rec.shops.filter((shop) => shop.afterWave === afterWave));
         const purchaseCounts: Record<string, number> = {};
         for (const visit of visits) {
@@ -316,10 +353,8 @@ describe('9-wave ladder balance (task 25)', () => {
       console.log(`LADDER_STATS ${JSON.stringify(summary)}`);
 
       expect(summary.finalBaseHp.min, 'leftover min').toBeGreaterThanOrEqual(40);
-      // Spec asked for median 50–70. The trait-aware 3-cannon bot exact-kills
-      // waves 8–9 on typical seeds even at HP 99; further HP raises only fatten
-      // a disaster tail (whole-robot detonations / losses) without moving the
-      // bulk. Median is logged above; see task 25 Completion Notes.
+      // Spec asked for median 50–70. Task 25 leftover is Partial (median 99 on 9 waves);
+      // this task extends the run to 10 without retuning 8–9. Median is logged above.
       expect(summary.finalBaseHp.median, 'leftover median').toBeGreaterThanOrEqual(50);
     },
   );

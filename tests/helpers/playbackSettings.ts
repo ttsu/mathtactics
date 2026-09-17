@@ -143,3 +143,8 @@ export function fakeTraitSettings() {
     bounceBackBodyColor: '#ef6c00',
   };
 }
+
+/** The `presentation.json` `boss` block (task 26 overflow scale) for fake `GameData`. */
+export function fakeBossSettings() {
+  return { scale: 1.55 };
+}
