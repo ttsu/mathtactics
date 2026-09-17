@@ -4,9 +4,9 @@
 
 ## Task
 
-Ship the Settings screen (hints + sound) from the main menu, and draw planning hints on the board
+Ship the Settings screen (hints only) from the main menu, and draw planning hints on the board
 when hints are on. `AppState.settings` and `localStorage` `settings` already exist (task 05);
-there is no screen and the board never reads the flag.
+there is no screen and the board never reads the flag. **No Sound row** — that waits for M5 audio.
 
 ## References
 
@@ -18,10 +18,10 @@ there is no screen and the board never reads the flag.
 
 Hints are a running total under each tile in an **armed** lane, up to and including the last tile
 before the first robot: `1 → 5 → 25 → 22`. They never show trait effects, blocked/doubled damage,
-or the outcome (GDD §5.7). Off by default.
+or the outcome (GDD §5.7). Off by default (grill A).
 
-Sound: the toggle must persist. Web Audio is M5 — flipping Sound does **not** mute task-10
-playback in this task. Record that in Completion Notes. Hints default **off** (grill A).
+**No Sound toggle** (grill A). A 7-year-old tapping a mute that changes nothing will think
+Settings is broken. Leave `settings.sound` in storage defaulting on for M5.
 
 `screen: 'settings'` is already on the union; `App.tsx` does not render it.
 
@@ -35,8 +35,8 @@ playback in this task. Record that in Completion Notes. Hints default **off** (g
    sentences:
    - **Hints** toggle (off by default). Icon should suggest a running total (e.g. `1 → 4` under
      a tile glyph), plus the label *Hints*.
-   - **Sound** toggle (on by default). Speaker icon + *Sound*.
    - **Home** (or a ▶ labelled *Home*) back to `'menu'`. Same pattern as Win/Lose.
+   - Do **not** add a Sound row.
 
    Toggles call `setSettings`. A reload keeps the values (`loadSettings` / `saveSettings` already
    wired). e2e: flip Hints on → reload → still on.
@@ -64,16 +64,16 @@ playback in this task. Record that in Completion Notes. Hints default **off** (g
      use a test-handle `getHints(): { lane, col, value }[]` or assert the sim function from a
      board fixture plus a board unit test that the drawer is called when the flag is on).
    - Hints off: no hint draw.
-   - Sound toggle persists across reload (no assertion on audio).
+   - Hints on survives reload. No Sound control to assert.
 
 ## Out of Scope
 
-Web Audio (M5). Trait chrome (23). Changing default hints to on.
+Web Audio and the Sound row (M5). Trait chrome (23). Changing default hints to on.
 
 ## Acceptance Criteria
 
-- [ ] Settings reachable from the main menu; Hints off and Sound on by default
-- [ ] Both toggles persist across reload
+- [ ] Settings reachable from the main menu; Hints off by default; no Sound row
+- [ ] Hints toggle persists across reload
 - [ ] Pure `laneHintValues` matches GDD §5.7 (no trait effects)
 - [ ] Armed-lane hint numerals draw only when hints are on, during planning, smaller than tile n
 - [ ] `npm test`, `typecheck`, `lint`, targeted e2e pass
