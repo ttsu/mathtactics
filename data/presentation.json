@@ -82,7 +82,7 @@
     },
     "blocked": {
       "bounceOffPt": 60,
-      "shieldWobblePt": 6,
+      "shieldWobblePt": 10,
       "shieldWobbleRepeats": 2,
       "shakeMs": 0,
       "shake": 0

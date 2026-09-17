@@ -16,8 +16,10 @@ import {
   TILE_LABEL_FONT_SIZE,
   WEAKNESS_N_FONT_SIZE,
   WEAKNESS_BOLT_SIZE,
+  WEAKNESS_MARK_OFFSET_X,
   BOUNCE_PLUS_FONT_SIZE,
   SHIELD_DOT_RADIUS,
+  ROBOT_SIZE,
   HINT_FONT_SIZE,
   TRAY_CAPACITY,
   TRAY_PADDING,
@@ -143,6 +145,12 @@ describe('piece and tray geometry (task 09)', () => {
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(BOUNCE_PLUS_FONT_SIZE);
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(SHIELD_DOT_RADIUS * 2);
     expect(PIECE_SIZE).toBeLessThan(CELL_SIZE);
+  });
+
+  it('puts the weakness bolt+n to the right of the robot body, not under HP', () => {
+    expect(WEAKNESS_MARK_OFFSET_X).toBeGreaterThan(ROBOT_SIZE / 2);
+    expect(WEAKNESS_BOLT_SIZE).toBeGreaterThanOrEqual(24);
+    expect(WEAKNESS_N_FONT_SIZE).toBeLessThan(ROBOT_HP_FONT_SIZE);
   });
 
   it('keeps planning-hint numerals smaller than the tile label (task 24, CLAUDE.md rule 6)', () => {

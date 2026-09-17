@@ -24,6 +24,7 @@ import {
   SHIELD_WIDTH,
   WEAKNESS_BOLT_SIZE,
   WEAKNESS_MARK_OFFSET_X,
+  WEAKNESS_N_GAP,
   designToWorld,
 } from '../layout';
 import { formatNumber } from '../pieces';
@@ -124,7 +125,11 @@ export class RobotView extends Phaser.GameObjects.Container {
     this.syncShield(this.chrome);
     this.syncMark(this.chrome);
     this.hp.setY(0);
-    this.bringToTop(this.hp);
+    // Shield and weakness mark sit beside the body; keep them in front of HP so the
+    // bolt+n cannot hide under the numeral (GDD §6.4).
+    if (this.shield !== null) this.bringToTop(this.shield);
+    if (this.markBolt !== null) this.bringToTop(this.markBolt);
+    if (this.chest !== null) this.bringToTop(this.chest);
   }
 
   /** Live chrome as drawn, for the test handle (TR §14). */
@@ -227,17 +232,17 @@ export class RobotView extends Phaser.GameObjects.Container {
       this.chest = null;
       return;
     }
-    const x = designToWorld(WEAKNESS_MARK_OFFSET_X);
+    const boltX = designToWorld(WEAKNESS_MARK_OFFSET_X);
     const boltColor = hexColor(this.colours.weaknessMarkColor);
     if (this.markBolt === null) {
       this.markBolt = this.scene.add.graphics();
       this.add(this.markBolt);
     }
     paintLightningBolt(this.markBolt, boltColor, PLACEHOLDER.robotOutline);
-    this.markBolt.setPosition(x - designToWorld(12), 0);
+    this.markBolt.setPosition(boltX, 0);
 
     const fontSize = `${designToWorld(chrome.chestFontSize)}px`;
-    const nX = x + designToWorld(10);
+    const nX = boltX + designToWorld(WEAKNESS_BOLT_SIZE / 2 + WEAKNESS_N_GAP);
     if (this.chest === null) {
       this.chest = this.scene.add
         .text(nX, 0, formatNumber(chrome.n), {
@@ -336,12 +341,13 @@ function paintLightningBolt(g: Phaser.GameObjects.Graphics, fill: number, outlin
   g.clear();
   const s = designToWorld(WEAKNESS_BOLT_SIZE);
   const points = [
-    [s * 0.35, -s * 0.5],
+    [s * 0.18, -s * 0.52],
+    [s * 0.46, 0],
     [s * 0.12, 0],
-    [s * 0.38, 0],
-    [-s * 0.35, s * 0.5],
-    [-s * 0.08, s * 0.02],
-    [-s * 0.32, s * 0.02],
+    [s * 0.22, s * 0.52],
+    [-s * 0.42, s * 0.06],
+    [-s * 0.04, s * 0.06],
+    [-s * 0.32, -s * 0.52],
   ].map(([x, y]) => new Phaser.Math.Vector2(x, y));
   g.fillStyle(fill);
   g.fillPoints(points, true);
