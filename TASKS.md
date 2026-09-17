@@ -65,7 +65,7 @@ A run becomes 7 waves and losable for the first time.
 Gate: **Playtest 4** — does a complete 10-wave run hold together once traits are visible and the
 Boss is in? Specs written after Playtest 3 (GDD v0.7). Trait *rules* already resolve in `/sim`;
 this milestone telegraphs them, swaps the first teaching trait into waves 4/6/7, and extends the
-run to 10 waves. Task 24 (settings & hints) may run in parallel with 22–23 and 25–26.
+run to 10 waves.
 
 Playtest 3: fun but too easy. Waves 4–7 get a HP bump and one teaching trait each on 4/6/7
 (Weakness-5, Bounce-back grill A, Odd-only); wave 5 stays all `basic` (grill A). A clean
@@ -79,13 +79,24 @@ Shop after 9 guarantees `−N` (grill A). Procedural packs draw without replacem
 Wave 8 T1/T8 pools are split (grill A). Wave 9 uses one shared full mix (grill A). Waves 1–3
 unchanged. Armor is **deferred to v1.1+**.
 
+**Order and shared files.** 22 first and alone: it fixes the balance bot every later number is
+measured with (the shipped bot is trait-blind — swapping the traits in with no HP change at all
+already costs 29 HP on the worst of 100 seeds, none of it real difficulty). Then 23 and 25 in
+parallel, and 24 at any time — it shares nothing with the others. 26 needs 25 merged (wave 10
+makes wave 9 non-final, and the schema then demands 25's `afterWave: 9` table) and 23 merged
+(it reuses 23's `RobotView` chrome seam). 27 last. Shared files to expect conflicts in:
+`data/waves.json` and `tests/ladder.test.ts` (22, 25, 26), `sim/data/schemas.ts` (25, 26),
+`game/board/views/RobotView.ts` + `BoardRenderer.ts` (23, 26), `e2e/run.spec.ts` (25, 26, 27).
+Each of 25 and 26 changes `waves.json`'s length, which moves the HUD wave dots and the
+detonation `heartTargetX` — both specs carry the fallout list.
+
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
-| 22 | [Trait templates & waves 4/6/7 swap](tasks/22-trait-templates-and-ladder-swap.md) | data | — | Not Started |
+| 22 | [Trait templates, trait-aware balance bot & waves 4/6/7 swap](tasks/22-trait-templates-and-ladder-swap.md) | data / tests | — | Not Started |
 | 23 | [Trait telegraph on the board](tasks/23-trait-telegraph.md) | presentation | 22 | Not Started |
 | 24 | [Settings screen & planning hints](tasks/24-settings-and-hints.md) | ui / board | — | Not Started |
 | 25 | [Shop 7–9 & procedural waves 8–9](tasks/25-procedural-waves-8-9.md) | sim / data | 22 | Not Started |
-| 26 | [Wave 10 Boss](tasks/26-wave-10-boss.md) | data / presentation | 22 | Not Started |
+| 26 | [Wave 10 Boss](tasks/26-wave-10-boss.md) | data / presentation | 22, 23, 25 | Not Started |
 | 27 | [10-wave balance, e2e & Playtest 4 checklist](tasks/27-full-run-and-playtest-4.md) | data / e2e | 23, 24, 25, 26 | Not Started |
 | H4 | **Human: Playtest 4** — play a complete run with your son; record notes in `playtests/04.md` | human | 27 | Not Started |
 

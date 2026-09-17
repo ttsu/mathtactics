@@ -10,8 +10,9 @@ do **not** add M5 juice (escalation, louder celebrations).
 
 ## References
 
-- GDD §6.2–6.4, §11.1–11.2, §12.2 (planning-phase cues) · TR §11.1
-- `game/board/views/RobotView.ts`, `game/board/reconcile.ts`, `game/board/views/palette.ts`
+- GDD §6.2–6.4, §11.1–11.2, §12.2 (planning-phase cues) · TR §11.1, §14 (test handle)
+- `game/board/views/RobotView.ts`, `game/board/BoardRenderer.ts` (`syncRobots`,
+  `ensureRobotView`), `game/board/playback/SegmentPlayer.ts`, `game/board/views/palette.ts`
 - `data/presentation.json` (new `traits` colours live here — CLAUDE.md rule 3)
 
 ## Context
@@ -20,7 +21,19 @@ do **not** add M5 juice (escalation, louder celebrations).
 `RobotSpawned` but the view ignores it. Playback already handles `RobotBouncedBack` (bar overshoots
 and settles) and `BallBlocked` (clonk). This task is the **planning-phase** silhouette.
 
+Robot views are created in **two** places, and neither has a trait today:
+`BoardRenderer.syncRobots` (from `run.board.robots`, which carries `trait`) and
+`BoardRenderer.ensureRobotView(robotId)`, called by `SegmentPlayer` when a spawn beat introduces a
+robot mid-sequence (the `RobotSpawned` / `RobotWaiting` events carry `trait`). `reconcile.ts` is
+only `diffKeys` / `planCannons` — there is no robot reconciliation module to edit.
+
 HP remains the largest element on the robot. Trait chrome is secondary.
+
+**Shared seam with task 26.** The Boss needs the same treatment (an oversized sprite keyed on
+`robot.isBoss`) through the same two creation sites. This task owns the seam: give `RobotView` one
+post-construction entry point that takes the robot's appearance (e.g.
+`setChrome({ trait, isBoss })`, idempotent, rebuilding only when the value changes), call it from
+both sites, and say so in Completion Notes. Task 26 then only adds the Boss branch.
 
 ## Requirements
 
@@ -38,9 +51,11 @@ HP remains the largest element on the robot. Trait chrome is secondary.
    Hex values may be tuned in Completion Notes; the keys may not. Contrast must keep the HP
    numeral readable (GDD §11.2).
 
-2. **`RobotView` telegraphs `robot.trait`** (and rebuilds if the trait changes — it shouldn't
-   during a run, but reconcile must pass trait in). Exact shapes are the implementer's, with
-   these **must-reads**:
+2. **`RobotView` telegraphs `robot.trait`**, applied from both creation sites above (a trait
+   never changes during a run, but the view is built before the trait is known, so the entry
+   point must be safe to call again with the same value). Sizes follow the existing board
+   constants in `game/board/layout.ts` (`ROBOT_SIZE`, `ROBOT_HP_FONT_SIZE`, …); only colours are
+   data. Exact shapes are the implementer's, with these **must-reads**:
 
    | Trait | Must read as |
    |---|---|
@@ -52,28 +67,58 @@ HP remains the largest element on the robot. Trait chrome is secondary.
 
    Wrong-parity shield colour is "what hurts it" (GDD §6.3). Do not label ODD/EVEN with letters.
 
-3. **Tests:**
-   - Unit: constructing a `RobotView` (or a small extracted `traitChrome(trait)` helper) for each
-     trait type yields a distinct flag/shape — e.g. weakness exposes `n`, odd vs even expose
-     different `pairCount`, bounce-back exposes `coiled: true`. Prefer a pure helper so the test
-     does not need a Phaser scene if that's already painful; if the view is the only seam, use
-     the existing Phaser test pattern in `tests/game/`.
-   - e2e: New Run → skip to a wave-4 planning board that has the Weakness-5 robot (dispatch
-     `endTurn`/`skipAnimation` as `e2e/run.spec.ts` does) → the robot's HP text is still present
-     and a testid or canvas assertion shows the chest **5**. If canvas text is impractical, assert
-     via a test-handle hook `getRobotChrome(robotId)` rather than inventing a DOM overlay.
+3. **Test handle** (TR §14) — the board is a canvas, so there is no DOM to assert on and a DOM
+   overlay is not an option (GDD §11.2: the board's numbers are Phaser text). Add one hook,
+   wired like `renderedBoard()` (board-side implementation injected from `game/main.tsx`,
+   declared on `TestHandle` in `game/state/testHandle.ts`):
 
-4. **Legibility:** any change that makes HP harder to read is a regression (CLAUDE.md rule 6).
-   Weakness `n` must not out-scale HP.
+   ```ts
+   getRobotChrome(robotId: string): {
+     trait: Trait['type'];
+     n: number | null;        // Weakness chest number, else null
+     pairCount: number;       // unpaired/paired feature count (odd = 1, even = 2)
+     coiled: boolean;
+     shieldColor: string | null;
+     hpFontSize: number;      // design points, for the legibility assertion
+   } | null;
+   ```
+
+   Keep it a description of what is drawn, read off the live view — not a re-derivation from
+   `run`. Task 27's e2e uses it as well, so land the shape here and record it in TR §14.
+
+4. **Tests:**
+   - Unit: a pure `traitChrome(trait, colours)` helper returns a distinct descriptor per trait
+     type (weakness exposes `n`, odd vs even differ in `pairCount`, bounce-back is `coiled`), and
+     `RobotView` renders from it. Prefer the pure helper as the assertion seam so the test needs
+     no Phaser scene; the existing Phaser test pattern in `tests/game/` is the fallback.
+   - e2e: install a board with one robot of each trait via `window.__GAME__.loadScenario(...)` —
+     the scenario board grammar already writes traits (`R20:w5`, `R20:bb`, `R20:odd`,
+     `R20:even`, TR §12), so this needs no wave play and no ladder coupling — then assert
+     `getRobotChrome` per robot and that the HP text is still present via `renderedBoard()`.
+     Playing three waves to reach wave 4 is not required and would couple this spec to task 22's
+     tuning.
+
+5. **Legibility:** any change that makes HP harder to read is a regression (CLAUDE.md rule 6).
+   Weakness `n` must not out-scale HP. Assert it, don't eyeball it: the unit test compares the
+   chest numeral's font size against `ROBOT_HP_FONT_SIZE`.
+
+6. **Human check.** Trait chrome is a presentation task, so it is merged after the human looks at
+   the PR preview on the iPad (`TASKS.md` M3 precedent: "Complete (iPad check pending)"). Put a
+   one-screen shot of all four traits in the PR body, and leave the iPad criterion unchecked
+   with "awaiting human check on preview".
 
 ## Out of Scope
 
-Boss overflow scale (26). Hint numbers (24). M5 bounce-back / clonk juice. Armor.
+Boss overflow scale (26 — but this task owns the `setChrome` seam it will use). Hint numbers
+(24). M5 bounce-back / clonk juice. Armor.
 
 ## Acceptance Criteria
 
 - [ ] Each trait is visually distinct during planning; `none` unchanged
 - [ ] Weakness shows n; odd/even show unpaired vs paired + shield colour; bounce-back is coiled
+- [ ] Chrome is applied from both `syncRobots` and `ensureRobotView`, through one entry point
 - [ ] Colours come from `presentation.json` `traits`
-- [ ] HP remains the largest numeral on the robot
+- [ ] `getRobotChrome` is on the test handle and recorded in TR §14
+- [ ] HP remains the largest numeral on the robot (asserted, not eyeballed)
 - [ ] `npm test`, `typecheck`, `lint`, and a targeted e2e pass
+- [ ] iPad preview check — awaiting human

@@ -24,6 +24,16 @@ floor is actually used), median 50–70. Do **not** retune waves 1–3. Do **not
 
 Settings/hints are not part of the sensible-player bot (hints off is the default a kid gets).
 
+The bot itself became trait-aware in task 22 (it ranks arrangements through `resolveImpact`).
+Every number below assumes that. If a leak shows up here, check whether the bot could have
+killed the robot and chose not to before you touch HP — a parity-blind or bounce-blind leak is a
+test bug, not difficulty.
+
+The hooks this task's e2e calls are owned elsewhere: `getHints()` and the
+`menu-settings` / `settings` / `settings-hints` / `settings-home` testids come from task 24,
+`getRobotChrome()` from task 23. If any of them landed under a different name, follow the code
+and say so in Completion Notes rather than adding a second hook.
+
 ## Requirements
 
 1. **Read Playtest 3 notes** and the Completion Notes of 22–26. If they already retuned 8–9,
@@ -38,7 +48,8 @@ Settings/hints are not part of the sensible-player bot (hints off is the default
    - every shop visit (after 1–9) offers the sensible player at least one affordable item;
    - second cannon still affordable by the shop after wave 3;
    - Boss is exact-killable in ≤ 3 hits (grill A) with the tiles the sensible player owns on
-     entering wave 10 (search bound the same way as task 21's ≤ 2-hit check);
+     entering wave 10 — task 22's `canExactKillInAtMostNHits(robot, values, n)` with `n = 3`,
+     search bound the same way as task 21's ≤ 2-hit check;
    - record in Completion Notes: turns per wave (min/median/max), full-run End Turns, coins
      earned/spent per shop, purchases, final base HP, and how often wave 8/9 leaked.
 
@@ -51,9 +62,15 @@ Settings/hints are not part of the sensible-player bot (hints off is the default
    Plus a short e2e: menu → Settings → Hints on → Home → New Game → after placing (or
    dispatching) one tile in an armed lane, `getHints()` (task 24) is non-empty.
 
+   Budgets: `MAX_TURNS` in the spec and `MAX_END_TURNS` (400) in the bot helper were sized for
+   7 waves (measured max 51 End Turns). Re-measure on 10 and leave headroom; a bot that
+   silently hits the cap throws rather than reporting a loss.
+
 4. **`playtests/04-checklist.md`** in the task-11/17/21 format. Question: **does a complete
    run hold together — traits readable, stretch hard enough, Boss a finale, and does he want
-   to go again?** Setup: Home Screen, fresh **New Game**, sound on. Watch for:
+   to go again?** Setup: Home Screen, fresh **New Game**, sound on — and say why: a run saved
+   by the M3 build resumes into the 10-wave ladder through ▶ Keep Going (the save schema did
+   not change, so it is not discarded), which is not what Playtest 4 is measuring. Watch for:
    - Does he read Weakness n / Bounce-back coil / Odd vs Even without being told?
    - Wrong-parity clonk: confusion or "oh, even"?
    - Bounce-back overshoot: does he reach for `−N`?
@@ -72,7 +89,9 @@ Armor. M5 juice, sound playback, art pass. Changing the 40 HP floor. Kid-facing 
 ## Acceptance Criteria
 
 - [ ] Sensible player wins seeds 1–100: leftover min ≥ 40 and ≤ 55, median 50–70; End-Turn-only loses
+- [ ] Boss exact-killable in ≤ 3 hits on entering wave 10, checked trait-aware
 - [ ] e2e plays a full 10-wave run through menus, shop, and a mid-shop reload
 - [ ] Settings/hints e2e covers the task-24 hook
+- [ ] Turn budgets re-measured for 10 waves (spec `MAX_TURNS`, helper `MAX_END_TURNS`)
 - [ ] `playtests/04-checklist.md` exists
 - [ ] `npm test`, `typecheck`, `lint`, `build`, `test:e2e`, `npm run sim -- scenarios` pass

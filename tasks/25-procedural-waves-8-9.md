@@ -11,9 +11,12 @@ that). Task 26 appends wave 10.
 
 ## References
 
-- GDD v0.7 §0, §6.6, §10.2–10.3 · TR §6 (rolling a wave), §9 (procedural wave JSON)
+- GDD v0.7 §0, §6.6, §10.2–10.3 · TR §6 (rolling a wave), §9 (procedural wave JSON, `rollShop`
+  guarantee matching)
 - `sim/waves/rollWave.ts`, `sim/data/schemas.ts`, `data/shop.json`, `data/waves.json`
-- Task 22's templates (`weakness-*`, `bounce-back`, `odd-only`, `even-only`, `basic`)
+- Task 22's templates (`weakness-*`, `bounce-back`, `odd-only`, `even-only`, `basic`) **and its
+  trait-aware balance bot** — requirement 6's numbers are meaningless without it
+- `sim/scenario/parse.ts` (`WavesFileSchema` backs the scenario `waves:` override)
 
 ## Context
 
@@ -33,9 +36,17 @@ deferred to v1.1+.
 
 1. **Schema.** A wave is **either** `{ id, spawns }` **or** `{ id, procedural }`, never both
    (strict). Procedural shape **exactly** TR §9. Cross-file: every `pool` id exists in
-   `robots.json`. `count` 1–5; `hp` `1 ≤ min ≤ max ≤ 99`; `turn` values unique in the wave;
-   at least one group with `turn: 1`; `pool` non-empty with unique ids; **`count` ≤ `pool.length`**
-   (without replacement, grill B). Authored waves unchanged.
+   `robots.json`. `count` 1–5 (the *schema* bound; the shipped tables in requirement 3 stay at
+   ≤ 4); `hp` `1 ≤ min ≤ max ≤ 99`; `turn` values unique in the wave; at least one group with
+   `turn: 1`; `pool` non-empty with unique ids; **`count` ≤ `pool.length`** (without
+   replacement, grill B). Authored waves unchanged.
+
+   `WaveDef` becomes a **union**, so every reader has to narrow. Current `wave.spawns` readers:
+   `sim/waves/rollWave.ts`, `tests/ladder.test.ts` (the shipped-wave shape test),
+   `tests/sim/data/waves.test.ts`, `tests/sim/waves/rollWave.test.ts`. Prefer a discriminated
+   union (`'spawns' in wave`) over optional fields so `tsc` finds every site. The scenario
+   `waves:` override reuses `WavesFileSchema` (`sim/scenario/parse.ts`), so inline procedural
+   waves come along for free — requirement 5 depends on that; add a parser test for it.
 
 2. **`rollWave`** — if `procedural` is present, use the TR §9 draw order (normative). Authored
    path stays byte-identical (existing `tests/sim` rollWave tests must still pass). Procedural
@@ -43,7 +54,8 @@ deferred to v1.1+.
 
    Tests: same seed → same lanes, templates, HP; drawing from `shop` does not change a
    procedural wave; `count: 3` always yields 3 distinct lanes; a group never repeats a
-   template; schema rejects `count` > `pool.length` and duplicate pool ids.
+   template; schema rejects `count` > `pool.length` and duplicate pool ids; a wave with both
+   `spawns` and `procedural` is rejected.
 
 3. **Ship waves 8–9** (tune only with a recorded reason). Draft:
 
@@ -64,6 +76,14 @@ deferred to v1.1+.
 4. **Shop tables** — append `afterWave` 7, 8, 9. Prices unchanged. Guarantees locked:
    after 7 `×2` or `×5` (grill A); after 8 none (grill A); after 9 `−N` (grill A). Table
    weights still draft (tune with reason):
+
+   **Read the guarantee semantics before copying the JSON below.** `{ kind: 'mul', n: [2, 5] }`
+   is a *range*, not a set: `rollShop` picks a weighted table entry of that kind and then draws
+   `nextInt` over the intersection of the two ranges (TR §9), so `[2, 5]` can also produce `×3`
+   or `×4`. That is a legible, cheap multiply either way, so **ship the range** and note it in
+   Completion Notes. A literal "`×2` or `×5`, nothing between" would need a new set-valued
+   guarantee shape in `shop.json` — out of scope here; it is listed in GDD §18 Open Items for
+   the human to settle.
 
    ```json
    { "afterWave": 7, "guarantees": [{ "kind": "mul", "n": [2, 5] }], "table": [
@@ -96,14 +116,42 @@ deferred to v1.1+.
    not a chip source. End-Turn-only still loses. If the draft numbers break that, retune
    **waves 8–9 only** (not 1–7) and record why.
 
+   Use task 22's **trait-aware** bot. A parity-blind bot leaks on every Odd-only/Even-only
+   robot it meets, and waves 8–9 are full of them — tuning HP down to compensate would ship
+   the Playtest 3 complaint back. If task 22 has not landed yet, land it first; this task's
+   numbers depend on it.
+
+   Aim at the band, not at its centre: wave 10 adds an escort, so task 27 re-measures the same
+   numbers with the Boss in and may nudge 8–9 again. Leave the tuning rationale in Completion
+   Notes so 27 adjusts rather than re-derives.
+
+7. **Run length changes from 7 to 9 — the rest of the app follows.** These fail (or silently
+   drift) the moment `waves.json` grows, and CI must be green in this PR:
+   - `e2e/run.spec.ts` asserts `finalState?.waveIndex === 6` and is titled "7 waves"; the
+     sensible-player turn budget (`MAX_TURNS = 200`, measured max 51 for 7 waves) needs
+     headroom over the new measured max. Task 27 rewrites this spec for 10 waves; here, just
+     keep it passing.
+   - The HUD wave dots come from `waves.json` length (`game/ui/Hud.tsx`), so the ♥ shifts.
+     `presentation.json` `playback.detonate.heartTargetX` is the Phaser fly-to target for
+     detonations (task 21 moved it 295 → 397 when the row went from 3 dots to 7) and
+     `e2e/run-playback.spec.ts` asserts the drawn ♥ is within 6 pt of it. Re-measure and record
+     the new value, and check 9 dots still fit the bar.
+   - `tests/ladder.test.ts` and `tests/sim/data/waves.test.ts` both assert the shipped wave-id
+     list; both need the two new ids and the union narrowing from requirement 1.
+   - Shop coverage (`{1 … waves.length − 1} ⊆ afterWave`) is why requirement 4 ships three
+     tables at once; `afterWave: 9` is the extra one that makes task 26 a no-shop-change PR.
+
 ## Out of Scope
 
-Boss (26). Trait visuals (23). Armor. Retuning waves 1–7.
+Boss (26). Trait visuals (23). Armor. Retuning waves 1–7. A set-valued shop guarantee.
 
 ## Acceptance Criteria
 
 - [ ] `rollWave` supports procedural groups; authored path unchanged
 - [ ] Waves 8–9 ship as procedural tables; shops 7–9 exist
 - [ ] Schema rejects a wave with both `spawns` and `procedural`
-- [ ] Ladder tests pass for seeds 1–100 on the 9-wave run (leftover min ≥ 40, median 50–70)
-- [ ] `npm test`, `typecheck`, `lint`, `npm run sim -- scenarios` pass
+- [ ] Scenario `waves:` accepts an inline procedural wave
+- [ ] Ladder tests pass for seeds 1–100 on the 9-wave run with the trait-aware bot
+      (leftover min ≥ 40, median 50–70)
+- [ ] 9-wave fallout handled: run e2e, wave dots, `heartTargetX`, shipped-wave-id assertions
+- [ ] `npm test`, `typecheck`, `lint`, `build`, `test:e2e`, `npm run sim -- scenarios` pass

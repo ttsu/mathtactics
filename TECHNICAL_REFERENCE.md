@@ -375,7 +375,14 @@ fails `npm test`.
 Validation: at least one wave; each wave is **either** authored (`spawns`) **or** procedural
 (`procedural`), never both; authored: ≥ 1 spawn and one with `turn: 1`; `lane` is 0–4 or `A`–`E`;
 distinct letters ≤ lanes not fixed in that wave; `hp` is `[min, max]` with `1 ≤ min ≤ max ≤ 99`
-(Boss template may go to 150); `robot` / procedural `pool` ids name a `robots.json` id.
+(Boss template may go to 150); `robot` / procedural `pool` ids name a `robots.json` id, and a
+`pool` may not name an `isBoss` template.
+
+The HP ceiling takes **two** stages, because a spawn schema cannot see `robots.json`: the
+per-spawn schema allows up to the Boss maximum (150), and the cross-file pass in
+`GameDataSchema` enforces ≤ 99 for every spawn whose template is not `isBoss` (M4, task 26).
+`WavesFileSchema` used standalone — the scenario `waves:` override (§12) — runs the first stage
+only, so a scenario may write a three-digit `basic`; shipped `waves.json` may not.
 
 M2's `reward` key (tile ids granted to the tray on wave clear) was removed in M3 along with its
 validation — the shop is the only tile source.
@@ -733,6 +740,19 @@ window.__GAME__ = {
     robots: { robotId: string; x: number; y: number }[];  // view centres, client coords
     tiles: string[];                        // piece ids with a tile view
   };
+  // M4. The board is a canvas, so trait chrome and hint numerals have no DOM to assert on and
+  // may not grow a DOM overlay just for tests (GDD §11.2). Both are board-side, injected from
+  // game/main.tsx like `renderedBoard`, and describe what is drawn now — never a re-derivation
+  // from `run`.
+  getRobotChrome(robotId: string): {        // task 23
+    trait: Trait['type'];
+    n: number | null;                       // Weakness chest number, else null
+    pairCount: number;                      // unpaired (1) vs paired (2) features
+    coiled: boolean;
+    shieldColor: string | null;
+    hpFontSize: number;                     // design pt, for the "HP stays largest" assertion
+  } | null;
+  getHints(): { lane: number; col: number; value: number }[];   // task 24; empty when hints off
 };
 ```
 
