@@ -48,14 +48,16 @@ deferred to v1.1+.
 
    | Wave | Groups | Teaches |
    |---|---|---|
-   | 8 | T1 `count: 3` hp `[30, 50]` · T8 `count: 3` hp `[40, 65]` · pool both: `weakness-5`, `bounce-back`, `odd-only`, `even-only` (T8), `weakness-2`/`weakness-10` (T8), `basic` | Mix; rest lanes exist |
-   | 9 | T1 `count: 4` hp `[45, 70]` · T8 `count: 4` hp `[60, 90]` · T15 `count: 3` hp `[70, 99]` · pool all three: same mix including `basic` | Four lanes **and** an extra pack (11 vs 6 robots) |
+   | 8 | T1 `count: 3` hp `[30, 50]` · T8 `count: 3` hp `[40, 65]` | Mix; rest `basic`; Even-only appears at T8 |
+   | 9 | T1 `count: 4` hp `[45, 70]` · T8 `count: 4` hp `[60, 90]` · T15 `count: 3` hp `[70, 99]` | Four lanes **and** an extra pack (11 vs 6) |
 
-   T8 wave-8 pool: `weakness-2`, `weakness-10`, `even-only`, `bounce-back`, `basic`.
-   T1 wave-8 pool: `weakness-5`, `bounce-back`, `odd-only`, `basic`.
+   Pools (all include `basic`):
+   - Wave 8 T1: `weakness-5`, `bounce-back`, `odd-only`, `basic`
+   - Wave 8 T8: `weakness-2`, `weakness-10`, `even-only`, `bounce-back`, `basic`
+   - Wave 9 all groups: `weakness-5`, `weakness-2`, `weakness-10`, `bounce-back`, `odd-only`, `even-only`, `basic`
 
    Constraints: ≥ 5 turn gap between groups; HP ≤ 99; wave 9 total **>** wave 8; `count` ≤ 4;
-   at least one of `odd-only` and one of `even-only` **possible** in wave 8's pools.
+   Even-only is possible on wave 8 (T8 pool).
 
 4. **Shop tables** — append `afterWave` 7, 8, 9. Prices unchanged. Draft (tune with reason):
 
