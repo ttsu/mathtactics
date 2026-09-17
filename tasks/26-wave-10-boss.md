@@ -4,7 +4,7 @@
 
 ## Task
 
-Author wave 10: one Boss (100–150 HP, no trait, oversized sprite) plus a light `basic` escort.
+Author wave 10: one Boss (100–150 HP, **no trait**, grill A, oversized sprite) plus a light `basic` escort.
 Clearing it wins the run. Shop after wave 9 already ships in task 25.
 
 ## References
@@ -16,7 +16,8 @@ Clearing it wins the run. Shop after wave 9 already ships in task 25.
 ## Context
 
 Normal robots cap at 99 HP so two digits always fit. The Boss is the only three-digit HP
-(GDD §2.1, §6.6). `RobotView.showHpText` already shrinks three-digit text to fit the block —
+(GDD §2.1, §6.6) and it is **untraited** (grill A) — the number is the puzzle, not a shield
+or parity gate. `RobotView.showHpText` already shrinks three-digit text to fit the block —
 keep that; the sprite **overflows the cell**, the number stays inside.
 
 `MAX_SPAWN_HP = 99` in `sim/data/schemas.ts` will reject a 100–150 range. Exception: a spawn

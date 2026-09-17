@@ -42,8 +42,8 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
 - **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
   wave start on the `wave` stream. Mixed traits, HP inside §6.6. Both waves may spawn `basic`.
   Wave 9 has more robots overall **and** more at once: packs of 4 plus an extra pack (grill C).
-- **Wave 10 is authored:** one Boss (100–150 HP, no trait, oversized sprite) plus escort
-  `basic`s at T1 (one) and T7 (two). Leaking the Boss is a loss.
+- **Wave 10 is authored:** one Boss (100–150 HP, **no trait**, grill A) plus escort `basic`s
+  at T1 (one) and T7 (two). Leaking the Boss is a loss. The three-digit HP is the puzzle.
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
   without words (§6.2–6.4). Bounce-back bar refill and blocked clonk already play (task 10).
 - **Settings and planning hints ship.** Gear on the main menu; hints **off by default** (grill A);
@@ -454,9 +454,9 @@ The robot can only be hurt by balls of one parity. Framed as **what hurts it**.
   traits — not ever-larger numbers.
 - Placeholder curve (tuned in data): wave 1 → 1–3, wave 2 → 4–10, wave 5 → ~10–30,
   wave 9 → ~30–99.
-- **Boss** (wave 10 only): one robot, 100–150 HP, no trait, visually much larger (occupies
-  one cell but its sprite overflows it). Arrives with a light escort of normal robots.
-  Detonates for remaining HP like any robot.
+- **Boss** (wave 10 only): one robot, 100–150 HP, **no trait** (grill A), visually much
+  larger (occupies one cell but its sprite overflows it). Arrives with a light escort of
+  normal robots. Detonates for remaining HP like any robot. The three-digit HP is the puzzle.
 
 ---
 
@@ -630,7 +630,7 @@ shop slots are seeded-random within each rung.
 | 6 | First **Bounce-back** robot | — | Trimming to exact |
 | 7 | First **Odd-only / Even-only** robot | — | Odd and even |
 | 8–9 | Procedural mix, HP ~30–99, more simultaneous lanes, mixed traits across robots | procedural | Combining everything |
-| 10 | **Boss** (100–150 HP) + light escort | — (no shop; win) | The big number |
+| 10 | **Boss** (100–150 HP, no trait) + light escort | — (no shop; win) | The big number |
 
 No tutorial mode and no text popups: wave design does the teaching.
 
@@ -718,7 +718,8 @@ and the reward chips became the wallet beat above.
 6. **Big touch targets.** ≥ 60 pt; drag-and-drop tolerates imprecise fingers.
 7. **No Safari interference.** No pinch-zoom, pull-to-refresh, swipe-back, or text-selection
    on long-press during play.
-8. **Settings** (from main menu): planning hints (off by default), sound on/off.
+8. **Settings** (from main menu): planning hints (off by default). Sound on/off ships with
+   M5 audio — M4 Settings has no Sound row.
 
 ---
 
@@ -916,7 +917,7 @@ Task specs are written one milestone at a time; later milestones may change afte
 | Tray | Owned tiles not on the board. |
 | Robot | Enemy unit. |
 | Trait | Weakness, Bounce-back, Odd-only, or Even-only. |
-| Boss | The wave-10 robot, 100–150 HP. |
+| Boss | The wave-10 robot, 100–150 HP, no trait. |
 | Base | Player's structure left of the cannon slots. |
 | Detonation | A robot reaching the base; damage = remaining HP. |
 | Locked cell | A cell containing a robot; tiles cannot be placed or removed. |
@@ -981,8 +982,8 @@ These were not explicitly discussed and were chosen as the simplest consistent o
   in storage, default on, unused.
 - Procedural groups draw distinct lanes with `nextInt` into the remaining lanes, then pick a
   template from the pool (with replacement) and roll HP — file order, `wave` stream only.
-- The Boss is authored in lane 2 (center), matching the starting cannon. Escort is T1 one
-  `basic` in a letter lane plus T7 two more `basic`s (grill: keep the draft, not a single escort).
+- The Boss is untraited (grill A): 100–150 HP, authored in lane 2 (center, matching the
+  starting cannon). Escort is T1 one `basic` plus T7 two more `basic`s (grill B).
 - A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.
 - Both waves 8 and 9 may spawn `basic`. Wave 9 has more robots overall **and** four at once
   plus an extra pack (grill C).
