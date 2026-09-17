@@ -7,6 +7,7 @@ import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings
 import { fakeShop } from '../../helpers/shop';
 import {
   fakeDangerSettings,
+  fakeHintsSettings,
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
@@ -50,6 +51,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       screens: fakeScreenSettings(),
       danger: fakeDangerSettings(),
       hud: fakeHudSettings(),
+      hints: fakeHintsSettings(),
     },
     ...overrides,
   };
@@ -175,5 +177,19 @@ describe('presentation.json hud Go nudge', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.presentation.hud.goNudgeIdleMs).toBe(10000);
     expect(data.presentation.hud.goColor).toMatch(/^#/);
+  });
+});
+
+describe('presentation.json planning hints (task 24)', () => {
+  it('rejects a missing hint colour', () => {
+    const raw = validRaw();
+    const presentation = raw.presentation as { hints?: { color: string } };
+    delete presentation.hints;
+    expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
+  });
+
+  it('ships a hint colour', () => {
+    const data = parseGameData(loadRawGameData());
+    expect(data.presentation.hints.color).toMatch(/^#/);
   });
 });

@@ -14,6 +14,7 @@ import {
   PIECE_SIZE,
   ROBOT_HP_FONT_SIZE,
   TILE_LABEL_FONT_SIZE,
+  HINT_FONT_SIZE,
   TRAY_CAPACITY,
   TRAY_PADDING,
   TRAY_SLOT_PITCH,
@@ -134,6 +135,10 @@ describe('piece and tray geometry (task 09)', () => {
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(TILE_LABEL_FONT_SIZE);
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(CANNON_VALUE_FONT_SIZE);
     expect(PIECE_SIZE).toBeLessThan(CELL_SIZE);
+  });
+
+  it('keeps planning-hint numerals smaller than the tile label (task 24, CLAUDE.md rule 6)', () => {
+    expect(HINT_FONT_SIZE).toBeLessThan(TILE_LABEL_FONT_SIZE);
   });
 
   it('converts a cell centre to client coordinates over the displayed canvas', () => {

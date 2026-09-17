@@ -165,5 +165,8 @@
     "goNudgeIdleMs": 10000,
     "goNudgeWiggleMs": 2400,
     "goNudgeWiggleDeg": 8
+  },
+  "hints": {
+    "color": "#2f3e57"
   }
 }

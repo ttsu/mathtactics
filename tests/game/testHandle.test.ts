@@ -11,6 +11,7 @@ import {
   fakePacingSettings,
   fakePlaybackSettings,
   fakeHudSettings,
+  fakeHintsSettings,
 } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
@@ -49,6 +50,7 @@ function fakeGameData(): GameData {
       drag: fakeDragSettings(),
       screens: fakeScreenSettings(),
       hud: fakeHudSettings(),
+      hints: fakeHintsSettings(),
     },
   } as unknown as GameData;
 }
@@ -300,15 +302,18 @@ describe('createTestHandle', () => {
       skipAnimation: () => {},
       isAnimating: () => false,
       renderedBoard: () => drawn,
+      getHints: () => [{ lane: 2, col: 1, value: 5 }],
     });
     expect(handle.cellToClient({ lane: 2, col: 3 })).toEqual({ x: 30, y: 20 });
     expect(handle.renderedBoard()).toBe(drawn);
+    expect(handle.getHints()).toEqual([{ lane: 2, col: 1, value: 5 }]);
   });
 
-  it('cellToClient and renderedBoard throw when no board is mounted', () => {
+  it('cellToClient, renderedBoard and getHints throw when no board is mounted', () => {
     const { handle } = buildHandle();
     expect(() => handle.cellToClient({ lane: 0, col: 0 })).toThrow('no board mounted');
     expect(() => handle.renderedBoard()).toThrow('no board mounted');
+    expect(() => handle.getHints()).toThrow('no board mounted');
   });
 
   it('skipAnimation without a board finishes playback directly', () => {
@@ -335,6 +340,7 @@ describe('createTestHandle', () => {
       skipAnimation: vi.fn(() => store.getState().finishPlayback()),
       isAnimating: () => false,
       renderedBoard: () => ({ robots: [], tiles: [] }),
+      getHints: () => [],
     };
     const handle = createTestHandle(store, board);
 
@@ -352,6 +358,7 @@ describe('createTestHandle', () => {
       skipAnimation: () => {},
       isAnimating: () => animating,
       renderedBoard: () => ({ robots: [], tiles: [] }),
+      getHints: () => [],
     });
     expect(store.getState().playback.status).toBe('idle');
     expect(handle.isIdle()).toBe(false);

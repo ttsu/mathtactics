@@ -329,6 +329,10 @@ const PresentationFileSchema = z.object({
     /** How far Go rocks each way, in degrees. */
     goNudgeWiggleDeg: z.number().nonnegative(),
   }),
+  /** Planning-hint numerals under tiles (task 24, GDD §5.7). Presentation only. */
+  hints: z.object({
+    color: z.string().min(1),
+  }),
 });
 
 /** References an existing tile definition by id (e.g. `"add:5"`) — used by shop guarantees,

@@ -101,6 +101,7 @@ if (import.meta.env.DEV || import.meta.env.VITE_TEST_HANDLE === '1') {
           tiles,
         };
       },
+      getHints: () => board.drawnHints(),
     }),
   );
 }

@@ -32,11 +32,20 @@ export interface TestHandle {
   /** What the board draws right now — robot views with their centres in client coordinates
    * (mid-tween included) and tile views' piece ids — for asserting the board mid-playback. */
   renderedBoard(): RenderedBoard;
+  /** Planning-hint numerals currently drawn (task 24). Empty when hints are off. Describes
+   * what the board is drawing now — never a re-derivation from `run`. */
+  getHints(): DrawnHint[];
 }
 
 export interface RenderedBoard {
   robots: { robotId: string; x: number; y: number }[];
   tiles: string[];
+}
+
+export interface DrawnHint {
+  lane: number;
+  col: number;
+  value: number;
 }
 
 declare global {
@@ -71,6 +80,7 @@ export interface TestHandleBoard {
   /** True while the playback Director has a sequence, tweens or timers pending. */
   isAnimating(): boolean;
   renderedBoard(): RenderedBoard;
+  getHints(): DrawnHint[];
 }
 
 /** Builds the `__GAME__` object for `store` — pure, no `window` access, so it's unit-testable.
@@ -109,6 +119,10 @@ export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBo
     renderedBoard: () => {
       if (!board) throw new Error('renderedBoard: no board mounted');
       return board.renderedBoard();
+    },
+    getHints: () => {
+      if (!board) throw new Error('getHints: no board mounted');
+      return board.getHints();
     },
   };
 }

@@ -20,6 +20,7 @@ import {
   fakePacingSettings,
   fakePlaybackSettings,
   fakeHudSettings,
+  fakeHintsSettings,
 } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
@@ -59,6 +60,7 @@ function fakeGameData(overrides: Partial<GameData['economy']> = {}): GameData {
       drag: fakeDragSettings(),
       screens: fakeScreenSettings(),
       hud: fakeHudSettings(),
+      hints: fakeHintsSettings(),
     },
   } as unknown as GameData;
 }

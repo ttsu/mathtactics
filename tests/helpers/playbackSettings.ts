@@ -133,3 +133,10 @@ export function fakeHudSettings() {
     goNudgeWiggleDeg: 8,
   };
 }
+
+/** The `presentation.json` `hints` block (task 24) for hand-built fake `GameData` fixtures. */
+export function fakeHintsSettings() {
+  return {
+    color: '#2f3e57',
+  };
+}

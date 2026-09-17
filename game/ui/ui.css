@@ -359,6 +359,17 @@
   box-shadow: 0 2px 0 #35618f;
 }
 
+/* Pressed toggle (Settings → Hints). Orange matches the big navigation buttons so "on" reads
+   as the same family as New Game / Home, not a new colour language. */
+.small-button.is-pressed {
+  background: #ff8c42;
+  box-shadow: 0 8px 0 #c8621f;
+}
+
+.small-button.is-pressed:active {
+  box-shadow: 0 2px 0 #c8621f;
+}
+
 /* Short label under a navigation button's icon (GDD §11.1, v0.5). Heavy weight and generous
    letter-spacing: an emerging reader decodes letter by letter, so the glyphs must not crowd.
    `pointer-events: none` keeps the label from swallowing taps meant for the button. */

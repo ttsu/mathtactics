@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { StoreApi } from 'zustand/vanilla';
 import type { AppStore } from '../state/store';
 import { BoardScene } from './BoardScene';
+import type { PlanningHintMark } from './planningHints';
 import { WORLD_HEIGHT, WORLD_WIDTH } from './layout';
 import { refitOnResize } from './refitOnResize';
 
@@ -14,6 +15,8 @@ export interface BoardGame {
   isAnimating(): boolean;
   /** What the board draws right now, in design points (test handle `renderedBoard`, TR §14). */
   drawn(): { robots: { robotId: string; x: number; y: number }[]; tiles: string[] };
+  /** Planning-hint numerals currently drawn (test handle `getHints`, TR §14). */
+  drawnHints(): PlanningHintMark[];
 }
 
 export interface BoardGameOptions {
@@ -59,5 +62,6 @@ export function createBoardGame(options: BoardGameOptions): BoardGame {
     skipAnimation: () => scene.director?.skipAll(),
     isAnimating: () => scene.director?.busy ?? false,
     drawn: () => scene.boardView?.drawn() ?? { robots: [], tiles: [] },
+    drawnHints: () => scene.boardView?.drawnHints() ?? [],
   };
 }
