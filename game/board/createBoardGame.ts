@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { StoreApi } from 'zustand/vanilla';
 import type { AppStore } from '../state/store';
 import { BoardScene } from './BoardScene';
+import type { PlanningHintMark } from './planningHints';
 import { WORLD_HEIGHT, WORLD_WIDTH } from './layout';
 import { refitOnResize } from './refitOnResize';
 import type { RobotChromeSnapshot } from './views/RobotView';
@@ -17,6 +18,8 @@ export interface BoardGame {
   drawn(): { robots: { robotId: string; x: number; y: number }[]; tiles: string[] };
   /** Live trait chrome as drawn (test handle `getRobotChrome`, TR §14). */
   robotChrome(robotId: string): RobotChromeSnapshot | null;
+  /** Planning-hint numerals currently drawn (test handle `getHints`, TR §14). */
+  drawnHints(): PlanningHintMark[];
 }
 
 export interface BoardGameOptions {
@@ -63,5 +66,6 @@ export function createBoardGame(options: BoardGameOptions): BoardGame {
     isAnimating: () => scene.director?.busy ?? false,
     drawn: () => scene.boardView?.drawn() ?? { robots: [], tiles: [] },
     robotChrome: (robotId) => scene.boardView?.robotChrome(robotId) ?? null,
+    drawnHints: () => scene.boardView?.drawnHints() ?? [],
   };
 }

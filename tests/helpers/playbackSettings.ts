@@ -143,3 +143,10 @@ export function fakeTraitSettings() {
     bounceBackBodyColor: '#ef6c00',
   };
 }
+
+/** The `presentation.json` `hints` block (task 24) for hand-built fake `GameData` fixtures. */
+export function fakeHintsSettings() {
+  return {
+    color: '#2f3e57',
+  };
+}

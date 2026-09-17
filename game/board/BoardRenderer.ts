@@ -10,10 +10,13 @@ import Phaser from 'phaser';
 import type { Lane } from '../../sim/core/coords';
 import type { RunState } from '../../sim/core/types';
 import type { GameData } from '../../sim/data/schemas';
+import type { PlanningHintMark } from './planningHints';
 import type { DragSource, DropResolution } from './dragTargets';
 import { fillRect, inset, strokeRect } from './drawBoardBackground';
 import {
   CELL_INSET,
+  HINT_FONT_SIZE,
+  HINT_OFFSET_Y,
   PIECE_SIZE,
   TRAY,
   TRAY_PADDING,
@@ -26,11 +29,11 @@ import {
   waitingGhostCenter,
   type Point,
 } from './layout';
-import { pieceHomes, tileColor, type PieceHome } from './pieces';
+import { formatNumber, pieceHomes, tileColor, type PieceHome } from './pieces';
 import { diffKeys, planCannons } from './reconcile';
 import { clampTrayScroll, isTraySlotVisible, maxTrayScroll } from './trayScroll';
 import { CannonView } from './views/CannonView';
-import { PLACEHOLDER } from './views/palette';
+import { FONT_FAMILY, PLACEHOLDER } from './views/palette';
 import { RobotView, type RobotAppearance, type RobotChromeSnapshot } from './views/RobotView';
 import { TileView } from './views/TileView';
 
@@ -38,6 +41,7 @@ import { TileView } from './views/TileView';
 export const DEPTH = {
   dropFeedback: 1,
   piece: 2,
+  hint: 2.5,
   robot: 3,
   trayMarkers: 4,
   laneWash: 5,
@@ -58,6 +62,8 @@ export class BoardRenderer {
   private readonly cannons = new Map<Lane, CannonView>();
   private readonly dropFeedback: Phaser.GameObjects.Graphics;
   private readonly trayMarkers: Phaser.GameObjects.Graphics;
+  private readonly hintTexts: Phaser.GameObjects.Text[] = [];
+  private drawnHintMarks: PlanningHintMark[] = [];
   private run: RunState | null = null;
   private held: PieceView | null = null;
   private scroll = 0;
@@ -132,6 +138,42 @@ export class BoardRenderer {
       })),
       tiles: [...this.tiles.keys()],
     };
+  }
+
+  /** Numerals currently drawn under tiles (task 24 / TR §14 `getHints`). Empty when hints are
+   * off, playback is running, or the run is not in planning — this is the drawn list, not a
+   * re-derivation from `run`. */
+  drawnHints(): PlanningHintMark[] {
+    return this.drawnHintMarks.map((mark) => ({ ...mark }));
+  }
+
+  /** Rebuilds the planning-hint numerals. Pass `[]` to hide (hints off, playback, or not planning). */
+  syncHints(marks: readonly PlanningHintMark[], color: string): void {
+    for (const text of this.hintTexts) {
+      this.scene.tweens.killTweensOf(text);
+      text.destroy();
+    }
+    this.hintTexts.length = 0;
+    this.drawnHintMarks = marks.map((mark) => ({ ...mark }));
+    const fontSize = `${designToWorld(HINT_FONT_SIZE)}px`;
+    for (const mark of marks) {
+      const center = cellCenter(mark.lane, mark.col);
+      const text = this.scene.add
+        .text(
+          designToWorld(center.x),
+          designToWorld(center.y + HINT_OFFSET_Y),
+          formatNumber(mark.value),
+          {
+            fontFamily: FONT_FAMILY,
+            fontSize,
+            fontStyle: 'bold',
+            color,
+          },
+        )
+        .setOrigin(0.5)
+        .setDepth(DEPTH.hint);
+      this.hintTexts.push(text);
+    }
   }
 
   cannonView(lane: Lane): CannonView | undefined {

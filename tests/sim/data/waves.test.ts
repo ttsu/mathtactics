@@ -5,6 +5,7 @@ import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings
 import { fakeShop } from '../../helpers/shop';
 import {
   fakeDangerSettings,
+  fakeHintsSettings,
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
@@ -56,6 +57,7 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
       danger: fakeDangerSettings(),
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
+      hints: fakeHintsSettings(),
     },
   };
 }

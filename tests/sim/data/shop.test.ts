@@ -4,6 +4,7 @@ import { loadRawGameData } from '../../helpers/loadDataFiles';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
 import {
   fakeDangerSettings,
+  fakeHintsSettings,
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
@@ -87,6 +88,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       danger: fakeDangerSettings(),
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
+      hints: fakeHintsSettings(),
     },
     ...overrides,
   };

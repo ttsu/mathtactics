@@ -102,6 +102,7 @@ if (import.meta.env.DEV || import.meta.env.VITE_TEST_HANDLE === '1') {
         };
       },
       getRobotChrome: (robotId) => board.robotChrome(robotId),
+      getHints: () => board.drawnHints(),
     }),
   );
 }

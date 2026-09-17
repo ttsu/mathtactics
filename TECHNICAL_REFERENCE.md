@@ -752,7 +752,10 @@ window.__GAME__ = {
     shieldColor: string | null;
     hpFontSize: number;                     // design pt, for the "HP stays largest" assertion
   } | null;
-  getHints(): { lane: number; col: number; value: number }[];   // task 24; empty when hints off
+  getHints(): { lane: number; col: number; value: number }[];   // task 24; empty when hints off.
+                                            // BoardRenderer.drawnHints — what is drawn now, not a
+                                            // re-derivation from `run`. Shape matches
+                                            // `laneHintValues` plus `lane`.
 };
 ```
 
