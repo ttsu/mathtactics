@@ -21,7 +21,7 @@ acceptable for this PR; do not invent placeholder glyphs here.
 
 M3 shipped seven untraited waves and a `robots.json` with a single `basic` template. Playtest 3
 found the run fun but too easy. GDD v0.7 answers that with **one teaching trait** on waves 4, 6
-and 7 **and a HP bump on waves 4–7** (wave 5 stays `basic` — subtraction). Waves 1–3 unchanged.
+and 7 **and a HP bump on waves 4–7** (wave 5 stays `basic`, grill A — subtraction). Waves 1–3 unchanged.
 Armor is deferred to v1.1+.
 
 Scenario files already exercise every trait (`:bb`, `:odd`, `:even`, `:w2`, `:w5`, `:w10` in
@@ -59,7 +59,7 @@ Scenario files already exercise every trait (`:bb`, `:odd`, `:even`, `:w2`, `:w5
    | Wave | Which spawn | New `robot` | Why |
    |---|---|---|---|
    | 4 | first spawn in file order | `weakness-5` | First Weakness; `n = 5` (GDD v0.7 §18.2) |
-   | 5 | — | still all `basic`; HP up | Teaches subtraction |
+   | 5 | — | still all `basic` (grill A); HP up | Teaches subtraction |
    | 6 | first spawn in file order | `bounce-back` | First Bounce-back |
    | 7 | first spawn in file order | `odd-only` | First Odd-only (base value 1 is odd) |
 

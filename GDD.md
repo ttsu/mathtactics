@@ -19,7 +19,7 @@ Playtest 3 (checklist notes): the run was **fun but too easy**; he asked for **a
 waves 9/10 — a second HP, shown separately, that must be destroyed first.
 
 - **Hardness: one teaching trait plus a 4–7 HP bump.** Waves 4/6/7 still get a single teaching
-  trait; remaining robots on those waves stay `basic`; wave 5 stays untraited. HP on waves
+  trait; remaining robots on those waves stay `basic`; wave 5 stays untraited (grill A). HP on waves
   4–7 is raised so sloppy play can leak (Playtest 3: too easy). Waves 1–3 are unchanged
   (Playtest 2 notes empty). A **sensible player** still ends the 7-wave stretch at **80–100**
   base HP (min ≥ 80 across seeds 1–100; at least some seeds finish below 100 — today's
@@ -35,8 +35,8 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   Bounce-back / parity. Not in M4, M5, or v1.
 - **Waves 4, 6, 7 gain their first teaching trait.** Wave 4: one Weakness (`n = 5`, grill A). Wave 6:
   one Bounce-back. Wave 7: one Odd-only (grill A: base value 1 is odd, so the first contact
-  can hurt without a tile). Wave 5 stays untraited — it teaches subtraction. Remaining robots on those
-  waves stay `basic`.
+  can hurt without a tile). Wave 5 stays untraited (grill A) — it teaches subtraction. Remaining
+  robots on those waves stay `basic`.
 - **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
   already follow `waves.json` length.
 - **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
@@ -626,7 +626,7 @@ shop slots are seeded-random within each rung.
 | 2 | HP 4–10, one lane at a time | at least one `×2` | Placing tiles; addition |
 | 3 | Two lanes threatened at once | — (the cannon offer is always present; income should make a 2nd cannon affordable around here) | Lane choice; shop tradeoffs |
 | 4 | First **Weakness** robot | at least one `×N` | Multiples |
-| 5 | Larger HP (~10–30) | at least one `−N` | Subtraction as a tool |
+| 5 | All **basic**, larger HP (~10–30) | at least one `−N` | Subtraction as a tool |
 | 6 | First **Bounce-back** robot | — | Trimming to exact |
 | 7 | First **Odd-only / Even-only** robot | — | Odd and even |
 | 8–9 | Procedural mix, HP ~30–99, more simultaneous lanes, mixed traits across robots | procedural | Combining everything |
@@ -635,7 +635,7 @@ shop slots are seeded-random within each rung.
 No tutorial mode and no text popups: wave design does the teaching.
 
 Waves 4–7 shipped **untraited** in M3. M4 swaps in the first teaching trait on waves 4, 6
-and 7 (wave 5 stays untraited) and adds the visuals that telegraph them (§6.2–6.4). A robot
+and 7 (wave 5 stays untraited, grill A) and adds the visuals that telegraph them (§6.2–6.4). A robot
 whose trait is invisible reads as a bug, not a puzzle.
 
 ### 10.3 Waves as Spawn Schedules
@@ -970,7 +970,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 
 - Wave 4's Weakness is `n = 5` (skip-counting by fives; grill A). Waves 8–9 mix 2/5/10.
 - Wave 7's first parity robot is Odd-only (cannon base value 1 is odd; grill A). Even-only enters in 8–9.
-- Wave 5 stays fully `basic` — subtraction is the lesson, not a new trait.
+- Wave 5 stays fully `basic` (grill A) — subtraction is the lesson, not a new trait.
 - Waves 4–7 leftover after wave 7: sensible-player min ≥ 80, and not every seed at 100.
 - 10-wave leftover after the Boss: sensible-player min near 40 (still ≥ 40), median 50–70.
   Chips come from waves 8–9 for a sensible player. Wave 10 escort is T1 one `basic` + T7 two
