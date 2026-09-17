@@ -76,7 +76,8 @@ and never see the Boss. Waves 8–9 may spawn `basic`; Even-only can roll at wav
 Wave 8 is 3+3 (grill A). Wave 9 has more robots than 8 (four at once **and** an extra pack).
 Shop after 7 guarantees `×2` or `×5` (grill A). Shop after 8 guarantees nothing (grill A).
 Shop after 9 guarantees `−N` (grill A). Procedural packs draw without replacement (grill B).
-Wave 8 T1/T8 pools are split (grill A). Waves 1–3 unchanged. Armor is **deferred to v1.1+**.
+Wave 8 T1/T8 pools are split (grill A). Wave 9 uses one shared full mix (grill A). Waves 1–3
+unchanged. Armor is **deferred to v1.1+**.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|

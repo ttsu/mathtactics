@@ -47,7 +47,8 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   Even-only can roll on wave 8 from T1 (grill B) — first-ball clonk is the lesson.
   Procedural packs draw **without replacement** (grill B): at most one of each template per group.
   Wave 8 T1 and T8 use **split pools** (grill A): T1 is n=5 + both parities + bounce + basic;
-  T8 introduces weakness-2 and weakness-10.
+  T8 introduces weakness-2 and weakness-10. Wave 9 uses **one shared full mix** on every pack
+  (grill A).
 - **Wave 10 is authored:** one Boss (**100–150 HP**, range grill A, **no trait**, grill A) plus escort `basic`s
   at T1 (one) and T7 (two). Leaking the Boss is a loss. The three-digit HP is the puzzle.
   Exact-killable in ≤ 3 hits with the tiles owned on entering wave 10 (grill A).
@@ -638,7 +639,7 @@ shop slots are seeded-random within each rung.
 | 6 | First **Bounce-back** robot (grill A) | — | Trimming to exact |
 | 7 | First **Odd-only** robot | at least one `×2` or `×5` (grill A) | Odd and even |
 | 8 | Procedural **3+3** (grill A), HP ~30–65, mixed traits | — (grill A) | Combining; Even-only at T1 |
-| 9 | Procedural **4+4+3** (grill C), HP ~45–99 | at least one `−N` (grill A) | Four lanes and an extra pack |
+| 9 | Procedural **4+4+3** (grill C), one full mix (grill A), HP ~45–99 | at least one `−N` (grill A) | Four lanes and an extra pack |
 | 10 | **Boss** (100–150 HP, range grill A, no trait) + light escort | — (no shop; win) | The big number |
 
 No tutorial mode and no text popups: wave design does the teaching.
@@ -1004,7 +1005,8 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.
 - Both waves 8 and 9 may spawn `basic`. Wave 8 is 3+3 (grill A). Wave 8 T1 and T8 use split
   pools (grill A): T1 is n=5 + both parities + bounce + basic; T8 introduces 2 and 10.
-  Wave 9 has more robots overall **and** four at once plus an extra pack (grill C).
+  Wave 9 has more robots overall **and** four at once plus an extra pack (grill C). Wave 9
+  uses one shared full mix on every pack (grill A).
 
 ---
 

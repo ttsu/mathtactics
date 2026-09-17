@@ -18,8 +18,8 @@ Clearing it wins the run. Shop after wave 9 already ships in task 25.
 Normal robots cap at 99 HP so two digits always fit. The Boss is the only three-digit HP
 (GDD §2.1, §6.6) and it is **untraited** (grill A) — the number is the puzzle, not a shield
 or parity gate. Exact-killable in ≤ 3 hits on entering wave 10 (grill A; asserted in task 27).
-`RobotView.showHpText` already shrinks three-digit text to fit the block —
-keep that; the sprite **overflows the cell**, the number stays inside.
+`RobotView.showHpText` already shrinks three-digit text to fit the block — keep that; the
+sprite **overflows the cell**, the number stays inside.
 
 `MAX_SPAWN_HP = 99` in `sim/data/schemas.ts` will reject a 100–150 range. Exception: a spawn
 whose `robot` template has `isBoss: true` may use `max ≤ 150`. Procedural pools must not
