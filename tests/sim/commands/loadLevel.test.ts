@@ -8,6 +8,7 @@ import { fakeShop } from '../../helpers/shop';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
 import {
   fakeDangerSettings,
+  fakeHintsSettings,
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
@@ -204,6 +205,7 @@ describe('applyCommand — loadLevel', () => {
         danger: fakeDangerSettings(),
         hud: fakeHudSettings(),
         traits: fakeTraitSettings(),
+        hints: fakeHintsSettings(),
       },
     };
     const data = parseGameData(raw);
