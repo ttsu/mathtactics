@@ -37,7 +37,9 @@ test('getRobotChrome telegraphs each trait and HP stays on the board', async ({ 
   await page.waitForFunction(() => {
     const game = window.__GAME__;
     const robots = game?.getState()?.board.robots ?? [];
-    return robots.length === 5 && robots.every((robot) => game!.getRobotChrome(robot.robotId) !== null);
+    return (
+      robots.length === 5 && robots.every((robot) => game!.getRobotChrome(robot.robotId) !== null)
+    );
   });
 
   const snapshot = await page.evaluate(() => {
@@ -90,7 +92,7 @@ test('getRobotChrome telegraphs each trait and HP stays on the board', async ({ 
   expect(byType.oddOnly?.chrome).toEqual({
     trait: 'oddOnly',
     n: null,
-    pairCount: 1,
+    pairCount: 2,
     coiled: false,
     shieldColor: traits.oddShieldColor,
     hpFontSize: ROBOT_HP_FONT_SIZE,
@@ -98,7 +100,7 @@ test('getRobotChrome telegraphs each trait and HP stays on the board', async ({ 
   expect(byType.evenOnly?.chrome).toEqual({
     trait: 'evenOnly',
     n: null,
-    pairCount: 2,
+    pairCount: 1,
     coiled: false,
     shieldColor: traits.evenShieldColor,
     hpFontSize: ROBOT_HP_FONT_SIZE,
@@ -111,6 +113,10 @@ test('getRobotChrome telegraphs each trait and HP stays on the board', async ({ 
 
   await page.screenshot({
     path: '/opt/cursor/artifacts/23-trait-telegraph.png',
+    fullPage: true,
+  });
+  await page.screenshot({
+    path: '/opt/cursor/artifacts/special-bots-traits.png',
     fullPage: true,
   });
   await page.screenshot({

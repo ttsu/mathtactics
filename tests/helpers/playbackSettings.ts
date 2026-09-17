@@ -81,7 +81,14 @@ export function fakePlaybackSettings() {
       shakeMs: 160,
       shake: 0.004,
     },
-    bounceBack: { wobbleScale: 1.2, maxBarFill: 1.2 },
+    bounceBack: {
+      wobbleScale: 1.2,
+      maxBarFill: 1.2,
+      plusCount: 5,
+      plusFloatPt: 52,
+      plusSpreadPt: 36,
+      plusColor: '#66bb6a',
+    },
     defeat: { popScale: 1.2, puffScale: 1.6 },
     exactKill: {
       popScale: 1.7,

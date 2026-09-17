@@ -1,7 +1,7 @@
 // A robot (task 09 req. 2): simple silhouette block with HP as the largest text on the board
 // (GDD §11.2), and an HP bar under it (task 10: bounce-back visibly refills it). Trait chrome
-// is the planning-phase telegraph (task 23); Boss overflow scale hangs off the same `setChrome`
-// seam in task 26.
+// is the planning-phase telegraph (task 23 / GDD v0.7.1); Boss overflow scale hangs off the same
+// `setChrome` seam in task 26.
 //
 // Playback (task 10) drives the HP text and bar separately while a hit animates (`showHpText`,
 // `setBarFill`); `setHp` puts both back in step.
@@ -16,6 +16,9 @@ import {
   ROBOT_ANTENNA_SPREAD,
   ROBOT_HP_FONT_SIZE,
   ROBOT_SIZE,
+  SHIELD_DOT_RADIUS,
+  SHIELD_DOT_SPREAD,
+  SHIELD_HP_OFFSET_Y,
   designToWorld,
 } from '../layout';
 import { formatNumber } from '../pieces';
@@ -96,6 +99,7 @@ export class RobotView extends Phaser.GameObjects.Container {
     this.bodyScale = isBoss ? this.bossScale : 1;
     this.paintBody(this.chrome);
     this.syncChest(this.chrome);
+    this.hp.setY(this.chrome.shieldColor !== null ? designToWorld(SHIELD_HP_OFFSET_Y) : 0);
   }
 
   /** Live chrome as drawn, for the test handle (TR §14). */
@@ -155,6 +159,11 @@ export class RobotView extends Phaser.GameObjects.Container {
     const g = this.silhouette;
     g.clear();
     const outline = PLACEHOLDER.robotOutline;
+    if (chrome.shieldColor !== null) {
+      drawShield(g, size, hexColor(chrome.shieldColor), outline);
+      drawShieldDots(g, size, chrome.pairCount, outline);
+      return;
+    }
     if (chrome.coiled) {
       drawCoil(g, size, outline);
     } else {
@@ -163,10 +172,6 @@ export class RobotView extends Phaser.GameObjects.Container {
     const fill = chrome.bodyColor ? hexColor(chrome.bodyColor) : PLACEHOLDER.robot;
     g.fillStyle(fill);
     g.fillRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
-    if (chrome.shieldColor !== null) {
-      g.fillStyle(hexColor(chrome.shieldColor), 0.4);
-      g.fillRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
-    }
     g.lineStyle(designToWorld(3), outline);
     g.strokeRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
   }
@@ -233,5 +238,47 @@ function drawCoil(g: Phaser.GameObjects.Graphics, size: number, outline: number)
   const height = designToWorld(7);
   for (let i = 0; i < 3; i++) {
     g.strokeEllipse(0, -size / 2 - designToWorld(5 + i * 6), width, height);
+  }
+}
+
+/** Heater-shield silhouette that fills the robot box — the parity telegraph (GDD §6.3). */
+function drawShield(
+  g: Phaser.GameObjects.Graphics,
+  size: number,
+  fill: number,
+  outline: number,
+): void {
+  const hw = size / 2;
+  const points = [
+    [0, -hw],
+    [hw * 0.78, -hw * 0.82],
+    [hw * 0.94, -hw * 0.18],
+    [hw * 0.7, hw * 0.38],
+    [0, hw],
+    [-hw * 0.7, hw * 0.38],
+    [-hw * 0.94, -hw * 0.18],
+    [-hw * 0.78, -hw * 0.82],
+  ].map(([x, y]) => new Phaser.Math.Vector2(x, y));
+  g.fillStyle(fill);
+  g.fillPoints(points, true);
+  g.lineStyle(designToWorld(3), outline);
+  g.strokePoints(points, true);
+}
+
+function drawShieldDots(
+  g: Phaser.GameObjects.Graphics,
+  size: number,
+  count: number,
+  outline: number,
+): void {
+  const radius = designToWorld(SHIELD_DOT_RADIUS);
+  const y = -size / 2 + designToWorld(16);
+  const xs =
+    count === 2 ? [-designToWorld(SHIELD_DOT_SPREAD), designToWorld(SHIELD_DOT_SPREAD)] : [0];
+  for (const x of xs) {
+    g.fillStyle(PLACEHOLDER.ballShine);
+    g.fillCircle(x, y, radius);
+    g.lineStyle(designToWorld(2), outline);
+    g.strokeCircle(x, y, radius);
   }
 }

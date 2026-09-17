@@ -747,7 +747,8 @@ window.__GAME__ = {
   getRobotChrome(robotId: string): {        // task 23
     trait: Trait['type'];
     n: number | null;                       // Weakness chest number, else null
-    pairCount: number;                      // unpaired (1) vs paired (2) features
+    pairCount: number;                      // identifying marks as drawn: antennae (1) or
+                                            // shield dots (1 = odd blocked, 2 = even blocked)
     coiled: boolean;
     shieldColor: string | null;
     hpFontSize: number;                     // design pt, for the "HP stays largest" assertion

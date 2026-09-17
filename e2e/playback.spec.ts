@@ -212,3 +212,35 @@ test('legibility screenshots mid-playback (tile pop, exact kill)', async ({ page
   await page.waitForTimeout(Math.max(0, 2_050 - (Date.now() - start)));
   await page.screenshot({ path: testInfo.outputPath('playback-exact-kill.png') });
 });
+
+const BOUNCE_BACK_OVERSHOOT = [
+  'name: e2e bounce-back overshoot refill',
+  'baseValue: 10',
+  'board:',
+  '  - ". . . . . . . ."',
+  '  - ". . . . . . . ."',
+  '  - "C +3 R10:bb . . . . ."',
+  '  - ". . . . . . . ."',
+  '  - ". . . . . . . ."',
+].join('\n');
+
+test('bounce-back overshoot keeps the robot and lands on the remainder HP', async ({ page }) => {
+  await load(page, BOUNCE_BACK_OVERSHOOT);
+  const events = await page.evaluate(() => window.__GAME__!.endTurn());
+  expect(events.some((event) => event.type === 'RobotBouncedBack')).toBe(true);
+
+  await page.waitForFunction(() => window.__GAME__!.isIdle(), undefined, { timeout: 20_000 });
+
+  const snapshot = await page.evaluate(() => {
+    const game = window.__GAME__!;
+    const robot = game.getState()!.board.robots[0]!;
+    return {
+      hp: robot.hp,
+      chrome: game.getRobotChrome(robot.robotId),
+      drawn: game.renderedBoard().robots.length,
+    };
+  });
+  expect(snapshot.hp).toBe(3);
+  expect(snapshot.drawn).toBe(1);
+  expect(snapshot.chrome).toMatchObject({ trait: 'bounceBack', coiled: true });
+});

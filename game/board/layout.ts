@@ -114,8 +114,16 @@ export const TILE_LABEL_FONT_SIZE = 40;
 export const ROBOT_HP_FONT_SIZE = 56;
 /** Weakness chest numeral — smaller than HP so HP stays the largest number (GDD §6.4, §11.2). */
 export const WEAKNESS_N_FONT_SIZE = 22;
-/** Horizontal offset of each even-only antenna from centre (design points). */
+/** Horizontal offset of each even-only antenna from centre (design points). Unused on parity
+ * robots: their identifying marks are shield dots, not antennae (GDD §6.3 v0.7.1). */
 export const ROBOT_ANTENNA_SPREAD = 14;
+/** Parity-shield crest dots (GDD §6.3). Radius and spread stay smaller than HP. */
+export const SHIELD_DOT_RADIUS = 7;
+export const SHIELD_DOT_SPREAD = 11;
+/** Drop the HP numeral slightly on a heater shield so the crest dots sit above it. */
+export const SHIELD_HP_OFFSET_Y = 12;
+/** Floating green pluses on a Bounce-back refill (GDD §6.2). Smaller than HP. */
+export const BOUNCE_PLUS_FONT_SIZE = 22;
 export const CANNON_VALUE_FONT_SIZE = 26;
 export const TILE_STAR_FONT_SIZE = 18;
 /** Planning-hint running totals under tiles (task 24). Must stay smaller than the tile numeral. */

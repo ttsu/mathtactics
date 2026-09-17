@@ -13,7 +13,7 @@
       "ballFireMs": 150,
       "impactMs": 380,
       "blockedMs": 450,
-      "bounceBackMs": 650,
+      "bounceBackMs": 850,
       "defeatMs": 320,
       "exactKillMs": 1000,
       "coinsMs": 220,
@@ -89,7 +89,11 @@
     },
     "bounceBack": {
       "wobbleScale": 1.25,
-      "maxBarFill": 1.2
+      "maxBarFill": 1.2,
+      "plusCount": 5,
+      "plusFloatPt": 52,
+      "plusSpreadPt": 36,
+      "plusColor": "#66bb6a"
     },
     "defeat": {
       "popScale": 1.25,

@@ -229,6 +229,11 @@ const PresentationFileSchema = z.object({
       wobbleScale: scale(),
       /** How far past full the springy HP bar refill may overshoot before settling (1 = none). */
       maxBarFill: z.number().min(1),
+      /** Green pluses that float around the robot as the remainder refills (GDD §6.2). */
+      plusCount: z.number().int().nonnegative(),
+      plusFloatPt: z.number().nonnegative(),
+      plusSpreadPt: z.number().nonnegative(),
+      plusColor: z.string().min(1),
     }),
     defeat: z.object({ popScale: scale(), puffScale: scale() }),
     exactKill: z.object({

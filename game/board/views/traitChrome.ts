@@ -1,4 +1,4 @@
-// Pure planning-phase trait silhouette (task 23, GDD §6.2–6.4). Phaser-free so tests can
+// Pure planning-phase trait silhouette (task 23, GDD §6.2–6.4, v0.7.1). Phaser-free so tests can
 // assert a distinct descriptor per trait without a scene. `RobotView` paints from this;
 // sizes live in layout.ts, only colours come from presentation.json `traits`.
 
@@ -13,7 +13,8 @@ export interface TraitChrome {
   trait: Trait['type'];
   /** Weakness chest number, else null. */
   n: number | null;
-  /** Unpaired (1) vs paired (2) antennae. Bounce-back / weakness / none keep today's single. */
+  /** Identifying marks as drawn: antennae on basic/weakness/bounce-back (1), shield dots on
+   * parity (1 = odd numbers blocked, 2 = even numbers blocked). */
   pairCount: number;
   coiled: boolean;
   shieldColor: string | null;
@@ -21,6 +22,13 @@ export interface TraitChrome {
   bodyColor: string | null;
   /** Weakness chest font size in design points; null when there is no chest numeral. */
   chestFontSize: number | null;
+}
+
+/** Shield dots showing the blocked parity (GDD §6.3): one = odd blocked, two = even blocked. */
+export function blockedParityDots(trait: Trait): 1 | 2 | null {
+  if (trait.type === 'evenOnly') return 1;
+  if (trait.type === 'oddOnly') return 2;
+  return null;
 }
 
 export function traitChrome(trait: Trait, colours: TraitColours): TraitChrome {
@@ -59,7 +67,7 @@ export function traitChrome(trait: Trait, colours: TraitColours): TraitChrome {
       return {
         trait: 'oddOnly',
         n: null,
-        pairCount: 1,
+        pairCount: 2,
         coiled: false,
         shieldColor: colours.oddShieldColor,
         bodyColor: null,
@@ -69,7 +77,7 @@ export function traitChrome(trait: Trait, colours: TraitColours): TraitChrome {
       return {
         trait: 'evenOnly',
         n: null,
-        pairCount: 2,
+        pairCount: 1,
         coiled: false,
         shieldColor: colours.evenShieldColor,
         bodyColor: null,

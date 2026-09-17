@@ -1,7 +1,8 @@
 // Plays one playback segment's beats on the board (task 10 req. 3), and snaps the segment to its
 // final state when it ends or is skipped (req. 5).
 //
-// Everything shown comes from event payloads — values, cells, damage, HP — never recomputed.
+// Everything shown comes from event payloads — values, cells, damage, HP — never recomputed,
+// except Bounce-back's visual drain to 0 between `hpBefore` and `hpAfter` (GDD §6.2).
 // Every duration, scale, distance and shake comes from `presentation.json`. Anything this player
 // creates or animates is tracked, so `finish()` can stop it all and leave clean final sprites.
 
@@ -17,6 +18,7 @@ import {
   BALL_IMPACT_OFFSET,
   BALL_RADIUS,
   BIG_STAR_RADIUS,
+  BOUNCE_PLUS_FONT_SIZE,
   BURST_RING_WIDTH,
   BURST_STAR_RADIUS,
   CELL_INSET,
@@ -41,6 +43,7 @@ import {
   PLACEHOLDER,
 } from '../views/palette';
 import type { RobotAppearance, RobotView } from '../views/RobotView';
+import { bounceBackPlusOffsets } from './bounceBackPluses';
 import { drawRing, drawStar, floatingText } from './effects';
 import { bouncesBack, isHudEvent, lastCellBefore, type PlaybackSegment } from './segments';
 import type { TimedBeat } from './timeline';
@@ -410,13 +413,10 @@ export class SegmentPlayer {
       ease: 'Quad.easeOut',
     });
     if (bouncesBack(this.segment, event)) {
-      // Overshot Bounce-back: the HP text holds `hpBefore` (it only ever shows payload values)
-      // while the bar dips toward empty; the bounce beat counts the text to `hpAfter` and springs
-      // the bar back up (GDD §6.2).
-      robot.showHpText(event.hpBefore);
-      this.counter(robot.barFill, 0, durationMs * this.share.most, 'Cubic.easeOut', (value) =>
-        robot.setBarFill(value),
-      );
+      // Overshot Bounce-back (GDD §6.2 v0.7.1): drain the numeral and bar to 0 on this beat.
+      // 0 is the visual empty beat between `hpBefore` and `hpAfter`, not a sim-emitted HP.
+      // The bounce beat then counts back to `hpAfter` with green pluses.
+      this.countHp(robot, event.hpBefore, 0, durationMs * this.share.most, 'Cubic.easeOut');
       return;
     }
     this.countHp(
@@ -431,7 +431,9 @@ export class SegmentPlayer {
   private robotBouncedBack(event: EventOf<'RobotBouncedBack'>, durationMs: number): void {
     const robot = this.renderer.robotView(event.robotId);
     if (robot === undefined) return;
-    const { maxBarFill } = this.settings.bounceBack;
+    const { maxBarFill, plusCount, plusFloatPt, plusSpreadPt, plusColor, wobbleScale } =
+      this.settings.bounceBack;
+    // Remainder comes back from the drained-to-zero impact beat (GDD §6.2).
     this.counter(
       robot.displayedHp,
       event.hpAfter,
@@ -439,7 +441,6 @@ export class SegmentPlayer {
       'Quad.easeOut',
       (value) => robot.showHpText(Math.round(value)),
     );
-    // The bar springs back up past its final fill and wobbles into place.
     this.counter(
       robot.barFill,
       event.hpAfter / robot.maxHp,
@@ -447,8 +448,33 @@ export class SegmentPlayer {
       'Elastic.easeOut',
       (value) => robot.setBarFill(value, maxBarFill),
     );
-    robot.setScale(this.settings.bounceBack.wobbleScale);
+    robot.setScale(wobbleScale);
     this.tween({ targets: robot, scale: 1, duration: durationMs, ease: 'Elastic.easeOut' });
+
+    const center = worldCenter(event.at);
+    for (const offset of bounceBackPlusOffsets(plusCount, plusSpreadPt)) {
+      const plus = floatingText(
+        this.scene,
+        center.x + designToWorld(offset.x),
+        center.y + designToWorld(offset.y),
+        '+',
+        BOUNCE_PLUS_FONT_SIZE,
+        plusColor,
+      );
+      this.track(plus).setDepth(DEPTH.effects);
+      this.tween({
+        targets: plus,
+        y: plus.y - designToWorld(plusFloatPt),
+        duration: durationMs,
+        ease: 'Cubic.easeOut',
+      });
+      this.tween({
+        targets: plus,
+        alpha: 0,
+        delay: durationMs * this.share.half,
+        duration: durationMs * this.share.fade,
+      });
+    }
   }
 
   private robotDefeated(event: EventOf<'RobotDefeated'>, durationMs: number): void {
@@ -720,7 +746,13 @@ export class SegmentPlayer {
       .setPosition(target.x, target.y - designToWorld(spawn.dropFromPt))
       .setScale(spawn.dropFromScale)
       .setAlpha(1);
-    this.tween({ targets: robot, y: target.y, scale: 1, duration: durationMs, ease: 'Back.easeOut' });
+    this.tween({
+      targets: robot,
+      y: target.y,
+      scale: 1,
+      duration: durationMs,
+      ease: 'Back.easeOut',
+    });
   }
 
   /** A `RobotWaiting` robot pops in as a translucent ghost, its HP visible, just right of column 7
@@ -745,9 +777,7 @@ export class SegmentPlayer {
   /** Spawn beats introduce a robot that wasn't in the pre-turn snapshot — chrome goes through
    * the same `setChrome` entry point as `syncRobots` (task 23). `RobotWaiting` has no `isBoss`
    * field; waiting robots pass `false` (wave-10 Boss arrives via `RobotSpawned`). */
-  private ensureSpawnView(
-    event: EventOf<'RobotSpawned'> | EventOf<'RobotWaiting'>,
-  ): RobotView {
+  private ensureSpawnView(event: EventOf<'RobotSpawned'> | EventOf<'RobotWaiting'>): RobotView {
     const appearance: RobotAppearance = {
       trait: event.trait,
       isBoss: event.type === 'RobotSpawned' && event.isBoss,

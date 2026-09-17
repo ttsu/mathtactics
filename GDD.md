@@ -1,7 +1,7 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.7
+**Version:** 0.7.1
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
@@ -10,6 +10,21 @@ of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.7.1
+
+Special-bot telegraph after the M4 planning-phase chrome shipped. The antenna-count plus
+colour-wash on Odd-only / Even-only was too close to a basic robot, and the trait itself was
+not readable. Bounce-back's bar spring did not show the "you overshot, it came back" story.
+
+- **Parity robots are a shield.** The body is a heater-shield silhouette in the trait colour
+  (not a grey block with a wash). **One dot** on the shield = odd numbers are blocked;
+  **two dots** = even numbers are blocked ("does everyone have a partner?"). Odd-only (hurt
+  by odd, blocks even) has two dots; Even-only (hurt by even, blocks odd) has one. HP stays
+  the largest numeral; the dots sit on the shield crest above it. No ODD/EVEN letters.
+- **Bounce-back overshoot:** HP numeral and bar drain to 0, then the remainder refills and
+  green pluses float around the robot. Exact kill still removes it; a short hit still just
+  counts down (no drain-to-zero, no pluses).
 
 ## 0. Changes in v0.7
 
@@ -53,7 +68,8 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   at T1 (one) and T7 (two). Leaking the Boss is a loss. The three-digit HP is the puzzle.
   Exact-killable in ≤ 3 hits with the tiles owned on entering wave 10 (grill A).
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
-  without words (§6.2–6.4). Bounce-back bar refill and blocked clonk already play (task 10).
+  without words (§6.2–6.4). Bounce-back drain-to-zero-then-refill (v0.7.1) and blocked clonk
+  already play; further celebration juice stays M5.
 - **Settings and planning hints ship.** Gear on the main menu; hints **off by default** (grill A);
   he can turn them on. Hints show **ball value only** — no trait effects, blocked/doubled damage,
   or outcome (grill A). **No Sound row in M4** (grill A) — the toggle would do nothing audible
@@ -128,6 +144,8 @@ resolved or explicitly deferred. Major changes from v0.2:
 - **Kills resolve per ball**, not at end of turn.
 - **Overkill Heal is replaced by Bounce-back**: `hp = min(|hp − damage|, maxHp)`.
 - **Parity Shield is reframed** as Odd-only / Even-only robots (show what hurts, not what blocks).
+  The v0.7.1 telegraph reverses the *visual*: the shield now shows which numbers bounce off
+  (one dot = odd blocked, two dots = even blocked). The rule is unchanged.
 - **v1 tiles are `+N`, `−N`, `×N` only.** Count tiles, path tiles, and Barrier are cut from v1.
 - **Robots have speed 1 and no attack stat.** Waves are spawn schedules.
 - **Same concept ladder every run**; 10 waves; normal robots capped at 99 HP; Boss finale.
@@ -426,18 +444,22 @@ newHp = min(|hp − damage|, maxHp)
 | 25 | 10 (way over → refills to full) |
 
 - Only an exact hit kills. This makes subtraction genuinely valuable.
-- Presentation: overshooting makes the robot visibly **bounce back** — its HP bar refills.
-  Legible from the bar alone.
+- Presentation: overshooting makes the robot visibly **bounce back**. The HP numeral and bar
+  drain to 0, then the remainder comes back and green pluses float around it. A short hit
+  (no overshoot) just counts HP down — no drain-to-zero, no pluses. Legible from the bar
+  and the pluses together.
 - Because HP never exceeds `maxHp`, detonation damage never exceeds `maxHp`.
 - Visual design must telegraph the trait loudly (e.g. springy/coiled silhouette).
 
 ### 6.3 Trait: Odd-only / Even-only
 
-The robot can only be hurt by balls of one parity. Framed as **what hurts it**.
+The robot can only be hurt by balls of one parity. The shield shows **which numbers bounce
+off** — one dot = odd blocked, two dots = even blocked ("does everyone have a partner?").
 
-- **Even-only** robots are built from matched pairs (two antennae, two eyes, paired blocks).
-- **Odd-only** robots have one unpaired "odd one out" part (single antenna, single eye).
-- The shield glows in the color of the parity that works. HP remains the most prominent element.
+- **Even-only** robots are a teal shield with **one** dot: odd balls clonk, even balls hurt.
+- **Odd-only** robots are a purple shield with **two** dots: even balls clonk, odd balls hurt.
+- The shield *is* the silhouette (not a wash on a grey block). HP remains the most prominent
+  element; the dots sit on the crest, smaller than the HP numeral. No ODD/EVEN letters.
 - A wrong-parity ball is **blocked**: 0 damage, ball consumed (a "clonk"). It does not
   pass through to robots behind.
 - Robot HP is unconstrained by parity. An Odd-only robot with even HP needs two or more
@@ -777,7 +799,8 @@ timed, escalating sequence**. The simulation produces an event list; presentatio
 2. **Impact is the payoff.** Screen shake scaled to damage, robot knockback, damage numbers
    flying off and settling.
 3. **Exact kills get a unique, unmistakable celebration** — the most satisfying moment in the game.
-4. **Bounce-back gets an equally loud negative beat** — the HP bar visibly refills.
+4. **Bounce-back gets an equally loud negative beat** — HP drains to zero, then the
+   remainder refills with green pluses floating around the robot.
 5. **Blocked (parity) hits** get a distinct "clonk".
 6. **HUD commits follow playback.** Coins and base HP update only when the matching event plays.
 7. **Skip:** tapping during playback jumps to the end of the current lane; tapping again skips the next.
