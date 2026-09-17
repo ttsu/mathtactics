@@ -60,7 +60,8 @@ deferred to v1.1+.
    wave 8 is 3+3 (grill A); Even-only is possible on wave 8 T1 (grill B).
 
 4. **Shop tables** — append `afterWave` 7, 8, 9. Prices unchanged. After-wave 7 guarantee is
-   locked (grill A): `×2` or `×5`. After 8–9 still draft (tune with reason):
+   locked (grill A): `×2` or `×5`. After-wave 8 guarantee is locked (grill A): none. After 9
+   still draft (tune with reason):
 
    ```json
    { "afterWave": 7, "guarantees": [{ "kind": "mul", "n": [2, 5] }], "table": [
