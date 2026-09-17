@@ -45,6 +45,7 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   Wave 8 is **3+3** (grill A): T1 three, T8 three — mix traits without four-lane panic.
   Wave 9 has more robots overall **and** more at once: packs of 4 plus an extra pack (grill C).
   Even-only can roll on wave 8 from T1 (grill B) — first-ball clonk is the lesson.
+  Procedural packs draw **without replacement** (grill B): at most one of each template per group.
 - **Wave 10 is authored:** one Boss (**100–150 HP**, range grill A, **no trait**, grill A) plus escort `basic`s
   at T1 (one) and T7 (two). Leaking the Boss is a loss. The three-digit HP is the puzzle.
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
@@ -992,7 +993,8 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - No Sound toggle in M4 Settings (grill A). Ship it with M5 audio. `settings.sound` may remain
   in storage, default on, unused.
 - Procedural groups draw distinct lanes with `nextInt` into the remaining lanes, then pick a
-  template from the pool (with replacement) and roll HP — file order, `wave` stream only.
+  template from the remaining pool **without replacement** (grill B) and roll HP — file order,
+  `wave` stream only. `count` ≤ unique `pool` length. The T1 clonk is a lesson, not a lottery.
 - The Boss is untraited (grill A): **100–150 HP** (range grill A), authored in lane 2 (center, matching the
   starting cannon). Escort is T1 one `basic` plus T7 two more `basic`s (grill B).
 - A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.

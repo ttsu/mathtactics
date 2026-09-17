@@ -251,8 +251,8 @@ emits the first turn's spawns.
   waiting robot that enters emits `RobotSpawned` with its existing `robotId`.
 - **Rolling a wave** (`/sim/waves/rollWave.ts`, `wave` stream): authored waves assign letters then
   HP (TR §9). Procedural waves (M4) draw each group's distinct lanes, then per lane a pool template
-  and HP. Result sorted by `turn` (stable). Exact draw order is normative so saves and scenarios
-  are reproducible.
+  **without replacement** and HP. Result sorted by `turn` (stable). Exact draw order is normative so
+  saves and scenarios are reproducible.
 
 Impact rules are implemented once in `/sim/resolve/impact.ts` as a pure function
 `resolveImpact(robot, ballValue) → ImpactOutcome`, exactly per GDD §5.4.
@@ -391,7 +391,7 @@ validation — the shop is the only tile source.
         "turn": 1,
         "count": 3,
         "hp": [30, 50],
-        "pool": ["weakness-5", "bounce-back", "odd-only", "basic"]
+        "pool": ["weakness-5", "bounce-back", "odd-only", "even-only", "basic"]
       }
     ]
   }
@@ -400,9 +400,10 @@ validation — the shop is the only tile source.
 
 `rollWave` draw order for a procedural group (normative, `wave` stream only): pick `count`
 distinct lanes by `nextInt` into the remaining lanes (ascending, same as letter assignment),
-then for each drawn lane in that order: `nextInt` into the pool (with replacement) and
-`nextInt` HP in `[min, max]`. Groups in file order. Same-turn groups are forbidden (`turn`
-values unique within a wave). `count` is 1–5; `pool` non-empty.
+then for each drawn lane in that order: `nextInt` into the **remaining** pool (**without
+replacement**, grill B) and `nextInt` HP in `[min, max]`. Groups in file order. Same-turn
+groups are forbidden (`turn` values unique within a wave). `count` is 1–5; `pool` non-empty
+with unique ids; **`count` ≤ `pool.length`**.
 
 `shop.json` (M3, task 18). `afterWave` is **1-based** — the number of the wave just cleared, which
 is `waveIndex + 1`; every other wave reference in the codebase is 0-based, so conversions are

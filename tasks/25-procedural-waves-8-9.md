@@ -34,15 +34,16 @@ deferred to v1.1+.
 1. **Schema.** A wave is **either** `{ id, spawns }` **or** `{ id, procedural }`, never both
    (strict). Procedural shape **exactly** TR §9. Cross-file: every `pool` id exists in
    `robots.json`. `count` 1–5; `hp` `1 ≤ min ≤ max ≤ 99`; `turn` values unique in the wave;
-   at least one group with `turn: 1`; `pool` non-empty. Authored waves unchanged.
+   at least one group with `turn: 1`; `pool` non-empty with unique ids; **`count` ≤ `pool.length`**
+   (without replacement, grill B). Authored waves unchanged.
 
 2. **`rollWave`** — if `procedural` is present, use the TR §9 draw order (normative). Authored
    path stays byte-identical (existing `tests/sim` rollWave tests must still pass). Procedural
    result is still `SpawnEntry[]` sorted by `turn`.
 
    Tests: same seed → same lanes, templates, HP; drawing from `shop` does not change a
-   procedural wave; `count: 3` always yields 3 distinct lanes; pool-with-replacement can
-   repeat a template.
+   procedural wave; `count: 3` always yields 3 distinct lanes; a group never repeats a
+   template; schema rejects `count` > `pool.length` and duplicate pool ids.
 
 3. **Ship waves 8–9** (tune only with a recorded reason). Draft:
 
