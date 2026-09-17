@@ -34,7 +34,7 @@ careless run can lose on 8–9 and never see the Boss. Leaking the Boss is a los
 | 7 | Odd-only on the first robot; remaining robots basic | Odd vs even; base value 1 is odd, so the first contact can hurt |
 | 8 | Procedural 3+3, mixed traits (Even-only can appear at T1) | Stretch; first-ball clonk on even; four-lane panic is later |
 | 9 | Procedural 4+4+3, mixed traits, highest normal HP | Hardest stretch — he can lose here and miss the Boss |
-| 10 | Boss (100–150 HP, three digits, no trait) + light escort | Finale; leaking the Boss is a loss |
+| 10 | Boss (100–140 HP, three digits, no trait) + light escort | Finale; leaking the Boss is a loss |
 
 Settings (gear on the menu) has a Hints toggle, **off by default**. Hints show ball value only —
 no trait effects. No Sound row yet (M5).

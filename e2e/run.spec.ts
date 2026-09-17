@@ -11,7 +11,7 @@ import { nextShopChoice, planningCommands } from '../tests/helpers/sensiblePlaye
 // wave 8 resumes via ▶ Keep Going with the same offers.
 //
 // The real New Game button seeds randomly, so `MAX_TURNS` is headroom over the measured
-// sensible-player worst case (task 26: 93 End Turns on 10 waves; task 27 remeasures).
+// sensible-player worst case (task 27: 92 End Turns on 10 waves).
 const MAX_TURNS = 200;
 const data = parseGameData(loadRawGameData());
 

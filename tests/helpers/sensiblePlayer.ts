@@ -423,8 +423,8 @@ export interface SensibleRunStats {
   waveEntries: WaveEntrySnapshot[];
 }
 
-/** Task 27 remeasures 10-wave End Turns and leaves headroom. A bot that hits the cap
- * throws rather than reporting a false loss. */
+/** Task 27 remeasured 10-wave End Turns at 50/66/92 (min/median/max). 400 still has
+ * headroom so a bot that hits the cap throws rather than reporting a false loss. */
 const MAX_END_TURNS = 400;
 
 export function playSensibleRun(seed: string, data: GameData): SensibleRunStats {
