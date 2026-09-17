@@ -17,6 +17,7 @@ import {
   WEAKNESS_N_FONT_SIZE,
   WEAKNESS_BOLT_SIZE,
   WEAKNESS_MARK_OFFSET_X,
+  WEAKNESS_MARK_OFFSET_Y,
   BOUNCE_PLUS_FONT_SIZE,
   SHIELD_DOT_RADIUS,
   ROBOT_SIZE,
@@ -147,9 +148,13 @@ describe('piece and tray geometry (task 09)', () => {
     expect(PIECE_SIZE).toBeLessThan(CELL_SIZE);
   });
 
-  it('puts the weakness bolt+n to the right of the robot body, not under HP', () => {
-    expect(WEAKNESS_MARK_OFFSET_X).toBeGreaterThan(ROBOT_SIZE / 2);
-    expect(WEAKNESS_BOLT_SIZE).toBeGreaterThanOrEqual(24);
+  it('puts the weakness bolt+n on the robot overlapping the bottom edge', () => {
+    const half = ROBOT_SIZE / 2;
+    expect(WEAKNESS_MARK_OFFSET_Y).toBeGreaterThan(0);
+    expect(WEAKNESS_MARK_OFFSET_Y).toBeLessThanOrEqual(half);
+    expect(WEAKNESS_MARK_OFFSET_Y + WEAKNESS_BOLT_SIZE / 2).toBeGreaterThan(half);
+    expect(Math.abs(WEAKNESS_MARK_OFFSET_X) + WEAKNESS_BOLT_SIZE / 2).toBeLessThan(half);
+    expect(WEAKNESS_BOLT_SIZE).toBeLessThan(ROBOT_HP_FONT_SIZE);
     expect(WEAKNESS_N_FONT_SIZE).toBeLessThan(ROBOT_HP_FONT_SIZE);
   });
 

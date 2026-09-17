@@ -24,6 +24,7 @@ import {
   SHIELD_WIDTH,
   WEAKNESS_BOLT_SIZE,
   WEAKNESS_MARK_OFFSET_X,
+  WEAKNESS_MARK_OFFSET_Y,
   WEAKNESS_N_GAP,
   designToWorld,
 } from '../layout';
@@ -125,8 +126,8 @@ export class RobotView extends Phaser.GameObjects.Container {
     this.syncShield(this.chrome);
     this.syncMark(this.chrome);
     this.hp.setY(0);
-    // Shield and weakness mark sit beside the body; keep them in front of HP so the
-    // bolt+n cannot hide under the numeral (GDD §6.4).
+    // Shield is a sibling of the body. Weakness bolt+n overlap the bottom edge in front of
+    // HP so the small n stays readable (GDD §6.4).
     if (this.shield !== null) this.bringToTop(this.shield);
     if (this.markBolt !== null) this.bringToTop(this.markBolt);
     if (this.chest !== null) this.bringToTop(this.chest);
@@ -233,30 +234,31 @@ export class RobotView extends Phaser.GameObjects.Container {
       return;
     }
     const boltX = designToWorld(WEAKNESS_MARK_OFFSET_X);
+    const boltY = designToWorld(WEAKNESS_MARK_OFFSET_Y);
     const boltColor = hexColor(this.colours.weaknessMarkColor);
     if (this.markBolt === null) {
       this.markBolt = this.scene.add.graphics();
       this.add(this.markBolt);
     }
     paintLightningBolt(this.markBolt, boltColor, PLACEHOLDER.robotOutline);
-    this.markBolt.setPosition(boltX, 0);
+    this.markBolt.setPosition(boltX, boltY);
 
     const fontSize = `${designToWorld(chrome.chestFontSize)}px`;
     const nX = boltX + designToWorld(WEAKNESS_BOLT_SIZE / 2 + WEAKNESS_N_GAP);
     if (this.chest === null) {
       this.chest = this.scene.add
-        .text(nX, 0, formatNumber(chrome.n), {
+        .text(nX, boltY, formatNumber(chrome.n), {
           fontFamily: FONT_FAMILY,
           fontSize,
           fontStyle: 'bold',
           color: this.colours.weaknessNColor,
           stroke: DARK_STROKE_COLOR,
-          strokeThickness: designToWorld(3),
+          strokeThickness: designToWorld(2),
         })
         .setOrigin(0, 0.5);
       this.add(this.chest);
     } else {
-      this.chest.setPosition(nX, 0).setFontSize(designToWorld(chrome.chestFontSize));
+      this.chest.setPosition(nX, boltY).setFontSize(designToWorld(chrome.chestFontSize));
       this.chest.setColor(this.colours.weaknessNColor);
       const text = formatNumber(chrome.n);
       if (this.chest.text !== text) this.chest.setText(text);

@@ -25,7 +25,8 @@ not readable. Bounce-back's bar spring did not show the "you overshot, it came b
 - **Bounce-back overshoot:** at impact the remainder pops off the ball and lands to the right
   of the robot; then it is sucked into the robot while HP counts up and a flurry of tiny
   green pluses fade upward. Exact kill still removes it; a short hit still just counts down.
-- **Weakness n** sits beside a red lightning bolt to the right of the robot, not under the HP.
+- **Weakness n** sits beside a small red lightning bolt on the robot, overlapping the bottom
+  edge so HP does not cover it.
 
 ## 0. Changes in v0.7
 
@@ -472,8 +473,8 @@ stacked dots = even blocked ("does everyone have a partner?").
 
 ### 6.4 Trait: Weakness to Multiples
 
-- The robot displays a number *n* ∈ {2, 5, 10} beside a red lightning bolt to the right of
-  the body (not under the HP numeral).
+- The robot displays a number *n* ∈ {2, 5, 10} beside a small red lightning bolt on the
+  body, overlapping the bottom edge (in front of HP so the numeral stays readable).
 - A ball whose value is a positive multiple of *n* deals **×2 damage**.
 - Exact kill is evaluated on the doubled damage.
 - The softest trait: rewards skip-counting fluency, never blocks progress.
