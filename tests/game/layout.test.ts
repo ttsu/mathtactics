@@ -14,6 +14,7 @@ import {
   PIECE_SIZE,
   ROBOT_HP_FONT_SIZE,
   TILE_LABEL_FONT_SIZE,
+  WEAKNESS_N_FONT_SIZE,
   TRAY_CAPACITY,
   TRAY_PADDING,
   TRAY_SLOT_PITCH,
@@ -133,6 +134,7 @@ describe('piece and tray geometry (task 09)', () => {
   it('makes robot HP the largest board text', () => {
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(TILE_LABEL_FONT_SIZE);
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(CANNON_VALUE_FONT_SIZE);
+    expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(WEAKNESS_N_FONT_SIZE);
     expect(PIECE_SIZE).toBeLessThan(CELL_SIZE);
   });
 

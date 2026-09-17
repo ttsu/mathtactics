@@ -112,6 +112,10 @@ export const ROBOT_SIZE = 76;
 /** Font sizes in design points. Robot HP must be the largest text on the board (GDD §11.2). */
 export const TILE_LABEL_FONT_SIZE = 40;
 export const ROBOT_HP_FONT_SIZE = 56;
+/** Weakness chest numeral — smaller than HP so HP stays the largest number (GDD §6.4, §11.2). */
+export const WEAKNESS_N_FONT_SIZE = 22;
+/** Horizontal offset of each even-only antenna from centre (design points). */
+export const ROBOT_ANTENNA_SPREAD = 14;
 export const CANNON_VALUE_FONT_SIZE = 26;
 export const TILE_STAR_FONT_SIZE = 18;
 /** Robot HP bar, drawn just under the robot block (task 10: bounce-back refills it). */

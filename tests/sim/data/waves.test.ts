@@ -8,6 +8,7 @@ import {
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
+  fakeTraitSettings,
 } from '../../helpers/playbackSettings';
 
 function spawnDef(overrides: Record<string, unknown> = {}) {
@@ -74,6 +75,7 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
       screens: fakeScreenSettings(),
       danger: fakeDangerSettings(),
       hud: fakeHudSettings(),
+      traits: fakeTraitSettings(),
     },
   };
 }

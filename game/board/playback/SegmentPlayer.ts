@@ -40,7 +40,7 @@ import {
   LIGHT_TEXT_COLOR,
   PLACEHOLDER,
 } from '../views/palette';
-import type { RobotView } from '../views/RobotView';
+import type { RobotAppearance, RobotView } from '../views/RobotView';
 import { drawRing, drawStar, floatingText } from './effects';
 import { bouncesBack, isHudEvent, lastCellBefore, type PlaybackSegment } from './segments';
 import type { TimedBeat } from './timeline';
@@ -171,13 +171,13 @@ export class SegmentPlayer {
           }
           break;
         case 'RobotSpawned': {
-          const robot = this.renderer.ensureRobotView(event.robotId);
+          const robot = this.ensureSpawnView(event);
           robot.setHp(event.hp, event.maxHp);
           this.restRobot(event.robotId, event.at);
           break;
         }
         case 'RobotWaiting': {
-          const robot = this.renderer.ensureRobotView(event.robotId);
+          const robot = this.ensureSpawnView(event);
           robot.setHp(event.hp, event.maxHp);
           this.restRobotAt(event.robotId, worldGhostCenter(event.lane))?.setAlpha(
             this.settings.spawn.ghostAlpha,
@@ -702,7 +702,7 @@ export class SegmentPlayer {
   private robotSpawned(event: EventOf<'RobotSpawned'>, durationMs: number): void {
     const { spawn } = this.settings;
     const wasGhost = this.renderer.robotView(event.robotId) !== undefined;
-    const robot = this.renderer.ensureRobotView(event.robotId);
+    const robot = this.ensureSpawnView(event);
     robot.setHp(event.hp, event.maxHp);
     const target = worldCenter(event.at);
     if (wasGhost) {
@@ -727,7 +727,7 @@ export class SegmentPlayer {
    * (task 15 req. 4). */
   private robotWaiting(event: EventOf<'RobotWaiting'>, durationMs: number): void {
     const { spawn } = this.settings;
-    const robot = this.renderer.ensureRobotView(event.robotId);
+    const robot = this.ensureSpawnView(event);
     robot.setHp(event.hp, event.maxHp);
     const target = worldGhostCenter(event.lane);
     robot.setPosition(target.x, target.y).setScale(spawn.ghostPopFromScale).setAlpha(0);
@@ -741,6 +741,19 @@ export class SegmentPlayer {
   }
 
   // --- Helpers ---
+
+  /** Spawn beats introduce a robot that wasn't in the pre-turn snapshot — chrome goes through
+   * the same `setChrome` entry point as `syncRobots` (task 23). `RobotWaiting` has no `isBoss`
+   * field; waiting robots pass `false` (wave-10 Boss arrives via `RobotSpawned`). */
+  private ensureSpawnView(
+    event: EventOf<'RobotSpawned'> | EventOf<'RobotWaiting'>,
+  ): RobotView {
+    const appearance: RobotAppearance = {
+      trait: event.trait,
+      isBoss: event.type === 'RobotSpawned' && event.isBoss,
+    };
+    return this.renderer.ensureRobotView(event.robotId, appearance);
+  }
 
   /** HUD commits follow playback (GDD §12.2 req. 6) — each HUD event is committed exactly once. */
   private commit(event: GameEvent): void {
