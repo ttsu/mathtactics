@@ -72,13 +72,13 @@
           {
             "turn": 1,
             "count": 3,
-            "hp": [30, 50],
+            "hp": [42, 58],
             "pool": ["weakness-5", "bounce-back", "odd-only", "even-only", "basic"]
           },
           {
             "turn": 8,
             "count": 3,
-            "hp": [40, 65],
+            "hp": [55, 75],
             "pool": ["weakness-2", "weakness-10", "even-only", "bounce-back", "basic"]
           }
         ]
@@ -91,7 +91,7 @@
           {
             "turn": 1,
             "count": 4,
-            "hp": [45, 70],
+            "hp": [55, 72],
             "pool": [
               "weakness-5",
               "weakness-2",
@@ -105,7 +105,7 @@
           {
             "turn": 8,
             "count": 4,
-            "hp": [60, 90],
+            "hp": [68, 88],
             "pool": [
               "weakness-5",
               "weakness-2",
@@ -119,7 +119,7 @@
           {
             "turn": 15,
             "count": 3,
-            "hp": [70, 99],
+            "hp": [78, 95],
             "pool": [
               "weakness-5",
               "weakness-2",
