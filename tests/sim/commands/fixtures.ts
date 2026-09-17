@@ -8,6 +8,7 @@ import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings
 import { fakeShop } from '../../helpers/shop';
 import {
   fakeDangerSettings,
+  fakeHintsSettings,
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
@@ -64,6 +65,7 @@ export function fakeGameData(overrides: Partial<GameData> = {}): GameData {
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
+      hints: fakeHintsSettings(),
     },
     ...overrides,
   };

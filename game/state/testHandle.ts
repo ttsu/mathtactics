@@ -34,6 +34,9 @@ export interface TestHandle {
   renderedBoard(): RenderedBoard;
   /** Live trait chrome as drawn (task 23). Null if that robot view isn't on the board. */
   getRobotChrome(robotId: string): RobotChrome | null;
+  /** Planning-hint numerals currently drawn (task 24). Empty when hints are off. Describes
+   * what the board is drawing now — never a re-derivation from `run`. */
+  getHints(): DrawnHint[];
 }
 
 export interface RenderedBoard {
@@ -49,6 +52,12 @@ export interface RobotChrome {
   coiled: boolean;
   shieldColor: string | null;
   hpFontSize: number;
+}
+
+export interface DrawnHint {
+  lane: number;
+  col: number;
+  value: number;
 }
 
 declare global {
@@ -84,6 +93,7 @@ export interface TestHandleBoard {
   isAnimating(): boolean;
   renderedBoard(): RenderedBoard;
   getRobotChrome(robotId: string): RobotChrome | null;
+  getHints(): DrawnHint[];
 }
 
 /** Builds the `__GAME__` object for `store` — pure, no `window` access, so it's unit-testable.
@@ -126,6 +136,10 @@ export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBo
     getRobotChrome: (robotId) => {
       if (!board) throw new Error('getRobotChrome: no board mounted');
       return board.getRobotChrome(robotId);
+    },
+    getHints: () => {
+      if (!board) throw new Error('getHints: no board mounted');
+      return board.getHints();
     },
   };
 }

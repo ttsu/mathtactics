@@ -13,6 +13,7 @@ import {
   fakeHudSettings,
   fakeTraitSettings,
   fakeBossSettings,
+  fakeHintsSettings,
 } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
@@ -53,6 +54,7 @@ function fakeGameData(): GameData {
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
+      hints: fakeHintsSettings(),
     },
   } as unknown as GameData;
 }
@@ -313,18 +315,21 @@ describe('createTestHandle', () => {
       isAnimating: () => false,
       renderedBoard: () => drawn,
       getRobotChrome: (robotId) => (robotId === 'robot:0' ? chrome : null),
+      getHints: () => [{ lane: 2, col: 1, value: 5 }],
     });
     expect(handle.cellToClient({ lane: 2, col: 3 })).toEqual({ x: 30, y: 20 });
     expect(handle.renderedBoard()).toBe(drawn);
     expect(handle.getRobotChrome('robot:0')).toBe(chrome);
     expect(handle.getRobotChrome('missing')).toBeNull();
+    expect(handle.getHints()).toEqual([{ lane: 2, col: 1, value: 5 }]);
   });
 
-  it('cellToClient, renderedBoard and getRobotChrome throw when no board is mounted', () => {
+  it('cellToClient, renderedBoard, getRobotChrome and getHints throw when no board is mounted', () => {
     const { handle } = buildHandle();
     expect(() => handle.cellToClient({ lane: 0, col: 0 })).toThrow('no board mounted');
     expect(() => handle.renderedBoard()).toThrow('no board mounted');
     expect(() => handle.getRobotChrome('robot:0')).toThrow('no board mounted');
+    expect(() => handle.getHints()).toThrow('no board mounted');
   });
 
   it('skipAnimation without a board finishes playback directly', () => {
@@ -352,6 +357,7 @@ describe('createTestHandle', () => {
       isAnimating: () => false,
       renderedBoard: () => ({ robots: [], tiles: [] }),
       getRobotChrome: () => null,
+      getHints: () => [],
     };
     const handle = createTestHandle(store, board);
 
@@ -370,6 +376,7 @@ describe('createTestHandle', () => {
       isAnimating: () => animating,
       renderedBoard: () => ({ robots: [], tiles: [] }),
       getRobotChrome: () => null,
+      getHints: () => [],
     });
     expect(store.getState().playback.status).toBe('idle');
     expect(handle.isIdle()).toBe(false);

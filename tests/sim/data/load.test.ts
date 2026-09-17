@@ -8,6 +8,7 @@ import { fakeShop } from '../../helpers/shop';
 import {
   fakeBossSettings,
   fakeDangerSettings,
+  fakeHintsSettings,
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
@@ -54,6 +55,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
+      hints: fakeHintsSettings(),
     },
     ...overrides,
   };
@@ -192,7 +194,7 @@ describe('presentation.json traits (task 23)', () => {
     const raw = validRaw();
     const presentation = raw.presentation as { traits: Record<string, unknown> };
     delete presentation.traits.oddShieldColor;
-    expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
+    expect(() => parseGameData(raw)).toThrow(/presentation.json/);
   });
 });
 
@@ -206,6 +208,20 @@ describe('presentation.json boss (task 26)', () => {
     const raw = validRaw();
     const presentation = raw.presentation as { boss?: unknown };
     delete presentation.boss;
-    expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
+    expect(() => parseGameData(raw)).toThrow(/presentation.json/);
+  });
+});
+
+describe('presentation.json planning hints (task 24)', () => {
+  it('rejects a missing hint colour', () => {
+    const raw = validRaw();
+    const presentation = raw.presentation as { hints?: { color: string } };
+    delete presentation.hints;
+    expect(() => parseGameData(raw)).toThrow(/presentation.json/);
+  });
+
+  it('ships a hint colour', () => {
+    const data = parseGameData(loadRawGameData());
+    expect(data.presentation.hints.color).toMatch(/^#/);
   });
 });
