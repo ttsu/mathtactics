@@ -34,9 +34,9 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   It fights §11.2 (HP is the largest element) and is closer to Barrier (§19) than to Weakness /
   Bounce-back / parity. Not in M4, M5, or v1.
 - **Waves 4, 6, 7 gain their first teaching trait.** Wave 4: one Weakness (`n = 5`, grill A). Wave 6:
-  one Bounce-back. Wave 7: one Odd-only (grill A: base value 1 is odd, so the first contact
-  can hurt without a tile). Wave 5 stays untraited (grill A) — it teaches subtraction. Remaining
-  robots on those waves stay `basic`.
+  one Bounce-back (grill A: the −N shop after 5 is the exam). Wave 7: one Odd-only (grill A: base
+  value 1 is odd, so the first contact can hurt without a tile). Wave 5 stays untraited (grill A) —
+  it teaches subtraction. Remaining robots on those waves stay `basic`.
 - **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
   already follow `waves.json` length.
 - **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
@@ -627,7 +627,7 @@ shop slots are seeded-random within each rung.
 | 3 | Two lanes threatened at once | — (the cannon offer is always present; income should make a 2nd cannon affordable around here) | Lane choice; shop tradeoffs |
 | 4 | First **Weakness** robot | at least one `×N` | Multiples |
 | 5 | All **basic**, larger HP (~10–30) | at least one `−N` | Subtraction as a tool |
-| 6 | First **Bounce-back** robot | — | Trimming to exact |
+| 6 | First **Bounce-back** robot (grill A) | — | Trimming to exact |
 | 7 | First **Odd-only / Even-only** robot | — | Odd and even |
 | 8–9 | Procedural mix, HP ~30–99, more simultaneous lanes, mixed traits across robots | procedural | Combining everything |
 | 10 | **Boss** (100–150 HP, no trait) + light escort | — (no shop; win) | The big number |
@@ -971,6 +971,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Wave 4's Weakness is `n = 5` (skip-counting by fives; grill A). Waves 8–9 mix 2/5/10.
 - Wave 7's first parity robot is Odd-only (cannon base value 1 is odd; grill A). Even-only enters in 8–9.
 - Wave 5 stays fully `basic` (grill A) — subtraction is the lesson, not a new trait.
+- Wave 6's first teaching trait is Bounce-back (grill A). The −N shop after 5 is the exam.
 - Waves 4–7 leftover after wave 7: sensible-player min ≥ 80, and not every seed at 100.
 - 10-wave leftover after the Boss: sensible-player min near 40 (still ≥ 40), median 50–70.
   Chips come from waves 8–9 for a sensible player. Wave 10 escort is T1 one `basic` + T7 two
