@@ -132,6 +132,12 @@
     "blue": "#2196f3",
     "orange": "#ff9800"
   },
+  "traits": {
+    "weaknessNColor": "#ffd54f",
+    "oddShieldColor": "#7e57c2",
+    "evenShieldColor": "#26a69a",
+    "bounceBackBodyColor": "#ef6c00"
+  },
   "drag": {
     "liftScale": 1.15,
     "liftDurationMs": 80,

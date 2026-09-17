@@ -1,6 +1,7 @@
 // Placeholder chrome colours and text styles for the board (task 03/09) — replaced by the art
 // pass (M5); not gameplay tuning. Tile face colours are NOT here: they come from
-// presentation.json (GDD §13).
+// presentation.json (GDD §13). Trait telegraph colours also live in presentation.json `traits`
+// (task 23).
 
 export const PLACEHOLDER = {
   base: 0x6d4c8f,

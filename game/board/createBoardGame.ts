@@ -4,6 +4,7 @@ import type { AppStore } from '../state/store';
 import { BoardScene } from './BoardScene';
 import { WORLD_HEIGHT, WORLD_WIDTH } from './layout';
 import { refitOnResize } from './refitOnResize';
+import type { RobotChromeSnapshot } from './views/RobotView';
 
 /** The mounted board: the Phaser game plus the playback controls the test handle needs. */
 export interface BoardGame {
@@ -14,6 +15,8 @@ export interface BoardGame {
   isAnimating(): boolean;
   /** What the board draws right now, in design points (test handle `renderedBoard`, TR §14). */
   drawn(): { robots: { robotId: string; x: number; y: number }[]; tiles: string[] };
+  /** Live trait chrome as drawn (test handle `getRobotChrome`, TR §14). */
+  robotChrome(robotId: string): RobotChromeSnapshot | null;
 }
 
 export interface BoardGameOptions {
@@ -59,5 +62,6 @@ export function createBoardGame(options: BoardGameOptions): BoardGame {
     skipAnimation: () => scene.director?.skipAll(),
     isAnimating: () => scene.director?.busy ?? false,
     drawn: () => scene.boardView?.drawn() ?? { robots: [], tiles: [] },
+    robotChrome: (robotId) => scene.boardView?.robotChrome(robotId) ?? null,
   };
 }

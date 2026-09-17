@@ -7,6 +7,7 @@ import {
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
+  fakeTraitSettings,
 } from '../../helpers/playbackSettings';
 
 function validTile(overrides: Record<string, unknown> = {}) {
@@ -47,6 +48,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       screens: fakeScreenSettings(),
       danger: fakeDangerSettings(),
       hud: fakeHudSettings(),
+      traits: fakeTraitSettings(),
     },
     ...overrides,
   };
