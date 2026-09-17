@@ -953,6 +953,7 @@ questions**, not blockers for M0/M1:
 | Item | When |
 |---|---|
 | Concrete HP curves, prices, income values | Tuned in data during M2–M4 playtests |
+| **"Guarantees `×2` or `×5`" (§10.2, wave 7): a set, or the range `×2`–`×5`?** A shop guarantee in data is `{ kind, n: [lo, hi] }`, a *range* (TR §9), so `[2, 5]` can also offer `×3` or `×4`. M4 ships the range (any cheap multiply). A literal two-value set needs a new guarantee shape — decide before M5 if the distinction matters | Raised while reviewing the M4 specs; task 25 |
 | Playback pacing values | Tuned after Playtest 1 |
 | Ladder waves 1–3 authored content | Drafted in task 12; finalized after Playtest 1 (task 17) |
 | Ladder waves 4–7 authored templates | Drafted untraited in M3 (task 21); first teaching trait swapped in M4 (task 22) |
