@@ -116,7 +116,7 @@ extending it. Procedural tables (25). Balance across 10 waves (27).
 
 **Status:** Complete (iPad check pending)
 **Completed:** 2026-09-17
-**PR:** TBD · Branch: `cursor/26-wave-10-boss-fa99`
+**PR:** #46 · Preview: https://mathtactics.timtsu.com/pr/pr-46/ · Branch: `cursor/26-wave-10-boss-fa99`
 
 **Acceptance criteria:**
 - [x] `boss` template exists; wave 10 is authored last — Met
