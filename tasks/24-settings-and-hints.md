@@ -18,7 +18,7 @@ there is no screen and the board never reads the flag. **No Sound row** — that
 
 Hints are a running total under each tile in an **armed** lane, up to and including the last tile
 before the first robot: `1 → 5 → 25 → 22`. They never show trait effects, blocked/doubled damage,
-or the outcome (GDD §5.7). Off by default (grill A).
+or the outcome (GDD §5.7, grill A). Off by default (grill A).
 
 **No Sound toggle** (grill A). A 7-year-old tapping a mute that changes nothing will think
 Settings is broken. Leave `settings.sound` in storage defaulting on for M5.
