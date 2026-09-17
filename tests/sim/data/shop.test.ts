@@ -204,9 +204,9 @@ describe('shop.json schema', () => {
 });
 
 describe('shipped shop.json', () => {
-  it('loads with six afterWave tables', () => {
+  it('loads with nine afterWave tables', () => {
     const data = parseGameData(loadRawGameData());
-    expect(data.shop.shops.map((shop) => shop.afterWave)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(data.shop.shops.map((shop) => shop.afterWave)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(data.shop.tileSlots).toBe(3);
   });
 });

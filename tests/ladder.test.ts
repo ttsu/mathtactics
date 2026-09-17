@@ -1,4 +1,4 @@
-// Task 21 balance checks for the 7-wave ladder (GDD §10.1–10.3, §8.2). Uses shipped data
+// Task 21 / 25 balance checks for the ladder (GDD §10.1–10.3, §8.2). Uses shipped data
 // (`parseGameData(loadRawGameData())`) and the real command pipeline (`applyCommand`).
 
 import { writeFileSync } from 'node:fs';
@@ -20,7 +20,7 @@ import {
 
 const data = parseGameData(loadRawGameData());
 const SEEDS = Array.from({ length: 100 }, (_, i) => String(i + 1));
-const LADDER_TIMEOUT_MS = 60_000;
+const LADDER_TIMEOUT_MS = 120_000;
 
 const SHIPPED_ROBOTS = [
   { id: 'basic', trait: { type: 'none' as const }, isBoss: false },
@@ -109,8 +109,20 @@ function summarize(values: number[]): { min: number; median: number; max: number
   return { min: Math.min(...values), median: median(values), max: Math.max(...values) };
 }
 
+const WAVE_8_T1_POOL = ['weakness-5', 'bounce-back', 'odd-only', 'even-only', 'basic'];
+const WAVE_8_T8_POOL = ['weakness-2', 'weakness-10', 'even-only', 'bounce-back', 'basic'];
+const WAVE_9_POOL = [
+  'weakness-5',
+  'weakness-2',
+  'weakness-10',
+  'bounce-back',
+  'odd-only',
+  'even-only',
+  'basic',
+];
+
 describe('authored ladder waves 4–7 (task 22)', () => {
-  it('ships seven robot templates and seven waves; teaching traits on 4/6/7 only', () => {
+  it('ships seven robot templates and nine waves; teaching traits on 4/6/7 only', () => {
     expect(data.waves.waves.map((wave) => wave.id)).toEqual([
       'wave-1',
       'wave-2',
@@ -119,10 +131,13 @@ describe('authored ladder waves 4–7 (task 22)', () => {
       'wave-5',
       'wave-6',
       'wave-7',
+      'wave-8',
+      'wave-9',
     ]);
     expect(data.robots).toEqual(SHIPPED_ROBOTS);
 
     for (const [index, wave] of data.waves.waves.entries()) {
+      if (!('spawns' in wave)) continue;
       expect(wave.spawns.length).toBeGreaterThanOrEqual(3);
       expect(wave.spawns.length).toBeLessThanOrEqual(6);
       expect(wave.spawns.every((spawn) => spawn.hp[1] <= 99)).toBe(true);
@@ -151,6 +166,41 @@ describe('authored ladder waves 4–7 (task 22)', () => {
         ).toBe(true);
         expect(wave.spawns.filter((spawn) => spawn.robot === teaching)).toHaveLength(1);
       }
+    }
+
+    const wave8 = data.waves.waves[7];
+    expect(wave8 && 'procedural' in wave8).toBe(true);
+    if (wave8 && 'procedural' in wave8) {
+      expect(wave8.procedural.groups).toEqual([
+        { turn: 1, count: 3, hp: [30, 50], pool: WAVE_8_T1_POOL },
+        { turn: 8, count: 3, hp: [40, 65], pool: WAVE_8_T8_POOL },
+      ]);
+      expect(WAVE_8_T1_POOL).toContain('even-only');
+      expect(WAVE_8_T1_POOL).not.toEqual(WAVE_8_T8_POOL);
+    }
+
+    const wave9 = data.waves.waves[8];
+    expect(wave9 && 'procedural' in wave9).toBe(true);
+    if (wave9 && 'procedural' in wave9) {
+      expect(wave9.procedural.groups).toEqual([
+        { turn: 1, count: 4, hp: [45, 70], pool: WAVE_9_POOL },
+        { turn: 8, count: 4, hp: [60, 90], pool: WAVE_9_POOL },
+        { turn: 15, count: 3, hp: [70, 99], pool: WAVE_9_POOL },
+      ]);
+    }
+
+    const procedural = data.waves.waves.filter((wave) => 'procedural' in wave);
+    const robotCounts = procedural.map((wave) =>
+      wave.procedural.groups.reduce((sum, group) => sum + group.count, 0),
+    );
+    expect(robotCounts[1]!).toBeGreaterThan(robotCounts[0]!);
+    for (const wave of procedural) {
+      const turns = wave.procedural.groups.map((group) => group.turn);
+      for (let i = 1; i < turns.length; i++) {
+        expect(turns[i]! - turns[i - 1]!).toBeGreaterThanOrEqual(5);
+      }
+      expect(wave.procedural.groups.every((group) => group.count <= 4)).toBe(true);
+      expect(wave.procedural.groups.every((group) => group.hp[1] <= 99)).toBe(true);
     }
   });
 
@@ -190,9 +240,9 @@ describe('sensible-player bot clears wave 1 with zero detonations (task 17 requi
   });
 });
 
-describe('7-wave ladder balance (task 21)', () => {
+describe('9-wave ladder balance (task 25)', () => {
   it(
-    'sensible player wins seeds 1–100 with leftover min ≥ 80; shops are live; End-Turn-only loses',
+    'sensible player wins seeds 1–100 with leftover min ≥ 40 and median 50–70; shops are live; End-Turn-only loses',
     { timeout: LADDER_TIMEOUT_MS },
     () => {
       const records: SensibleRunStats[] = [];
@@ -201,7 +251,7 @@ describe('7-wave ladder balance (task 21)', () => {
         const rec = playSensibleRun(seed, data);
         records.push(rec);
         expect(rec.phase, `seed ${seed} phase`).toBe('won');
-        expect(rec.minBaseHp, `seed ${seed} min HP`).toBeGreaterThanOrEqual(80);
+        expect(rec.minBaseHp, `seed ${seed} min HP`).toBeGreaterThanOrEqual(40);
 
         for (const shop of rec.shops) {
           expect(shop.hadAffordable, `seed ${seed} shop after wave ${shop.afterWave}`).toBe(true);
@@ -211,7 +261,7 @@ describe('7-wave ladder balance (task 21)', () => {
         expect(wave3Shop!.cannonAffordable, `seed ${seed} second cannon by wave-3 shop`).toBe(true);
 
         for (const entry of rec.waveEntries) {
-          if (entry.waveIndex < 3) continue;
+          if (entry.waveIndex < 3 || entry.waveIndex > 6) continue;
           for (const robot of entry.robots) {
             // Leftover-HP gates push teaching-trait HP past the task-21 2-hit ceiling
             // (a 2-hittable robot dies in two turns, so a 3-lane third robot is always
@@ -235,7 +285,7 @@ describe('7-wave ladder balance (task 21)', () => {
       const perWave = Array.from({ length: waveCount }, (_, wave) =>
         summarize(records.map((rec) => rec.turnsPerWave[wave] ?? 0)),
       );
-      const shopSummaries = [1, 2, 3, 4, 5, 6].map((afterWave) => {
+      const shopSummaries = [1, 2, 3, 4, 5, 6, 7, 8].map((afterWave) => {
         const visits = records.flatMap((rec) => rec.shops.filter((shop) => shop.afterWave === afterWave));
         const purchaseCounts: Record<string, number> = {};
         for (const visit of visits) {
@@ -265,9 +315,9 @@ describe('7-wave ladder balance (task 21)', () => {
       // Visible in the vitest log for Completion Notes.
       console.log(`LADDER_STATS ${JSON.stringify(summary)}`);
 
-      expect(summary.finalBaseHp.min, 'leftover min').toBeGreaterThanOrEqual(80);
-      const below100 = finalHp.filter((hp) => hp < 100).length;
-      expect(below100, `seeds below 100 leftover (${below100})`).toBeGreaterThanOrEqual(10);
+      expect(summary.finalBaseHp.min, 'leftover min').toBeGreaterThanOrEqual(40);
+      expect(summary.finalBaseHp.median, 'leftover median').toBeGreaterThanOrEqual(50);
+      expect(summary.finalBaseHp.median, 'leftover median').toBeLessThanOrEqual(70);
     },
   );
 });

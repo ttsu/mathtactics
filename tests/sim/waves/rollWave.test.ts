@@ -1,16 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { nextInt, seedRng, type RngState } from '../../../sim/core/rng';
+import { createStreams, nextInt, seedRng, type RngState } from '../../../sim/core/rng';
 import type { WaveDef } from '../../../sim/data/schemas';
+import { parseGameData } from '../../../sim/data/load';
+import { rollShop } from '../../../sim/shop/rollShop';
 import { rollWave } from '../../../sim/waves/rollWave';
+import { fakeRunState } from '../commands/fixtures';
+import { loadRawGameData } from '../../helpers/loadDataFiles';
 
-type SpawnDef = WaveDef['spawns'][number];
+type AuthoredWave = Extract<WaveDef, { spawns: unknown }>;
+type SpawnDef = AuthoredWave['spawns'][number];
+type ProceduralWave = Extract<WaveDef, { procedural: unknown }>;
+type ProceduralGroup = ProceduralWave['procedural']['groups'][number];
 
 function spawnDef(overrides: Partial<SpawnDef> = {}): SpawnDef {
   return { turn: 1, lane: 'A', robot: 'basic', hp: [1, 3], ...overrides };
 }
 
-function waveDef(spawns: SpawnDef[]): WaveDef {
+function waveDef(spawns: SpawnDef[]): AuthoredWave {
   return { id: 'wave-test', spawns };
+}
+
+function procGroup(overrides: Partial<ProceduralGroup> = {}): ProceduralGroup {
+  return {
+    turn: 1,
+    count: 3,
+    hp: [10, 20],
+    pool: ['weakness-5', 'bounce-back', 'odd-only', 'even-only', 'basic'],
+    ...overrides,
+  };
+}
+
+function procWave(groups: ProceduralGroup[]): ProceduralWave {
+  return { id: 'wave-proc', procedural: { groups } };
 }
 
 const SEEDS = Array.from({ length: 200 }, (_, i) => `seed-${i}`);
@@ -130,5 +151,98 @@ describe('rollWave', () => {
     const before = [...rng];
     rollWave(waveDef([spawnDef()]), rng);
     expect(rng).toEqual(before);
+  });
+});
+
+describe('rollWave — procedural', () => {
+  const data = parseGameData(loadRawGameData());
+
+  it('is deterministic: the same seed gives the same lanes, templates, and HP', () => {
+    const wave = procWave([procGroup(), procGroup({ turn: 8, count: 3, hp: [40, 65] })]);
+    expect(rollWave(wave, seedRng('proc-same'))).toEqual(rollWave(wave, seedRng('proc-same')));
+  });
+
+  it('follows the TR §9 draw order: lanes, then per lane pool without replacement and HP', () => {
+    const group = procGroup({
+      turn: 1,
+      count: 3,
+      hp: [10, 20],
+      pool: ['weakness-5', 'bounce-back', 'odd-only', 'even-only', 'basic'],
+    });
+    const wave = procWave([group]);
+    let rng: RngState = seedRng('proc-draw-order');
+    const draw = (min: number, max: number) => {
+      const [value, next] = nextInt(rng, min, max);
+      rng = next;
+      return value;
+    };
+
+    const remainingLanes = [0, 1, 2, 3, 4];
+    const drawnLanes: number[] = [];
+    for (let i = 0; i < 3; i += 1) {
+      const index = draw(0, remainingLanes.length - 1);
+      drawnLanes.push(remainingLanes.splice(index, 1)[0]!);
+    }
+    const remainingPool = [...group.pool];
+    const expected = drawnLanes.map((lane) => {
+      const poolIndex = draw(0, remainingPool.length - 1);
+      const robotTemplateId = remainingPool.splice(poolIndex, 1)[0]!;
+      const hp = draw(10, 20);
+      return { turn: 1, lane, robotTemplateId, hp };
+    });
+
+    const result = rollWave(wave, seedRng('proc-draw-order'));
+    expect(result.spawns).toEqual(expected);
+    expect(result.rng).toEqual(rng);
+  });
+
+  it('drawing from shop does not change a procedural wave', () => {
+    const wave = procWave([procGroup()]);
+    const streams = createStreams('shop-isolation');
+    const shopState = fakeRunState({ rng: streams });
+    rollShop(1, shopState, data);
+    expect(rollWave(wave, streams.wave)).toEqual(
+      rollWave(wave, createStreams('shop-isolation').wave),
+    );
+  });
+
+  it('count: 3 always yields 3 distinct lanes', () => {
+    const wave = procWave([procGroup({ count: 3 })]);
+    for (const seed of SEEDS) {
+      const { spawns } = rollWave(wave, seedRng(seed));
+      expect(spawns).toHaveLength(3);
+      expect(new Set(spawns.map((spawn) => spawn.lane)).size).toBe(3);
+    }
+  });
+
+  it('a group never repeats a template', () => {
+    const wave = procWave([
+      procGroup({ count: 3 }),
+      procGroup({
+        turn: 8,
+        count: 3,
+        hp: [40, 65],
+        pool: ['weakness-2', 'weakness-10', 'even-only', 'bounce-back', 'basic'],
+      }),
+    ]);
+    for (const seed of SEEDS) {
+      const { spawns } = rollWave(wave, seedRng(seed));
+      const turn1 = spawns.filter((spawn) => spawn.turn === 1);
+      const turn8 = spawns.filter((spawn) => spawn.turn === 8);
+      expect(new Set(turn1.map((spawn) => spawn.robotTemplateId)).size).toBe(turn1.length);
+      expect(new Set(turn8.map((spawn) => spawn.robotTemplateId)).size).toBe(turn8.length);
+    }
+  });
+
+  it('sorts groups by turn', () => {
+    const wave = procWave([
+      procGroup({ turn: 8, count: 1, hp: [4, 4], pool: ['basic'] }),
+      procGroup({ turn: 1, count: 1, hp: [3, 3], pool: ['odd-only'] }),
+    ]);
+    const { spawns } = rollWave(wave, seedRng('sorted-proc'));
+    expect(spawns.map((spawn) => [spawn.turn, spawn.robotTemplateId])).toEqual([
+      [1, 'odd-only'],
+      [8, 'basic'],
+    ]);
   });
 });

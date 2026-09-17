@@ -608,16 +608,24 @@ const RobotsFileSchema = z.array(RobotTemplateSchema).superRefine((robots, ctx) 
 /** A `robots.json` entry: the trait and Boss flag every robot spawned from it gets. */
 export type RobotTemplate = z.infer<typeof RobotTemplateSchema>;
 
-// --- waves.json (GDD §10.3, §10.5, TR §9) — authored waves; procedural tables arrive in M4 ---
+// --- waves.json (GDD §10.3, §10.5, TR §9) — authored (waves 1–7) or procedural (waves 8–9) ---
 
 export const LANE_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
 export type LaneLetter = (typeof LANE_LETTERS)[number];
 
-/** Highest HP an authored spawn may roll: normal robot HP never exceeds 99 (GDD §2.1). The Boss
- * (M4) is the only three-digit robot and will need its own limit. */
+/** Highest HP a normal spawn may roll: never exceeds 99 (GDD §2.1 / §6.6). The Boss (task 26)
+ * is the only three-digit robot and will need its own limit. */
 const MAX_SPAWN_HP = 99;
 
 const SpawnHpSchema = z.number().int().min(1).max(MAX_SPAWN_HP);
+
+const SpawnHpRangeSchema = z
+  .tuple([SpawnHpSchema, SpawnHpSchema])
+  .superRefine(([min, max], ctx) => {
+    if (min > max) {
+      ctx.addIssue({ code: 'custom', message: `hp min ${min} is greater than max ${max}` });
+    }
+  });
 
 const WaveSpawnSchema = z.strictObject({
   /** 1-based turn within the wave. */
@@ -629,14 +637,10 @@ const WaveSpawnSchema = z.strictObject({
   /** A `robots.json` id (checked across files in `GameDataSchema`). */
   robot: z.string().min(1),
   /** `[min, max]`, both inclusive; rolled at wave start. */
-  hp: z.tuple([SpawnHpSchema, SpawnHpSchema]).superRefine(([min, max], ctx) => {
-    if (min > max) {
-      ctx.addIssue({ code: 'custom', message: `hp min ${min} is greater than max ${max}` });
-    }
-  }),
+  hp: SpawnHpRangeSchema,
 });
 
-const WaveDefSchema = z
+const AuthoredWaveSchema = z
   .strictObject({
     id: z.string().min(1),
     spawns: z.array(WaveSpawnSchema).min(1),
@@ -666,14 +670,121 @@ const WaveDefSchema = z
     }
   });
 
-/** One authored wave from `waves.json`. Rolled into concrete `SpawnEntry`s by `rollWave`. */
+const ProceduralGroupSchema = z
+  .strictObject({
+    /** 1-based turn within the wave. Unique across groups (TR §9). */
+    turn: z.number().int().min(1),
+    /** Robots this group spawns; schema bound 1–5, shipped tables stay ≤ 4 (task 25). */
+    count: z.number().int().min(1).max(5),
+    /** `[min, max]`, both inclusive; rolled per robot at wave start. */
+    hp: SpawnHpRangeSchema,
+    /** Distinct `robots.json` ids drawn without replacement (grill B). */
+    pool: z.array(z.string().min(1)).min(1),
+  })
+  .superRefine((group, ctx) => {
+    const seen = new Set<string>();
+    group.pool.forEach((id, index) => {
+      if (seen.has(id)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['pool', index],
+          message: `duplicate pool id "${id}"`,
+        });
+      }
+      seen.add(id);
+    });
+    if (group.count > group.pool.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['count'],
+        message: `count ${group.count} exceeds pool.length ${group.pool.length}`,
+      });
+    }
+  });
+
+const ProceduralWaveSchema = z
+  .strictObject({
+    id: z.string().min(1),
+    procedural: z.strictObject({
+      groups: z.array(ProceduralGroupSchema).min(1),
+    }),
+  })
+  .superRefine((wave, ctx) => {
+    if (!wave.procedural.groups.some((group) => group.turn === 1)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['procedural', 'groups'],
+        message: 'a wave needs a group on turn 1',
+      });
+    }
+
+    const seenTurns = new Set<number>();
+    wave.procedural.groups.forEach((group, index) => {
+      if (seenTurns.has(group.turn)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['procedural', 'groups', index, 'turn'],
+          message: `duplicate turn ${group.turn}`,
+        });
+      }
+      seenTurns.add(group.turn);
+    });
+  });
+
+/** A wave is either authored (`spawns`) or procedural (`procedural`), never both (TR §9).
+ * Dispatch on which key is present (instead of `z.union`) so authored-wave issue paths like
+ * `spawns[0].lane` stay intact. Narrow with `'spawns' in wave` so every reader picks a branch. */
+const WaveDefSchema = z.unknown().transform((value, ctx) => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    ctx.addIssue({ code: 'custom', message: 'expected a wave object' });
+    return z.NEVER;
+  }
+  const record = value as Record<string, unknown>;
+  const hasSpawns = Object.hasOwn(record, 'spawns');
+  const hasProcedural = Object.hasOwn(record, 'procedural');
+  if (hasSpawns && hasProcedural) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'a wave cannot have both spawns and procedural',
+    });
+    return z.NEVER;
+  }
+  if (hasSpawns) {
+    const parsed = AuthoredWaveSchema.safeParse(value);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        ctx.addIssue({ code: 'custom', message: issue.message, path: issue.path });
+      }
+      return z.NEVER;
+    }
+    return parsed.data;
+  }
+  if (hasProcedural) {
+    const parsed = ProceduralWaveSchema.safeParse(value);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        ctx.addIssue({ code: 'custom', message: issue.message, path: issue.path });
+      }
+      return z.NEVER;
+    }
+    return parsed.data;
+  }
+  ctx.addIssue({
+    code: 'custom',
+    message: 'a wave needs either spawns or procedural',
+  });
+  return z.NEVER;
+});
+
+/** One wave from `waves.json`. Rolled into concrete `SpawnEntry`s by `rollWave`. */
 export type WaveDef = z.infer<typeof WaveDefSchema>;
 
 /** Exported for the scenario runner's `waves:` override (TR §12, task 13 requirement 5): an
  * inline `waves.json`-shaped array replacing `data.waves.waves` for one scenario, structurally
- * validated the same way a real `waves.json` is. Cross-file checks against `robots.json` ids are
- * not repeated here — scenario waves reference the real shipped `robots`, and an unknown id
- * surfaces as its own clear runtime error where it's actually used (`rollWave`/`spawn`). */
+ * validated the same way a real `waves.json` is — including procedural groups (task 25).
+ * Cross-file checks against `robots.json` ids are not repeated here — scenario waves reference
+ * the real shipped `robots`, and an unknown id surfaces as its own clear runtime error where
+ * it's actually used (`rollWave`/`spawn`). */
 export const WavesFileSchema = z.strictObject({
   waves: z
     .array(WaveDefSchema)
@@ -711,14 +822,47 @@ export const GameDataSchema = z
     const robotIds = new Set(data.robots.map((robot) => robot.id));
     const tileIds = new Set<string>(data.tiles.map((tile) => tile.id));
     data.waves.waves.forEach((wave, waveIndex) => {
-      wave.spawns.forEach((spawn, spawnIndex) => {
-        if (!robotIds.has(spawn.robot)) {
-          ctx.addIssue({
-            code: 'custom',
-            path: ['waves', 'waves', waveIndex, 'spawns', spawnIndex, 'robot'],
-            message: `unknown robot id "${spawn.robot}"`,
-          });
-        }
+      if ('spawns' in wave) {
+        wave.spawns.forEach((spawn, spawnIndex) => {
+          if (!robotIds.has(spawn.robot)) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['waves', 'waves', waveIndex, 'spawns', spawnIndex, 'robot'],
+              message: `unknown robot id "${spawn.robot}"`,
+            });
+          }
+        });
+        return;
+      }
+      wave.procedural.groups.forEach((group, groupIndex) => {
+        group.pool.forEach((id, poolIndex) => {
+          const path = [
+            'waves',
+            'waves',
+            waveIndex,
+            'procedural',
+            'groups',
+            groupIndex,
+            'pool',
+            poolIndex,
+          ] as const;
+          if (!robotIds.has(id)) {
+            ctx.addIssue({
+              code: 'custom',
+              path: [...path],
+              message: `unknown robot id "${id}"`,
+            });
+            return;
+          }
+          const template = data.robots.find((robot) => robot.id === id);
+          if (template?.isBoss) {
+            ctx.addIssue({
+              code: 'custom',
+              path: [...path],
+              message: `pool may not name a Boss template "${id}"`,
+            });
+          }
+        });
       });
     });
 
