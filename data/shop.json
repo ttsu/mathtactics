@@ -53,6 +53,33 @@
         { "kind": "sub", "n": [1, 10], "weight": 5 },
         { "kind": "mul", "n": [2, 10], "weight": 4 }
       ]
+    },
+    {
+      "afterWave": 7,
+      "guarantees": [{ "kind": "mul", "n": [2, 5] }],
+      "table": [
+        { "kind": "add", "n": [1, 10], "weight": 4 },
+        { "kind": "sub", "n": [1, 10], "weight": 5 },
+        { "kind": "mul", "n": [2, 10], "weight": 5 }
+      ]
+    },
+    {
+      "afterWave": 8,
+      "guarantees": [],
+      "table": [
+        { "kind": "add", "n": [1, 10], "weight": 4 },
+        { "kind": "sub", "n": [1, 10], "weight": 5 },
+        { "kind": "mul", "n": [2, 10], "weight": 5 }
+      ]
+    },
+    {
+      "afterWave": 9,
+      "guarantees": [{ "kind": "sub" }],
+      "table": [
+        { "kind": "add", "n": [1, 10], "weight": 3 },
+        { "kind": "sub", "n": [1, 10], "weight": 6 },
+        { "kind": "mul", "n": [2, 10], "weight": 5 }
+      ]
     }
   ]
 }

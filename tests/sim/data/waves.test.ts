@@ -20,6 +20,26 @@ function waveDef(overrides: Record<string, unknown> = {}) {
   return { id: 'wave-1', spawns: [spawnDef()], ...overrides };
 }
 
+function procGroup(overrides: Record<string, unknown> = {}) {
+  return {
+    turn: 1,
+    count: 1,
+    hp: [1, 3],
+    pool: ['basic'],
+    ...overrides,
+  };
+}
+
+function procWave(overrides: Record<string, unknown> = {}) {
+  return { id: 'wave-proc', procedural: { groups: [procGroup()] }, ...overrides };
+}
+
+const ALL_ROBOTS = [
+  { id: 'basic', trait: { type: 'none' }, isBoss: false },
+  { id: 'odd-only', trait: { type: 'oddOnly' }, isBoss: false },
+  { id: 'bounce-back', trait: { type: 'bounceBack' }, isBoss: false },
+];
+
 function shopForWaves(waveCount: number) {
   return fakeShop({
     shops: Array.from({ length: Math.max(0, waveCount - 1) }, (_, i) => ({
@@ -93,7 +113,8 @@ describe('waves.json schema', () => {
         waveDef({ id: 'wave-2' }),
       ]),
     );
-    expect(data.waves.waves[0]?.spawns[1]).toEqual({
+    const wave = data.waves.waves[0];
+    expect(wave && 'spawns' in wave ? wave.spawns[1] : undefined).toEqual({
       turn: 3,
       lane: 4,
       robot: 'basic',
@@ -191,10 +212,104 @@ describe('waves.json schema', () => {
     const raw = validRaw([waveDef({ rewards: { tiles: [] } })]);
     expect(() => parseGameData(raw)).toThrow(/^waves\.json: waves\[0\]:/);
   });
+
+  it('accepts a procedural wave', () => {
+    const data = parseGameData(
+      validRaw(
+        [
+          procWave({
+            procedural: {
+              groups: [
+                procGroup({ count: 2, hp: [4, 8], pool: ['basic', 'odd-only'] }),
+                procGroup({ turn: 6, count: 1, hp: [9, 9], pool: ['bounce-back'] }),
+              ],
+            },
+          }),
+        ],
+        ALL_ROBOTS,
+      ),
+    );
+    const wave = data.waves.waves[0];
+    expect(wave && 'procedural' in wave ? wave.procedural : undefined).toEqual({
+      groups: [
+        { turn: 1, count: 2, hp: [4, 8], pool: ['basic', 'odd-only'] },
+        { turn: 6, count: 1, hp: [9, 9], pool: ['bounce-back'] },
+      ],
+    });
+  });
+
+  it('rejects a wave with both spawns and procedural', () => {
+    const raw = validRaw([
+      { id: 'wave-1', spawns: [spawnDef()], procedural: { groups: [procGroup()] } },
+    ]);
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]: a wave cannot have both spawns and procedural/,
+    );
+  });
+
+  it('rejects count greater than pool.length', () => {
+    const raw = validRaw([
+      procWave({ procedural: { groups: [procGroup({ count: 2, pool: ['basic'] })] } }),
+    ]);
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.procedural\.groups\[0\]\.count: count 2 exceeds pool.length 1/,
+    );
+  });
+
+  it('rejects duplicate pool ids', () => {
+    const raw = validRaw([
+      procWave({
+        procedural: { groups: [procGroup({ pool: ['basic', 'basic'] })] },
+      }),
+    ]);
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.procedural\.groups\[0\]\.pool\[1\]: duplicate pool id "basic"/,
+    );
+  });
+
+  it('rejects an unknown pool id', () => {
+    const raw = validRaw([procWave({ procedural: { groups: [procGroup({ pool: ['tank'] })] } })]);
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.procedural\.groups\[0\]\.pool\[0\]: unknown robot id "tank"/,
+    );
+  });
+
+  it('rejects a Boss template in a procedural pool', () => {
+    const raw = validRaw(
+      [procWave({ procedural: { groups: [procGroup({ pool: ['titan'] })] } })],
+      [
+        { id: 'basic', trait: { type: 'none' }, isBoss: false },
+        { id: 'titan', trait: { type: 'none' }, isBoss: true },
+      ],
+    );
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.procedural\.groups\[0\]\.pool\[0\]: pool may not name a Boss template "titan"/,
+    );
+  });
+
+  it('rejects a procedural wave with no turn-1 group', () => {
+    const raw = validRaw([procWave({ procedural: { groups: [procGroup({ turn: 2 })] } })]);
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.procedural\.groups: a wave needs a group on turn 1/,
+    );
+  });
+
+  it('rejects duplicate group turns', () => {
+    const raw = validRaw([
+      procWave({
+        procedural: {
+          groups: [procGroup(), procGroup({ hp: [2, 2] })],
+        },
+      }),
+    ]);
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.procedural\.groups\[1\]\.turn: duplicate turn 1/,
+    );
+  });
 });
 
-describe('draft ladder content (task 12 / 21 / 22)', () => {
-  it('ships the seven robot templates and waves 1-7', () => {
+describe('draft ladder content (task 12 / 21 / 22 / 25)', () => {
+  it('ships the seven robot templates and waves 1-9', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.robots).toEqual([
       { id: 'basic', trait: { type: 'none' }, isBoss: false },
@@ -213,7 +328,12 @@ describe('draft ladder content (task 12 / 21 / 22)', () => {
       'wave-5',
       'wave-6',
       'wave-7',
+      'wave-8',
+      'wave-9',
     ]);
     expect(data.waves.waves.every((wave) => !('reward' in wave))).toBe(true);
+    expect('spawns' in data.waves.waves[6]!).toBe(true);
+    expect('procedural' in data.waves.waves[7]!).toBe(true);
+    expect('procedural' in data.waves.waves[8]!).toBe(true);
   });
 });

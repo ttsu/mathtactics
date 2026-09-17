@@ -4,13 +4,13 @@ import type { Command, RunState, ShopOffer } from '../sim/core/types';
 import { loadRawGameData } from '../tests/helpers/loadDataFiles';
 import { nextShopChoice, planningCommands } from '../tests/helpers/sensiblePlayer';
 
-// Task 21: a full 7-wave run through the real menus, screens and shop. Planning turns use the
+// Task 21: a full 9-wave run through the real menus, screens and shop. Planning turns use the
 // sensible-player policy via `dispatch` plus `skipAnimation`. Shop visits tap a real affordable
 // card (same buy priority as the balance bot) then ▶ Next wave. A reload inside a mid-run shop
 // resumes via ▶ Continue with the same offers.
 //
 // The real New Run button seeds randomly, so `MAX_TURNS` is headroom over the measured
-// sensible-player worst case (task 21 Completion Notes).
+// sensible-player worst case (task 21: 51 End Turns on 7 waves; task 25: 87 on 9 waves).
 const MAX_TURNS = 200;
 const data = parseGameData(loadRawGameData());
 
@@ -99,10 +99,10 @@ async function playUntilWon(page: Page, turnsStart: number, reloadAfterWave?: nu
   return turns;
 }
 
-test('a full run plays through the real menus and screens: New Run -> 7 waves -> win -> menu', async ({
+test('a full run plays through the real menus and screens: New Run -> 9 waves -> win -> menu', async ({
   page,
 }, testInfo) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__ !== undefined);
   await expect(page.getByTestId('main-menu')).toBeVisible();
@@ -111,11 +111,20 @@ test('a full run plays through the real menus and screens: New Run -> 7 waves ->
   expect(await getScreen(page)).toBe('game');
   await waitIdle(page);
 
+  const dots = page.getByTestId('level-dots');
+  await expect(dots).toBeVisible();
+  expect(await dots.locator('.level-dot').count()).toBe(9);
+  const barBox = await page.getByTestId('hud-bar').boundingBox();
+  const dotsBox = await dots.boundingBox();
+  expect(barBox).not.toBeNull();
+  expect(dotsBox).not.toBeNull();
+  expect(dotsBox!.x + dotsBox!.width).toBeLessThanOrEqual(barBox!.x + barBox!.width);
+
   await playUntilWon(page, 0);
 
   const finalState = await getState(page);
   expect(finalState?.phase).toBe('won');
-  expect(finalState?.waveIndex).toBe(6);
+  expect(finalState?.waveIndex).toBe(8);
   await expect(page.getByTestId('won')).toBeVisible();
   await page.waitForTimeout(700);
   await page.screenshot({ path: testInfo.outputPath('run-won.png') });
@@ -126,7 +135,7 @@ test('a full run plays through the real menus and screens: New Run -> 7 waves ->
 });
 
 test('reloading inside a shop resumes the same offers and the run completes', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__ !== undefined);
   await page.getByTestId('menu-new-run').click();

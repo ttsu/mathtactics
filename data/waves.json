@@ -64,6 +64,74 @@
         { "turn": 8, "lane": "B", "robot": "basic", "hp": [44, 50] },
         { "turn": 8, "lane": "C", "robot": "basic", "hp": [44, 50] }
       ]
+    },
+    {
+      "id": "wave-8",
+      "procedural": {
+        "groups": [
+          {
+            "turn": 1,
+            "count": 3,
+            "hp": [42, 58],
+            "pool": ["weakness-5", "bounce-back", "odd-only", "even-only", "basic"]
+          },
+          {
+            "turn": 8,
+            "count": 3,
+            "hp": [55, 75],
+            "pool": ["weakness-2", "weakness-10", "even-only", "bounce-back", "basic"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "wave-9",
+      "procedural": {
+        "groups": [
+          {
+            "turn": 1,
+            "count": 4,
+            "hp": [55, 72],
+            "pool": [
+              "weakness-5",
+              "weakness-2",
+              "weakness-10",
+              "bounce-back",
+              "odd-only",
+              "even-only",
+              "basic"
+            ]
+          },
+          {
+            "turn": 8,
+            "count": 4,
+            "hp": [68, 88],
+            "pool": [
+              "weakness-5",
+              "weakness-2",
+              "weakness-10",
+              "bounce-back",
+              "odd-only",
+              "even-only",
+              "basic"
+            ]
+          },
+          {
+            "turn": 15,
+            "count": 3,
+            "hp": [78, 95],
+            "pool": [
+              "weakness-5",
+              "weakness-2",
+              "weakness-10",
+              "bounce-back",
+              "odd-only",
+              "even-only",
+              "basic"
+            ]
+          }
+        ]
+      }
     }
   ]
 }

@@ -1,0 +1,30 @@
+# Task 25: inline procedural `waves:` roll on `newRun` (wave stream) into a
+# concrete spawn list. Asserts spawn count, distinct lanes, and a traited
+# `RobotSpawned` on the event list (CLAUDE.md rule 2). Seed `proc-tiny-1` is
+# pinned so the draw is reproducible.
+name: procedural wave rolls distinct lanes and a traited spawn
+mode: run
+baseValue: 1
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+waves:
+  - id: proc-tiny
+    procedural:
+      groups:
+        - turn: 1
+          count: 3
+          hp: [8, 8]
+          pool: [odd-only, bounce-back, basic]
+commands:
+  - newRun: proc-tiny-1
+expectEvents:
+  - { type: RobotSpawned, at: { lane: 4 }, trait: { type: bounceBack }, hp: 8 }
+  - { type: RobotSpawned, at: { lane: 3 }, trait: { type: oddOnly }, hp: 8 }
+  - { type: RobotSpawned, at: { lane: 0 }, trait: { type: none }, hp: 8 }
+expectState:
+  phase: planning
+  waveIndex: 0
