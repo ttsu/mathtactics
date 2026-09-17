@@ -21,7 +21,7 @@ before the first robot: `1 → 5 → 25 → 22`. They never show trait effects, 
 or the outcome (GDD §5.7). Off by default.
 
 Sound: the toggle must persist. Web Audio is M5 — flipping Sound does **not** mute task-10
-playback in this task. Record that in Completion Notes.
+playback in this task. Record that in Completion Notes. Hints default **off** (grill A).
 
 `screen: 'settings'` is already on the union; `App.tsx` does not render it.
 

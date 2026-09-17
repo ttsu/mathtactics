@@ -46,8 +46,9 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   `basic`s at T1 (one) and T7 (two). Leaking the Boss is a loss.
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
   without words (§6.2–6.4). Bounce-back bar refill and blocked clonk already play (task 10).
-- **Settings and planning hints ship.** Gear on the main menu; hints off by default; sound
-  on/off persists. Web Audio is M5 — the sound toggle is a real setting with no playback yet.
+- **Settings and planning hints ship.** Gear on the main menu; hints **off by default** (grill A);
+  he can turn them on. Sound on/off persists. Web Audio is M5 — the sound toggle is a real
+  setting with no playback yet.
 
 ## 0. Changes in v0.6.1
 
@@ -975,7 +976,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
   more (kid-facing trap). Leaking the Boss is a loss.
 - The Settings gear on the main menu is labelled *Settings* (one extra word beyond the §11.1
   navigation list). Hints and Sound toggles are icon + one word each.
-- The sound toggle persists and does nothing to playback until M5 ships Web Audio.
+- Planning hints are off by default (grill A). The player can turn them on in Settings.
 - Procedural groups draw distinct lanes with `nextInt` into the remaining lanes, then pick a
   template from the pool (with replacement) and roll HP — file order, `wave` stream only.
 - The Boss is authored in lane 2 (center), matching the starting cannon. Escort is T1 one
