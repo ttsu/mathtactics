@@ -1,15 +1,63 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.6.1
+**Version:** 0.7
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
-**Status:** M3 built (Playtest 2–3 pending); HUD fire control is ▶ Go (v0.6.1, §11.1). This
-document is the single source of truth for *design*.
+**Status:** M4 specs written after Playtest 3 (not yet built). This document is the single source
+of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.7
+
+v0.7 records the decisions made while writing the M4 task specs, after Playtest 3.
+
+Playtest 3 (checklist notes): the run was **fun but too easy**; he asked for **armor** on
+waves 9/10 — a second HP, shown separately, that must be destroyed first.
+
+- **Hardness: one teaching trait plus a 4–7 HP bump.** Waves 4/6/7 still get a single teaching
+  trait; remaining robots on those waves stay `basic`; wave 5 stays untraited (grill A). HP on waves
+  4–7 is raised so sloppy play can leak (Playtest 3: too easy). Waves 1–3 are unchanged
+  (Playtest 2 notes empty). A **sensible player** still ends the 7-wave stretch at **80–100**
+  base HP (min ≥ 80 across seeds 1–100; at least some seeds finish below 100 — today's
+  100/100/100 is the too-easy bug). Waves 8–10 do the real damage: a sensible player
+  **wins the 10-wave run** with leftover **min near 40** (still ≥ 40) and **median 50–70**.
+  Those chips come from **waves 8–9** for a sensible player (who kills the escort). Wave 10
+  keeps a **light-but-present escort**: one `basic` at T1 plus two more at T7. Leaking the
+  Boss is a loss. The T7 pair is a kid-facing trap, not a bot HP tax. A sloppy run **can
+  lose on 8–9 and never see the Boss** (grill A). The sensible player still always reaches
+  wave 10.
+- **Armor is deferred to v1.1+.** It is a new rule (a second number on the robot), not a trait.
+  It fights §11.2 (HP is the largest element) and is closer to Barrier (§19) than to Weakness /
+  Bounce-back / parity. Not in M4, M5, or v1.
+- **Waves 4, 6, 7 gain their first teaching trait.** Wave 4: one Weakness (`n = 5`, grill A). Wave 6:
+  one Bounce-back (grill A: the −N shop after 5 is the exam). Wave 7: one Odd-only (grill A: base
+  value 1 is odd, so the first contact can hurt without a tile). Wave 5 stays untraited (grill A) —
+  it teaches subtraction. Remaining robots on those waves stay `basic`.
+- **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
+  already follow `waves.json` length. Shop after 7 guarantees `×2` or `×5` (grill A). Shop after
+  8 guarantees nothing (grill A). Shop after 9 guarantees `−N` (grill A) — last trim before the Boss.
+- **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
+  wave start on the `wave` stream. Mixed traits, HP inside §6.6. Both waves may spawn `basic`.
+  Wave 8 is **3+3** (grill A): T1 three, T8 three — mix traits without four-lane panic.
+  Wave 9 has more robots overall **and** more at once: packs of 4 plus an extra pack (grill C).
+  Even-only can roll on wave 8 from T1 (grill B) — first-ball clonk is the lesson.
+  Procedural packs draw **without replacement** (grill B): at most one of each template per group.
+  Wave 8 T1 and T8 use **split pools** (grill A): T1 is n=5 + both parities + bounce + basic;
+  T8 introduces weakness-2 and weakness-10. Wave 9 uses **one shared full mix** on every pack
+  (grill A).
+- **Wave 10 is authored:** one Boss (**100–150 HP**, range grill A, **no trait**, grill A) plus escort `basic`s
+  at T1 (one) and T7 (two). Leaking the Boss is a loss. The three-digit HP is the puzzle.
+  Exact-killable in ≤ 3 hits with the tiles owned on entering wave 10 (grill A).
+- **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
+  without words (§6.2–6.4). Bounce-back bar refill and blocked clonk already play (task 10).
+- **Settings and planning hints ship.** Gear on the main menu; hints **off by default** (grill A);
+  he can turn them on. Hints show **ball value only** — no trait effects, blocked/doubled damage,
+  or outcome (grill A). **No Sound row in M4** (grill A) — the toggle would do nothing audible
+  until M5 Web Audio. `settings.sound` may stay in storage defaulting on.
 
 ## 0. Changes in v0.6.1
 
@@ -345,7 +393,7 @@ kill. The player experiences the celebration before learning what "exact" means.
 - An optional hint shows, under each tile in an armed lane, the ball's running total
   after that tile — up to and including the last tile before the first robot:
   `1 → 5 → 25 → 22`.
-- Hints never show trait effects, blocked/doubled damage, or the outcome.
+- Hints never show trait effects, blocked/doubled damage, or the outcome (grill A).
 - **Off by default.** Toggled in the Settings screen (reached from the main menu, not the HUD).
 
 ---
@@ -415,9 +463,9 @@ The robot can only be hurt by balls of one parity. Framed as **what hurts it**.
   traits — not ever-larger numbers.
 - Placeholder curve (tuned in data): wave 1 → 1–3, wave 2 → 4–10, wave 5 → ~10–30,
   wave 9 → ~30–99.
-- **Boss** (wave 10 only): one robot, 100–150 HP, no trait, visually much larger (occupies
-  one cell but its sprite overflows it). Arrives with a light escort of normal robots.
-  Detonates for remaining HP like any robot.
+- **Boss** (wave 10 only): one robot, **100–150 HP** (range grill A), **no trait** (grill A), visually much
+  larger (occupies one cell but its sprite overflows it). Arrives with a light escort of
+  normal robots. Detonates for remaining HP like any robot. The three-digit HP is the puzzle.
 
 ---
 
@@ -587,16 +635,18 @@ shop slots are seeded-random within each rung.
 | 2 | HP 4–10, one lane at a time | at least one `×2` | Placing tiles; addition |
 | 3 | Two lanes threatened at once | — (the cannon offer is always present; income should make a 2nd cannon affordable around here) | Lane choice; shop tradeoffs |
 | 4 | First **Weakness** robot | at least one `×N` | Multiples |
-| 5 | Larger HP (~10–30) | at least one `−N` | Subtraction as a tool |
-| 6 | First **Bounce-back** robot | — | Trimming to exact |
-| 7 | First **Odd-only / Even-only** robot | — | Odd and even |
-| 8–9 | Procedural mix, HP ~30–99, more simultaneous lanes, mixed traits across robots | procedural | Combining everything |
-| 10 | **Boss** (100–150 HP) + light escort | — (no shop; win) | The big number |
+| 5 | All **basic**, larger HP (~10–30) | at least one `−N` | Subtraction as a tool |
+| 6 | First **Bounce-back** robot (grill A) | — | Trimming to exact |
+| 7 | First **Odd-only** robot | at least one `×2` or `×5` (grill A) | Odd and even |
+| 8 | Procedural **3+3** (grill A), HP ~30–65, mixed traits | — (grill A) | Combining; Even-only at T1 |
+| 9 | Procedural **4+4+3** (grill C), one full mix (grill A), HP ~45–99 | at least one `−N` (grill A) | Four lanes and an extra pack |
+| 10 | **Boss** (100–150 HP, range grill A, no trait) + light escort | — (no shop; win) | The big number |
 
 No tutorial mode and no text popups: wave design does the teaching.
 
-Waves 4–7 ship **untraited** in M3 and gain their traits in M4, alongside the visuals that
-telegraph them (§6.2–6.4). A robot whose trait is invisible reads as a bug, not a puzzle.
+Waves 4–7 shipped **untraited** in M3. M4 swaps in the first teaching trait on waves 4, 6
+and 7 (wave 5 stays untraited, grill A) and adds the visuals that telegraph them (§6.2–6.4). A robot
+whose trait is invisible reads as a bug, not a puzzle.
 
 ### 10.3 Waves as Spawn Schedules
 
@@ -678,7 +728,8 @@ and the reward chips became the wallet beat above.
 6. **Big touch targets.** ≥ 60 pt; drag-and-drop tolerates imprecise fingers.
 7. **No Safari interference.** No pinch-zoom, pull-to-refresh, swipe-back, or text-selection
    on long-press during play.
-8. **Settings** (from main menu): planning hints (off by default), sound on/off.
+8. **Settings** (from main menu): planning hints (off by default). Sound on/off ships with
+   M5 audio — M4 Settings has no Sound row.
 
 ---
 
@@ -858,7 +909,7 @@ Work is tracked in `TASKS.md` with one spec per task in `tasks/`.
 | **M1 Core loop** | Sim (lanes, `±×` tiles, per-ball impact, exact kill), scenario runner, board + tray drag, End Turn, lane playback, hand-authored puzzle levels | **Playtest 1** — is building an equation fun? |
 | **M2 A run** | Waves & spawn schedules, advance, base HP & detonation, wave rewards (shop stand-in), win/lose, save/resume, main menu, ladder waves 1–3 | Playtest 2 — does a run hold together? |
 | **M3 Economy** | Shop, coins, cannons & upgrades, seen-tiles log, ladder waves 1–7 | Playtest 3 |
-| **M4 Traits & finale** | Weakness, Bounce-back, Odd/Even-only, waves 8–10 + Boss, hints toggle, settings | Playtest 4 — complete v1 run |
+| **M4 Traits & finale** | Trait telegraph, ladder swap on 4/6/7, waves 8–10 + Boss, hints toggle, settings | Playtest 4 — complete v1 run |
 | **M5 Juice & art** | Escalation, celebrations, sound, AI art pass | v1 |
 
 Task specs are written one milestone at a time; later milestones may change after playtests.
@@ -876,7 +927,7 @@ Task specs are written one milestone at a time; later milestones may change afte
 | Tray | Owned tiles not on the board. |
 | Robot | Enemy unit. |
 | Trait | Weakness, Bounce-back, Odd-only, or Even-only. |
-| Boss | The wave-10 robot, 100–150 HP. |
+| Boss | The wave-10 robot, 100–150 HP, no trait. |
 | Base | Player's structure left of the cannon slots. |
 | Detonation | A robot reaching the base; damage = remaining HP. |
 | Locked cell | A cell containing a robot; tiles cannot be placed or removed. |
@@ -904,8 +955,8 @@ questions**, not blockers for M0/M1:
 | Concrete HP curves, prices, income values | Tuned in data during M2–M4 playtests |
 | Playback pacing values | Tuned after Playtest 1 |
 | Ladder waves 1–3 authored content | Drafted in task 12; finalized after Playtest 1 (task 17) |
-| Ladder waves 4–7 authored templates | Drafted and balanced untraited in M3 (task 21); traits in M4 |
-| Waves 8–9 procedural table design | M4 task spec |
+| Ladder waves 4–7 authored templates | Drafted untraited in M3 (task 21); first teaching trait swapped in M4 (task 22) |
+| Waves 8–9 procedural table design | Specified in task 25 (`waves.json` `procedural` groups) |
 | Browsable seen-tiles gallery | M5, with the art pass (§8.7) |
 | Sound sourcing (library vs generated) | M5 |
 | Kid-facing title and art style | M5 |
@@ -925,6 +976,38 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Tiles may be placed in unarmed lanes (so layouts survive moving the cannon).
 - Settings contains planning hints and sound toggles.
 
+### 18.2 Minor calls made while writing v0.7
+
+- Wave 4's Weakness is `n = 5` (skip-counting by fives; grill A). Waves 8–9 mix 2/5/10.
+- Wave 7's first parity robot is Odd-only (cannon base value 1 is odd; grill A). Even-only
+  can appear from wave 8 T1 (grill B); first-ball clonk is the lesson.
+- Wave 5 stays fully `basic` (grill A) — subtraction is the lesson, not a new trait.
+- Wave 6's first teaching trait is Bounce-back (grill A). The −N shop after 5 is the exam.
+- Shop after wave 7 guarantees `×2` or `×5` (grill A). Heading into the 8–9 mix with a multiply.
+- Shop after wave 8 guarantees nothing (grill A). No second gift one shop later.
+- Shop after wave 9 guarantees `−N` (grill A). Last trim before the Boss.
+- Waves 4–7 leftover after wave 7: sensible-player min ≥ 80, and not every seed at 100.
+- 10-wave leftover after the Boss: sensible-player min near 40 (still ≥ 40), median 50–70.
+  Chips come from waves 8–9 for a sensible player. Wave 10 escort is T1 one `basic` + T7 two
+  more (kid-facing trap). Leaking the Boss is a loss.
+- The Settings gear on the main menu is labelled *Settings* (one extra word beyond the §11.1
+  navigation list). The Hints toggle is icon + one word. No Sound row until M5.
+- Planning hints are off by default (grill A). The player can turn them on in Settings.
+  They show ball value only — no trait effects, blocked/doubled damage, or outcome (grill A).
+- No Sound toggle in M4 Settings (grill A). Ship it with M5 audio. `settings.sound` may remain
+  in storage, default on, unused.
+- Procedural groups draw distinct lanes with `nextInt` into the remaining lanes, then pick a
+  template from the remaining pool **without replacement** (grill B) and roll HP — file order,
+  `wave` stream only. `count` ≤ unique `pool` length. The T1 clonk is a lesson, not a lottery.
+- The Boss is untraited (grill A): **100–150 HP** (range grill A), authored in lane 2 (center, matching the
+  starting cannon). Escort is T1 one `basic` plus T7 two more `basic`s (grill B). Exact-killable
+  in ≤ 3 hits with the tiles owned on entering wave 10 (grill A).
+- A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.
+- Both waves 8 and 9 may spawn `basic`. Wave 8 is 3+3 (grill A). Wave 8 T1 and T8 use split
+  pools (grill A): T1 is n=5 + both parities + bounce + basic; T8 introduces 2 and 10.
+  Wave 9 has more robots overall **and** four at once plus an extra pack (grill C). Wave 9
+  uses one shared full mix on every pack (grill A).
+
 ---
 
 ## 19. Deferred to v1.1+
@@ -934,6 +1017,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 | **Path tiles** (Redirect, Bounce) | Ship with `transformationCount` cap (~20) and the §14.4 tie-break in the same change. Loops lean "feature". |
 | **Splitter / division** | Splits a ball; remainder becomes splash. Division enters spatially, never as `÷`. |
 | **Count tiles** (`+1 ball`) | Cut from v1. If revived: copies cannot make copies (additive stacking). |
+| **Armor** (separate HP destroyed first) | Playtest 3 idea for waves 9/10. A second number on the robot fights §11.2. Closer to Barrier than to existing traits. |
 | **Barrier / Slow tile** | Revisit if playtests show a need to stall. Would reintroduce robot `attack`. |
 | **Robot speed > 1** | Interacts with locked cells and equation shrinking. |
 | **Stacked traits** | Use §6.5 order. |

@@ -95,6 +95,10 @@ Waves reached:
 
 ### Quotes / reactions
 
+fun but too easy. make it harder
+
 ### Bugs / confusions
 
 ### Ideas for M4
+
+- wave 9/10 robots with armor. armor is displayed separately from the robot and needs to be destroyed first. (deferred to v1.1+)
