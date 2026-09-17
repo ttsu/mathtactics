@@ -12,6 +12,7 @@ import {
   fakePlaybackSettings,
   fakeHudSettings,
   fakeTraitSettings,
+  fakeBossSettings,
 } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
@@ -51,6 +52,7 @@ function fakeGameData(): GameData {
       screens: fakeScreenSettings(),
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
+      boss: fakeBossSettings(),
     },
   } as unknown as GameData;
 }

@@ -52,6 +52,7 @@ export class RobotView extends Phaser.GameObjects.Container {
   constructor(
     scene: Phaser.Scene,
     private readonly colours: TraitColours,
+    private readonly bossScale: number,
   ) {
     super(scene);
     this.chrome = traitChrome({ type: 'none' }, colours);
@@ -82,8 +83,10 @@ export class RobotView extends Phaser.GameObjects.Container {
     return this.shownHp;
   }
 
-  /** Idempotent chrome entry point. Rebuilds only when `trait` / `isBoss` change. `isBoss` is
-   * accepted now so task 26 can add the overflow-scale branch here without a third creation path. */
+  /** Idempotent chrome entry point. Rebuilds only when `trait` / `isBoss` change. Boss overflow
+   * scale is applied to the silhouette (and any chrome drawn on it), never this Container —
+   * playback and `BoardRenderer.place` reset Container scale to 1. HP text and bar stay inside
+   * the original `ROBOT_SIZE` box. */
   setChrome({ trait, isBoss }: RobotAppearance): void {
     const key = appearanceKey(trait, isBoss);
     if (key === this.appearanceKey) return;
@@ -91,6 +94,7 @@ export class RobotView extends Phaser.GameObjects.Container {
     this.chrome = traitChrome(trait, this.colours);
     this.paintBody(this.chrome);
     this.syncChest(this.chrome);
+    this.silhouette.setScale(isBoss ? this.bossScale : 1);
   }
 
   /** Live chrome as drawn, for the test handle (TR §14). */

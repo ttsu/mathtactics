@@ -132,6 +132,15 @@
           }
         ]
       }
+    },
+    {
+      "id": "wave-10",
+      "spawns": [
+        { "turn": 1, "lane": 2, "robot": "boss", "hp": [100, 150] },
+        { "turn": 1, "lane": "A", "robot": "basic", "hp": [20, 40] },
+        { "turn": 7, "lane": "B", "robot": "basic", "hp": [30, 50] },
+        { "turn": 7, "lane": "C", "robot": "basic", "hp": [30, 50] }
+      ]
     }
   ]
 }
