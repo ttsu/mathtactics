@@ -45,7 +45,7 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   Wave 8 is **3+3** (grill A): T1 three, T8 three — mix traits without four-lane panic.
   Wave 9 has more robots overall **and** more at once: packs of 4 plus an extra pack (grill C).
   Even-only can roll on wave 8 from T1 (grill B) — first-ball clonk is the lesson.
-- **Wave 10 is authored:** one Boss (100–150 HP, **no trait**, grill A) plus escort `basic`s
+- **Wave 10 is authored:** one Boss (**100–150 HP**, range grill A, **no trait**, grill A) plus escort `basic`s
   at T1 (one) and T7 (two). Leaking the Boss is a loss. The three-digit HP is the puzzle.
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
   without words (§6.2–6.4). Bounce-back bar refill and blocked clonk already play (task 10).
@@ -458,7 +458,7 @@ The robot can only be hurt by balls of one parity. Framed as **what hurts it**.
   traits — not ever-larger numbers.
 - Placeholder curve (tuned in data): wave 1 → 1–3, wave 2 → 4–10, wave 5 → ~10–30,
   wave 9 → ~30–99.
-- **Boss** (wave 10 only): one robot, 100–150 HP, **no trait** (grill A), visually much
+- **Boss** (wave 10 only): one robot, **100–150 HP** (range grill A), **no trait** (grill A), visually much
   larger (occupies one cell but its sprite overflows it). Arrives with a light escort of
   normal robots. Detonates for remaining HP like any robot. The three-digit HP is the puzzle.
 
@@ -635,7 +635,7 @@ shop slots are seeded-random within each rung.
 | 7 | First **Odd-only** robot | at least one `×2` or `×5` (grill A) | Odd and even |
 | 8 | Procedural **3+3** (grill A), HP ~30–65, mixed traits | — (grill A) | Combining; Even-only at T1 |
 | 9 | Procedural **4+4+3** (grill C), HP ~45–99 | at least one `−N` (grill A) | Four lanes and an extra pack |
-| 10 | **Boss** (100–150 HP, no trait) + light escort | — (no shop; win) | The big number |
+| 10 | **Boss** (100–150 HP, range grill A, no trait) + light escort | — (no shop; win) | The big number |
 
 No tutorial mode and no text popups: wave design does the teaching.
 
@@ -993,7 +993,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
   in storage, default on, unused.
 - Procedural groups draw distinct lanes with `nextInt` into the remaining lanes, then pick a
   template from the pool (with replacement) and roll HP — file order, `wave` stream only.
-- The Boss is untraited (grill A): 100–150 HP, authored in lane 2 (center, matching the
+- The Boss is untraited (grill A): **100–150 HP** (range grill A), authored in lane 2 (center, matching the
   starting cannon). Escort is T1 one `basic` plus T7 two more `basic`s (grill B).
 - A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.
 - Both waves 8 and 9 may spawn `basic`. Wave 8 is 3+3 (grill A). Wave 9 has more robots
