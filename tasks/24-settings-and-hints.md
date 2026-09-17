@@ -113,7 +113,7 @@ Web Audio and the Sound row (M5). Trait chrome (23). Changing default hints to o
 
 **Status:** Complete (iPad check pending)
 **Completed:** 2026-09-17
-**PR:** TBD · Preview: TBD
+**PR:** #45 · Preview: https://mathtactics.timtsu.com/pr/pr-45/
 **Branch:** `cursor/24-settings-hints-fa99` (not `task/24-settings-and-hints`)
 
 **Acceptance criteria:**
