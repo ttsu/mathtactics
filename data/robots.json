@@ -5,5 +5,6 @@
   { "id": "weakness-10", "trait": { "type": "weakness", "n": 10 }, "isBoss": false },
   { "id": "bounce-back", "trait": { "type": "bounceBack" }, "isBoss": false },
   { "id": "odd-only", "trait": { "type": "oddOnly" }, "isBoss": false },
-  { "id": "even-only", "trait": { "type": "evenOnly" }, "isBoss": false }
+  { "id": "even-only", "trait": { "type": "evenOnly" }, "isBoss": false },
+  { "id": "boss", "trait": { "type": "none" }, "isBoss": true }
 ]

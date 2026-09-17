@@ -12,6 +12,7 @@ import {
   fakePlaybackSettings,
   fakeHudSettings,
   fakeTraitSettings,
+  fakeBossSettings,
   fakeHintsSettings,
 } from '../helpers/playbackSettings';
 
@@ -52,6 +53,7 @@ function fakeGameData(): GameData {
       screens: fakeScreenSettings(),
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
+      boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
     },
   } as unknown as GameData;

@@ -102,12 +102,57 @@ extending it. Procedural tables (25). Balance across 10 waves (27).
 
 ## Acceptance Criteria
 
-- [ ] `boss` template exists; wave 10 is authored last
-- [ ] Boss HP 100–150; escort ≤ 99; schema enforces the split across the two validation stages
-- [ ] `procedural.pool` rejects `isBoss` ids
-- [ ] Boss sprite overflows the cell via task 23's chrome entry point; HP stays the largest
+- [x] `boss` template exists; wave 10 is authored last
+- [x] Boss HP 100–150; escort ≤ 99; schema enforces the split across the two validation stages
+- [x] `procedural.pool` rejects `isBoss` ids
+- [x] Boss sprite overflows the cell via task 23's chrome entry point; HP stays the largest
       readable numeral
-- [ ] Exact-kill scenario on the Boss wins the run
-- [ ] 10-wave fallout handled: wave dots fit, `heartTargetX` verified, run e2e updated
-- [ ] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass
+- [x] Exact-kill scenario on the Boss wins the run
+- [x] 10-wave fallout handled: wave dots fit, `heartTargetX` verified, run e2e updated
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass
 - [ ] iPad preview check (Boss scale and 10 dots) — awaiting human
+
+## Completion Notes
+
+**Status:** Complete (iPad check pending)
+**Completed:** 2026-09-17
+**PR:** #46 · Preview: https://mathtactics.timtsu.com/pr/pr-46/ · Branch: `cursor/26-wave-10-boss-fa99`
+
+**Acceptance criteria:**
+- [x] `boss` template exists; wave 10 is authored last — Met
+- [x] Boss HP 100–150; escort ≤ 99; schema enforces the split across the two validation stages — Met
+- [x] `procedural.pool` rejects `isBoss` ids — Met (existing titan fixture plus shipped `boss` id)
+- [x] Boss sprite overflows the cell via task 23's chrome entry point; HP stays the largest readable numeral — Met (`RobotView.setChrome` redraws the silhouette at `boss.scale`; screenshot `/opt/cursor/artifacts/26-boss.png`; iPad still pending)
+- [x] Exact-kill scenario on the Boss wins the run — Met (`scenarios/run/boss-exact-kill-wins.scenario.yaml`)
+- [x] 10-wave fallout handled: wave dots fit, `heartTargetX` verified, run e2e updated — Met (`e2e/run.spec.ts` waveIndex 9 / 10 dots; `heartTargetX` 449 → 475, e2e within 6 pt)
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass — Met
+- [ ] iPad preview check (Boss scale and 10 dots) — awaiting human check on preview
+
+**Verification:** npm test ✔ (63 files / 724 tests) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (75 tests, webkit) · `npm run sim -- scenarios/run/boss-exact-kill-wins.scenario.yaml` ✔
+
+**Deviations from spec:**
+- Branch name is `cursor/26-wave-10-boss-fa99` (cloud-agent convention) rather than `task/26-wave-10-boss`.
+- `heartTargetX` 449 → **475** (one extra 16 pt dot + 10 pt gap). e2e `run-playback` still within 6 pt. 10 dots still fit the HUD bar.
+- Wave 10 HP is the draft `[100, 150]` / escort `[20, 40]` + `[30, 50]` — not retuned.
+- 10-wave leftover is still Partial from task 25: sensible-player seeds 1–100 **min 56 / median 99 / max 100**. Escort did not move leftover (wave 10 turns min/median/max 2/3/6). Did not grind 8–9 HP.
+- End-Turns min/median/max **50/66/93** (task 25 was 48/63/87). `MAX_TURNS = 200` still has headroom. Task 27 remeasures.
+- Boss overflow is drawn at scaled size inside `paintBody`, not `Graphics.setScale`. Same seam (`setChrome` only); Container scale stays 1.
+
+**Architectural decisions made:**
+- Two-stage HP: per-spawn authored ceiling 150; `GameDataSchema` cross-file enforces ≤ 99 unless the named template is `isBoss` (error path `waves.json: waves[i].spawns[j].hp`). Procedural groups keep a separate ≤ 99 schema (they already reject `isBoss` pool ids).
+- `WavesFileSchema` standalone (scenario `waves:`) has no cross-file check, so a scenario can write 150 HP `basic`.
+- Boss `trait` must be `none` (robots.json schema).
+- `RobotView.setChrome` stores `bodyScale` and redraws the silhouette (antennae included) at `ROBOT_SIZE * boss.scale`. HP text + bar stay in the original `ROBOT_SIZE` box; `showHpText` still shrinks three-digit HP. No third creation path: waiters pass `isBoss: false`; Boss arrives via `RobotSpawned` and `syncRobots`.
+
+**Design questions raised:**
+- None. Leftover median 99 is still task 25/27's problem.
+
+**Known issues / follow-up:**
+- Task 27: leftover still Partial from 25 (min 56 / median 99 on 10 waves). Boss exact-kill in ≤ 3 hits is their assertion (`canExactKillInAtMostNHits(..., 3)` exact-only). Scale the silhouette inside `setChrome`, not the Container. `heartTargetX` is 475 for 10 dots.
+- iPad preview check still required before merge (Boss scale and 10 dots).
+
+**Files created:** `scenarios/run/boss-exact-kill-wins.scenario.yaml`, `e2e/boss.spec.ts`
+**Files modified:** `data/{robots,waves,presentation}.json`, `sim/data/schemas.ts`, `game/board/views/RobotView.ts`, `game/board/BoardRenderer.ts`, `tests/helpers/playbackSettings.ts`, `tests/ladder.test.ts`, `tests/sim/data/{waves,load,shop,levels}.test.ts`, `tests/sim/commands/{fixtures.ts,loadLevel.test.ts}`, `tests/game/{store,testHandle}.test.ts`, `e2e/run.spec.ts`, `TASKS.md`, this file
+
+**Notes for next agent:**
+- Leftover is still Partial from 25; do not retune waves 8–9 here. Wave 10 escort is a kid-facing trap, not the leftover lever. `setChrome` is the only Boss scale site — playback/`place` already `setScale(1)` on the Container. Start leftover from min 56 / median 99, not from 50–70.

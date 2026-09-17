@@ -116,7 +116,7 @@
     "detonate": {
       "shakeMs": 220,
       "shake": 0.01,
-      "heartTargetX": 449,
+      "heartTargetX": 475,
       "heartTargetY": 44,
       "heartLabelScale": 0.55
     },
@@ -137,6 +137,9 @@
     "oddShieldColor": "#7e57c2",
     "evenShieldColor": "#26a69a",
     "bounceBackBodyColor": "#ef6c00"
+  },
+  "boss": {
+    "scale": 1.55
   },
   "drag": {
     "liftScale": 1.15,

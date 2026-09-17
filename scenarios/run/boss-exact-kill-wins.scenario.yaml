@@ -1,0 +1,31 @@
+# Task 26: a 100 HP Boss exact-killed by a 100-value ball is the last robot of the last
+# wave, so the run wins. Board-grammar robots hardcode isBoss: false — spawn looks up
+# the `boss` template from robots.json via `waves:` / `pendingSpawns.robot`. Turn order
+# is FIRE then SPAWN, so the first End Turn brings the Boss onto the board and the
+# second hits it (same pattern as shipped-weakness-5-doubles).
+name: boss exact kill of the last robot of the last wave wins the run
+mode: run
+baseValue: 100
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+pendingSpawns:
+  - { turn: 1, lane: 2, hp: 100, robot: boss }
+waves:
+  - id: wave-boss
+    spawns:
+      - { turn: 1, lane: 2, robot: boss, hp: [100, 100] }
+commands:
+  - endTurn
+  - endTurn
+expectEvents:
+  - { type: RobotSpawned, isBoss: true, hp: 100, trait: { type: none } }
+  - { type: RobotDamaged, ballValue: 100, damage: 100, hpBefore: 100, hpAfter: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: WaveCleared, waveIndex: 0 }
+  - { type: RunWon }
+expectState:
+  phase: won

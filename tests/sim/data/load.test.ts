@@ -6,6 +6,7 @@ import { loadRawGameData } from '../../helpers/loadDataFiles';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
 import { fakeShop } from '../../helpers/shop';
 import {
+  fakeBossSettings,
   fakeDangerSettings,
   fakeHintsSettings,
   fakeHudSettings,
@@ -53,6 +54,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       danger: fakeDangerSettings(),
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
+      boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
     },
     ...overrides,
@@ -192,6 +194,20 @@ describe('presentation.json traits (task 23)', () => {
     const raw = validRaw();
     const presentation = raw.presentation as { traits: Record<string, unknown> };
     delete presentation.traits.oddShieldColor;
+    expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
+  });
+});
+
+describe('presentation.json boss (task 26)', () => {
+  it('ships the overflow scale', () => {
+    const data = parseGameData(loadRawGameData());
+    expect(data.presentation.boss).toEqual(fakeBossSettings());
+  });
+
+  it('rejects a missing boss scale', () => {
+    const raw = validRaw();
+    const presentation = raw.presentation as { boss?: unknown };
+    delete presentation.boss;
     expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
   });
 });

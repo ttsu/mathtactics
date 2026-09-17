@@ -21,6 +21,7 @@ import {
   fakePlaybackSettings,
   fakeHudSettings,
   fakeTraitSettings,
+  fakeBossSettings,
   fakeHintsSettings,
 } from '../helpers/playbackSettings';
 
@@ -62,6 +63,7 @@ function fakeGameData(overrides: Partial<GameData['economy']> = {}): GameData {
       screens: fakeScreenSettings(),
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
+      boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
     },
   } as unknown as GameData;

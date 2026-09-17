@@ -13,6 +13,7 @@ import {
   fakePacingSettings,
   fakePlaybackSettings,
   fakeTraitSettings,
+  fakeBossSettings,
 } from '../../helpers/playbackSettings';
 
 function expectOk(result: ReturnType<typeof applyCommand>): asserts result is {
@@ -205,6 +206,7 @@ describe('applyCommand — loadLevel', () => {
         danger: fakeDangerSettings(),
         hud: fakeHudSettings(),
         traits: fakeTraitSettings(),
+        boss: fakeBossSettings(),
         hints: fakeHintsSettings(),
       },
     };

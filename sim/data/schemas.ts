@@ -275,6 +275,11 @@ const PresentationFileSchema = z.object({
     evenShieldColor: z.string().min(1),
     bounceBackBodyColor: z.string().min(1),
   }),
+  /** Wave-10 Boss overflow scale (task 26, GDD §6.6). Applied to the silhouette inside
+   * `RobotView.setChrome`, never to the Container (playback resets Container scale to 1). */
+  boss: z.object({
+    scale: scale(),
+  }),
   /** Board drag-and-drop feel (task 09). Presentation only — never changes an outcome. */
   drag: z.object({
     /** Scale of a lifted piece relative to its on-board size. */
@@ -597,11 +602,21 @@ export type LevelDef = z.infer<typeof LevelDefSchema>;
 
 // --- robots.json (GDD §6.1, TR §9) — M2 ships one template, `basic`; visual keys arrive in M5 ---
 
-const RobotTemplateSchema = z.strictObject({
-  id: z.string().min(1),
-  trait: TraitSchema,
-  isBoss: z.boolean(),
-});
+const RobotTemplateSchema = z
+  .strictObject({
+    id: z.string().min(1),
+    trait: TraitSchema,
+    isBoss: z.boolean(),
+  })
+  .superRefine((robot, ctx) => {
+    if (robot.isBoss && robot.trait.type !== 'none') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['trait'],
+        message: 'Boss trait must be none',
+      });
+    }
+  });
 
 const RobotsFileSchema = z.array(RobotTemplateSchema).superRefine((robots, ctx) => {
   const seen = new Set<string>();
@@ -625,19 +640,27 @@ export type RobotTemplate = z.infer<typeof RobotTemplateSchema>;
 export const LANE_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
 export type LaneLetter = (typeof LANE_LETTERS)[number];
 
-/** Highest HP a normal spawn may roll: never exceeds 99 (GDD §2.1 / §6.6). The Boss (task 26)
- * is the only three-digit robot and will need its own limit. */
-const MAX_SPAWN_HP = 99;
+/** Highest HP a normal spawn may roll: never exceeds 99 (GDD §2.1 / §6.6). The Boss is the
+ * only three-digit robot (task 26); authored spawns may go to 150, and the cross-file pass
+ * in `GameDataSchema` keeps non-Boss templates at 99. */
+const MAX_NORMAL_SPAWN_HP = 99;
+const MAX_BOSS_SPAWN_HP = 150;
 
-const SpawnHpSchema = z.number().int().min(1).max(MAX_SPAWN_HP);
-
-const SpawnHpRangeSchema = z
-  .tuple([SpawnHpSchema, SpawnHpSchema])
-  .superRefine(([min, max], ctx) => {
+function spawnHpRange(maxHp: number) {
+  const hp = z.number().int().min(1).max(maxHp);
+  return z.tuple([hp, hp]).superRefine(([min, max], ctx) => {
     if (min > max) {
       ctx.addIssue({ code: 'custom', message: `hp min ${min} is greater than max ${max}` });
     }
   });
+}
+
+/** Per-spawn authored HP: 1 ≤ min ≤ max ≤ Boss maximum. Non-Boss templates are capped at 99
+ * in `GameDataSchema` (a spawn schema cannot see `robots.json`). */
+const SpawnHpRangeSchema = spawnHpRange(MAX_BOSS_SPAWN_HP);
+
+/** Procedural groups never include the Boss (pool check) and stay at the two-digit cap. */
+const NormalSpawnHpRangeSchema = spawnHpRange(MAX_NORMAL_SPAWN_HP);
 
 const WaveSpawnSchema = z.strictObject({
   /** 1-based turn within the wave. */
@@ -688,8 +711,8 @@ const ProceduralGroupSchema = z
     turn: z.number().int().min(1),
     /** Robots this group spawns; schema bound 1–5, shipped tables stay ≤ 4 (task 25). */
     count: z.number().int().min(1).max(5),
-    /** `[min, max]`, both inclusive; rolled per robot at wave start. */
-    hp: SpawnHpRangeSchema,
+    /** `[min, max]`, both inclusive; rolled per robot at wave start. ≤ 99 (no Boss). */
+    hp: NormalSpawnHpRangeSchema,
     /** Distinct `robots.json` ids drawn without replacement (grill B). */
     pool: z.array(z.string().min(1)).min(1),
   })
@@ -841,6 +864,15 @@ export const GameDataSchema = z
               code: 'custom',
               path: ['waves', 'waves', waveIndex, 'spawns', spawnIndex, 'robot'],
               message: `unknown robot id "${spawn.robot}"`,
+            });
+            return;
+          }
+          const template = data.robots.find((robot) => robot.id === spawn.robot);
+          if (template && !template.isBoss && spawn.hp[1] > MAX_NORMAL_SPAWN_HP) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['waves', 'waves', waveIndex, 'spawns', spawnIndex, 'hp'],
+              message: `hp max ${spawn.hp[1]} exceeds ${MAX_NORMAL_SPAWN_HP} for non-Boss template "${spawn.robot}"`,
             });
           }
         });

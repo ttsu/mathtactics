@@ -59,7 +59,6 @@ export interface DrawnHint {
   col: number;
   value: number;
 }
-
 declare global {
   interface Window {
     /** Only ever set in dev/preview builds — see `installTestHandle` below. */

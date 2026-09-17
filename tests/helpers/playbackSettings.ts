@@ -144,6 +144,11 @@ export function fakeTraitSettings() {
   };
 }
 
+/** The `presentation.json` `boss` block (task 26 overflow scale) for fake `GameData`. */
+export function fakeBossSettings() {
+  return { scale: 1.55 };
+}
+
 /** The `presentation.json` `hints` block (task 24) for hand-built fake `GameData` fixtures. */
 export function fakeHintsSettings() {
   return {

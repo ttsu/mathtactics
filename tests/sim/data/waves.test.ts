@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseGameData } from '../../../sim/data/load';
+import { WavesFileSchema } from '../../../sim/data/schemas';
 import { loadRawGameData } from '../../helpers/loadDataFiles';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
 import { fakeShop } from '../../helpers/shop';
@@ -10,6 +11,7 @@ import {
   fakePacingSettings,
   fakePlaybackSettings,
   fakeTraitSettings,
+  fakeBossSettings,
 } from '../../helpers/playbackSettings';
 
 function spawnDef(overrides: Record<string, unknown> = {}) {
@@ -77,6 +79,7 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
       danger: fakeDangerSettings(),
       hud: fakeHudSettings(),
       traits: fakeTraitSettings(),
+      boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
     },
   };
@@ -85,9 +88,36 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
 describe('robots.json schema', () => {
   it('accepts a template and keeps its trait and Boss flag', () => {
     const data = parseGameData(
-      validRaw([waveDef()], [{ id: 'basic', trait: { type: 'weakness', n: 5 }, isBoss: true }]),
+      validRaw([waveDef()], [{ id: 'basic', trait: { type: 'weakness', n: 5 }, isBoss: false }]),
     );
-    expect(data.robots).toEqual([{ id: 'basic', trait: { type: 'weakness', n: 5 }, isBoss: true }]);
+    expect(data.robots).toEqual([{ id: 'basic', trait: { type: 'weakness', n: 5 }, isBoss: false }]);
+  });
+
+  it('accepts an untraited Boss template', () => {
+    const data = parseGameData(
+      validRaw(
+        [waveDef({ spawns: [spawnDef({ robot: 'boss', hp: [100, 150] })] })],
+        [
+          { id: 'basic', trait: { type: 'none' }, isBoss: false },
+          { id: 'boss', trait: { type: 'none' }, isBoss: true },
+        ],
+      ),
+    );
+    expect(data.robots).toEqual([
+      { id: 'basic', trait: { type: 'none' }, isBoss: false },
+      { id: 'boss', trait: { type: 'none' }, isBoss: true },
+    ]);
+  });
+
+  it('rejects a Boss whose trait is not none', () => {
+    const raw = validRaw(
+      [waveDef()],
+      [
+        { id: 'basic', trait: { type: 'none' }, isBoss: false },
+        { id: 'boss', trait: { type: 'weakness', n: 5 }, isBoss: true },
+      ],
+    );
+    expect(() => parseGameData(raw)).toThrow(/^robots\.json: \[1\]\.trait: Boss trait must be none/);
   });
 
   it('rejects an unknown trait', () => {
@@ -142,11 +172,44 @@ describe('waves.json schema', () => {
     );
   });
 
-  it('rejects hp 0 and hp 100', () => {
+  it('rejects hp 0 and hp above the Boss maximum', () => {
     const zero = validRaw([waveDef({ spawns: [spawnDef({ hp: [0, 3] })] })]);
     expect(() => parseGameData(zero)).toThrow(/^waves\.json: waves\[0\]\.spawns\[0\]\.hp\[0\]:/);
-    const hundred = validRaw([waveDef({ spawns: [spawnDef({ hp: [3, 100] })] })]);
-    expect(() => parseGameData(hundred)).toThrow(/^waves\.json: waves\[0\]\.spawns\[0\]\.hp\[1\]:/);
+    const tooHigh = validRaw([waveDef({ spawns: [spawnDef({ hp: [3, 151] })] })]);
+    expect(() => parseGameData(tooHigh)).toThrow(/^waves\.json: waves\[0\]\.spawns\[0\]\.hp\[1\]:/);
+  });
+
+  it('rejects a non-Boss spawn whose hp max exceeds 99 (cross-file)', () => {
+    const raw = validRaw([waveDef({ spawns: [spawnDef({ hp: [100, 100] })] })]);
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.spawns\[0\]\.hp: hp max 100 exceeds 99 for non-Boss template "basic"/,
+    );
+  });
+
+  it('loads a Boss spawn with hp [100, 150]', () => {
+    const data = parseGameData(
+      validRaw(
+        [waveDef({ spawns: [spawnDef({ robot: 'boss', hp: [100, 150] })] })],
+        [
+          { id: 'basic', trait: { type: 'none' }, isBoss: false },
+          { id: 'boss', trait: { type: 'none' }, isBoss: true },
+        ],
+      ),
+    );
+    const wave = data.waves.waves[0];
+    expect(wave && 'spawns' in wave ? wave.spawns[0] : undefined).toEqual({
+      turn: 1,
+      lane: 'A',
+      robot: 'boss',
+      hp: [100, 150],
+    });
+  });
+
+  it('rejects a basic spawn with hp [100, 120] even though the per-spawn ceiling is 150', () => {
+    const raw = validRaw([waveDef({ spawns: [spawnDef({ hp: [100, 120] })] })]);
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.spawns\[0\]\.hp: hp max 120 exceeds 99 for non-Boss template "basic"/,
+    );
   });
 
   it('rejects a wave with no spawns', () => {
@@ -274,6 +337,13 @@ describe('waves.json schema', () => {
     );
   });
 
+  it('rejects a procedural group whose hp exceeds 99', () => {
+    const raw = validRaw([
+      procWave({ procedural: { groups: [procGroup({ hp: [100, 100] })] } }),
+    ]);
+    expect(() => parseGameData(raw)).toThrow(/^waves\.json: waves\[0\]\.procedural\.groups\[0\]\.hp/);
+  });
+
   it('rejects a Boss template in a procedural pool', () => {
     const raw = validRaw(
       [procWave({ procedural: { groups: [procGroup({ pool: ['titan'] })] } })],
@@ -285,6 +355,26 @@ describe('waves.json schema', () => {
     expect(() => parseGameData(raw)).toThrow(
       /^waves\.json: waves\[0\]\.procedural\.groups\[0\]\.pool\[0\]: pool may not name a Boss template "titan"/,
     );
+  });
+
+  it('rejects the shipped boss id in a procedural pool', () => {
+    const raw = validRaw(
+      [procWave({ procedural: { groups: [procGroup({ pool: ['boss'] })] } })],
+      [
+        { id: 'basic', trait: { type: 'none' }, isBoss: false },
+        { id: 'boss', trait: { type: 'none' }, isBoss: true },
+      ],
+    );
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.procedural\.groups\[0\]\.pool\[0\]: pool may not name a Boss template "boss"/,
+    );
+  });
+
+  it('WavesFileSchema standalone (scenario waves:) allows 150 HP on a non-Boss id', () => {
+    const parsed = WavesFileSchema.safeParse({
+      waves: [{ id: 's', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [150, 150] }] }],
+    });
+    expect(parsed.success).toBe(true);
   });
 
   it('rejects a procedural wave with no turn-1 group', () => {
@@ -308,8 +398,8 @@ describe('waves.json schema', () => {
   });
 });
 
-describe('draft ladder content (task 12 / 21 / 22 / 25)', () => {
-  it('ships the seven robot templates and waves 1-9', () => {
+describe('draft ladder content (task 12 / 21 / 22 / 25 / 26)', () => {
+  it('ships the eight robot templates and waves 1-10', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.robots).toEqual([
       { id: 'basic', trait: { type: 'none' }, isBoss: false },
@@ -319,6 +409,7 @@ describe('draft ladder content (task 12 / 21 / 22 / 25)', () => {
       { id: 'bounce-back', trait: { type: 'bounceBack' }, isBoss: false },
       { id: 'odd-only', trait: { type: 'oddOnly' }, isBoss: false },
       { id: 'even-only', trait: { type: 'evenOnly' }, isBoss: false },
+      { id: 'boss', trait: { type: 'none' }, isBoss: true },
     ]);
     expect(data.waves.waves.map((wave) => wave.id)).toEqual([
       'wave-1',
@@ -330,10 +421,12 @@ describe('draft ladder content (task 12 / 21 / 22 / 25)', () => {
       'wave-7',
       'wave-8',
       'wave-9',
+      'wave-10',
     ]);
     expect(data.waves.waves.every((wave) => !('reward' in wave))).toBe(true);
     expect('spawns' in data.waves.waves[6]!).toBe(true);
     expect('procedural' in data.waves.waves[7]!).toBe(true);
     expect('procedural' in data.waves.waves[8]!).toBe(true);
+    expect('spawns' in data.waves.waves[9]!).toBe(true);
   });
 });
