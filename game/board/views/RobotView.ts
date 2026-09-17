@@ -1,10 +1,11 @@
 // A robot (task 09 req. 2): simple silhouette block with HP as the largest text on the board
 // (GDD §11.2), and an HP bar under it (task 10: bounce-back visibly refills it). Trait chrome
-// is the planning-phase telegraph (task 23); Boss overflow scale hangs off the same `setChrome`
-// seam in task 26.
+// is the planning-phase telegraph (task 23 / GDD v0.7.1); Boss overflow scale hangs off the same
+// `setChrome` seam in task 26.
 //
 // Playback (task 10) drives the HP text and bar separately while a hit animates (`showHpText`,
-// `setBarFill`); `setHp` puts both back in step.
+// `setBarFill`); `setHp` puts both back in step. The parity shield is a child of this Container
+// so a blocked ball can shake it without moving the body.
 
 import Phaser from 'phaser';
 import type { Trait } from '../../../sim/core/types';
@@ -16,6 +17,15 @@ import {
   ROBOT_ANTENNA_SPREAD,
   ROBOT_HP_FONT_SIZE,
   ROBOT_SIZE,
+  SHIELD_DOT_RADIUS,
+  SHIELD_DOT_SPREAD,
+  SHIELD_HEIGHT,
+  SHIELD_OFFSET_X,
+  SHIELD_WIDTH,
+  WEAKNESS_BOLT_SIZE,
+  WEAKNESS_MARK_OFFSET_X,
+  WEAKNESS_MARK_OFFSET_Y,
+  WEAKNESS_N_GAP,
   designToWorld,
 } from '../layout';
 import { formatNumber } from '../pieces';
@@ -42,6 +52,9 @@ export class RobotView extends Phaser.GameObjects.Container {
   private readonly silhouette: Phaser.GameObjects.Graphics;
   private readonly hp: Phaser.GameObjects.Text;
   private readonly bar: Phaser.GameObjects.Graphics;
+  private shield: Phaser.GameObjects.Graphics | null = null;
+  private shieldRestX = 0;
+  private markBolt: Phaser.GameObjects.Graphics | null = null;
   private chest: Phaser.GameObjects.Text | null = null;
   private max = 1;
   private shownHp = 0;
@@ -84,6 +97,21 @@ export class RobotView extends Phaser.GameObjects.Container {
     return this.shownHp;
   }
 
+  /** Parity shield child, or null when this robot has no shield. */
+  shieldObject(): Phaser.GameObjects.Graphics | null {
+    return this.shield;
+  }
+
+  /** Resting local-x of the shield (design-converted). */
+  shieldHomeX(): number {
+    return this.shieldRestX;
+  }
+
+  /** Snap the shield back after a clonk wobble (playback `finish`). */
+  resetChromeMotion(): void {
+    this.shield?.setPosition(this.shieldRestX, 0);
+  }
+
   /** Idempotent chrome entry point. Rebuilds only when `trait` / `isBoss` change. Boss overflow
    * scale is applied by redrawing the silhouette (and any chrome drawn on it) larger, never by
    * scaling this Container — playback and `BoardRenderer.place` reset Container scale to 1.
@@ -95,7 +123,14 @@ export class RobotView extends Phaser.GameObjects.Container {
     this.chrome = traitChrome(trait, this.colours);
     this.bodyScale = isBoss ? this.bossScale : 1;
     this.paintBody(this.chrome);
-    this.syncChest(this.chrome);
+    this.syncShield(this.chrome);
+    this.syncMark(this.chrome);
+    this.hp.setY(0);
+    // Shield is a sibling of the body. Weakness bolt+n overlap the bottom edge in front of
+    // HP so the small n stays readable (GDD §6.4).
+    if (this.shield !== null) this.bringToTop(this.shield);
+    if (this.markBolt !== null) this.bringToTop(this.markBolt);
+    if (this.chest !== null) this.bringToTop(this.chest);
   }
 
   /** Live chrome as drawn, for the test handle (TR §14). */
@@ -158,47 +193,76 @@ export class RobotView extends Phaser.GameObjects.Container {
     if (chrome.coiled) {
       drawCoil(g, size, outline);
     } else {
-      drawAntennae(g, size, chrome.pairCount, outline);
+      drawAntennae(g, size, 1, outline);
     }
     const fill = chrome.bodyColor ? hexColor(chrome.bodyColor) : PLACEHOLDER.robot;
     g.fillStyle(fill);
     g.fillRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
-    if (chrome.shieldColor !== null) {
-      g.fillStyle(hexColor(chrome.shieldColor), 0.4);
-      g.fillRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
-    }
     g.lineStyle(designToWorld(3), outline);
     g.strokeRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
   }
 
-  private syncChest(chrome: TraitChrome): void {
+  private syncShield(chrome: TraitChrome): void {
+    if (chrome.shieldColor === null) {
+      this.shield?.destroy();
+      this.shield = null;
+      this.shieldRestX = 0;
+      return;
+    }
+    if (this.shield === null) {
+      this.shield = this.scene.add.graphics();
+      this.add(this.shield);
+    }
+    const scale = this.bodyScale;
+    this.shieldRestX = designToWorld(SHIELD_OFFSET_X) * scale;
+    paintCarriedShield(
+      this.shield,
+      chrome.pairCount,
+      hexColor(chrome.shieldColor),
+      PLACEHOLDER.robotOutline,
+      scale,
+    );
+    this.shield.setPosition(this.shieldRestX, 0);
+  }
+
+  private syncMark(chrome: TraitChrome): void {
     if (chrome.n === null || chrome.chestFontSize === null) {
+      this.markBolt?.destroy();
+      this.markBolt = null;
       this.chest?.destroy();
       this.chest = null;
       return;
     }
-    const size = designToWorld(ROBOT_SIZE);
+    const boltX = designToWorld(WEAKNESS_MARK_OFFSET_X);
+    const boltY = designToWorld(WEAKNESS_MARK_OFFSET_Y);
+    const boltColor = hexColor(this.colours.weaknessMarkColor);
+    if (this.markBolt === null) {
+      this.markBolt = this.scene.add.graphics();
+      this.add(this.markBolt);
+    }
+    paintLightningBolt(this.markBolt, boltColor, PLACEHOLDER.robotOutline);
+    this.markBolt.setPosition(boltX, boltY);
+
     const fontSize = `${designToWorld(chrome.chestFontSize)}px`;
-    const y = size / 2 - designToWorld(4);
+    const nX = boltX + designToWorld(WEAKNESS_BOLT_SIZE / 2 + WEAKNESS_N_GAP);
     if (this.chest === null) {
       this.chest = this.scene.add
-        .text(0, y, formatNumber(chrome.n), {
+        .text(nX, boltY, formatNumber(chrome.n), {
           fontFamily: FONT_FAMILY,
           fontSize,
           fontStyle: 'bold',
           color: this.colours.weaknessNColor,
           stroke: DARK_STROKE_COLOR,
-          strokeThickness: designToWorld(3),
+          strokeThickness: designToWorld(2),
         })
-        .setOrigin(0.5, 1);
+        .setOrigin(0, 0.5);
       this.add(this.chest);
-      this.bringToTop(this.hp);
-      return;
+    } else {
+      this.chest.setPosition(nX, boltY).setFontSize(designToWorld(chrome.chestFontSize));
+      this.chest.setColor(this.colours.weaknessNColor);
+      const text = formatNumber(chrome.n);
+      if (this.chest.text !== text) this.chest.setText(text);
     }
-    this.chest.setPosition(0, y).setFontSize(designToWorld(chrome.chestFontSize));
-    this.chest.setColor(this.colours.weaknessNColor);
-    const text = formatNumber(chrome.n);
-    if (this.chest.text !== text) this.chest.setText(text);
   }
 }
 
@@ -234,4 +298,61 @@ function drawCoil(g: Phaser.GameObjects.Graphics, size: number, outline: number)
   for (let i = 0; i < 3; i++) {
     g.strokeEllipse(0, -size / 2 - designToWorld(5 + i * 6), width, height);
   }
+}
+
+/** Heater shield drawn at the Graphics origin — placed on the left of the robot body. */
+function paintCarriedShield(
+  g: Phaser.GameObjects.Graphics,
+  dots: number,
+  fill: number,
+  outline: number,
+  scale: number,
+): void {
+  g.clear();
+  const hw = (designToWorld(SHIELD_WIDTH) * scale) / 2;
+  const hh = (designToWorld(SHIELD_HEIGHT) * scale) / 2;
+  const points = [
+    [0, -hh],
+    [hw * 0.78, -hh * 0.72],
+    [hw, -hh * 0.08],
+    [hw * 0.62, hh * 0.42],
+    [0, hh],
+    [-hw * 0.62, hh * 0.42],
+    [-hw, -hh * 0.08],
+    [-hw * 0.78, -hh * 0.72],
+  ].map(([x, y]) => new Phaser.Math.Vector2(x, y));
+  g.fillStyle(fill);
+  g.fillPoints(points, true);
+  g.lineStyle(designToWorld(3), outline);
+  g.strokePoints(points, true);
+
+  const radius = designToWorld(SHIELD_DOT_RADIUS) * scale;
+  const ys =
+    dots === 2
+      ? [-designToWorld(SHIELD_DOT_SPREAD) * scale, designToWorld(SHIELD_DOT_SPREAD) * scale]
+      : [0];
+  for (const y of ys) {
+    g.fillStyle(PLACEHOLDER.ballShine);
+    g.fillCircle(0, y, radius);
+    g.lineStyle(designToWorld(2), outline);
+    g.strokeCircle(0, y, radius);
+  }
+}
+
+function paintLightningBolt(g: Phaser.GameObjects.Graphics, fill: number, outline: number): void {
+  g.clear();
+  const s = designToWorld(WEAKNESS_BOLT_SIZE);
+  const points = [
+    [s * 0.18, -s * 0.52],
+    [s * 0.46, 0],
+    [s * 0.12, 0],
+    [s * 0.22, s * 0.52],
+    [-s * 0.42, s * 0.06],
+    [-s * 0.04, s * 0.06],
+    [-s * 0.32, -s * 0.52],
+  ].map(([x, y]) => new Phaser.Math.Vector2(x, y));
+  g.fillStyle(fill);
+  g.fillPoints(points, true);
+  g.lineStyle(designToWorld(2), outline);
+  g.strokePoints(points, true);
 }

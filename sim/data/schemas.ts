@@ -219,9 +219,10 @@ const PresentationFileSchema = z.object({
     }),
     blocked: z.object({
       bounceOffPt: z.number().nonnegative(),
-      robotWobblePt: z.number().nonnegative(),
-      /** Extra side-to-side shakes of the robot after the first. */
-      robotWobbleRepeats: z.number().int().nonnegative(),
+      /** Side-to-side travel of the parity shield on a clonk — the robot body stays still. */
+      shieldWobblePt: z.number().nonnegative(),
+      /** Extra side-to-side shakes of the shield after the first. */
+      shieldWobbleRepeats: z.number().int().nonnegative(),
       shakeMs: ms(),
       shake: shakeIntensity(),
     }),
@@ -229,6 +230,14 @@ const PresentationFileSchema = z.object({
       wobbleScale: scale(),
       /** How far past full the springy HP bar refill may overshoot before settling (1 = none). */
       maxBarFill: z.number().min(1),
+      /** How far right of the robot's right edge the remainder numeral lands. */
+      remainderLandPt: z.number().nonnegative(),
+      remainderPopScale: scale(),
+      /** Tiny green pluses that fade up as the remainder is sucked in (GDD §6.2). */
+      plusCount: z.number().int().nonnegative(),
+      plusFloatPt: z.number().nonnegative(),
+      plusSpreadPt: z.number().nonnegative(),
+      plusColor: z.string().min(1),
     }),
     defeat: z.object({ popScale: scale(), puffScale: scale() }),
     exactKill: z.object({
@@ -271,6 +280,7 @@ const PresentationFileSchema = z.object({
    * hex values may be tuned for HP contrast. */
   traits: z.object({
     weaknessNColor: z.string().min(1),
+    weaknessMarkColor: z.string().min(1),
     oddShieldColor: z.string().min(1),
     evenShieldColor: z.string().min(1),
     bounceBackBodyColor: z.string().min(1),

@@ -76,12 +76,21 @@ export function fakePlaybackSettings() {
     },
     blocked: {
       bounceOffPt: 60,
-      robotWobblePt: 8,
-      robotWobbleRepeats: 2,
-      shakeMs: 160,
-      shake: 0.004,
+      shieldWobblePt: 6,
+      shieldWobbleRepeats: 2,
+      shakeMs: 0,
+      shake: 0,
     },
-    bounceBack: { wobbleScale: 1.2, maxBarFill: 1.2 },
+    bounceBack: {
+      wobbleScale: 1.12,
+      maxBarFill: 1.15,
+      remainderLandPt: 28,
+      remainderPopScale: 1.35,
+      plusCount: 12,
+      plusFloatPt: 36,
+      plusSpreadPt: 40,
+      plusColor: '#66bb6a',
+    },
     defeat: { popScale: 1.2, puffScale: 1.6 },
     exactKill: {
       popScale: 1.7,
@@ -138,6 +147,7 @@ export function fakeHudSettings() {
 export function fakeTraitSettings() {
   return {
     weaknessNColor: '#ffd54f',
+    weaknessMarkColor: '#e53935',
     oddShieldColor: '#7e57c2',
     evenShieldColor: '#26a69a',
     bounceBackBodyColor: '#ef6c00',

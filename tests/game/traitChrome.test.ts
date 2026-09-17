@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ROBOT_HP_FONT_SIZE } from '../../game/board/layout';
-import { traitChrome } from '../../game/board/views/traitChrome';
+import { blockedParityDots, traitChrome } from '../../game/board/views/traitChrome';
 import type { Trait } from '../../sim/core/types';
 import { fakeTraitSettings } from '../helpers/playbackSettings';
 
@@ -43,17 +43,27 @@ describe('traitChrome', () => {
     });
     expect(oddOnly).toMatchObject({
       trait: 'oddOnly',
-      pairCount: 1,
+      pairCount: 2,
       coiled: false,
       shieldColor: colours.oddShieldColor,
     });
     expect(evenOnly).toMatchObject({
       trait: 'evenOnly',
-      pairCount: 2,
+      pairCount: 1,
       coiled: false,
       shieldColor: colours.evenShieldColor,
     });
     expect(oddOnly.shieldColor).not.toBe(evenOnly.shieldColor);
+  });
+
+  it('puts blocked-parity dots on the shield (1 = odd blocked, 2 = even blocked)', () => {
+    expect(blockedParityDots({ type: 'evenOnly' })).toBe(1);
+    expect(blockedParityDots({ type: 'oddOnly' })).toBe(2);
+    expect(blockedParityDots({ type: 'none' })).toBeNull();
+    expect(blockedParityDots({ type: 'bounceBack' })).toBeNull();
+    expect(blockedParityDots({ type: 'weakness', n: 5 })).toBeNull();
+    expect(traitChrome({ type: 'oddOnly' }, colours).pairCount).toBe(2);
+    expect(traitChrome({ type: 'evenOnly' }, colours).pairCount).toBe(1);
   });
 
   it('exposes each Weakness n and keeps the chest numeral smaller than HP', () => {

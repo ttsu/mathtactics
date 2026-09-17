@@ -184,6 +184,25 @@ describe('presentation.json hud Go nudge', () => {
   });
 });
 
+describe('presentation.json bounce-back pluses (GDD §6.2)', () => {
+  it('ships the refill plus count, travel and colour', () => {
+    const data = parseGameData(loadRawGameData());
+    expect(data.presentation.playback.bounceBack.plusCount).toBeGreaterThan(0);
+    expect(data.presentation.playback.bounceBack.plusFloatPt).toBeGreaterThan(0);
+    expect(data.presentation.playback.bounceBack.remainderLandPt).toBeGreaterThan(0);
+    expect(data.presentation.playback.bounceBack.plusColor).toMatch(/^#/);
+  });
+
+  it('rejects a missing plus colour', () => {
+    const raw = validRaw();
+    const presentation = raw.presentation as {
+      playback: { bounceBack: Record<string, unknown> };
+    };
+    delete presentation.playback.bounceBack.plusColor;
+    expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
+  });
+});
+
 describe('presentation.json traits (task 23)', () => {
   it('ships telegraph colours with locked keys', () => {
     const data = parseGameData(loadRawGameData());

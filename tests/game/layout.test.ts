@@ -15,6 +15,12 @@ import {
   ROBOT_HP_FONT_SIZE,
   TILE_LABEL_FONT_SIZE,
   WEAKNESS_N_FONT_SIZE,
+  WEAKNESS_BOLT_SIZE,
+  WEAKNESS_MARK_OFFSET_X,
+  WEAKNESS_MARK_OFFSET_Y,
+  BOUNCE_PLUS_FONT_SIZE,
+  SHIELD_DOT_RADIUS,
+  ROBOT_SIZE,
   HINT_FONT_SIZE,
   TRAY_CAPACITY,
   TRAY_PADDING,
@@ -136,7 +142,20 @@ describe('piece and tray geometry (task 09)', () => {
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(TILE_LABEL_FONT_SIZE);
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(CANNON_VALUE_FONT_SIZE);
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(WEAKNESS_N_FONT_SIZE);
+    expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(WEAKNESS_BOLT_SIZE);
+    expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(BOUNCE_PLUS_FONT_SIZE);
+    expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(SHIELD_DOT_RADIUS * 2);
     expect(PIECE_SIZE).toBeLessThan(CELL_SIZE);
+  });
+
+  it('puts the weakness bolt+n on the robot overlapping the bottom edge', () => {
+    const half = ROBOT_SIZE / 2;
+    expect(WEAKNESS_MARK_OFFSET_Y).toBeGreaterThan(0);
+    expect(WEAKNESS_MARK_OFFSET_Y).toBeLessThanOrEqual(half);
+    expect(WEAKNESS_MARK_OFFSET_Y + WEAKNESS_BOLT_SIZE / 2).toBeGreaterThan(half);
+    expect(Math.abs(WEAKNESS_MARK_OFFSET_X) + WEAKNESS_BOLT_SIZE / 2).toBeLessThan(half);
+    expect(WEAKNESS_BOLT_SIZE).toBeLessThan(ROBOT_HP_FONT_SIZE);
+    expect(WEAKNESS_N_FONT_SIZE).toBeLessThan(ROBOT_HP_FONT_SIZE);
   });
 
   it('keeps planning-hint numerals smaller than the tile label (task 24, CLAUDE.md rule 6)', () => {

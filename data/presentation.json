@@ -13,7 +13,7 @@
       "ballFireMs": 150,
       "impactMs": 380,
       "blockedMs": 450,
-      "bounceBackMs": 650,
+      "bounceBackMs": 900,
       "defeatMs": 320,
       "exactKillMs": 1000,
       "coinsMs": 220,
@@ -82,14 +82,20 @@
     },
     "blocked": {
       "bounceOffPt": 60,
-      "robotWobblePt": 8,
-      "robotWobbleRepeats": 2,
-      "shakeMs": 160,
-      "shake": 0.004
+      "shieldWobblePt": 10,
+      "shieldWobbleRepeats": 2,
+      "shakeMs": 0,
+      "shake": 0
     },
     "bounceBack": {
-      "wobbleScale": 1.25,
-      "maxBarFill": 1.2
+      "wobbleScale": 1.12,
+      "maxBarFill": 1.15,
+      "remainderLandPt": 28,
+      "remainderPopScale": 1.35,
+      "plusCount": 12,
+      "plusFloatPt": 36,
+      "plusSpreadPt": 40,
+      "plusColor": "#66bb6a"
     },
     "defeat": {
       "popScale": 1.25,
@@ -134,6 +140,7 @@
   },
   "traits": {
     "weaknessNColor": "#ffd54f",
+    "weaknessMarkColor": "#e53935",
     "oddShieldColor": "#7e57c2",
     "evenShieldColor": "#26a69a",
     "bounceBackBodyColor": "#ef6c00"

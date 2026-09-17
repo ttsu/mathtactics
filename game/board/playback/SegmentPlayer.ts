@@ -1,7 +1,8 @@
 // Plays one playback segment's beats on the board (task 10 req. 3), and snaps the segment to its
 // final state when it ends or is skipped (req. 5).
 //
-// Everything shown comes from event payloads — values, cells, damage, HP — never recomputed.
+// Everything shown comes from event payloads — values, cells, damage, HP — never recomputed,
+// except Bounce-back's visual drain to 0 between `hpBefore` and `hpAfter` (GDD §6.2).
 // Every duration, scale, distance and shake comes from `presentation.json`. Anything this player
 // creates or animates is tracked, so `finish()` can stop it all and leave clean final sprites.
 
@@ -17,6 +18,7 @@ import {
   BALL_IMPACT_OFFSET,
   BALL_RADIUS,
   BIG_STAR_RADIUS,
+  BOUNCE_PLUS_FONT_SIZE,
   BURST_RING_WIDTH,
   BURST_STAR_RADIUS,
   CELL_INSET,
@@ -41,6 +43,7 @@ import {
   PLACEHOLDER,
 } from '../views/palette';
 import type { RobotAppearance, RobotView } from '../views/RobotView';
+import { bounceBackPlusOffsets, remainderLandOffset } from './bounceBackPluses';
 import { drawRing, drawStar, floatingText } from './effects';
 import { bouncesBack, isHudEvent, lastCellBefore, type PlaybackSegment } from './segments';
 import type { TimedBeat } from './timeline';
@@ -53,6 +56,7 @@ export class SegmentPlayer {
   private readonly transients: Phaser.GameObjects.GameObject[] = [];
   private readonly committed = new Set<number>();
   private ball: BallView | null = null;
+  private remainderLabel: Phaser.GameObjects.Text | null = null;
   private ballPop: Phaser.Tweens.Tween | null = null;
   private ballWobble: Phaser.Tweens.Tween | null = null;
 
@@ -129,6 +133,7 @@ export class SegmentPlayer {
     for (const object of this.transients) object.destroy();
     this.transients.length = 0;
     this.ball = null;
+    this.remainderLabel = null;
     this.scene.cameras.main.resetFX();
 
     for (const event of this.segment.events) {
@@ -366,32 +371,36 @@ export class SegmentPlayer {
 
   private robotDamaged(event: EventOf<'RobotDamaged'>, durationMs: number): void {
     const { impact } = this.settings;
-    this.consumeBall(durationMs * this.share.quick);
     const robot = this.renderer.robotView(event.robotId);
     const center = worldCenter(event.at);
+    const ballX = this.ball?.x ?? center.x - designToWorld(BALL_IMPACT_OFFSET);
+    const ballY = this.ball?.y ?? center.y;
+    this.consumeBall(durationMs * this.share.quick);
 
-    const label = floatingText(
-      this.scene,
-      center.x,
-      center.y - designToWorld(ROBOT_SIZE / 2),
-      `−${event.damage}`,
-      DAMAGE_FONT_SIZE,
-      event.doubled ? DOUBLED_DAMAGE_TEXT_COLOR : LIGHT_TEXT_COLOR,
-    );
-    this.track(label).setDepth(DEPTH.effects);
-    if (event.doubled) label.setScale(impact.doubledDamageScale);
-    this.tween({
-      targets: label,
-      y: label.y - designToWorld(impact.damageFloatPt),
-      duration: durationMs,
-      ease: 'Cubic.easeOut',
-    });
-    this.tween({
-      targets: label,
-      alpha: 0,
-      delay: durationMs * this.share.most,
-      duration: durationMs * this.share.fade,
-    });
+    if (!bouncesBack(this.segment, event)) {
+      const label = floatingText(
+        this.scene,
+        center.x,
+        center.y - designToWorld(ROBOT_SIZE / 2),
+        `−${event.damage}`,
+        DAMAGE_FONT_SIZE,
+        event.doubled ? DOUBLED_DAMAGE_TEXT_COLOR : LIGHT_TEXT_COLOR,
+      );
+      this.track(label).setDepth(DEPTH.effects);
+      if (event.doubled) label.setScale(impact.doubledDamageScale);
+      this.tween({
+        targets: label,
+        y: label.y - designToWorld(impact.damageFloatPt),
+        duration: durationMs,
+        ease: 'Cubic.easeOut',
+      });
+      this.tween({
+        targets: label,
+        alpha: 0,
+        delay: durationMs * this.share.most,
+        duration: durationMs * this.share.fade,
+      });
+    }
 
     if (event.damage > 0) {
       this.scene.cameras.main.shake(
@@ -410,13 +419,30 @@ export class SegmentPlayer {
       ease: 'Quad.easeOut',
     });
     if (bouncesBack(this.segment, event)) {
-      // Overshot Bounce-back: the HP text holds `hpBefore` (it only ever shows payload values)
-      // while the bar dips toward empty; the bounce beat counts the text to `hpAfter` and springs
-      // the bar back up (GDD §6.2).
-      robot.showHpText(event.hpBefore);
-      this.counter(robot.barFill, 0, durationMs * this.share.most, 'Cubic.easeOut', (value) =>
-        robot.setBarFill(value),
+      // Overshot Bounce-back (GDD §6.2): drain HP to 0, remainder pops off the ball and lands
+      // to the right of the robot. The bounce beat sucks it in.
+      this.countHp(robot, event.hpBefore, 0, durationMs * this.share.most, 'Cubic.easeOut');
+      const { remainderLandPt, remainderPopScale, plusColor } = this.settings.bounceBack;
+      const land = remainderLandOffset(remainderLandPt);
+      const remainder = floatingText(
+        this.scene,
+        ballX,
+        ballY,
+        formatNumber(event.hpAfter),
+        DAMAGE_FONT_SIZE,
+        plusColor,
       );
+      remainder.setScale(remainderPopScale);
+      this.remainderLabel = remainder;
+      this.track(remainder).setDepth(DEPTH.effects);
+      this.tween({
+        targets: remainder,
+        x: center.x + designToWorld(land.x),
+        y: center.y + designToWorld(land.y),
+        scale: 1,
+        duration: durationMs * this.share.most,
+        ease: 'Back.easeOut',
+      });
       return;
     }
     this.countHp(
@@ -431,7 +457,26 @@ export class SegmentPlayer {
   private robotBouncedBack(event: EventOf<'RobotBouncedBack'>, durationMs: number): void {
     const robot = this.renderer.robotView(event.robotId);
     if (robot === undefined) return;
-    const { maxBarFill } = this.settings.bounceBack;
+    const { maxBarFill, plusCount, plusFloatPt, plusSpreadPt, plusColor, wobbleScale } =
+      this.settings.bounceBack;
+    const center = worldCenter(event.at);
+    const remainder = this.remainderLabel;
+    if (remainder !== null) {
+      this.tween({
+        targets: remainder,
+        x: center.x,
+        y: center.y,
+        scale: 0.2,
+        duration: durationMs * this.share.half,
+        ease: 'Cubic.easeIn',
+      });
+      this.tween({
+        targets: remainder,
+        alpha: 0,
+        delay: durationMs * this.share.half,
+        duration: durationMs * this.share.fade,
+      });
+    }
     this.counter(
       robot.displayedHp,
       event.hpAfter,
@@ -439,7 +484,6 @@ export class SegmentPlayer {
       'Quad.easeOut',
       (value) => robot.showHpText(Math.round(value)),
     );
-    // The bar springs back up past its final fill and wobbles into place.
     this.counter(
       robot.barFill,
       event.hpAfter / robot.maxHp,
@@ -447,8 +491,32 @@ export class SegmentPlayer {
       'Elastic.easeOut',
       (value) => robot.setBarFill(value, maxBarFill),
     );
-    robot.setScale(this.settings.bounceBack.wobbleScale);
+    robot.setScale(wobbleScale);
     this.tween({ targets: robot, scale: 1, duration: durationMs, ease: 'Elastic.easeOut' });
+
+    for (const offset of bounceBackPlusOffsets(plusCount, plusSpreadPt)) {
+      const plus = floatingText(
+        this.scene,
+        center.x + designToWorld(offset.x),
+        center.y + designToWorld(offset.y),
+        '+',
+        BOUNCE_PLUS_FONT_SIZE,
+        plusColor,
+      );
+      this.track(plus).setDepth(DEPTH.effects).setAlpha(0.9);
+      this.tween({
+        targets: plus,
+        y: plus.y - designToWorld(plusFloatPt),
+        duration: durationMs,
+        ease: 'Cubic.easeOut',
+      });
+      this.tween({
+        targets: plus,
+        alpha: 0,
+        duration: durationMs,
+        ease: 'Quad.easeIn',
+      });
+    }
   }
 
   private robotDefeated(event: EventOf<'RobotDefeated'>, durationMs: number): void {
@@ -546,7 +614,7 @@ export class SegmentPlayer {
       this.tween({
         targets: ball,
         x: ball.x - designToWorld(blocked.bounceOffPt),
-        duration: durationMs * this.share.half,
+        duration: durationMs * this.share.quick,
         ease: 'Quad.easeOut',
       });
       this.tween({
@@ -556,26 +624,39 @@ export class SegmentPlayer {
         duration: durationMs * this.share.fade,
       });
     }
-    const shield = this.track(
+    const shieldFx = this.track(
       drawRing(this.scene.add.graphics(), PLACEHOLDER.clonk, BURST_RING_WIDTH),
     );
-    shield.setPosition(center.x, center.y).setDepth(DEPTH.effects);
-    this.tween({ targets: shield, alpha: 0, duration: durationMs, ease: 'Quad.easeIn' });
-
     const robot = this.renderer.robotView(event.robotId);
-    if (robot !== undefined) {
-      robot.setX(center.x - designToWorld(blocked.robotWobblePt));
+    const shield = robot?.shieldObject() ?? null;
+    const clonkX = shield !== null ? center.x + shield.x : center.x;
+    shieldFx.setPosition(clonkX, center.y).setDepth(DEPTH.effects);
+    this.tween({ targets: shieldFx, alpha: 0, duration: durationMs, ease: 'Quad.easeIn' });
+
+    if (shield !== null && robot !== undefined) {
+      // Shake after the ball has bounced off so the rattle is visible on the left,
+      // not hidden under the ball. The robot body is not tweened (GDD §6.3).
+      const home = robot.shieldHomeX();
+      const wobble = designToWorld(blocked.shieldWobblePt);
+      const leaveMs = durationMs * this.share.quick;
+      const oneWayMs =
+        (durationMs * this.share.most) / (2 * (blocked.shieldWobbleRepeats + 1));
       this.tween({
-        targets: robot,
-        x: center.x + designToWorld(blocked.robotWobblePt),
-        duration: (durationMs * this.share.half) / (2 * (blocked.robotWobbleRepeats + 1)),
+        targets: shield,
+        x: home - wobble,
+        delay: leaveMs,
+        duration: oneWayMs,
         yoyo: true,
-        repeat: blocked.robotWobbleRepeats,
+        repeat: blocked.shieldWobbleRepeats,
         ease: 'Sine.easeInOut',
-        onComplete: () => robot.setX(center.x),
+        onComplete: () => {
+          shield.setX(home);
+        },
       });
     }
-    this.scene.cameras.main.shake(blocked.shakeMs, blocked.shake, true);
+    if (blocked.shake > 0) {
+      this.scene.cameras.main.shake(blocked.shakeMs, blocked.shake, true);
+    }
   }
 
   private ballExited(_event: EventOf<'BallExited'>, durationMs: number): void {
@@ -720,7 +801,13 @@ export class SegmentPlayer {
       .setPosition(target.x, target.y - designToWorld(spawn.dropFromPt))
       .setScale(spawn.dropFromScale)
       .setAlpha(1);
-    this.tween({ targets: robot, y: target.y, scale: 1, duration: durationMs, ease: 'Back.easeOut' });
+    this.tween({
+      targets: robot,
+      y: target.y,
+      scale: 1,
+      duration: durationMs,
+      ease: 'Back.easeOut',
+    });
   }
 
   /** A `RobotWaiting` robot pops in as a translucent ghost, its HP visible, just right of column 7
@@ -745,9 +832,7 @@ export class SegmentPlayer {
   /** Spawn beats introduce a robot that wasn't in the pre-turn snapshot — chrome goes through
    * the same `setChrome` entry point as `syncRobots` (task 23). `RobotWaiting` has no `isBoss`
    * field; waiting robots pass `false` (wave-10 Boss arrives via `RobotSpawned`). */
-  private ensureSpawnView(
-    event: EventOf<'RobotSpawned'> | EventOf<'RobotWaiting'>,
-  ): RobotView {
+  private ensureSpawnView(event: EventOf<'RobotSpawned'> | EventOf<'RobotWaiting'>): RobotView {
     const appearance: RobotAppearance = {
       trait: event.trait,
       isBoss: event.type === 'RobotSpawned' && event.isBoss,
@@ -818,6 +903,7 @@ export class SegmentPlayer {
   private restRobotAt(robotId: string, point: { x: number; y: number }): RobotView | undefined {
     const robot = this.renderer.robotView(robotId);
     if (robot === undefined) return undefined;
+    robot.resetChromeMotion();
     return robot.setPosition(point.x, point.y).setScale(1).setAlpha(1).setAngle(0);
   }
 
