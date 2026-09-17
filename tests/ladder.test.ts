@@ -242,7 +242,7 @@ describe('sensible-player bot clears wave 1 with zero detonations (task 17 requi
 
 describe('9-wave ladder balance (task 25)', () => {
   it(
-    'sensible player wins seeds 1–100 with leftover min ≥ 40 and median 50–70; shops are live; End-Turn-only loses',
+    'sensible player wins seeds 1–100 with leftover min ≥ 40 and median ≥ 50; shops are live; End-Turn-only loses',
     { timeout: LADDER_TIMEOUT_MS },
     () => {
       const records: SensibleRunStats[] = [];
