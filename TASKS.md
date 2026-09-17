@@ -97,7 +97,7 @@ detonation `heartTargetX` — both specs carry the fallout list.
 | 24 | [Settings screen & planning hints](tasks/24-settings-and-hints.md) | ui / board | — | Complete (iPad check pending) |
 | 25 | [Shop 7–9 & procedural waves 8–9](tasks/25-procedural-waves-8-9.md) | sim / data | 22 | Partial (leftover median 99, not 50–70) |
 | 26 | [Wave 10 Boss](tasks/26-wave-10-boss.md) | data / presentation | 22, 23, 25 | Complete (iPad check pending) |
-| 27 | [10-wave balance, e2e & Playtest 4 checklist](tasks/27-full-run-and-playtest-4.md) | data / e2e | 23, 24, 25, 26 | Not Started |
+| 27 | [10-wave balance, e2e & Playtest 4 checklist](tasks/27-full-run-and-playtest-4.md) | data / e2e | 23, 24, 25, 26 | Partial (leftover median 99, not 50–70) |
 | H4 | **Human: Playtest 4** — play a complete run with your son; record notes in `playtests/04.md` | human | 27 | Not Started |
 
 ## M5 — Juice & Art *(specs written after Playtest 4)*
