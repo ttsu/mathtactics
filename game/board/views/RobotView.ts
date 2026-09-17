@@ -251,13 +251,13 @@ function drawShield(
   const hw = size / 2;
   const points = [
     [0, -hw],
-    [hw * 0.78, -hw * 0.82],
-    [hw * 0.94, -hw * 0.18],
+    [hw * 0.72, -hw * 0.78],
+    [hw * 0.94, -hw * 0.12],
     [hw * 0.7, hw * 0.38],
     [0, hw],
     [-hw * 0.7, hw * 0.38],
-    [-hw * 0.94, -hw * 0.18],
-    [-hw * 0.78, -hw * 0.82],
+    [-hw * 0.94, -hw * 0.12],
+    [-hw * 0.72, -hw * 0.78],
   ].map(([x, y]) => new Phaser.Math.Vector2(x, y));
   g.fillStyle(fill);
   g.fillPoints(points, true);
@@ -272,7 +272,7 @@ function drawShieldDots(
   outline: number,
 ): void {
   const radius = designToWorld(SHIELD_DOT_RADIUS);
-  const y = -size / 2 + designToWorld(16);
+  const y = -size / 2 + radius + designToWorld(3);
   const xs =
     count === 2 ? [-designToWorld(SHIELD_DOT_SPREAD), designToWorld(SHIELD_DOT_SPREAD)] : [0];
   for (const x of xs) {

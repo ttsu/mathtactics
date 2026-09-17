@@ -224,23 +224,40 @@ const BOUNCE_BACK_OVERSHOOT = [
   '  - ". . . . . . . ."',
 ].join('\n');
 
-test('bounce-back overshoot keeps the robot and lands on the remainder HP', async ({ page }) => {
-  await load(page, BOUNCE_BACK_OVERSHOOT);
-  const events = await page.evaluate(() => window.__GAME__!.endTurn());
-  expect(events.some((event) => event.type === 'RobotBouncedBack')).toBe(true);
-
-  await page.waitForFunction(() => window.__GAME__!.isIdle(), undefined, { timeout: 20_000 });
-
-  const snapshot = await page.evaluate(() => {
-    const game = window.__GAME__!;
-    const robot = game.getState()!.board.robots[0]!;
-    return {
-      hp: robot.hp,
-      chrome: game.getRobotChrome(robot.robotId),
-      drawn: game.renderedBoard().robots.length,
-    };
+test.describe('bounce-back overshoot presentation', () => {
+  test.use({
+    video: { mode: 'on', size: { width: 1180, height: 820 } },
   });
-  expect(snapshot.hp).toBe(3);
-  expect(snapshot.drawn).toBe(1);
-  expect(snapshot.chrome).toMatchObject({ trait: 'bounceBack', coiled: true });
+
+  test('bounce-back overshoot keeps the robot and lands on the remainder HP', async ({
+    page,
+  }, testInfo) => {
+    await load(page, BOUNCE_BACK_OVERSHOOT);
+    const start = Date.now();
+    const events = await page.evaluate(() => window.__GAME__!.endTurn());
+    expect(events.some((event) => event.type === 'RobotBouncedBack')).toBe(true);
+
+    // Cannon thump + roll onto +3 + pause + roll to the robot + impact drain (~1.0 s),
+    // then the remainder refill with green pluses (bounceBackMs 850).
+    await page.waitForTimeout(Math.max(0, 1_050 - (Date.now() - start)));
+    await page.screenshot({ path: '/opt/cursor/artifacts/bounce_back_hp_drained.png' });
+    await page.waitForTimeout(Math.max(0, 1_450 - (Date.now() - start)));
+    await page.screenshot({ path: '/opt/cursor/artifacts/bounce_back_green_pluses.png' });
+
+    await page.waitForFunction(() => window.__GAME__!.isIdle(), undefined, { timeout: 20_000 });
+
+    const snapshot = await page.evaluate(() => {
+      const game = window.__GAME__!;
+      const robot = game.getState()!.board.robots[0]!;
+      return {
+        hp: robot.hp,
+        chrome: game.getRobotChrome(robot.robotId),
+        drawn: game.renderedBoard().robots.length,
+      };
+    });
+    expect(snapshot.hp).toBe(3);
+    expect(snapshot.drawn).toBe(1);
+    expect(snapshot.chrome).toMatchObject({ trait: 'bounceBack', coiled: true });
+    await page.screenshot({ path: testInfo.outputPath('bounce-back-after.png') });
+  });
 });
