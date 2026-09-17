@@ -37,8 +37,8 @@ Settings/hints are not part of the sensible-player bot (hints off is the default
    - End-Turn-only **loses** every seed;
    - every shop visit (after 1–9) offers the sensible player at least one affordable item;
    - second cannon still affordable by the shop after wave 3;
-   - Boss is exact-killable in ≤ 3 hits with the tiles the sensible player owns on entering
-     wave 10 (search bound the same way as task 21's ≤ 2-hit check);
+   - Boss is exact-killable in ≤ 3 hits (grill A) with the tiles the sensible player owns on
+     entering wave 10 (search bound the same way as task 21's ≤ 2-hit check);
    - record in Completion Notes: turns per wave (min/median/max), full-run End Turns, coins
      earned/spent per shop, purchases, final base HP, and how often wave 8/9 leaked.
 

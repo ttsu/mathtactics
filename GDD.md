@@ -50,6 +50,7 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   T8 introduces weakness-2 and weakness-10.
 - **Wave 10 is authored:** one Boss (**100–150 HP**, range grill A, **no trait**, grill A) plus escort `basic`s
   at T1 (one) and T7 (two). Leaking the Boss is a loss. The three-digit HP is the puzzle.
+  Exact-killable in ≤ 3 hits with the tiles owned on entering wave 10 (grill A).
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
   without words (§6.2–6.4). Bounce-back bar refill and blocked clonk already play (task 10).
 - **Settings and planning hints ship.** Gear on the main menu; hints **off by default** (grill A);
@@ -998,7 +999,8 @@ These were not explicitly discussed and were chosen as the simplest consistent o
   template from the remaining pool **without replacement** (grill B) and roll HP — file order,
   `wave` stream only. `count` ≤ unique `pool` length. The T1 clonk is a lesson, not a lottery.
 - The Boss is untraited (grill A): **100–150 HP** (range grill A), authored in lane 2 (center, matching the
-  starting cannon). Escort is T1 one `basic` plus T7 two more `basic`s (grill B).
+  starting cannon). Escort is T1 one `basic` plus T7 two more `basic`s (grill B). Exact-killable
+  in ≤ 3 hits with the tiles owned on entering wave 10 (grill A).
 - A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.
 - Both waves 8 and 9 may spawn `basic`. Wave 8 is 3+3 (grill A). Wave 8 T1 and T8 use split
   pools (grill A): T1 is n=5 + both parities + bounce + basic; T8 introduces 2 and 10.
