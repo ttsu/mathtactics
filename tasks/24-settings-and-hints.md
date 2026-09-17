@@ -108,3 +108,72 @@ Web Audio and the Sound row (M5). Trait chrome (23). Changing default hints to o
 - [ ] `getHints()` is on the test handle and recorded in TR §14
 - [ ] `npm test`, `typecheck`, `lint`, targeted e2e pass
 - [ ] iPad preview check (Settings is a new screen) — awaiting human
+
+## Completion Notes
+
+**Status:** Complete (iPad check pending)
+**Completed:** 2026-09-17
+**PR:** TBD · Preview: TBD
+**Branch:** `cursor/24-settings-hints-fa99` (not `task/24-settings-and-hints`)
+
+**Acceptance criteria:**
+- [x] Settings reachable from the main menu; Hints off by default; no Sound row — Met (`MainMenu.tsx` gear
+  `menu-settings`, `SettingsScreen.tsx`; e2e asserts `aria-pressed="false"` by default and no Sound text)
+- [x] Settings testids are `menu-settings`, `settings`, `settings-hints`, `settings-home` — Met
+- [x] Hints toggle persists across reload — Met (e2e `Hints on survives reload`)
+- [x] Pure `laneHintValues` matches GDD §5.7 (no trait effects) — Met (`sim/core/hints.ts`,
+  `tests/sim/core/hints.test.ts`)
+- [x] Armed-lane hint numerals draw only when hints are on, during planning, smaller than tile n — Met
+  (`planningHintMarks` seam + `BoardRenderer.syncHints`; `HINT_FONT_SIZE` 22 < `TILE_LABEL_FONT_SIZE` 40;
+  e2e `getHints()` empty when off, matches `laneHintValues` when on). Visual check on iPad is still pending.
+- [x] `getHints()` is on the test handle and recorded in TR §14 — Met (`testHandle.ts`, `game/main.tsx`,
+  TR §14 comment)
+- [x] `npm test`, `typecheck`, `lint`, targeted e2e pass — Met (see Verification)
+- [ ] iPad preview check (Settings is a new screen) — awaiting human check on preview
+
+**Verification:** npm test ✔ (695) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (`e2e/settings.spec.ts`, 4 passed)
+
+**Deviations from spec:**
+- **`laneHintValues` returns `{ col, value }[]`, not `number[]`.** The spec allowed either; presentation needs
+  the cell, so the function returns `{ col, value }[]` and `planningHintMarks` adds `lane`. Recorded here and
+  in TR §14.
+- **Branch name** is `cursor/24-settings-hints-fa99`, not `task/24-settings-and-hints`.
+- **Settings Home is ▶ labelled *Home*.** Win/Lose still use an unlabeled ▶ with `aria-label="Menu"`;
+  GDD §11.1 wants a short label on new navigation, so Settings includes the word *Home*.
+- **A fresh run has an empty tray** (tiles come from the shop). The e2e still taps New Game after turning
+  hints on, then `loadScenario` + `dispatch(placeTile)` to put a tile on an armed lane so `getHints()` can
+  be asserted against `laneHintValues`.
+- **Board unit test is a Phaser-free seam** (`planningHintMarks` in `game/board/planningHints.ts`), not a
+  `BoardRenderer` instance. Spec allowed "pure helper / BoardRenderer seam; avoid Phaser if possible".
+
+**Architectural decisions made:**
+- `sim/core/hints.ts` holds `laneHintValues` next to `applyTile`. It does not import `/sim/commands`
+  (inlines the cell lookup) and does not read `robot.trait`.
+- `game/board/planningHints.ts` `planningHintMarks(run, data, hintsEnabled, playbackIdle)` is the
+  presentation gate: empty when hints are off, playback is running, or `phase !== 'planning'`.
+  `BoardRenderer.syncHints` draws that list; `drawnHints()` is what `getHints()` returns.
+- Hint colour lives in `presentation.json` `hints.color`; font size is geometry in `layout.ts`
+  (`HINT_FONT_SIZE`, `HINT_OFFSET_Y`).
+- `BoardScene` re-syncs hints when the board slice, `settings.hints`, or `run.phase` changes, and
+  clears them on playback start.
+
+**Design questions raised:**
+- None.
+
+**Known issues / follow-up:**
+- iPad preview check of the new Settings screen and hint numeral legibility (size/contrast under tiles).
+- Sound row stays out until M5 audio.
+
+**Files created:** `sim/core/hints.ts`, `game/ui/SettingsScreen.tsx`, `game/board/planningHints.ts`,
+`tests/sim/core/hints.test.ts`, `tests/game/planningHints.test.ts`, `e2e/settings.spec.ts`
+
+**Files modified:** `sim/core/index.ts`, `sim/data/schemas.ts`, `data/presentation.json`,
+`game/ui/{App,MainMenu,icons,ui.css}`, `game/board/{BoardRenderer,BoardScene,createBoardGame,layout}.ts`,
+`game/state/testHandle.ts`, `game/main.tsx`, `TECHNICAL_REFERENCE.md`, `TASKS.md`, this file,
+`tests/helpers/playbackSettings.ts`, `tests/game/{layout,store,testHandle}.test.ts`,
+`tests/sim/commands/{fixtures,loadLevel}.ts`, `tests/sim/data/{load,levels,shop,waves}.test.ts`
+
+**Notes for next agent:**
+- `getHints()` is board-drawn state, empty when hints are off. Task 27's e2e should use the four
+  Settings testids and `getHints()` as specified — do not rename them.
+

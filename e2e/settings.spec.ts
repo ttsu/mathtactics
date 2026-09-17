@@ -1,8 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MIN_TOUCH_TARGET } from '../game/state/designSpace';
-import { gameData } from '../game/state/gameData';
+import { parseGameData } from '../sim/data/load';
 import { laneHintValues } from '../sim/core/hints';
 import type { Lane } from '../sim/core/coords';
+import { loadRawGameData } from '../tests/helpers/loadDataFiles';
+
+const data = parseGameData(loadRawGameData());
 
 // Task 24: Settings screen (hints only) and planning-hint numerals on the board.
 // Asserts on structured state (TR §14); no Sound row (M5).
@@ -107,7 +110,7 @@ test('Menu → Settings → Hints on → Home → New Game → place a tile → 
   const state = await getState(page);
   expect(state).not.toBeNull();
   const lane = state!.board.cannons.findIndex((armed) => armed) as Lane;
-  const expected = laneHintValues(state!, lane, gameData).map((hint) => ({
+  const expected = laneHintValues(state!, lane, data).map((hint) => ({
     lane,
     col: hint.col,
     value: hint.value,
