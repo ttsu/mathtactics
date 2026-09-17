@@ -48,6 +48,7 @@ export class RobotView extends Phaser.GameObjects.Container {
   private fill = -1;
   private appearanceKey: string | null = null;
   private chrome: TraitChrome;
+  private bodyScale = 1;
 
   constructor(
     scene: Phaser.Scene,
@@ -84,17 +85,17 @@ export class RobotView extends Phaser.GameObjects.Container {
   }
 
   /** Idempotent chrome entry point. Rebuilds only when `trait` / `isBoss` change. Boss overflow
-   * scale is applied to the silhouette (and any chrome drawn on it), never this Container —
-   * playback and `BoardRenderer.place` reset Container scale to 1. HP text and bar stay inside
-   * the original `ROBOT_SIZE` box. */
+   * scale is applied by redrawing the silhouette (and any chrome drawn on it) larger, never by
+   * scaling this Container — playback and `BoardRenderer.place` reset Container scale to 1.
+   * HP text and bar stay inside the original `ROBOT_SIZE` box. */
   setChrome({ trait, isBoss }: RobotAppearance): void {
     const key = appearanceKey(trait, isBoss);
     if (key === this.appearanceKey) return;
     this.appearanceKey = key;
     this.chrome = traitChrome(trait, this.colours);
+    this.bodyScale = isBoss ? this.bossScale : 1;
     this.paintBody(this.chrome);
     this.syncChest(this.chrome);
-    this.silhouette.setScale(isBoss ? this.bossScale : 1);
   }
 
   /** Live chrome as drawn, for the test handle (TR §14). */
@@ -150,7 +151,7 @@ export class RobotView extends Phaser.GameObjects.Container {
   }
 
   private paintBody(chrome: TraitChrome): void {
-    const size = designToWorld(ROBOT_SIZE);
+    const size = designToWorld(ROBOT_SIZE) * this.bodyScale;
     const g = this.silhouette;
     g.clear();
     const outline = PLACEHOLDER.robotOutline;
