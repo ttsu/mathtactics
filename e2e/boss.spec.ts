@@ -1,12 +1,12 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
-import { ROBOT_HP_FONT_SIZE } from '../game/board/layout';
+import { ROBOT_HP_FONT_SIZE, cellCenter } from '../game/board/layout';
 
-// Task 26: spawn the wave-10 Boss via the robots.json template (board grammar has no
-// `:boss` suffix) and screenshot the oversized silhouette. Cannon sits in another lane
-// so FIRE-then-SPAWN brings it on without hitting it.
+// Task 26: put the wave-10 Boss on the board through `syncRobots` (`loadState` with `isBoss`)
+// so the oversized silhouette is visible without a FIRE-then-SPAWN turn. Occupies col 6 so
+// overflow into neighbouring cells is obvious; cannon slot (col 0) stays clear.
 
-const BOSS_SPAWN = [
+const PLANNING_BOARD = [
   'name: e2e boss overflow sprite',
   'mode: run',
   'baseValue: 1',
@@ -16,12 +16,6 @@ const BOSS_SPAWN = [
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
-  'pendingSpawns:',
-  '  - { turn: 1, lane: 2, hp: 120, robot: boss }',
-  'waves:',
-  '  - id: wave-boss',
-  '    spawns:',
-  '      - { turn: 1, lane: 2, robot: boss, hp: [120, 120] }',
 ].join('\n');
 
 async function load(page: Page, yaml: string) {
@@ -39,32 +33,50 @@ test.beforeAll(async () => {
 test('the Boss overflows the cell and three-digit HP stays the largest numeral', async ({
   page,
 }) => {
-  await load(page, BOSS_SPAWN);
+  await load(page, PLANNING_BOARD);
 
-  await page.evaluate(() => window.__GAME__!.endTurn());
-  await page.evaluate(() => window.__GAME__!.skipAnimation());
-  await page.waitForFunction(() => window.__GAME__!.isIdle());
+  await page.evaluate(() => {
+    const game = window.__GAME__!;
+    const state = game.getState()!;
+    game.loadState({
+      ...state,
+      board: {
+        ...state.board,
+        robots: [
+          {
+            robotId: 'robot:boss',
+            lane: 2,
+            col: 6,
+            hp: 120,
+            maxHp: 150,
+            trait: { type: 'none' },
+            isBoss: true,
+          },
+        ],
+      },
+    });
+  });
+
+  await page.waitForFunction(() => window.__GAME__!.getRobotChrome('robot:boss') !== null);
 
   const snapshot = await page.evaluate(() => {
     const game = window.__GAME__!;
-    const robots = game.getState()!.board.robots;
-    return robots.map((robot) => ({
-      robotId: robot.robotId,
-      isBoss: robot.isBoss,
-      hp: robot.hp,
-      lane: robot.lane,
-      col: robot.col,
-      chrome: game.getRobotChrome(robot.robotId),
-    }));
+    const robot = game.getState()!.board.robots.find((entry) => entry.robotId === 'robot:boss')!;
+    return {
+      robot,
+      chrome: game.getRobotChrome('robot:boss'),
+      drawn: game.renderedBoard(),
+    };
   });
 
-  const boss = snapshot.find((robot) => robot.isBoss);
-  expect(boss).toBeDefined();
-  expect(boss?.hp).toBe(120);
-  expect(boss?.lane).toBe(2);
-  expect(boss?.col).toBe(7);
-  expect(boss?.chrome?.hpFontSize).toBe(ROBOT_HP_FONT_SIZE);
-  expect(boss?.chrome?.trait).toBe('none');
+  expect(snapshot.robot).toMatchObject({ isBoss: true, hp: 120, lane: 2, col: 6 });
+  expect(snapshot.chrome?.hpFontSize).toBe(ROBOT_HP_FONT_SIZE);
+  expect(snapshot.chrome?.trait).toBe('none');
+  const drawn = snapshot.drawn.robots.find((entry) => entry.robotId === 'robot:boss');
+  expect(drawn).toBeDefined();
+  const home = cellCenter(2, 6);
+  expect(Math.abs(drawn!.x - home.x)).toBeLessThan(2);
+  expect(Math.abs(drawn!.y - home.y)).toBeLessThan(2);
 
   await page.screenshot({ path: '/opt/cursor/artifacts/26-boss.png' });
 });
