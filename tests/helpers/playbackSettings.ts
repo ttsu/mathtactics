@@ -133,3 +133,13 @@ export function fakeHudSettings() {
     goNudgeWiggleDeg: 8,
   };
 }
+
+/** The `presentation.json` `traits` block (task 23 telegraph colours) for fake `GameData`. */
+export function fakeTraitSettings() {
+  return {
+    weaknessNColor: '#ffd54f',
+    oddShieldColor: '#7e57c2',
+    evenShieldColor: '#26a69a',
+    bounceBackBodyColor: '#ef6c00',
+  };
+}

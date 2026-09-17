@@ -1,43 +1,62 @@
 // A robot (task 09 req. 2): simple silhouette block with HP as the largest text on the board
-// (GDD §11.2), and an HP bar under it (task 10: bounce-back visibly refills it). Traits get their
-// visuals in M4.
+// (GDD §11.2), and an HP bar under it (task 10: bounce-back visibly refills it). Trait chrome
+// is the planning-phase telegraph (task 23); Boss overflow scale hangs off the same `setChrome`
+// seam in task 26.
 //
 // Playback (task 10) drives the HP text and bar separately while a hit animates (`showHpText`,
 // `setBarFill`); `setHp` puts both back in step.
 
 import Phaser from 'phaser';
+import type { Trait } from '../../../sim/core/types';
 import {
   CORNER_RADIUS,
   HP_BAR_GAP,
   HP_BAR_HEIGHT,
   HP_BAR_WIDTH,
+  ROBOT_ANTENNA_SPREAD,
   ROBOT_HP_FONT_SIZE,
   ROBOT_SIZE,
   designToWorld,
 } from '../layout';
 import { formatNumber } from '../pieces';
 import { DARK_STROKE_COLOR, FONT_FAMILY, LIGHT_TEXT_COLOR, PLACEHOLDER } from './palette';
+import { traitChrome, type TraitChrome, type TraitColours } from './traitChrome';
+
+/** Appearance handed to `setChrome` from both robot creation sites (task 23 seam for task 26). */
+export interface RobotAppearance {
+  readonly trait: Trait;
+  readonly isBoss: boolean;
+}
+
+/** What the test handle reports — a description of the live view, not a re-derivation from `run`. */
+export interface RobotChromeSnapshot {
+  trait: Trait['type'];
+  n: number | null;
+  pairCount: number;
+  coiled: boolean;
+  shieldColor: string | null;
+  hpFontSize: number;
+}
 
 export class RobotView extends Phaser.GameObjects.Container {
+  private readonly body: Phaser.GameObjects.Graphics;
   private readonly hp: Phaser.GameObjects.Text;
   private readonly bar: Phaser.GameObjects.Graphics;
+  private chest: Phaser.GameObjects.Text | null = null;
   private max = 1;
   private shownHp = 0;
   private fill = -1;
+  private appearanceKey: string | null = null;
+  private chrome: TraitChrome;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(
+    scene: Phaser.Scene,
+    private readonly colours: TraitColours,
+  ) {
     super(scene);
-    const size = designToWorld(ROBOT_SIZE);
-    const body = scene.add.graphics();
-    // Antenna, then body — a block that reads as "robot" rather than "tile".
-    body.lineStyle(designToWorld(4), PLACEHOLDER.robotOutline);
-    body.lineBetween(0, -size / 2, 0, -size / 2 - designToWorld(8));
-    body.fillStyle(PLACEHOLDER.robotOutline);
-    body.fillCircle(0, -size / 2 - designToWorld(9), designToWorld(4));
-    body.fillStyle(PLACEHOLDER.robot);
-    body.fillRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
-    body.lineStyle(designToWorld(3), PLACEHOLDER.robotOutline);
-    body.strokeRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
+    this.chrome = traitChrome({ type: 'none' }, colours);
+    this.body = scene.add.graphics();
+    this.paintBody(this.chrome);
 
     this.bar = scene.add.graphics();
     this.hp = scene.add
@@ -50,7 +69,7 @@ export class RobotView extends Phaser.GameObjects.Container {
         strokeThickness: designToWorld(4),
       })
       .setOrigin(0.5);
-    this.add([body, this.bar, this.hp]);
+    this.add([this.body, this.bar, this.hp]);
     scene.add.existing(this);
   }
 
@@ -61,6 +80,29 @@ export class RobotView extends Phaser.GameObjects.Container {
   /** The HP number currently on the robot (mid-animation, this may differ from its state). */
   get displayedHp(): number {
     return this.shownHp;
+  }
+
+  /** Idempotent chrome entry point. Rebuilds only when `trait` / `isBoss` change. `isBoss` is
+   * accepted now so task 26 can add the overflow-scale branch here without a third creation path. */
+  setChrome({ trait, isBoss }: RobotAppearance): void {
+    const key = appearanceKey(trait, isBoss);
+    if (key === this.appearanceKey) return;
+    this.appearanceKey = key;
+    this.chrome = traitChrome(trait, this.colours);
+    this.paintBody(this.chrome);
+    this.syncChest(this.chrome);
+  }
+
+  /** Live chrome as drawn, for the test handle (TR §14). */
+  getChrome(): RobotChromeSnapshot {
+    return {
+      trait: this.chrome.trait,
+      n: this.chrome.n,
+      pairCount: this.chrome.pairCount,
+      coiled: this.chrome.coiled,
+      shieldColor: this.chrome.shieldColor,
+      hpFontSize: ROBOT_HP_FONT_SIZE,
+    };
   }
 
   /** HP text and bar together, from state or a final event value. */
@@ -101,5 +143,90 @@ export class RobotView extends Phaser.GameObjects.Container {
     g.fillRect(x, y, width, height);
     g.fillStyle(PLACEHOLDER.hpBarFill);
     g.fillRect(x, y, width * fill, height);
+  }
+
+  private paintBody(chrome: TraitChrome): void {
+    const size = designToWorld(ROBOT_SIZE);
+    const g = this.body;
+    g.clear();
+    const outline = PLACEHOLDER.robotOutline;
+    if (chrome.coiled) {
+      drawCoil(g, size, outline);
+    } else {
+      drawAntennae(g, size, chrome.pairCount, outline);
+    }
+    const fill = chrome.bodyColor ? hexColor(chrome.bodyColor) : PLACEHOLDER.robot;
+    g.fillStyle(fill);
+    g.fillRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
+    if (chrome.shieldColor !== null) {
+      g.fillStyle(hexColor(chrome.shieldColor), 0.4);
+      g.fillRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
+    }
+    g.lineStyle(designToWorld(3), outline);
+    g.strokeRoundedRect(-size / 2, -size / 2, size, size, designToWorld(CORNER_RADIUS));
+  }
+
+  private syncChest(chrome: TraitChrome): void {
+    if (chrome.n === null || chrome.chestFontSize === null) {
+      this.chest?.destroy();
+      this.chest = null;
+      return;
+    }
+    const size = designToWorld(ROBOT_SIZE);
+    const fontSize = `${designToWorld(chrome.chestFontSize)}px`;
+    const y = size / 2 - designToWorld(4);
+    if (this.chest === null) {
+      this.chest = this.scene.add
+        .text(0, y, formatNumber(chrome.n), {
+          fontFamily: FONT_FAMILY,
+          fontSize,
+          fontStyle: 'bold',
+          color: this.colours.weaknessNColor,
+          stroke: DARK_STROKE_COLOR,
+          strokeThickness: designToWorld(3),
+        })
+        .setOrigin(0.5, 1);
+      this.add(this.chest);
+      this.bringToTop(this.hp);
+      return;
+    }
+    this.chest.setPosition(0, y).setFontSize(designToWorld(chrome.chestFontSize));
+    this.chest.setColor(this.colours.weaknessNColor);
+    const text = formatNumber(chrome.n);
+    if (this.chest.text !== text) this.chest.setText(text);
+  }
+}
+
+function appearanceKey(trait: Trait, isBoss: boolean): string {
+  const n = trait.type === 'weakness' ? `:${trait.n}` : '';
+  return `${trait.type}${n}:${isBoss ? '1' : '0'}`;
+}
+
+function hexColor(hex: string): number {
+  return Phaser.Display.Color.ValueToColor(hex).color;
+}
+
+function drawAntennae(
+  g: Phaser.GameObjects.Graphics,
+  size: number,
+  pairCount: number,
+  outline: number,
+): void {
+  const spread = pairCount === 2 ? designToWorld(ROBOT_ANTENNA_SPREAD) : 0;
+  const xs = pairCount === 2 ? [-spread, spread] : [0];
+  for (const x of xs) {
+    g.lineStyle(designToWorld(4), outline);
+    g.lineBetween(x, -size / 2, x, -size / 2 - designToWorld(8));
+    g.fillStyle(outline);
+    g.fillCircle(x, -size / 2 - designToWorld(9), designToWorld(4));
+  }
+}
+
+function drawCoil(g: Phaser.GameObjects.Graphics, size: number, outline: number): void {
+  g.lineStyle(designToWorld(3), outline);
+  const width = designToWorld(18);
+  const height = designToWorld(7);
+  for (let i = 0; i < 3; i++) {
+    g.strokeEllipse(0, -size / 2 - designToWorld(5 + i * 6), width, height);
   }
 }
