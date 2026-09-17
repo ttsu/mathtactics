@@ -177,14 +177,14 @@ State 1 is task 21's recorded number. State 2 was measured on this branch after 
 
 **Deviations from spec:**
 - Branch name is `cursor/22-trait-templates-fa99` (cloud-agent convention) rather than `task/22-trait-templates-and-ladder-swap`.
-- Wave 4–7 reachability call site is `canExactKillInAtMostNHits(robot, values, 4)`, not `n=2`. A 2-hittable robot dies in two turns, so a 3-lane third robot is always covered and leftover stays 100/100/100 at the 2-hit HP ceiling. Leftover gates required raising teaching-trait HP (Bounce-back / Odd-only / Weakness-5) past that ceiling; n=3 still missed 4 seed/robot pairs; n=4 holds for every seed 1–100. Shop policy is unchanged.
+- Wave 4–7 reachability call site is `canExactKillInAtMostNHits(robot, values, 5)`, not `n=2`. A 2-hittable robot dies in two turns, so a 3-lane third robot is always covered and leftover stays 100/100/100 at the 2-hit HP ceiling. Leftover gates required raising teaching-trait HP (Bounce-back / Odd-only / Weakness-5) past that ceiling. After review, overkill (`result === 'kill'`) is not counted as an exact kill (task 21 skipped `chip >= hp`). That made `n=4` fail (seed 24 wave 7 Odd-only HP 63 has no exact in ≤4 hits). `n=5` holds for every seed 1–100. Shop policy is unchanged.
 - Wave 5 HP `[32,44]` / `[38,48]` sits above GDD §6.6's placeholder "wave 5 ≈ 10–30". Required for leftover; v0.7 already says raise 4–7 after Playtest 3.
 - Scenario uses two `endTurn`s: run-mode turn order is FIRE then SPAWN, so the first End Turn brings the `weakness-5` template onto the board and the second hits it through `x5`.
 
 **Architectural decisions made:**
 - `arrangementRank` / `bestSequence` take a `Robot` and rank through `resolveImpact`. Category 2 exact, 1 undershoot, 0 overshoot (including Bounce-back overshoot), -1 blocked; bigger raw ball value breaks ties.
 - `WaveEntrySnapshot` captures full robots (on-board plus pending, templates looked up from `robots.json`) so the ladder 2/3/4-hit check sees `trait`.
-- `canExactKillInAtMostNHits` walks `resolveImpact` up to `n` hits with tiles not consumed (blocked consumes a hit, HP unchanged). Memoized on `(hp, hitsLeft)`.
+- `canExactKillInAtMostNHits` walks `resolveImpact` up to `n` hits with tiles not consumed (blocked consumes a hit, HP unchanged). Overkill is skipped, not success. Memoized on `(hp, hitsLeft)`.
 
 **Design questions raised:**
 - Task-21's ≤2-hit bar and v0.7 leftover (min ≥ 80, some seeds below 100) cannot both hold against this bot: 2-hit ⇒ 2-turn kills ⇒ 3-lane coverage. Leftover leaks are Bounce-back (bot will not overshoot; at col 1 there are no tile cells, so only base value) and Odd-only / Weakness-5 remaining HP at detonation. If the next playtest still feels easy for a 7-year-old, waves 8–9 are the intended chip; do not undo the teaching traits.
@@ -197,5 +197,5 @@ State 1 is task 21's recorded number. State 2 was measured on this branch after 
 **Files modified:** `data/robots.json`, `data/waves.json`, `tests/helpers/sensiblePlayer.ts`, `tests/ladder.test.ts`, `tests/sim/data/waves.test.ts`, `TASKS.md`, this file
 
 **Notes for next agent:**
-- Measure leftover with the trait-aware bot only. Untraited ranking is a no-op vs M3 (100/100/100). Basic-robot 2-hit ceilings on waves 5–7 are ~48 for every seed; Bounce-back 2-hit ceiling is 40; Odd-only 2-hit ceiling is 30; Weakness-5 2-hit ceiling is 20. Leftover currently lives on Bounce-back `[54,64]` and Odd-only `[52,64]` reaching col 1. Task 23 telegraphs traits; 25 may run in parallel after this merges (`waves.json` / `tests/ladder.test.ts` conflict).
+- Measure leftover with the trait-aware bot only. Untraited ranking is a no-op vs M3 (100/100/100). Basic-robot 2-hit ceilings on waves 5–7 are ~48 for every seed; Bounce-back 2-hit ceiling is 40; Odd-only 2-hit ceiling is 30; Weakness-5 2-hit ceiling is 20. Leftover currently lives on Bounce-back `[54,64]` and Odd-only `[52,64]` reaching col 1. Task 23 telegraphs traits; 25 may run in parallel after this merges (`waves.json` / `tests/ladder.test.ts` conflict). Task 27's Boss check must use `canExactKillInAtMostNHits(..., 3)` with **exact-only** success (overkill is not exact). Wave 4–7 solvability uses `n=5` because Odd-only odd HP needs an odd hit count.
 

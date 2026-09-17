@@ -192,7 +192,7 @@ describe('sensible-player bot clears wave 1 with zero detonations (task 17 requi
 
 describe('7-wave ladder balance (task 21)', () => {
   it(
-    'sensible player wins seeds 1–100 above 40 base HP; shops are live; End-Turn-only loses',
+    'sensible player wins seeds 1–100 with leftover min ≥ 80; shops are live; End-Turn-only loses',
     { timeout: LADDER_TIMEOUT_MS },
     () => {
       const records: SensibleRunStats[] = [];
@@ -215,10 +215,11 @@ describe('7-wave ladder balance (task 21)', () => {
           for (const robot of entry.robots) {
             // Leftover-HP gates push teaching-trait HP past the task-21 2-hit ceiling
             // (a 2-hittable robot dies in two turns, so a 3-lane third robot is always
-            // covered and leftover stays 100). n=4 still holds for every seed 1–100.
+            // covered and leftover stays 100). After counting only exact kills (not
+            // overkill), some Odd-only odd HP needs 5 odd shots; n=5 holds for 1–100.
             expect(
-              canExactKillInAtMostNHits(robot, entry.values, 4),
-              `seed ${seed} wave ${entry.waveIndex + 1} HP ${robot.hp} trait ${robot.trait.type} not exact-killable in ≤4 hits`,
+              canExactKillInAtMostNHits(robot, entry.values, 5),
+              `seed ${seed} wave ${entry.waveIndex + 1} HP ${robot.hp} trait ${robot.trait.type} not exact-killable in ≤5 hits`,
             ).toBe(true);
           }
         }

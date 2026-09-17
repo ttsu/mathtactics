@@ -165,9 +165,11 @@ export function reachableBallValues(state: RunState, data: GameData): number[] {
 
 /**
  * True if some sequence of at most `n` hits, each a value from `values` (tiles are not consumed
- * — the same set is available every hit), kills `robot` through `resolveImpact`. A blocked
- * (wrong-parity) ball consumes a hit but does not change HP. Bounce-back never goes negative, so
- * its only kill is `hpAfter === 0`.
+ * — the same set is available every hit), exact-kills `robot` through `resolveImpact`. Overkill
+ * (`result === 'kill'`) is not an exact kill — skip that shot and try another value, matching
+ * task 21's `chip >= hp` continue. A blocked (wrong-parity) ball consumes a hit but does not
+ * change HP. Bounce-back never emits `kill`; overshoot continues from `hpAfter` so a later
+ * exact is still reachable. Success is only `result === 'exact'` (`hpAfter === 0`).
  */
 export function canExactKillInAtMostNHits(robot: Robot, values: number[], n: number): boolean {
   const unique = [...new Set(values)];
@@ -184,9 +186,8 @@ export function canExactKillInAtMostNHits(robot: Robot, values: number[], n: num
         if (walk(current, hitsLeft - 1)) return true;
         continue;
       }
-      if (outcome.result === 'exact' || outcome.result === 'kill' || outcome.hpAfter <= 0) {
-        return true;
-      }
+      if (outcome.result === 'exact') return true;
+      if (outcome.result === 'kill') continue;
       if (walk({ ...current, hp: outcome.hpAfter }, hitsLeft - 1)) return true;
     }
 

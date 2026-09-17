@@ -116,4 +116,25 @@ describe('canExactKillInAtMostNHits', () => {
     expect(canExactKillInAtMostNHits(robot, [2], 3)).toBe(true);
     expect(canExactKillInAtMostNHits(robot, [2], 2)).toBe(false);
   });
+
+  it('does not count overkill as an exact kill', () => {
+    const basic = probeRobot(10, { type: 'none' });
+    expect(canExactKillInAtMostNHits(basic, [13], 1)).toBe(false);
+    expect(canExactKillInAtMostNHits(basic, [13], 3)).toBe(false);
+    expect(canExactKillInAtMostNHits(basic, [10], 1)).toBe(true);
+  });
+
+  it('Bounce-back overshoot is not an exact; overshoot then exact is a 2-hit', () => {
+    const robot = probeRobot(10, { type: 'bounceBack' });
+    expect(canExactKillInAtMostNHits(robot, [13], 1)).toBe(false);
+    expect(canExactKillInAtMostNHits(robot, [13], 8)).toBe(false);
+    expect(canExactKillInAtMostNHits(robot, [13, 3], 2)).toBe(true);
+  });
+
+  it('Odd-only odd HP needs an odd number of odd hits', () => {
+    const robot = probeRobot(9, { type: 'oddOnly' });
+    expect(canExactKillInAtMostNHits(robot, [3], 2)).toBe(false);
+    expect(canExactKillInAtMostNHits(robot, [3], 3)).toBe(true);
+    expect(canExactKillInAtMostNHits(robot, [3], 4)).toBe(true);
+  });
 });
