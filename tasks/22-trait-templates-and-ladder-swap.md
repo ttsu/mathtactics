@@ -141,7 +141,7 @@ only the rule it reads the outcome from changes.
 
 **Status:** Complete
 **Completed:** 2026-09-17
-**PR:** TBD · Preview: https://mathtactics.timtsu.com/pr/pr-<N>/
+**PR:** #42 · Preview: https://mathtactics.timtsu.com/pr/pr-42/
 
 **Acceptance criteria:**
 - [x] `robots.json` has the seven templates above — Met
