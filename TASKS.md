@@ -74,8 +74,8 @@ near 40, median 50–70). The Boss is untraited (100–150 HP, grill A). Wave 10
 one + T7 two. Leaking the Boss is a loss. A sloppy run can lose on 8–9 and never see the
 Boss. Waves 8–9 may spawn `basic`; Even-only can roll at wave 8 T1 (grill B). Wave 8 is 3+3
 (grill A). Wave 9 has more robots than 8 (four at once **and** an extra pack). Shop after 7
-guarantees `×2` or `×5` (grill A). Shop after 8 guarantees nothing (grill A). Waves 1–3
-unchanged. Armor is **deferred to v1.1+**.
+guarantees `×2` or `×5` (grill A). Shop after 8 guarantees nothing (grill A). Shop after 9
+guarantees `−N` (grill A). Waves 1–3 unchanged. Armor is **deferred to v1.1+**.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|

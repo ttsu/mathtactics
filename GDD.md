@@ -39,7 +39,7 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   it teaches subtraction. Remaining robots on those waves stay `basic`.
 - **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
   already follow `waves.json` length. Shop after 7 guarantees `×2` or `×5` (grill A). Shop after
-  8 guarantees nothing (grill A).
+  8 guarantees nothing (grill A). Shop after 9 guarantees `−N` (grill A) — last trim before the Boss.
 - **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
   wave start on the `wave` stream. Mixed traits, HP inside §6.6. Both waves may spawn `basic`.
   Wave 8 is **3+3** (grill A): T1 three, T8 three — mix traits without four-lane panic.
@@ -634,7 +634,7 @@ shop slots are seeded-random within each rung.
 | 6 | First **Bounce-back** robot (grill A) | — | Trimming to exact |
 | 7 | First **Odd-only** robot | at least one `×2` or `×5` (grill A) | Odd and even |
 | 8 | Procedural **3+3** (grill A), HP ~30–65, mixed traits | — (grill A) | Combining; Even-only at T1 |
-| 9 | Procedural **4+4+3** (grill C), HP ~45–99 | procedural | Four lanes and an extra pack |
+| 9 | Procedural **4+4+3** (grill C), HP ~45–99 | at least one `−N` (grill A) | Four lanes and an extra pack |
 | 10 | **Boss** (100–150 HP, no trait) + light escort | — (no shop; win) | The big number |
 
 No tutorial mode and no text popups: wave design does the teaching.
@@ -980,6 +980,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Wave 6's first teaching trait is Bounce-back (grill A). The −N shop after 5 is the exam.
 - Shop after wave 7 guarantees `×2` or `×5` (grill A). Heading into the 8–9 mix with a multiply.
 - Shop after wave 8 guarantees nothing (grill A). No second gift one shop later.
+- Shop after wave 9 guarantees `−N` (grill A). Last trim before the Boss.
 - Waves 4–7 leftover after wave 7: sensible-player min ≥ 80, and not every seed at 100.
 - 10-wave leftover after the Boss: sensible-player min near 40 (still ≥ 40), median 50–70.
   Chips come from waves 8–9 for a sensible player. Wave 10 escort is T1 one `basic` + T7 two
