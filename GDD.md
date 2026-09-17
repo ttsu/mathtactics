@@ -17,14 +17,15 @@ Special-bot telegraph after the M4 planning-phase chrome shipped. The antenna-co
 colour-wash on Odd-only / Even-only was too close to a basic robot, and the trait itself was
 not readable. Bounce-back's bar spring did not show the "you overshot, it came back" story.
 
-- **Parity robots are a shield.** The body is a heater-shield silhouette in the trait colour
-  (not a grey block with a wash). **One dot** on the shield = odd numbers are blocked;
-  **two dots** = even numbers are blocked ("does everyone have a partner?"). Odd-only (hurt
-  by odd, blocks even) has two dots; Even-only (hurt by even, blocks odd) has one. HP stays
-  the largest numeral; the dots sit on the shield crest above it. No ODD/EVEN letters.
-- **Bounce-back overshoot:** HP numeral and bar drain to 0, then the remainder refills and
-  green pluses float around the robot. Exact kill still removes it; a short hit still just
-  counts down (no drain-to-zero, no pluses).
+- **Parity robots carry a shield on the left** (toward the incoming ball), on a normal grey
+  block. **One dot** = odd numbers are blocked; **two dots** (stacked) = even numbers are
+  blocked. Odd-only (hurt by odd, blocks even) has two dots; Even-only (hurt by even, blocks
+  odd) has one. A blocked ball shakes the **shield only** — the robot body stays still. A
+  hitting ball uses the normal knockback. HP stays the largest numeral. No ODD/EVEN letters.
+- **Bounce-back overshoot:** at impact the remainder pops off the ball and lands to the right
+  of the robot; then it is sucked into the robot while HP counts up and a flurry of tiny
+  green pluses fade upward. Exact kill still removes it; a short hit still just counts down.
+- **Weakness n** sits beside a red lightning bolt to the right of the robot, not under the HP.
 
 ## 0. Changes in v0.7
 
@@ -444,22 +445,24 @@ newHp = min(|hp − damage|, maxHp)
 | 25 | 10 (way over → refills to full) |
 
 - Only an exact hit kills. This makes subtraction genuinely valuable.
-- Presentation: overshooting makes the robot visibly **bounce back**. The HP numeral and bar
-  drain to 0, then the remainder comes back and green pluses float around it. A short hit
-  (no overshoot) just counts HP down — no drain-to-zero, no pluses. Legible from the bar
-  and the pluses together.
+- Presentation: overshooting makes the robot visibly **bounce back**. At impact the remainder
+  pops off the ball and lands to the right of the robot; then it is sucked in while HP counts
+  up and a flurry of tiny green pluses fade upward. A short hit (no overshoot) just counts
+  HP down. Legible from the remainder numeral and the pluses together.
 - Because HP never exceeds `maxHp`, detonation damage never exceeds `maxHp`.
 - Visual design must telegraph the trait loudly (e.g. springy/coiled silhouette).
 
 ### 6.3 Trait: Odd-only / Even-only
 
-The robot can only be hurt by balls of one parity. The shield shows **which numbers bounce
-off** — one dot = odd blocked, two dots = even blocked ("does everyone have a partner?").
+The robot can only be hurt by balls of one parity. A shield on the **left** of the robot
+(the side the ball hits) shows **which numbers bounce off** — one dot = odd blocked, two
+stacked dots = even blocked ("does everyone have a partner?").
 
-- **Even-only** robots are a teal shield with **one** dot: odd balls clonk, even balls hurt.
-- **Odd-only** robots are a purple shield with **two** dots: even balls clonk, odd balls hurt.
-- The shield *is* the silhouette (not a wash on a grey block). HP remains the most prominent
-  element; the dots sit on the crest, smaller than the HP numeral. No ODD/EVEN letters.
+- **Even-only** robots carry a teal shield with **one** dot: odd balls clonk, even balls hurt.
+- **Odd-only** robots carry a purple shield with **two** dots: even balls clonk, odd balls hurt.
+- The body stays the basic grey block with HP centred. The shield is a separate piece so a
+  blocked ball can shake the shield without moving the robot. A hitting ball uses the normal
+  knockback. No ODD/EVEN letters.
 - A wrong-parity ball is **blocked**: 0 damage, ball consumed (a "clonk"). It does not
   pass through to robots behind.
 - Robot HP is unconstrained by parity. An Odd-only robot with even HP needs two or more
@@ -469,7 +472,8 @@ off** — one dot = odd blocked, two dots = even blocked ("does everyone have a 
 
 ### 6.4 Trait: Weakness to Multiples
 
-- The robot displays a number *n* ∈ {2, 5, 10} on its chest.
+- The robot displays a number *n* ∈ {2, 5, 10} beside a red lightning bolt to the right of
+  the body (not under the HP numeral).
 - A ball whose value is a positive multiple of *n* deals **×2 damage**.
 - Exact kill is evaluated on the doubled damage.
 - The softest trait: rewards skip-counting fluency, never blocks progress.
@@ -799,9 +803,10 @@ timed, escalating sequence**. The simulation produces an event list; presentatio
 2. **Impact is the payoff.** Screen shake scaled to damage, robot knockback, damage numbers
    flying off and settling.
 3. **Exact kills get a unique, unmistakable celebration** — the most satisfying moment in the game.
-4. **Bounce-back gets an equally loud negative beat** — HP drains to zero, then the
-   remainder refills with green pluses floating around the robot.
-5. **Blocked (parity) hits** get a distinct "clonk".
+4. **Bounce-back gets an equally loud negative beat** — the remainder pops off the ball,
+   lands to the right of the robot, then is sucked in while HP counts up and tiny green
+   pluses fade upward.
+5. **Blocked (parity) hits** get a distinct "clonk": the shield shakes, the robot does not.
 6. **HUD commits follow playback.** Coins and base HP update only when the matching event plays.
 7. **Skip:** tapping during playback jumps to the end of the current lane; tapping again skips the next.
 8. **Replay:** a HUD button during planning replays the last turn's events (visual only).

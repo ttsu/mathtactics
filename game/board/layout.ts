@@ -114,16 +114,23 @@ export const TILE_LABEL_FONT_SIZE = 40;
 export const ROBOT_HP_FONT_SIZE = 56;
 /** Weakness chest numeral — smaller than HP so HP stays the largest number (GDD §6.4, §11.2). */
 export const WEAKNESS_N_FONT_SIZE = 22;
+/** Horizontal offset from the robot centre to the weakness bolt+n badge (to the right). */
+export const WEAKNESS_MARK_OFFSET_X = ROBOT_SIZE / 2 + 16;
+/** Lightning-bolt glyph size for the Weakness mark (design points). */
+export const WEAKNESS_BOLT_SIZE = 16;
 /** Horizontal offset of each even-only antenna from centre (design points). Unused on parity
  * robots: their identifying marks are shield dots, not antennae (GDD §6.3 v0.7.1). */
 export const ROBOT_ANTENNA_SPREAD = 14;
-/** Parity-shield crest dots (GDD §6.3). Radius and spread stay smaller than HP. */
-export const SHIELD_DOT_RADIUS = 6;
-export const SHIELD_DOT_SPREAD = 10;
-/** Drop the HP numeral on a heater shield so the crest dots sit above it, not on it. */
-export const SHIELD_HP_OFFSET_Y = 16;
-/** Floating green pluses on a Bounce-back refill (GDD §6.2). Smaller than HP. */
-export const BOUNCE_PLUS_FONT_SIZE = 22;
+/** Parity shield carried on the left of the robot (GDD §6.3). */
+export const SHIELD_WIDTH = 30;
+export const SHIELD_HEIGHT = 46;
+/** Shield centre relative to the robot centre (negative = toward the incoming ball). */
+export const SHIELD_OFFSET_X = -(ROBOT_SIZE / 2) - 8;
+/** Dots on the shield. Stacked vertically when there are two. Smaller than HP. */
+export const SHIELD_DOT_RADIUS = 5;
+export const SHIELD_DOT_SPREAD = 8;
+/** Tiny green pluses on a Bounce-back refill (GDD §6.2). Smaller than HP. */
+export const BOUNCE_PLUS_FONT_SIZE = 14;
 export const CANNON_VALUE_FONT_SIZE = 26;
 export const TILE_STAR_FONT_SIZE = 18;
 /** Planning-hint running totals under tiles (task 24). Must stay smaller than the tile numeral. */

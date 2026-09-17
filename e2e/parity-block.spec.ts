@@ -1,19 +1,19 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// Bounce-back overshoot presentation (GDD §6.2): remainder pops off the ball, lands right,
-// then is sucked in while HP counts up and tiny green pluses fade up.
+// Parity block presentation: even ball vs Odd-only. The shield (not the robot body) takes
+// the clonk. Video is on so the shield-only shake can be reviewed.
 
 test.use({
   video: { mode: 'on', size: { width: 1180, height: 820 } },
 });
 
-const BOUNCE_BACK_OVERSHOOT = [
-  'name: e2e bounce-back overshoot refill',
-  'baseValue: 10',
+const ODD_BLOCK = [
+  'name: e2e odd-only block',
+  'baseValue: 2',
   'board:',
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
-  '  - "C +3 R10:bb . . . . ."',
+  '  - "C R5:odd . . . . . ."',
   '  - ". . . . . . . ."',
   '  - ". . . . . . . ."',
 ].join('\n');
@@ -25,10 +25,10 @@ async function load(page: Page, yaml: string) {
   await page.evaluate((text) => window.__GAME__!.loadScenario(text), yaml);
 }
 
-test('bounce-back overshoot keeps the robot and lands on the remainder HP', async ({ page }) => {
-  await load(page, BOUNCE_BACK_OVERSHOOT);
+test('an even ball is blocked and the Odd-only robot keeps its HP', async ({ page }) => {
+  await load(page, ODD_BLOCK);
   const events = await page.evaluate(() => window.__GAME__!.endTurn());
-  expect(events.some((event) => event.type === 'RobotBouncedBack')).toBe(true);
+  expect(events.some((event) => event.type === 'BallBlocked')).toBe(true);
 
   await page.waitForFunction(() => window.__GAME__!.isIdle(), undefined, { timeout: 20_000 });
 
@@ -38,10 +38,8 @@ test('bounce-back overshoot keeps the robot and lands on the remainder HP', asyn
     return {
       hp: robot.hp,
       chrome: game.getRobotChrome(robot.robotId),
-      drawn: game.renderedBoard().robots.length,
     };
   });
-  expect(snapshot.hp).toBe(3);
-  expect(snapshot.drawn).toBe(1);
-  expect(snapshot.chrome).toMatchObject({ trait: 'bounceBack', coiled: true });
+  expect(snapshot.hp).toBe(5);
+  expect(snapshot.chrome).toMatchObject({ trait: 'oddOnly', pairCount: 2 });
 });

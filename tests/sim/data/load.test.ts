@@ -189,6 +189,7 @@ describe('presentation.json bounce-back pluses (GDD §6.2)', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.presentation.playback.bounceBack.plusCount).toBeGreaterThan(0);
     expect(data.presentation.playback.bounceBack.plusFloatPt).toBeGreaterThan(0);
+    expect(data.presentation.playback.bounceBack.remainderLandPt).toBeGreaterThan(0);
     expect(data.presentation.playback.bounceBack.plusColor).toMatch(/^#/);
   });
 

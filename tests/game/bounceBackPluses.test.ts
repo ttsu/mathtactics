@@ -1,18 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { bounceBackPlusOffsets } from '../../game/board/playback/bounceBackPluses';
+import { ROBOT_SIZE } from '../../game/board/layout';
+import {
+  bounceBackPlusOffsets,
+  remainderLandOffset,
+} from '../../game/board/playback/bounceBackPluses';
+
+describe('remainderLandOffset', () => {
+  it('lands to the right of the robot body', () => {
+    const land = remainderLandOffset(28);
+    expect(land.x).toBe(ROBOT_SIZE / 2 + 28);
+    expect(land.y).toBe(0);
+  });
+});
 
 describe('bounceBackPlusOffsets', () => {
-  it('lays out an arc of pluses above the robot', () => {
-    expect(bounceBackPlusOffsets(0, 36)).toEqual([]);
-    expect(bounceBackPlusOffsets(1, 36)).toEqual([{ x: 0, y: -36 * 0.35 }]);
+  it('lays out a flurry of pluses around the robot', () => {
+    expect(bounceBackPlusOffsets(0, 40)).toEqual([]);
+    expect(bounceBackPlusOffsets(1, 40)).toEqual([{ x: 0, y: -40 * 0.35 }]);
 
-    const five = bounceBackPlusOffsets(5, 36);
-    expect(five).toHaveLength(5);
-    expect(five[0]!.x).toBeLessThan(0);
-    expect(five[4]!.x).toBeGreaterThan(0);
-    expect(five[2]!.x).toBeCloseTo(0, 5);
-    for (const plus of five) {
-      expect(plus.y).toBeLessThan(0);
-    }
+    const cloud = bounceBackPlusOffsets(12, 40);
+    expect(cloud).toHaveLength(12);
+    expect(cloud.some((plus) => plus.x < 0)).toBe(true);
+    expect(cloud.some((plus) => plus.x > 0)).toBe(true);
   });
 });

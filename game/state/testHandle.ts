@@ -46,7 +46,7 @@ export interface RenderedBoard {
 
 /** Trait chrome as drawn on the live robot view — not a re-derivation from `run` (TR §14).
  * `pairCount` is the identifying marks as drawn: one antenna on basic/weakness/bounce-back,
- * or shield dots on parity (1 = odd blocked, 2 = even blocked). */
+ * or left-hand shield dots on parity (1 = odd blocked, 2 = even blocked). */
 export interface RobotChrome {
   trait: Trait['type'];
   n: number | null;

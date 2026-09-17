@@ -14,7 +14,7 @@ export interface TraitChrome {
   /** Weakness chest number, else null. */
   n: number | null;
   /** Identifying marks as drawn: antennae on basic/weakness/bounce-back (1), shield dots on
-   * parity (1 = odd numbers blocked, 2 = even numbers blocked). */
+   * the left-hand shield (1 = odd numbers blocked, 2 = even numbers blocked). */
   pairCount: number;
   coiled: boolean;
   shieldColor: string | null;

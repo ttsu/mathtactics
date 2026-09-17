@@ -15,6 +15,7 @@ import {
   ROBOT_HP_FONT_SIZE,
   TILE_LABEL_FONT_SIZE,
   WEAKNESS_N_FONT_SIZE,
+  WEAKNESS_BOLT_SIZE,
   BOUNCE_PLUS_FONT_SIZE,
   SHIELD_DOT_RADIUS,
   HINT_FONT_SIZE,
@@ -138,6 +139,7 @@ describe('piece and tray geometry (task 09)', () => {
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(TILE_LABEL_FONT_SIZE);
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(CANNON_VALUE_FONT_SIZE);
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(WEAKNESS_N_FONT_SIZE);
+    expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(WEAKNESS_BOLT_SIZE);
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(BOUNCE_PLUS_FONT_SIZE);
     expect(ROBOT_HP_FONT_SIZE).toBeGreaterThan(SHIELD_DOT_RADIUS * 2);
     expect(PIECE_SIZE).toBeLessThan(CELL_SIZE);

@@ -116,7 +116,7 @@ test('getRobotChrome telegraphs each trait and HP stays on the board', async ({ 
     fullPage: true,
   });
   await page.screenshot({
-    path: '/opt/cursor/artifacts/special-bots-traits.png',
+    path: '/opt/cursor/artifacts/special_bots_side_shield.png',
     fullPage: true,
   });
   await page.screenshot({
