@@ -602,6 +602,24 @@ React interactive elements set `pointer-events: auto`. Everything else passes th
 - **React (`/game/ui`):** HUD (coins, base HP, wave, Go, Undo, Replay), shop, main menu,
   settings, win/loss screens, seen-tiles log, rotate-device overlay.
 
+### 11.3.1 Drag pointer recovery
+
+`DragController` tracks one live pointer (task 09: ignore extra fingers). Phaser 4's default
+touch pool is a single Pointer that stays `active` until a matching `touchend`/`touchcancel`. If
+that end is lost (iOS Control Center, a React overlay, Safari reusing a `Touch.identifier`),
+later `touchstart`s are dropped and tiles/cannons freeze. iOS may also synthesize a mouse down
+after a tap and never send mouseup, which latches the same controller.
+
+Recovery (rules in Phaser-free `/game/board/pointerSync.ts`, wired from `DragController.attach`):
+- capture-phase `touchstart` frees stale Phaser touch Pointers *before* Phaser assigns the new
+  finger (including identifier reuse);
+- bubble-phase `touchend`/`touchcancel` frees any Pointer Phaser still has `active` after the
+  surface is empty;
+- a new `pointerdown` restarts the gesture when the tracked pointer is stale, the same slot is
+  reused, or a real touch preempts a *stationary* latched mouse (iOS ghost mousedown; a mouse
+  that has already moved is a live drag, so extra fingers stay ignored);
+- Phaser `hidden`/`blur` cancel the drag and `resetPointers()`.
+
 ### 11.4 Playback Director
 
 `/game/board/playback/Director.ts`:

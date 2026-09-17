@@ -50,14 +50,16 @@ async function mouseDrag(page: Page, from: Pt, to: Pt) {
 /** Touch events dispatched on the canvas (Phaser's TouchManager). Playwright has no touch-drag
  * API and WebKit has no `Touch` constructor, so the touches come from WebKit's
  * `document.createTouch`/`createTouchList` and are delivered as real `TouchEvent`s. */
-async function touchDrag(
+type TouchEnd = 'touchend' | 'touchcancel' | 'none';
+
+async function dispatchTouch(
   page: Page,
   from: Pt,
   to: Pt,
-  { end = 'touchend' }: { end?: 'touchend' | 'touchcancel' } = {},
+  { end = 'touchend', identifier = 1 }: { end?: TouchEnd; identifier?: number } = {},
 ) {
   await page.evaluate(
-    ({ from, to, end }) => {
+    ({ from, to, end, identifier }) => {
       // WebKit's legacy factories — the only way to build a `Touch`/`TouchList` there.
       type LegacyTouchDocument = Document & {
         createTouch(
@@ -74,7 +76,7 @@ async function touchDrag(
       const doc = document as LegacyTouchDocument;
       const canvas = document.querySelector('#board-root canvas')!;
       const fire = (type: string, p: { x: number; y: number }, active: boolean) => {
-        const touch = doc.createTouch(window, canvas, 1, p.x, p.y, p.x, p.y);
+        const touch = doc.createTouch(window, canvas, identifier, p.x, p.y, p.x, p.y);
         const current = active ? doc.createTouchList(touch) : doc.createTouchList();
         canvas.dispatchEvent(
           new TouchEvent(type, {
@@ -87,6 +89,7 @@ async function touchDrag(
         );
       };
       fire('touchstart', from, true);
+      if (end === 'none') return;
       const steps = 8;
       for (let i = 1; i <= steps; i += 1) {
         fire(
@@ -97,8 +100,17 @@ async function touchDrag(
       }
       fire(end, to, false);
     },
-    { from, to, end },
+    { from, to, end, identifier },
   );
+}
+
+async function touchDrag(
+  page: Page,
+  from: Pt,
+  to: Pt,
+  { end = 'touchend' }: { end?: Exclude<TouchEnd, 'none'> } = {},
+) {
+  await dispatchTouch(page, from, to, { end });
 }
 
 const getState = (page: Page) => page.evaluate(() => window.__GAME__!.getState()!);
@@ -155,6 +167,46 @@ test('a cancelled touch abandons the drag instead of dropping', async ({ page })
   });
 
   expect(await getState(page)).toEqual(before);
+});
+
+test('an orphaned touchstart does not freeze later tile drags', async ({ page }) => {
+  await loadBoard(page);
+  const start = await trayPoint(page, 0);
+  await dispatchTouch(page, start, start, { end: 'none' });
+
+  const pieceId = (await getState(page)).tray[1]!;
+  await touchDrag(page, await trayPoint(page, 1), await cellPoint(page, { lane: 3, col: 6 }));
+
+  const after = await getState(page);
+  expect(after.board.cells[3]![6]).toBe(pieceId);
+  expect(after.tray).not.toContain(pieceId);
+});
+
+test('a mouse press left down does not freeze later touch drags', async ({ page }) => {
+  await loadBoard(page);
+  const start = await trayPoint(page, 0);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+
+  const pieceId = (await getState(page)).tray[1]!;
+  await touchDrag(page, await trayPoint(page, 1), await cellPoint(page, { lane: 3, col: 6 }));
+
+  const after = await getState(page);
+  expect(after.board.cells[3]![6]).toBe(pieceId);
+  expect(after.tray).not.toContain(pieceId);
+});
+
+test('a cancelled touch does not freeze a later drag', async ({ page }) => {
+  await loadBoard(page);
+  await touchDrag(page, await trayPoint(page, 0), await cellPoint(page, { lane: 3, col: 3 }), {
+    end: 'touchcancel',
+  });
+
+  const pieceId = (await getState(page)).tray[1]!;
+  await touchDrag(page, await trayPoint(page, 1), await cellPoint(page, { lane: 4, col: 2 }));
+
+  const after = await getState(page);
+  expect(after.board.cells[4]![2]).toBe(pieceId);
 });
 
 test('Undo restores the board and disables itself when history is empty', async ({ page }) => {
@@ -229,10 +281,12 @@ test('a second pointer is ignored while a drag is in progress', async ({ page })
   const before = await getState(page);
   const first = before.tray[0]!;
 
-  // Mouse holds tray tile 0; meanwhile a touch tries to drag tray tile 1 elsewhere.
+  // Mouse starts a real drag of tray tile 0 (moved off the press point); meanwhile a
+  // touch tries to drag tray tile 1 elsewhere and must be ignored.
   const start = await trayPoint(page, 0);
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
+  await page.mouse.move(start.x + 20, start.y + 20, { steps: 4 });
   await touchDrag(page, await trayPoint(page, 1), await cellPoint(page, { lane: 3, col: 3 }));
   const target = await cellPoint(page, { lane: 2, col: 2 });
   await page.mouse.move(target.x, target.y, { steps: 8 });
