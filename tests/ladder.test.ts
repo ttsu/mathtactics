@@ -9,7 +9,7 @@ import type { GameEvent, RunState } from '../sim/core/types';
 import type { Lane } from '../sim/core/coords';
 import { loadRawGameData } from './helpers/loadDataFiles';
 import {
-  canExactKillInAtMostTwoHits,
+  canExactKillInAtMostNHits,
   playEndTurnOnlyRun,
   playSensibleRun,
   requireOk,
@@ -142,10 +142,10 @@ describe('7-wave ladder balance (task 21)', () => {
 
         for (const entry of rec.waveEntries) {
           if (entry.waveIndex < 3) continue;
-          for (const hp of entry.hps) {
+          for (const robot of entry.robots) {
             expect(
-              canExactKillInAtMostTwoHits(hp, entry.values),
-              `seed ${seed} wave ${entry.waveIndex + 1} HP ${hp} not exact-killable in ≤2 hits`,
+              canExactKillInAtMostNHits(robot, entry.values, 2),
+              `seed ${seed} wave ${entry.waveIndex + 1} HP ${robot.hp} trait ${robot.trait.type} not exact-killable in ≤2 hits`,
             ).toBe(true);
           }
         }

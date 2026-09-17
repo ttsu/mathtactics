@@ -92,7 +92,7 @@ detonation `heartTargetX` — both specs carry the fallout list.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
-| 22 | [Trait templates, trait-aware balance bot & waves 4/6/7 swap](tasks/22-trait-templates-and-ladder-swap.md) | data / tests | — | Not Started |
+| 22 | [Trait templates, trait-aware balance bot & waves 4/6/7 swap](tasks/22-trait-templates-and-ladder-swap.md) | data / tests | — | In Progress |
 | 23 | [Trait telegraph on the board](tasks/23-trait-telegraph.md) | presentation | 22 | Not Started |
 | 24 | [Settings screen & planning hints](tasks/24-settings-and-hints.md) | ui / board | — | Not Started |
 | 25 | [Shop 7–9 & procedural waves 8–9](tasks/25-procedural-waves-8-9.md) | sim / data | 22 | Not Started |
