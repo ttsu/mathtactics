@@ -100,7 +100,7 @@ Armor. M5 juice, sound playback, art pass. Changing the 40 HP floor. Kid-facing 
 
 **Status:** Partial
 **Completed:** 2026-09-17
-**PR:** TBD · Branch: `cursor/27-full-run-playtest-4-fa99`
+**PR:** #47 · Preview: https://mathtactics.timtsu.com/pr/pr-47/ · Branch: `cursor/27-full-run-playtest-4-fa99`
 
 **Acceptance criteria:**
 - [~] Sensible player wins seeds 1–100: leftover min ≥ 40 and ≤ 55, median 50–70; End-Turn-only loses — Partial: every seed wins; End-Turn-only loses; leftover **min 56 / median 99 / max 100**. Min ≥ 40 holds; min ≤ 55 and median 50–70 do not. CI asserts win + min ≥ 40, not a fake 50–70 band.
@@ -153,7 +153,7 @@ Every shop after 1–9 had an affordable item. Second cannon by the shop after w
 **Deviations from spec:**
 - Branch name is `cursor/27-full-run-playtest-4-fa99` (cloud-agent convention) rather than `task/27-full-run-and-playtest-4`.
 - Leftover median 99, not 50–70; leftover min 56, not ≤ 55. Honest CI: wins + min ≥ 40. Do not name a test 50–70 that only checks ≥ 50.
-- **Boss HP authored range `[100, 140]`**, not grill A `[100, 150]`. Seed 77's mul-poor tray (17 tiles, max ball 54, no ×4+) cannot exact-kill 145/146/148/149 in ≤ 3 hits (`n=4` would pass). Cap at 140 keeps three-digit HP and the 3-hit grill without a shop-policy rewrite. Schema still allows Boss HP 150.
+- **Boss HP authored range `[100, 140]`**, not grill A `[100, 150]`. Binding 3-hit failure is **seed 75 @ HP 141** (max ball 48, only `×2`); seed 77's mul-poor tray (max ball 54) fails 145/146/148/149. Cap at 140 is the largest contiguous range starting at 100 that 3-hits every seed 1–100. Schema still allows Boss HP 150.
 - Hints e2e uses `loadScenario` after New Game to put a tray tile on an armed lane (fresh run tray is empty) — same as task 24.
 - `playtests/04-checklist.md` uses ▶ **Keep Going** / **New Game** (shipped labels), not M3's Continue / New Run.
 
