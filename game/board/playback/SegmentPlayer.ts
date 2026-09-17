@@ -643,15 +643,12 @@ export class SegmentPlayer {
         (durationMs * this.share.most) / (2 * (blocked.shieldWobbleRepeats + 1));
       this.tween({
         targets: shield,
-        x: home + wobble,
+        x: home - wobble,
         delay: leaveMs,
         duration: oneWayMs,
         yoyo: true,
         repeat: blocked.shieldWobbleRepeats,
         ease: 'Sine.easeInOut',
-        onStart: () => {
-          shield.setX(home - wobble);
-        },
         onComplete: () => {
           shield.setX(home);
         },
