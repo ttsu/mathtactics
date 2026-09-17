@@ -1,24 +1,37 @@
 import { expect, test, type Page } from '@playwright/test';
 import { parseGameData } from '../sim/data/load';
+import type { Lane } from '../sim/core/coords';
 import type { Command, RunState, ShopOffer } from '../sim/core/types';
 import { loadRawGameData } from '../tests/helpers/loadDataFiles';
 import { nextShopChoice, planningCommands } from '../tests/helpers/sensiblePlayer';
 
-// Task 21: a full 10-wave run through the real menus, screens and shop. Planning turns use the
+// Task 27: a full 10-wave run through the real menus, screens and shop. Planning turns use the
 // sensible-player policy via `dispatch` plus `skipAnimation`. Shop visits tap a real affordable
-// card (same buy priority as the balance bot) then ▶ Next wave. A reload inside a mid-run shop
-// resumes via ▶ Continue with the same offers.
+// card (same buy priority as the balance bot) then ▶ Next wave. A reload inside the shop after
+// wave 8 resumes via ▶ Keep Going with the same offers.
 //
-// The real New Run button seeds randomly, so `MAX_TURNS` is headroom over the measured
-// sensible-player worst case (task 21: 51 End Turns on 7 waves; task 25: 87 on 9 waves).
-// Task 27 remeasures for 10 waves; keep passing here.
+// The real New Game button seeds randomly, so `MAX_TURNS` is headroom over the measured
+// sensible-player worst case (task 27: 92 End Turns on 10 waves).
 const MAX_TURNS = 200;
 const data = parseGameData(loadRawGameData());
 
 const getState = (page: Page) => page.evaluate(() => window.__GAME__!.getState());
 const getScreen = (page: Page) => page.evaluate(() => window.__GAME__!.getScreen());
+const getHints = (page: Page) => page.evaluate(() => window.__GAME__!.getHints());
 const waitIdle = (page: Page) =>
   page.waitForFunction(() => window.__GAME__!.isIdle(), undefined, { timeout: 20_000 });
+
+const HINT_BOARD = [
+  'name: e2e planning hints',
+  'baseValue: 1',
+  'tray: [add:4]',
+  'board:',
+  '  - ". . . . . . . ."',
+  '  - ". . . . . . . ."',
+  '  - "C . . . . . . R20"',
+  '  - ". . . . . . . ."',
+  '  - ". . . . . . . ."',
+].join('\n');
 
 async function dispatchAll(page: Page, commands: Command[]) {
   for (const cmd of commands) {
@@ -100,7 +113,7 @@ async function playUntilWon(page: Page, turnsStart: number, reloadAfterWave?: nu
   return turns;
 }
 
-test('a full run plays through the real menus and screens: New Run -> 10 waves -> win -> menu', async ({
+test('a full run plays through the real menus and screens: New Game -> 10 waves -> win -> menu', async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
@@ -135,18 +148,62 @@ test('a full run plays through the real menus and screens: New Run -> 10 waves -
   await expect(page.getByTestId('menu-continue')).toHaveCount(0);
 });
 
-test('reloading inside a shop resumes the same offers and the run completes', async ({ page }) => {
+test('reloading inside the shop after wave 8 resumes the same offers and the run completes', async ({
+  page,
+}) => {
   test.setTimeout(180_000);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__ !== undefined);
   await page.getByTestId('menu-new-run').click();
   await waitIdle(page);
 
-  await playUntilWon(page, 0, 3);
+  await playUntilWon(page, 0, 8);
 
   expect((await getState(page))?.phase).toBe('won');
   await expect(page.getByTestId('won')).toBeVisible();
   await page.getByTestId('won-menu').click();
   expect(await getScreen(page)).toBe('menu');
   await expect(page.getByTestId('menu-continue')).toHaveCount(0);
+});
+
+test('menu → Settings → Hints on → Home → New Game → place a tile → getHints() is non-empty', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.waitForFunction(() => window.__GAME__ !== undefined);
+  await expect(page.getByTestId('main-menu')).toBeVisible();
+
+  await page.getByTestId('menu-settings').click();
+  await expect(page.getByTestId('settings')).toBeVisible();
+  await expect(page.getByTestId('settings-hints')).toHaveAttribute('aria-pressed', 'false');
+  await page.getByTestId('settings-hints').click();
+  await expect(page.getByTestId('settings-hints')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByTestId('settings-home').click();
+  expect(await getScreen(page)).toBe('menu');
+
+  await page.getByTestId('menu-new-run').click();
+  expect(await getScreen(page)).toBe('game');
+  await waitIdle(page);
+
+  // A fresh run has an empty tray (tiles come from the shop). Install a board with a tray tile
+  // and dispatch placeTile so getHints can be asserted (task 24 hook; testids unchanged).
+  await page.evaluate((text) => window.__GAME__!.loadScenario(text), HINT_BOARD);
+  await waitIdle(page);
+
+  const placed = await page.evaluate(() => {
+    const state = window.__GAME__!.getState()!;
+    const pieceId = state.tray[0];
+    const lane = state.board.cannons.findIndex((armed) => armed);
+    if (pieceId === undefined || lane < 0) {
+      return { ok: false as const, error: 'no tray tile or armed lane' };
+    }
+    return window.__GAME__!.dispatch({
+      type: 'placeTile',
+      pieceId,
+      to: { lane: lane as Lane, col: 1 },
+    });
+  });
+  expect(placed).toEqual({ ok: true });
+
+  await expect.poll(async () => (await getHints(page)).length).toBeGreaterThan(0);
 });

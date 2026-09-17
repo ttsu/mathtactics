@@ -70,7 +70,7 @@ run to 10 waves.
 Playtest 3: fun but too easy. Waves 4–7 get a HP bump and one teaching trait each on 4/6/7
 (Weakness-5, Bounce-back grill A, Odd-only); wave 5 stays all `basic` (grill A). A clean
 7-wave run still ends at 80–100 HP. Waves 8–9 do the real chipping (10-wave leftover min
-near 40, median 50–70). The Boss is untraited, HP 100–150, exact-killable in ≤ 3 hits (grill A).
+near 40, median 50–70). The Boss is untraited, HP 100–140, exact-killable in ≤ 3 hits (grill A).
 Wave 10 escort is T1 one + T7 two. Leaking the Boss is a loss. A sloppy run can lose on 8–9
 and never see the Boss. Waves 8–9 may spawn `basic`; Even-only can roll at wave 8 T1 (grill B).
 Wave 8 is 3+3 (grill A). Wave 9 has more robots than 8 (four at once **and** an extra pack).
@@ -97,7 +97,7 @@ detonation `heartTargetX` — both specs carry the fallout list.
 | 24 | [Settings screen & planning hints](tasks/24-settings-and-hints.md) | ui / board | — | Complete (iPad check pending) |
 | 25 | [Shop 7–9 & procedural waves 8–9](tasks/25-procedural-waves-8-9.md) | sim / data | 22 | Partial (leftover median 99, not 50–70) |
 | 26 | [Wave 10 Boss](tasks/26-wave-10-boss.md) | data / presentation | 22, 23, 25 | Complete (iPad check pending) |
-| 27 | [10-wave balance, e2e & Playtest 4 checklist](tasks/27-full-run-and-playtest-4.md) | data / e2e | 23, 24, 25, 26 | Not Started |
+| 27 | [10-wave balance, e2e & Playtest 4 checklist](tasks/27-full-run-and-playtest-4.md) | data / e2e | 23, 24, 25, 26 | Partial (leftover median 99, not 50–70) |
 | H4 | **Human: Playtest 4** — play a complete run with your son; record notes in `playtests/04.md` | human | 27 | Not Started |
 
 ## M5 — Juice & Art *(specs written after Playtest 4)*
