@@ -11,6 +11,7 @@ import {
   fakePacingSettings,
   fakePlaybackSettings,
   fakeHudSettings,
+  fakeTraitSettings,
 } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
@@ -49,6 +50,7 @@ function fakeGameData(): GameData {
       drag: fakeDragSettings(),
       screens: fakeScreenSettings(),
       hud: fakeHudSettings(),
+      traits: fakeTraitSettings(),
     },
   } as unknown as GameData;
 }
@@ -295,20 +297,32 @@ describe('createTestHandle', () => {
       basePath: '/',
     });
     const drawn = { robots: [{ robotId: 'robot:0', x: 5, y: 6 }], tiles: ['piece:1'] };
+    const chrome = {
+      trait: 'oddOnly' as const,
+      n: null,
+      pairCount: 1,
+      coiled: false,
+      shieldColor: '#7e57c2',
+      hpFontSize: 56,
+    };
     const handle = createTestHandle(store, {
       cellToClient: (cell) => ({ x: cell.col * 10, y: cell.lane * 10 }),
       skipAnimation: () => {},
       isAnimating: () => false,
       renderedBoard: () => drawn,
+      getRobotChrome: (robotId) => (robotId === 'robot:0' ? chrome : null),
     });
     expect(handle.cellToClient({ lane: 2, col: 3 })).toEqual({ x: 30, y: 20 });
     expect(handle.renderedBoard()).toBe(drawn);
+    expect(handle.getRobotChrome('robot:0')).toBe(chrome);
+    expect(handle.getRobotChrome('missing')).toBeNull();
   });
 
-  it('cellToClient and renderedBoard throw when no board is mounted', () => {
+  it('cellToClient, renderedBoard and getRobotChrome throw when no board is mounted', () => {
     const { handle } = buildHandle();
     expect(() => handle.cellToClient({ lane: 0, col: 0 })).toThrow('no board mounted');
     expect(() => handle.renderedBoard()).toThrow('no board mounted');
+    expect(() => handle.getRobotChrome('robot:0')).toThrow('no board mounted');
   });
 
   it('skipAnimation without a board finishes playback directly', () => {
@@ -335,6 +349,7 @@ describe('createTestHandle', () => {
       skipAnimation: vi.fn(() => store.getState().finishPlayback()),
       isAnimating: () => false,
       renderedBoard: () => ({ robots: [], tiles: [] }),
+      getRobotChrome: () => null,
     };
     const handle = createTestHandle(store, board);
 
@@ -352,6 +367,7 @@ describe('createTestHandle', () => {
       skipAnimation: () => {},
       isAnimating: () => animating,
       renderedBoard: () => ({ robots: [], tiles: [] }),
+      getRobotChrome: () => null,
     });
     expect(store.getState().playback.status).toBe('idle');
     expect(handle.isIdle()).toBe(false);

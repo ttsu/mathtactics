@@ -7,6 +7,7 @@ import {
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
+  fakeTraitSettings,
 } from '../../helpers/playbackSettings';
 import { fakeShop } from '../../helpers/shop';
 
@@ -85,6 +86,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       screens: fakeScreenSettings(),
       danger: fakeDangerSettings(),
       hud: fakeHudSettings(),
+      traits: fakeTraitSettings(),
     },
     ...overrides,
   };

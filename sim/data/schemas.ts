@@ -267,6 +267,14 @@ const PresentationFileSchema = z.object({
     }),
   }),
   tileColors: z.record(TileColorSchema, z.string().min(1)),
+  /** Planning-phase trait telegraph colours (task 23, GDD §6.2–6.4). Keys are locked;
+   * hex values may be tuned for HP contrast. */
+  traits: z.object({
+    weaknessNColor: z.string().min(1),
+    oddShieldColor: z.string().min(1),
+    evenShieldColor: z.string().min(1),
+    bounceBackBodyColor: z.string().min(1),
+  }),
   /** Board drag-and-drop feel (task 09). Presentation only — never changes an outcome. */
   drag: z.object({
     /** Scale of a lifted piece relative to its on-board size. */
