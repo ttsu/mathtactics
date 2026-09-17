@@ -122,3 +122,55 @@ Boss overflow scale (26 — but this task owns the `setChrome` seam it will use)
 - [ ] HP remains the largest numeral on the robot (asserted, not eyeballed)
 - [ ] `npm test`, `typecheck`, `lint`, and a targeted e2e pass
 - [ ] iPad preview check — awaiting human
+
+## Completion Notes
+
+**Status:** Complete (iPad check pending)
+**Completed:** 2026-09-17
+**PR:** #44 · Preview: https://mathtactics.timtsu.com/pr/pr-44/
+
+**Acceptance criteria:**
+- [x] Each trait is visually distinct during planning; `none` unchanged — Met (screenshot `/opt/cursor/artifacts/23-trait-telegraph.png`; iPad still pending)
+- [x] Weakness shows n; odd/even show unpaired vs paired + shield colour; bounce-back is coiled — Met
+- [x] Chrome is applied from both `syncRobots` and `ensureRobotView`, through one entry point — Met (`RobotView.setChrome`)
+- [x] Colours come from `presentation.json` `traits` — Met
+- [x] `getRobotChrome` is on the test handle and recorded in TR §14 — Met (shape unchanged from the M4 sketch)
+- [x] HP remains the largest numeral on the robot (asserted, not eyeballed) — Met (`traitChrome` chest font `< ROBOT_HP_FONT_SIZE`; e2e `hpFontSize`)
+- [x] `npm test`, `typecheck`, `lint`, and a targeted e2e pass — Met
+- [ ] iPad preview check — awaiting human check on preview
+
+**Verification:** npm test ✔ (63 files / 696 tests) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (`e2e/trait-telegraph.spec.ts` webkit)
+
+**Deviations from spec:**
+- Branch name is `cursor/23-trait-telegraph-fa99` (cloud-agent convention) rather than `task/23-trait-telegraph`.
+- `RobotWaiting` has no `isBoss` field (only `RobotSpawned` does). Spawn chrome for a waiter passes `isBoss: false`. Wave-10 Boss arrives via `RobotSpawned`, which already carries `isBoss`.
+- Weakness chest `n` sits at the bottom of the block (`WEAKNESS_N_FONT_SIZE` 22 vs HP 56) so it cannot out-scale HP. It overlaps the lower edge of a two-digit HP; gold + stroke keeps it a second number. Hex values are the spec defaults; not tuned.
+
+**Architectural decisions made:**
+- Chrome seam (task 26 adds the Boss branch **inside** `setChrome` only — do not add a third creation path):
+
+  ```ts
+  RobotView.setChrome({ trait, isBoss }: RobotAppearance): void
+  BoardRenderer.ensureRobotView(robotId: string, appearance?: RobotAppearance): RobotView
+  ```
+
+  `RobotAppearance = { trait: Trait; isBoss: boolean }`. Idempotent: rebuilds only when `trait`/`isBoss` change. `isBoss` is stored in the key and is a no-op this PR (no scale).
+- `syncRobots` calls `setChrome({ trait: robot.trait, isBoss: robot.isBoss })` from `run.board.robots`.
+- `SegmentPlayer` spawn beats (`RobotSpawned` / `RobotWaiting`, including `finish()`) call `ensureRobotView(id, appearance)` so mid-sequence spawns go through the same entry point.
+- Pure `traitChrome(trait, colours)` in `game/board/views/traitChrome.ts` (Phaser-free) is the unit-test seam. `getRobotChrome` reads `RobotView.getChrome()` — what is drawn, not a re-derivation from `run`.
+- Sizes in `layout.ts` (`WEAKNESS_N_FONT_SIZE`, `ROBOT_ANTENNA_SPREAD`); only colours in `presentation.json` `traits`.
+
+**Design questions raised:**
+- None. Weakness-n overlap vs HP is a presentation call for the iPad check; do not shrink HP.
+
+**Known issues / follow-up:**
+- Task 26: add `presentation.json` `boss.scale` and apply it in `setChrome` when `isBoss`. Do not change `ensureRobotView` / `syncRobots` signatures further.
+- Task 24: `getHints` is still a TR §14 stub.
+- iPad preview check still required before merge.
+
+**Files created:** `game/board/views/traitChrome.ts`, `tests/game/traitChrome.test.ts`, `e2e/trait-telegraph.spec.ts`
+**Files modified:** `data/presentation.json`, `sim/data/schemas.ts`, `game/board/views/RobotView.ts`, `game/board/views/palette.ts`, `game/board/layout.ts`, `game/board/BoardRenderer.ts`, `game/board/playback/SegmentPlayer.ts`, `game/board/createBoardGame.ts`, `game/main.tsx`, `game/state/testHandle.ts`, `tests/helpers/playbackSettings.ts`, `tests/game/{layout,store,testHandle}.test.ts`, `tests/sim/data/{load,levels,shop,waves}.test.ts`, `tests/sim/commands/{fixtures.ts,loadLevel.test.ts}`, `TASKS.md`, this file
+
+**Notes for next agent:**
+- Task 26 only adds the Boss branch inside `RobotView.setChrome`. Both creation sites already pass `isBoss`. `RobotView` stores silhouette graphics as `silhouette`, not `body` — `Container.body` is Phaser's physics body and shadowing it fails the typecheck.
+

@@ -4,7 +4,7 @@
 
 import type { StoreApi } from 'zustand/vanilla';
 import type { Cell } from '../../sim/core/coords';
-import type { Command, CommandError, GameEvent, RunState } from '../../sim/core/types';
+import type { Command, CommandError, GameEvent, RunState, Trait } from '../../sim/core/types';
 import type { GameData } from '../../sim/data/schemas';
 import { buildScenarioState, effectiveData, parseScenario } from '../../sim/scenario';
 import type { AppStore, Display, Screen } from './store';
@@ -32,11 +32,23 @@ export interface TestHandle {
   /** What the board draws right now — robot views with their centres in client coordinates
    * (mid-tween included) and tile views' piece ids — for asserting the board mid-playback. */
   renderedBoard(): RenderedBoard;
+  /** Live trait chrome as drawn (task 23). Null if that robot view isn't on the board. */
+  getRobotChrome(robotId: string): RobotChrome | null;
 }
 
 export interface RenderedBoard {
   robots: { robotId: string; x: number; y: number }[];
   tiles: string[];
+}
+
+/** Trait chrome as drawn on the live robot view — not a re-derivation from `run` (TR §14). */
+export interface RobotChrome {
+  trait: Trait['type'];
+  n: number | null;
+  pairCount: number;
+  coiled: boolean;
+  shieldColor: string | null;
+  hpFontSize: number;
 }
 
 declare global {
@@ -71,6 +83,7 @@ export interface TestHandleBoard {
   /** True while the playback Director has a sequence, tweens or timers pending. */
   isAnimating(): boolean;
   renderedBoard(): RenderedBoard;
+  getRobotChrome(robotId: string): RobotChrome | null;
 }
 
 /** Builds the `__GAME__` object for `store` — pure, no `window` access, so it's unit-testable.
@@ -109,6 +122,10 @@ export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBo
     renderedBoard: () => {
       if (!board) throw new Error('renderedBoard: no board mounted');
       return board.renderedBoard();
+    },
+    getRobotChrome: (robotId) => {
+      if (!board) throw new Error('getRobotChrome: no board mounted');
+      return board.getRobotChrome(robotId);
     },
   };
 }

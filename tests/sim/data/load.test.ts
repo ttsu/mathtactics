@@ -10,6 +10,7 @@ import {
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
+  fakeTraitSettings,
 } from '../../helpers/playbackSettings';
 
 function validTile(overrides: Record<string, unknown> = {}) {
@@ -50,6 +51,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       screens: fakeScreenSettings(),
       danger: fakeDangerSettings(),
       hud: fakeHudSettings(),
+      traits: fakeTraitSettings(),
     },
     ...overrides,
   };
@@ -175,5 +177,19 @@ describe('presentation.json hud Go nudge', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.presentation.hud.goNudgeIdleMs).toBe(10000);
     expect(data.presentation.hud.goColor).toMatch(/^#/);
+  });
+});
+
+describe('presentation.json traits (task 23)', () => {
+  it('ships telegraph colours with locked keys', () => {
+    const data = parseGameData(loadRawGameData());
+    expect(data.presentation.traits).toEqual(fakeTraitSettings());
+  });
+
+  it('rejects a missing trait colour key', () => {
+    const raw = validRaw();
+    const presentation = raw.presentation as { traits: Record<string, unknown> };
+    delete presentation.traits.oddShieldColor;
+    expect(() => parseGameData(raw)).toThrow(/presentation\.json/);
   });
 });

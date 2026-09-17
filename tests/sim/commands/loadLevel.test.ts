@@ -11,6 +11,7 @@ import {
   fakeHudSettings,
   fakePacingSettings,
   fakePlaybackSettings,
+  fakeTraitSettings,
 } from '../../helpers/playbackSettings';
 
 function expectOk(result: ReturnType<typeof applyCommand>): asserts result is {
@@ -202,6 +203,7 @@ describe('applyCommand — loadLevel', () => {
         screens: fakeScreenSettings(),
         danger: fakeDangerSettings(),
         hud: fakeHudSettings(),
+        traits: fakeTraitSettings(),
       },
     };
     const data = parseGameData(raw);

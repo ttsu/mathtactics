@@ -31,7 +31,7 @@ import { diffKeys, planCannons } from './reconcile';
 import { clampTrayScroll, isTraySlotVisible, maxTrayScroll } from './trayScroll';
 import { CannonView } from './views/CannonView';
 import { PLACEHOLDER } from './views/palette';
-import { RobotView } from './views/RobotView';
+import { RobotView, type RobotAppearance, type RobotChromeSnapshot } from './views/RobotView';
 import { TileView } from './views/TileView';
 
 /** Draw order for everything on the board, including the playback Director's layers (task 10). */
@@ -103,15 +103,22 @@ export class BoardRenderer {
 
   /** Creates (if needed) and returns the view for `robotId` — for the playback Director to bring
    * a robot onto the board mid-sequence (task 15: a `RobotSpawned`/`RobotWaiting` beat introduces
-   * one that wasn't in the pre-turn snapshot). The next `sync()` reconciles it against `run`
-   * normally. */
-  ensureRobotView(robotId: string): RobotView {
+   * one that wasn't in the pre-turn snapshot). Pass `appearance` so spawn chrome goes through the
+   * same `setChrome` entry point as `syncRobots` (task 23; task 26 adds the Boss branch there).
+   * The next `sync()` reconciles it against `run` normally. */
+  ensureRobotView(robotId: string, appearance?: RobotAppearance): RobotView {
     let view = this.robots.get(robotId);
     if (view === undefined) {
-      view = new RobotView(this.scene).setDepth(DEPTH.robot);
+      view = this.createRobotView();
       this.robots.set(robotId, view);
     }
+    if (appearance !== undefined) view.setChrome(appearance);
     return view;
+  }
+
+  /** Live trait chrome for `robotId`, or `null` if that view isn't on the board. */
+  robotChrome(robotId: string): RobotChromeSnapshot | null {
+    return this.robots.get(robotId)?.getChrome() ?? null;
   }
 
   /** What the board draws right now, for the test handle (TR §14): every robot view with its
@@ -245,9 +252,10 @@ export class BoardRenderer {
       let view = this.robots.get(robot.robotId);
       const created = view === undefined;
       if (view === undefined) {
-        view = new RobotView(this.scene).setDepth(DEPTH.robot);
+        view = this.createRobotView();
         this.robots.set(robot.robotId, view);
       }
+      view.setChrome({ trait: robot.trait, isBoss: robot.isBoss });
       view.setHp(robot.hp, robot.maxHp);
       view.setAlpha(robot.col === null ? ghostAlpha : 1);
       const center =
@@ -340,6 +348,10 @@ export class BoardRenderer {
       ease: EASE,
       onComplete: () => view.setDepth(baseDepth),
     });
+  }
+
+  private createRobotView(): RobotView {
+    return new RobotView(this.scene, this.data.presentation.traits).setDepth(DEPTH.robot);
   }
 
   private destroy(view: Phaser.GameObjects.Container | undefined): void {
