@@ -127,7 +127,7 @@ Boss overflow scale (26 — but this task owns the `setChrome` seam it will use)
 
 **Status:** Complete (iPad check pending)
 **Completed:** 2026-09-17
-**PR:** TBD · Preview: TBD
+**PR:** #44 · Preview: https://mathtactics.timtsu.com/pr/pr-44/
 
 **Acceptance criteria:**
 - [x] Each trait is visually distinct during planning; `none` unchanged — Met (screenshot `/opt/cursor/artifacts/23-trait-telegraph.png`; iPad still pending)
