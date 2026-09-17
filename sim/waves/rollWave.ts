@@ -1,11 +1,20 @@
-// Rolls an authored wave into its concrete spawn schedule at wave start (GDD §10.3, TR §6
+// Rolls a wave into its concrete spawn schedule at wave start (GDD §10.3, TR §6
 // "Rolling a wave"). Pure: takes the `wave` RNG stream and returns the advanced stream.
 //
-// The draw order is normative so saves and scenarios reproduce exactly:
+// Two shapes, never mixed (TR §9). The draw order is normative so saves and scenarios reproduce:
+//
+// Authored (`spawns`):
 //   1. each distinct lane letter, in order of first appearance, draws one `nextInt` index into the
 //      lanes still free (not fixed in this wave, not taken by an earlier letter), ascending;
 //   2. each entry's HP, in file order — one draw per entry, even when `min === max`.
-// The result is stable-sorted by `turn`, so same-turn entries keep file order.
+//
+// Procedural (`procedural`): for each group in file order, on the `wave` stream only:
+//   1. pick `count` distinct lanes by `nextInt` into the remaining lanes (ascending, same as
+//      letter assignment);
+//   2. for each drawn lane in that order: `nextInt` into the remaining pool (without replacement)
+//      and `nextInt` HP in `[min, max]`.
+//
+// The result is stable-sorted by `turn`, so same-turn entries keep file / draw order.
 
 import { lanes, type Lane } from '../core/coords';
 import { nextInt, type RngState } from '../core/rng';
@@ -17,7 +26,10 @@ export interface RolledWave {
   rng: RngState;
 }
 
-export function rollWave(waveDef: WaveDef, rngState: RngState): RolledWave {
+function rollAuthoredWave(
+  waveDef: Extract<WaveDef, { spawns: unknown }>,
+  rngState: RngState,
+): RolledWave {
   let rng = rngState;
 
   const fixedLanes = new Set<Lane>();
@@ -51,4 +63,44 @@ export function rollWave(waveDef: WaveDef, rngState: RngState): RolledWave {
   // `Array.prototype.sort` is stable (ES2019), so same-turn entries keep file order.
   spawns.sort((a, b) => a.turn - b.turn);
   return { spawns, rng };
+}
+
+function rollProceduralWave(
+  waveDef: Extract<WaveDef, { procedural: unknown }>,
+  rngState: RngState,
+): RolledWave {
+  let rng = rngState;
+  const spawns: SpawnEntry[] = [];
+
+  for (const group of waveDef.procedural.groups) {
+    const remainingLanes = lanes();
+    const drawnLanes: Lane[] = [];
+    for (let i = 0; i < group.count; i += 1) {
+      const [index, next] = nextInt(rng, 0, remainingLanes.length - 1);
+      rng = next;
+      const lane = remainingLanes.splice(index, 1)[0]!;
+      drawnLanes.push(lane);
+    }
+
+    const remainingPool = [...group.pool];
+    for (const lane of drawnLanes) {
+      const [poolIndex, afterPool] = nextInt(rng, 0, remainingPool.length - 1);
+      rng = afterPool;
+      const robotTemplateId = remainingPool.splice(poolIndex, 1)[0]!;
+      const [min, max] = group.hp;
+      const [hp, afterHp] = nextInt(rng, min, max);
+      rng = afterHp;
+      spawns.push({ turn: group.turn, lane, robotTemplateId, hp });
+    }
+  }
+
+  spawns.sort((a, b) => a.turn - b.turn);
+  return { spawns, rng };
+}
+
+export function rollWave(waveDef: WaveDef, rngState: RngState): RolledWave {
+  if ('spawns' in waveDef) {
+    return rollAuthoredWave(waveDef, rngState);
+  }
+  return rollProceduralWave(waveDef, rngState);
 }

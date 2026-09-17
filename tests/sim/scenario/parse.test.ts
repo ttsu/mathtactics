@@ -318,6 +318,31 @@ describe('parseScenario — task 13 (mode: run)', () => {
     ]);
   });
 
+  it('parses an inline procedural waves override', () => {
+    const yamlText = [
+      'name: t',
+      'mode: run',
+      'baseValue: 1',
+      'board:',
+      ...blankBoard().map((row) => `  - "${row}"`),
+      'waves:',
+      '  - id: proc',
+      '    procedural:',
+      '      groups:',
+      '        - { turn: 1, count: 2, hp: [4, 8], pool: [basic, odd-only] }',
+      'commands: []',
+    ].join('\n');
+    const scenario = parseScenario(yamlText);
+    expect(scenario.waves).toEqual([
+      {
+        id: 'proc',
+        procedural: {
+          groups: [{ turn: 1, count: 2, hp: [4, 8], pool: ['basic', 'odd-only'] }],
+        },
+      },
+    ]);
+  });
+
   it('rejects an inline waves override with no turn-1 spawn, same rule as waves.json', () => {
     const yamlText = [
       'name: t',
