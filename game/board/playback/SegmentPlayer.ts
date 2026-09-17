@@ -614,7 +614,7 @@ export class SegmentPlayer {
       this.tween({
         targets: ball,
         x: ball.x - designToWorld(blocked.bounceOffPt),
-        duration: durationMs * this.share.half,
+        duration: durationMs * this.share.quick,
         ease: 'Quad.easeOut',
       });
       this.tween({
@@ -634,17 +634,27 @@ export class SegmentPlayer {
     this.tween({ targets: shieldFx, alpha: 0, duration: durationMs, ease: 'Quad.easeIn' });
 
     if (shield !== null && robot !== undefined) {
+      // Shake after the ball has bounced off so the rattle is visible on the left,
+      // not hidden under the ball. The robot body is not tweened (GDD §6.3).
       const home = robot.shieldHomeX();
       const wobble = designToWorld(blocked.shieldWobblePt);
-      shield.setX(home - wobble);
+      const leaveMs = durationMs * this.share.quick;
+      const oneWayMs =
+        (durationMs * this.share.most) / (2 * (blocked.shieldWobbleRepeats + 1));
       this.tween({
         targets: shield,
         x: home + wobble,
-        duration: (durationMs * this.share.half) / (2 * (blocked.shieldWobbleRepeats + 1)),
+        delay: leaveMs,
+        duration: oneWayMs,
         yoyo: true,
         repeat: blocked.shieldWobbleRepeats,
         ease: 'Sine.easeInOut',
-        onComplete: () => shield.setX(home),
+        onStart: () => {
+          shield.setX(home - wobble);
+        },
+        onComplete: () => {
+          shield.setX(home);
+        },
       });
     }
     if (blocked.shake > 0) {
