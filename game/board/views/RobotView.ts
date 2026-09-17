@@ -39,7 +39,7 @@ export interface RobotChromeSnapshot {
 }
 
 export class RobotView extends Phaser.GameObjects.Container {
-  private readonly body: Phaser.GameObjects.Graphics;
+  private readonly silhouette: Phaser.GameObjects.Graphics;
   private readonly hp: Phaser.GameObjects.Text;
   private readonly bar: Phaser.GameObjects.Graphics;
   private chest: Phaser.GameObjects.Text | null = null;
@@ -55,7 +55,7 @@ export class RobotView extends Phaser.GameObjects.Container {
   ) {
     super(scene);
     this.chrome = traitChrome({ type: 'none' }, colours);
-    this.body = scene.add.graphics();
+    this.silhouette = scene.add.graphics();
     this.paintBody(this.chrome);
 
     this.bar = scene.add.graphics();
@@ -69,7 +69,7 @@ export class RobotView extends Phaser.GameObjects.Container {
         strokeThickness: designToWorld(4),
       })
       .setOrigin(0.5);
-    this.add([this.body, this.bar, this.hp]);
+    this.add([this.silhouette, this.bar, this.hp]);
     scene.add.existing(this);
   }
 
@@ -147,7 +147,7 @@ export class RobotView extends Phaser.GameObjects.Container {
 
   private paintBody(chrome: TraitChrome): void {
     const size = designToWorld(ROBOT_SIZE);
-    const g = this.body;
+    const g = this.silhouette;
     g.clear();
     const outline = PLACEHOLDER.robotOutline;
     if (chrome.coiled) {
