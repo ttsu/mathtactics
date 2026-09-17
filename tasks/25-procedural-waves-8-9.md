@@ -59,7 +59,8 @@ deferred to v1.1+.
    Constraints: ≥ 5 turn gap between groups; HP ≤ 99; wave 9 total **>** wave 8; `count` ≤ 4;
    wave 8 is 3+3 (grill A); Even-only is possible on wave 8 T1 (grill B).
 
-4. **Shop tables** — append `afterWave` 7, 8, 9. Prices unchanged. Draft (tune with reason):
+4. **Shop tables** — append `afterWave` 7, 8, 9. Prices unchanged. After-wave 7 guarantee is
+   locked (grill A): `×2` or `×5`. After 8–9 still draft (tune with reason):
 
    ```json
    { "afterWave": 7, "guarantees": [{ "kind": "mul", "n": [2, 5] }], "table": [
