@@ -1,1 +1,9 @@
-[{ "id": "basic", "trait": { "type": "none" }, "isBoss": false }]
+[
+  { "id": "basic", "trait": { "type": "none" }, "isBoss": false },
+  { "id": "weakness-2", "trait": { "type": "weakness", "n": 2 }, "isBoss": false },
+  { "id": "weakness-5", "trait": { "type": "weakness", "n": 5 }, "isBoss": false },
+  { "id": "weakness-10", "trait": { "type": "weakness", "n": 10 }, "isBoss": false },
+  { "id": "bounce-back", "trait": { "type": "bounceBack" }, "isBoss": false },
+  { "id": "odd-only", "trait": { "type": "oddOnly" }, "isBoss": false },
+  { "id": "even-only", "trait": { "type": "evenOnly" }, "isBoss": false }
+]

@@ -28,41 +28,41 @@
     {
       "id": "wave-4",
       "spawns": [
-        { "turn": 1, "lane": "A", "robot": "basic", "hp": [12, 14] },
-        { "turn": 1, "lane": "B", "robot": "basic", "hp": [12, 14] },
-        { "turn": 6, "lane": "A", "robot": "basic", "hp": [12, 14] },
-        { "turn": 6, "lane": "C", "robot": "basic", "hp": [12, 14] },
+        { "turn": 1, "lane": "A", "robot": "weakness-5", "hp": [28, 36] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [16, 16] },
+        { "turn": 6, "lane": "A", "robot": "basic", "hp": [16, 16] },
+        { "turn": 6, "lane": "C", "robot": "basic", "hp": [16, 16] },
         { "turn": 11, "lane": "B", "robot": "basic", "hp": [16, 16] }
       ]
     },
     {
       "id": "wave-5",
       "spawns": [
-        { "turn": 1, "lane": "A", "robot": "basic", "hp": [14, 24] },
-        { "turn": 1, "lane": "B", "robot": "basic", "hp": [14, 24] },
-        { "turn": 7, "lane": "A", "robot": "basic", "hp": [20, 30] },
-        { "turn": 7, "lane": "C", "robot": "basic", "hp": [20, 30] }
+        { "turn": 1, "lane": "A", "robot": "basic", "hp": [32, 44] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [32, 44] },
+        { "turn": 7, "lane": "A", "robot": "basic", "hp": [38, 48] },
+        { "turn": 7, "lane": "C", "robot": "basic", "hp": [38, 48] }
       ]
     },
     {
       "id": "wave-6",
       "spawns": [
-        { "turn": 1, "lane": "A", "robot": "basic", "hp": [16, 26] },
-        { "turn": 1, "lane": "B", "robot": "basic", "hp": [16, 26] },
-        { "turn": 1, "lane": "C", "robot": "basic", "hp": [16, 26] },
-        { "turn": 8, "lane": "A", "robot": "basic", "hp": [24, 34] },
-        { "turn": 8, "lane": "B", "robot": "basic", "hp": [24, 34] }
+        { "turn": 1, "lane": "A", "robot": "bounce-back", "hp": [54, 64] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [32, 44] },
+        { "turn": 1, "lane": "C", "robot": "basic", "hp": [32, 44] },
+        { "turn": 8, "lane": "A", "robot": "basic", "hp": [38, 48] },
+        { "turn": 8, "lane": "B", "robot": "basic", "hp": [38, 48] }
       ]
     },
     {
       "id": "wave-7",
       "spawns": [
-        { "turn": 1, "lane": "A", "robot": "basic", "hp": [20, 30] },
-        { "turn": 1, "lane": "B", "robot": "basic", "hp": [20, 30] },
-        { "turn": 1, "lane": "C", "robot": "basic", "hp": [20, 30] },
-        { "turn": 8, "lane": "A", "robot": "basic", "hp": [30, 38] },
-        { "turn": 8, "lane": "B", "robot": "basic", "hp": [30, 38] },
-        { "turn": 8, "lane": "C", "robot": "basic", "hp": [30, 38] }
+        { "turn": 1, "lane": "A", "robot": "odd-only", "hp": [52, 64] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [36, 48] },
+        { "turn": 1, "lane": "C", "robot": "basic", "hp": [36, 48] },
+        { "turn": 8, "lane": "A", "robot": "basic", "hp": [44, 50] },
+        { "turn": 8, "lane": "B", "robot": "basic", "hp": [44, 50] },
+        { "turn": 8, "lane": "C", "robot": "basic", "hp": [44, 50] }
       ]
     }
   ]

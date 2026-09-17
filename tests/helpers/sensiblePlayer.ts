@@ -9,6 +9,7 @@ import { COLS, lanes } from '../../sim/core/coords';
 import { applyTile } from '../../sim/core/tiles';
 import type {
   Command,
+  Robot,
   RunState,
   ShopOffer,
   ShopSlotId,
@@ -16,6 +17,7 @@ import type {
   TileId,
 } from '../../sim/core/types';
 import type { GameData } from '../../sim/data/schemas';
+import { resolveImpact } from '../../sim/resolve/impact';
 
 const MAX_ARRANGEMENTS = 3000;
 const MAX_TILES_PER_LANE = 3;
@@ -105,27 +107,35 @@ function pieceSequences(pieceIds: string[], kMax: number): string[][] {
   return result;
 }
 
-function arrangementRank(value: number, hp: number): [number, number] {
-  if (value === hp) return [2, value];
-  if (value <= hp) return [1, value];
-  return [0, value];
+/**
+ * Rank a candidate ball through `resolveImpact` (GDD §5.4): exact > undershoot > overshoot >
+ * blocked. Bigger raw ball value breaks ties. A wrong-parity blocked ball is strictly worst.
+ * Bounce-back overshoot (`bounceBack !== null`, `result === 'survive'`) ranks with overshoots,
+ * not undershoots. Category: 2 exact, 1 undershoot, 0 overshoot, -1 blocked.
+ */
+export function arrangementRank(robot: Robot, value: number): [number, number] {
+  const outcome = resolveImpact(robot, value);
+  if (outcome.kind === 'blocked') return [-1, value];
+  if (outcome.result === 'exact') return [2, value];
+  if (outcome.result === 'kill' || outcome.bounceBack !== null) return [0, value];
+  return [1, value];
 }
 
-function betterRank(a: [number, number], b: [number, number]): boolean {
+export function betterRank(a: [number, number], b: [number, number]): boolean {
   if (a[0] !== b[0]) return a[0] > b[0];
   return a[1] > b[1];
 }
 
-function bestSequence(
+export function bestSequence(
   state: RunState,
   data: GameData,
   pieceIds: string[],
-  hp: number,
+  robot: Robot,
   kMax: number,
 ): string[] {
   const sequences = pieceSequences(pieceIds, kMax);
   let best: string[] = [];
-  let bestRank: [number, number] = arrangementRank(state.cannonBaseValue, hp);
+  let bestRank: [number, number] = arrangementRank(robot, state.cannonBaseValue);
   for (const seq of sequences) {
     const defs = seq.map((pieceId) => {
       const piece = state.pieces[pieceId];
@@ -133,7 +143,7 @@ function bestSequence(
       return tileDef(data, piece.tileId);
     });
     const value = ballValue(state.cannonBaseValue, defs);
-    const rank = arrangementRank(value, hp);
+    const rank = arrangementRank(robot, value);
     if (betterRank(rank, bestRank)) {
       bestRank = rank;
       best = seq;
@@ -153,16 +163,39 @@ export function reachableBallValues(state: RunState, data: GameData): number[] {
   return [...values];
 }
 
-export function canExactKillInAtMostTwoHits(hp: number, values: number[]): boolean {
-  const set = new Set(values);
-  if (set.has(hp)) return true;
-  for (const first of values) {
-    const chip = Math.max(0, first);
-    if (chip <= 0 || chip >= hp) continue;
-    const remaining = hp - chip;
-    if (set.has(remaining)) return true;
-  }
-  return false;
+/**
+ * True if some sequence of at most `n` hits, each a value from `values` (tiles are not consumed
+ * — the same set is available every hit), exact-kills `robot` through `resolveImpact`. Overkill
+ * (`result === 'kill'`) is not an exact kill — skip that shot and try another value, matching
+ * task 21's `chip >= hp` continue. A blocked (wrong-parity) ball consumes a hit but does not
+ * change HP. Bounce-back never emits `kill`; overshoot continues from `hpAfter` so a later
+ * exact is still reachable. Success is only `result === 'exact'` (`hpAfter === 0`).
+ */
+export function canExactKillInAtMostNHits(robot: Robot, values: number[], n: number): boolean {
+  const unique = [...new Set(values)];
+  const failed = new Set<string>();
+
+  const walk = (current: Robot, hitsLeft: number): boolean => {
+    if (hitsLeft <= 0) return false;
+    const key = `${current.hp}:${hitsLeft}`;
+    if (failed.has(key)) return false;
+
+    for (const value of unique) {
+      const outcome = resolveImpact(current, value);
+      if (outcome.kind === 'blocked') {
+        if (walk(current, hitsLeft - 1)) return true;
+        continue;
+      }
+      if (outcome.result === 'exact') return true;
+      if (outcome.result === 'kill') continue;
+      if (walk({ ...current, hp: outcome.hpAfter }, hitsLeft - 1)) return true;
+    }
+
+    failed.add(key);
+    return false;
+  };
+
+  return walk(robot, n);
 }
 
 function returnBoardTiles(state: RunState, data: GameData): { state: RunState; commands: Command[] } {
@@ -248,7 +281,7 @@ function placeForArmedLanes(
     if (cols.length === 0) continue;
     const available = [...next.tray].sort();
     const kMax = Math.min(MAX_TILES_PER_LANE, cols.length, available.length);
-    const seq = bestSequence(next, data, available, job.robot.hp, kMax);
+    const seq = bestSequence(next, data, available, job.robot, kMax);
     for (let i = 0; i < seq.length; i++) {
       const cmd: Command = {
         type: 'placeTile',
@@ -374,7 +407,7 @@ export interface ShopVisitStats {
 
 export interface WaveEntrySnapshot {
   waveIndex: number;
-  hps: number[];
+  robots: Robot[];
   values: number[];
 }
 
@@ -408,13 +441,24 @@ export function playSensibleRun(seed: string, data: GameData): SensibleRunStats 
 
     if (state.phase === 'planning' && capturedEntry !== state.waveIndex) {
       capturedEntry = state.waveIndex;
-      const hps = [
-        ...state.board.robots.map((robot) => robot.hp),
-        ...state.pendingSpawns.map((entry) => entry.hp),
-      ];
+      const pendingRobots = state.pendingSpawns.map((entry, index) => {
+        const template = data.robots.find((candidate) => candidate.id === entry.robotTemplateId);
+        if (!template) {
+          throw new Error(`unknown robot template "${entry.robotTemplateId}"`);
+        }
+        return {
+          robotId: `pending:${index}`,
+          lane: entry.lane,
+          col: null,
+          hp: entry.hp,
+          maxHp: entry.hp,
+          trait: template.trait,
+          isBoss: template.isBoss,
+        } satisfies Robot;
+      });
       waveEntries.push({
         waveIndex: state.waveIndex,
-        hps,
+        robots: [...state.board.robots.map((robot) => ({ ...robot })), ...pendingRobots],
         values: reachableBallValues(state, data),
       });
     }
