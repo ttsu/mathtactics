@@ -5,8 +5,10 @@ import { writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { applyCommand } from '../sim/commands/applyCommand';
 import { parseGameData } from '../sim/data/load';
+import { createStreams } from '../sim/core/rng';
 import type { GameEvent, RunState } from '../sim/core/types';
 import type { Lane } from '../sim/core/coords';
+import { rollWave } from '../sim/waves/rollWave';
 import { loadRawGameData } from './helpers/loadDataFiles';
 import {
   canExactKillInAtMostNHits,
@@ -19,6 +21,35 @@ import {
 const data = parseGameData(loadRawGameData());
 const SEEDS = Array.from({ length: 100 }, (_, i) => String(i + 1));
 const LADDER_TIMEOUT_MS = 60_000;
+
+const SHIPPED_ROBOTS = [
+  { id: 'basic', trait: { type: 'none' as const }, isBoss: false },
+  { id: 'weakness-2', trait: { type: 'weakness' as const, n: 2 as const }, isBoss: false },
+  { id: 'weakness-5', trait: { type: 'weakness' as const, n: 5 as const }, isBoss: false },
+  { id: 'weakness-10', trait: { type: 'weakness' as const, n: 10 as const }, isBoss: false },
+  { id: 'bounce-back', trait: { type: 'bounceBack' as const }, isBoss: false },
+  { id: 'odd-only', trait: { type: 'oddOnly' as const }, isBoss: false },
+  { id: 'even-only', trait: { type: 'evenOnly' as const }, isBoss: false },
+];
+
+/** 0-based wave index → teaching template id. Wave 5 (index 4) stays all `basic`. */
+const TEACHING_ROBOT: Record<number, string> = {
+  3: 'weakness-5',
+  5: 'bounce-back',
+  6: 'odd-only',
+};
+
+/** Roll waves 0..waveIndex on the production `wave` stream so HP/lanes match `newRun`/`nextWave`. */
+function rollShippedWave(seed: string, waveIndex: number) {
+  let rng = createStreams(seed).wave;
+  let spawns: ReturnType<typeof rollWave>['spawns'] = [];
+  for (let i = 0; i <= waveIndex; i++) {
+    const rolled = rollWave(data.waves.waves[i]!, rng);
+    rng = rolled.rng;
+    spawns = rolled.spawns;
+  }
+  return spawns;
+}
 
 function newRun(seed: string): RunState {
   return requireOk(applyCommand(null, { type: 'newRun', seed }, data)).state;
@@ -78,8 +109,8 @@ function summarize(values: number[]): { min: number; median: number; max: number
   return { min: Math.min(...values), median: median(values), max: Math.max(...values) };
 }
 
-describe('authored ladder waves 4–7 (task 21)', () => {
-  it('ships seven untraited waves, last wave is wave-7, spawn constraints hold', () => {
+describe('authored ladder waves 4–7 (task 22)', () => {
+  it('ships seven robot templates and seven waves; teaching traits on 4/6/7 only', () => {
     expect(data.waves.waves.map((wave) => wave.id)).toEqual([
       'wave-1',
       'wave-2',
@@ -89,12 +120,11 @@ describe('authored ladder waves 4–7 (task 21)', () => {
       'wave-6',
       'wave-7',
     ]);
-    expect(data.robots).toEqual([{ id: 'basic', trait: { type: 'none' }, isBoss: false }]);
+    expect(data.robots).toEqual(SHIPPED_ROBOTS);
 
     for (const [index, wave] of data.waves.waves.entries()) {
       expect(wave.spawns.length).toBeGreaterThanOrEqual(3);
       expect(wave.spawns.length).toBeLessThanOrEqual(6);
-      expect(wave.spawns.every((spawn) => spawn.robot === 'basic')).toBe(true);
       expect(wave.spawns.every((spawn) => spawn.hp[1] <= 99)).toBe(true);
       const letters = new Set(
         wave.spawns.map((spawn) => spawn.lane).filter((lane) => typeof lane === 'string'),
@@ -106,6 +136,46 @@ describe('authored ladder waves 4–7 (task 21)', () => {
           expect(turns[i]! - turns[i - 1]!).toBeGreaterThanOrEqual(5);
         }
       }
+
+      const teaching = TEACHING_ROBOT[index];
+      if (teaching === undefined) {
+        expect(
+          wave.spawns.every((spawn) => spawn.robot === 'basic'),
+          `wave ${index + 1} should be all basic`,
+        ).toBe(true);
+      } else {
+        expect(wave.spawns[0]?.robot, `wave ${index + 1} first spawn`).toBe(teaching);
+        expect(
+          wave.spawns.slice(1).every((spawn) => spawn.robot === 'basic'),
+          `wave ${index + 1} remaining spawns should be basic`,
+        ).toBe(true);
+        expect(wave.spawns.filter((spawn) => spawn.robot === teaching)).toHaveLength(1);
+      }
+    }
+  });
+
+  it('rollWave of shipped waves 4/6/7 uses the teaching template; wave 5 stays basic', () => {
+    const samples = SEEDS.slice(0, 20);
+    for (const seed of samples) {
+      for (const [waveIndex, teaching] of Object.entries(TEACHING_ROBOT)) {
+        const spawns = rollShippedWave(seed, Number(waveIndex));
+        const teachingSpawns = spawns.filter((spawn) => spawn.robotTemplateId === teaching);
+        expect(
+          teachingSpawns.length,
+          `seed ${seed} wave ${Number(waveIndex) + 1} teaching ${teaching}`,
+        ).toBeGreaterThanOrEqual(1);
+        expect(
+          spawns
+            .filter((spawn) => spawn.robotTemplateId !== teaching)
+            .every((spawn) => spawn.robotTemplateId === 'basic'),
+          `seed ${seed} wave ${Number(waveIndex) + 1} other spawns basic`,
+        ).toBe(true);
+      }
+      const wave5 = rollShippedWave(seed, 4);
+      expect(
+        wave5.every((spawn) => spawn.robotTemplateId === 'basic'),
+        `seed ${seed} wave 5 all basic`,
+      ).toBe(true);
     }
   });
 });

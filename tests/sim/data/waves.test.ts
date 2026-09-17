@@ -189,10 +189,18 @@ describe('waves.json schema', () => {
   });
 });
 
-describe('draft ladder content (task 12 / 21)', () => {
-  it('ships the basic robot and waves 1-7', () => {
+describe('draft ladder content (task 12 / 21 / 22)', () => {
+  it('ships the seven robot templates and waves 1-7', () => {
     const data = parseGameData(loadRawGameData());
-    expect(data.robots).toEqual([{ id: 'basic', trait: { type: 'none' }, isBoss: false }]);
+    expect(data.robots).toEqual([
+      { id: 'basic', trait: { type: 'none' }, isBoss: false },
+      { id: 'weakness-2', trait: { type: 'weakness', n: 2 }, isBoss: false },
+      { id: 'weakness-5', trait: { type: 'weakness', n: 5 }, isBoss: false },
+      { id: 'weakness-10', trait: { type: 'weakness', n: 10 }, isBoss: false },
+      { id: 'bounce-back', trait: { type: 'bounceBack' }, isBoss: false },
+      { id: 'odd-only', trait: { type: 'oddOnly' }, isBoss: false },
+      { id: 'even-only', trait: { type: 'evenOnly' }, isBoss: false },
+    ]);
     expect(data.waves.waves.map((wave) => wave.id)).toEqual([
       'wave-1',
       'wave-2',

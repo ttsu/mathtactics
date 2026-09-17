@@ -1,0 +1,27 @@
+# Task 22: the shipped `weakness-5` ladder template is wired — a ×5 in front of a
+# robot spawned from that id doubles damage (GDD §6.4). Existing `:w5` board-grammar
+# scenarios cover the rule; this one loads the robots.json template via `waves:` /
+# `pendingSpawns.robot`. Turn order is FIRE then SPAWN, so the first End Turn brings
+# the template onto the board and the second hits it through ×5.
+name: shipped weakness-5 template doubles through ×5
+mode: run
+baseValue: 1
+board:
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+  - "C . . . . . x5 ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+pendingSpawns:
+  - { turn: 1, lane: 2, hp: 10, robot: weakness-5 }
+waves:
+  - id: wave-4-teaching
+    spawns:
+      - { turn: 1, lane: 2, robot: weakness-5, hp: [10, 10] }
+commands:
+  - endTurn
+  - endTurn
+expectEvents:
+  - { type: RobotSpawned, trait: { type: weakness, n: 5 }, hp: 10, isBoss: false }
+  - { type: RobotDamaged, ballValue: 5, damage: 10, doubled: true, hpBefore: 10, hpAfter: 0 }
+  - { type: RobotDefeated, exact: true }
