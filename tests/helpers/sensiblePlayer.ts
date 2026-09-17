@@ -418,10 +418,13 @@ export interface SensibleRunStats {
   minBaseHp: number;
   endTurns: number;
   turnsPerWave: number[];
+  hpLostPerWave: number[];
   shops: ShopVisitStats[];
   waveEntries: WaveEntrySnapshot[];
 }
 
+/** Task 27 remeasures 10-wave End Turns and leaves headroom. A bot that hits the cap
+ * throws rather than reporting a false loss. */
 const MAX_END_TURNS = 400;
 
 export function playSensibleRun(seed: string, data: GameData): SensibleRunStats {
@@ -430,6 +433,8 @@ export function playSensibleRun(seed: string, data: GameData): SensibleRunStats 
   let endTurns = 0;
   let coinsAfterLastShop = 0;
   const turnsPerWave: number[] = Array.from({ length: data.waves.waves.length }, () => 0);
+  const hpAtWaveStart: number[] = Array.from({ length: data.waves.waves.length }, () => state.baseHp);
+  const hpLostPerWave: number[] = Array.from({ length: data.waves.waves.length }, () => 0);
   const shops: ShopVisitStats[] = [];
   const waveEntries: WaveEntrySnapshot[] = [];
   let capturedEntry = -1;
@@ -441,6 +446,7 @@ export function playSensibleRun(seed: string, data: GameData): SensibleRunStats 
 
     if (state.phase === 'planning' && capturedEntry !== state.waveIndex) {
       capturedEntry = state.waveIndex;
+      hpAtWaveStart[state.waveIndex] = state.baseHp;
       const pendingRobots = state.pendingSpawns.map((entry, index) => {
         const template = data.robots.find((candidate) => candidate.id === entry.robotTemplateId);
         if (!template) {
@@ -464,6 +470,7 @@ export function playSensibleRun(seed: string, data: GameData): SensibleRunStats 
     }
 
     if (state.phase === 'waveCleared') {
+      hpLostPerWave[state.waveIndex] = hpAtWaveStart[state.waveIndex]! - state.baseHp;
       state = applyOk(state, { type: 'openShop' }, data);
       continue;
     }
@@ -503,6 +510,8 @@ export function playSensibleRun(seed: string, data: GameData): SensibleRunStats 
     if (state.baseHp < minBaseHp) minBaseHp = state.baseHp;
   }
 
+  hpLostPerWave[state.waveIndex] = hpAtWaveStart[state.waveIndex]! - state.baseHp;
+
   return {
     seed,
     phase: state.phase,
@@ -510,6 +519,7 @@ export function playSensibleRun(seed: string, data: GameData): SensibleRunStats 
     minBaseHp,
     endTurns,
     turnsPerWave,
+    hpLostPerWave,
     shops,
     waveEntries,
   };
