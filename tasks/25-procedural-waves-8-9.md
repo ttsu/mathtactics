@@ -160,7 +160,7 @@ Boss (26). Trait visuals (23). Armor. Retuning waves 1–7. A set-valued shop gu
 
 **Status:** Partial
 **Completed:** 2026-09-17
-**PR:** TBD · Branch `cursor/25-procedural-waves-fa99`
+**PR:** #43 · Preview: https://mathtactics.timtsu.com/pr/pr-43/ · Branch `cursor/25-procedural-waves-fa99`
 
 **Acceptance criteria:**
 - [x] `rollWave` supports procedural groups; authored path unchanged — Met (`sim/waves/rollWave.ts`; existing authored tests still pass; new TR §9 draw-order tests)
