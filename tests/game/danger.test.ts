@@ -63,6 +63,17 @@ describe('dangerLanes', () => {
     expect(dangerLanes(run)).toEqual([0, 2, 4]);
   });
 
+  it('a 2x2 Boss on col 1 marks both occupied lanes', () => {
+    const run = fakeRunState({
+      board: {
+        cannons: [],
+        cells: emptyCells(),
+        robots: [robot({ robotId: 'boss', lane: 1, col: 1, isBoss: true, hp: 1000, maxHp: 1000 })],
+      },
+    });
+    expect(dangerLanes(run)).toEqual([1, 2]);
+  });
+
   it('never returns the same lane twice, even with two robots on column 1 in the same lane', () => {
     // Not reachable through real play (one robot per cell), but the derivation should still be
     // safe against it rather than assume the invariant.

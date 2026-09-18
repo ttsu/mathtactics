@@ -142,6 +142,35 @@ describe('debugAddRobot', () => {
     expect(behind?.trait).toEqual({ type: 'bounceBack' });
   });
 
+  it('spawns a Boss on a 2x2 at col 6', () => {
+    const start = debugJumpToLevel(realData, 'level-1');
+    expect(start.ok).toBe(true);
+    if (!start.ok) return;
+    const result = debugAddRobot(
+      start.run,
+      realData,
+      { templateId: 'boss', lane: 0, hp: 1000 },
+      seed,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const added = result.run.board.robots.find((robot) => robot.isBoss);
+    expect(added).toMatchObject({
+      lane: 0,
+      col: 6,
+      hp: 1000,
+      maxHp: 1000,
+      isBoss: true,
+    });
+  });
+
+  it('rejects a Boss on the bottom lane', () => {
+    expect(debugAddRobot(null, realData, { templateId: 'boss', lane: 4, hp: 1000 }, seed)).toEqual({
+      ok: false,
+      error: 'boss needs two lanes',
+    });
+  });
+
   it('rejects a bad template, lane, or hp', () => {
     expect(debugAddRobot(null, realData, { templateId: 'nope', lane: 0, hp: 10 }, seed)).toEqual({
       ok: false,

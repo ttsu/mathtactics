@@ -3,12 +3,14 @@
 //
 // On-board robots are processed `(col asc, lane asc)` (front-most first, task 13 requirement 1).
 // A robot on col 1 always leaves the board — queued to detonate (`sim/resolve/detonate.ts`
-// resolves the damage later) — freeing its cell immediately for any follower processed later in
+// resolves the damage later) — freeing its cells immediately for any follower processed later in
 // this same sweep (a chain of adjacent robots in one lane all advance together). Otherwise a
-// robot moves to `col - 1` if that cell is empty (`RobotAdvanced`), else stays (no event).
-// Waiting robots (`col: null`) are never in this sweep at all.
+// robot moves to `col − 1` if every new footprint cell is empty of *other* robots
+// (`RobotAdvanced`), else stays (no event). Waiting robots (`col: null`) are never in this sweep.
+// A 2×2 Boss's back cells of the destination overlap its current front — those are not blockers.
 
 import type { Col, Lane } from '../core/coords';
+import { robotFootprint, robotOccupies } from '../core/footprint';
 import type { Board, GameEvent, Robot } from '../core/types';
 
 export type AdvanceDecision = { kind: 'detonate' } | { kind: 'move'; to: Col } | { kind: 'stay' };
@@ -18,6 +20,9 @@ export type AdvanceDecision = { kind: 'detonate' } | { kind: 'move'; to: Col } |
  * sweep order with speed-1 robots means the "stay" branch can never actually trigger through
  * `advance` below in v1 (task 13 context note) — this is the seam that lets the rule still be
  * proven directly, by feeding a synthetic `isOccupied`.
+ *
+ * `isOccupied` reports cells held by *other* robots. The Boss's destination back column is its
+ * current front, so a self-inclusive occupancy check would freeze it in place.
  */
 export function decideAdvance(
   robot: Robot,
@@ -28,7 +33,10 @@ export function decideAdvance(
   }
   if (robot.col === 1) return { kind: 'detonate' };
   const to = (robot.col - 1) as Col;
-  return isOccupied(robot.lane, to) ? { kind: 'stay' } : { kind: 'move', to };
+  const destination = robotFootprint({ ...robot, col: to });
+  return destination.some((cell) => isOccupied(cell.lane, cell.col))
+    ? { kind: 'stay' }
+    : { kind: 'move', to };
 }
 
 export interface AdvanceResult {
@@ -47,7 +55,7 @@ export function advance(board: Board, firstStep: number): AdvanceResult {
 
   // Copies so callers' `board.robots` is never mutated (task 06/07 purity rule). `onBoard`
   // shares the same object references as `robots` (filter doesn't clone), so mutating a robot
-  // found via `onBoard` updates what `isOccupied` sees for the rest of the sweep.
+  // found via `onBoard` updates what occupancy sees for the rest of the sweep.
   const robots = board.robots.map((robot) => ({ ...robot }));
   const onBoard = robots
     .filter((robot) => robot.col !== null)
@@ -56,11 +64,16 @@ export function advance(board: Board, firstStep: number): AdvanceResult {
   const detonating: Robot[] = [];
   const removed = new Set<string>();
 
-  const isOccupied = (lane: Lane, col: Col): boolean =>
-    robots.some((robot) => !removed.has(robot.robotId) && robot.lane === lane && robot.col === col);
+  const occupiedByOthers = (selfId: string, lane: Lane, col: Col): boolean =>
+    robots.some(
+      (robot) =>
+        robot.robotId !== selfId &&
+        !removed.has(robot.robotId) &&
+        robotOccupies(robot, { lane, col }),
+    );
 
   for (const robot of onBoard) {
-    const decision = decideAdvance(robot, isOccupied);
+    const decision = decideAdvance(robot, (lane, col) => occupiedByOthers(robot.robotId, lane, col));
     if (decision.kind === 'detonate') {
       detonating.push({ ...robot });
       removed.add(robot.robotId);

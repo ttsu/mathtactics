@@ -24,9 +24,10 @@ import {
   cellCenter,
   cellRect,
   designToWorld,
-  worldToDesign,
+  robotCenter,
   traySlotCenter,
   waitingGhostCenter,
+  worldToDesign,
   type Point,
 } from './layout';
 import { formatNumber, pieceHomes, tileColor, type PieceHome } from './pieces';
@@ -298,10 +299,13 @@ export class BoardRenderer {
         this.robots.set(robot.robotId, view);
       }
       view.setChrome({ trait: robot.trait, isBoss: robot.isBoss });
+      view.setAnchor(robot.lane, robot.col);
       view.setHp(robot.hp, robot.maxHp);
       view.setAlpha(robot.col === null ? ghostAlpha : 1);
       const center =
-        robot.col === null ? waitingGhostCenter(robot.lane) : cellCenter(robot.lane, robot.col);
+        robot.col === null
+          ? waitingGhostCenter(robot.lane, robot.isBoss)
+          : robotCenter(robot.lane, robot.col, robot.isBoss);
       this.place(view, center, 1, !created);
     }
   }

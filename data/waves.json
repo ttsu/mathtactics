@@ -136,10 +136,10 @@
     {
       "id": "wave-10",
       "spawns": [
-        { "turn": 1, "lane": 2, "robot": "boss", "hp": [100, 140] },
-        { "turn": 1, "lane": "A", "robot": "basic", "hp": [20, 40] },
-        { "turn": 7, "lane": "B", "robot": "basic", "hp": [30, 50] },
-        { "turn": 7, "lane": "C", "robot": "basic", "hp": [30, 50] }
+        { "turn": 1, "lane": 1, "robot": "boss", "hp": [1000, 1000] },
+        { "turn": 1, "lane": "A", "robot": "bounce-back", "hp": [20, 40] },
+        { "turn": 7, "lane": "B", "robot": "odd-only", "hp": [30, 50] },
+        { "turn": 7, "lane": "C", "robot": "even-only", "hp": [30, 50] }
       ]
     }
   ]

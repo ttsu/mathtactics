@@ -4,13 +4,13 @@
 
 import type { Col, Lane } from '../../../sim/core/coords';
 import { isLane } from '../../../sim/core/coords';
-import type { RunState, TileId } from '../../../sim/core/types';
+import { footprintIsFree, spawnColFor } from '../../../sim/core/footprint';
+import type { Robot, RunState, TileId } from '../../../sim/core/types';
 import { allocatePieceId, allocateRobotId } from '../../../sim/commands/ids';
 import { buildLevelState } from '../../../sim/commands/level';
 import { buildNewRun } from '../../../sim/commands/newRun';
 import { buildNextWave } from '../../../sim/commands/nextWave';
 import type { GameData } from '../../../sim/data/schemas';
-import { SPAWN_COL } from '../../../sim/waves/spawn';
 
 export type DebugResult = { ok: true; run: RunState } | { ok: false; error: string };
 
@@ -95,17 +95,21 @@ export function debugAddTile(
   });
 }
 
-export const DEBUG_HP_PRESETS = [1, 5, 10, 20, 50, 100, 150] as const;
+export const DEBUG_HP_PRESETS = [1, 5, 10, 20, 50, 100, 150, 1000] as const;
 
 export function defaultDebugHp(isBoss: boolean): number {
-  return isBoss ? 100 : 10;
+  return isBoss ? 1000 : 10;
 }
 
-function firstOpenCol(run: RunState, lane: Lane): Col | null {
-  for (let col = SPAWN_COL; col >= 1; col--) {
-    if (!run.board.robots.some((robot) => robot.lane === lane && robot.col === col)) {
-      return col as Col;
-    }
+function firstOpenAnchor(run: RunState, lane: Lane, isBoss: boolean): Col | null {
+  if (isBoss && !isLane(lane + 1)) return null;
+  for (let col = spawnColFor(isBoss); col >= 1; col--) {
+    const probe: Pick<Robot, 'lane' | 'col' | 'isBoss'> = {
+      lane,
+      col: col as Col,
+      isBoss,
+    };
+    if (footprintIsFree(run.board.robots, probe)) return col as Col;
   }
   return null;
 }
@@ -119,13 +123,16 @@ export function debugAddRobot(
   const template = data.robots.find((candidate) => candidate.id === options.templateId);
   if (!template) return fail(`unknown robot "${options.templateId}"`);
   if (!isLane(options.lane)) return fail(`bad lane ${options.lane}`);
-  if (!Number.isInteger(options.hp) || options.hp < 1 || options.hp > 150) {
+  if (!Number.isInteger(options.hp) || options.hp < 1 || options.hp > 1000) {
     return fail(`bad hp ${options.hp}`);
+  }
+  if (template.isBoss && !isLane(options.lane + 1)) {
+    return fail('boss needs two lanes');
   }
 
   const current = ensureRun(run, data, seed);
   const [robotId, nextIds] = allocateRobotId(current.nextIds);
-  const col = firstOpenCol(current, options.lane);
+  const col = firstOpenAnchor(current, options.lane, template.isBoss);
   return ok({
     ...current,
     nextIds,

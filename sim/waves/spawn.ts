@@ -2,20 +2,27 @@
 //
 // Order: robots already waiting off-board first (in `board.robots` order — they were scheduled
 // earlier), then pending entries due this turn (`turn <= state.turn`), in schedule order. Each
-// enters col 7 of its lane if no robot is there (`RobotSpawned`); otherwise it waits off-board with
-// `col: null`. Only a newly scheduled robot emits `RobotWaiting` — one still waiting emits nothing.
+// enters its spawn column (7 for a 1×1, 6 for a 2×2 Boss so the back sits on 7) if every cell of
+// its footprint is free (`RobotSpawned`); otherwise it waits off-board with `col: null`. Only a
+// newly scheduled robot emits `RobotWaiting` — one still waiting emits nothing.
 
-import type { Col, Lane } from '../core/coords';
+import type { Lane } from '../core/coords';
+import { footprintIsFree, spawnColFor, type Occupant } from '../core/footprint';
 import type { GameEvent, Robot, RunState } from '../core/types';
 import type { GameData } from '../data/schemas';
 import { allocateRobotId } from '../commands/ids';
 
-/** Robots enter the board at the far right (GDD §3.1). */
-export const SPAWN_COL: Col = 7;
+/** Robots enter the board at the far right (GDD §3.1). Re-exported so callers that only need
+ * the 1×1 column keep importing one name. */
+export { SPAWN_COL, BOSS_SPAWN_COL, spawnColFor } from '../core/footprint';
 
 export interface SpawnResult {
   state: RunState;
   events: GameEvent[];
+}
+
+function probe(lane: Lane, isBoss: boolean): Occupant {
+  return { lane, col: spawnColFor(isBoss), isBoss };
 }
 
 /** `firstStep` is the `step` of the first event emitted, so SPAWN can continue a longer
@@ -25,12 +32,11 @@ export function spawn(state: RunState, data: GameData, firstStep = 0): SpawnResu
   const nextStep = () => firstStep + events.length;
 
   const robots: Robot[] = state.board.robots.map((robot) => ({ ...robot }));
-  const spawnCellFree = (lane: Lane) =>
-    !robots.some((robot) => robot.lane === lane && robot.col === SPAWN_COL);
+  const canEnter = (lane: Lane, isBoss: boolean) => footprintIsFree(robots, probe(lane, isBoss));
 
   for (const robot of robots) {
-    if (robot.col !== null || !spawnCellFree(robot.lane)) continue;
-    robot.col = SPAWN_COL;
+    if (robot.col !== null || !canEnter(robot.lane, robot.isBoss)) continue;
+    robot.col = spawnColFor(robot.isBoss);
     events.push(spawnedEvent(robot, nextStep()));
   }
 
@@ -45,11 +51,11 @@ export function spawn(state: RunState, data: GameData, firstStep = 0): SpawnResu
     }
     const [robotId, next] = allocateRobotId(nextIds);
     nextIds = next;
-    const enters = spawnCellFree(entry.lane);
+    const enters = canEnter(entry.lane, template.isBoss);
     const robot: Robot = {
       robotId,
       lane: entry.lane,
-      col: enters ? SPAWN_COL : null,
+      col: enters ? spawnColFor(template.isBoss) : null,
       hp: entry.hp,
       maxHp: entry.hp,
       trait: template.trait,
@@ -79,12 +85,15 @@ export function spawn(state: RunState, data: GameData, firstStep = 0): SpawnResu
 }
 
 function spawnedEvent(robot: Robot, step: number): GameEvent {
+  if (robot.col === null) {
+    throw new Error(`spawn: RobotSpawned for off-board robot ${robot.robotId}`);
+  }
   return {
     step,
     group: 'spawn',
     type: 'RobotSpawned',
     robotId: robot.robotId,
-    at: { lane: robot.lane, col: SPAWN_COL },
+    at: { lane: robot.lane, col: robot.col },
     hp: robot.hp,
     maxHp: robot.maxHp,
     trait: robot.trait,

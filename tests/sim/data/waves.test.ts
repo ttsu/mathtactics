@@ -96,7 +96,7 @@ describe('robots.json schema', () => {
   it('accepts an untraited Boss template', () => {
     const data = parseGameData(
       validRaw(
-        [waveDef({ spawns: [spawnDef({ robot: 'boss', hp: [100, 150] })] })],
+        [waveDef({ spawns: [spawnDef({ robot: 'boss', lane: 1, hp: [100, 150] })] })],
         [
           { id: 'basic', trait: { type: 'none' }, isBoss: false },
           { id: 'boss', trait: { type: 'none' }, isBoss: true },
@@ -175,7 +175,7 @@ describe('waves.json schema', () => {
   it('rejects hp 0 and hp above the Boss maximum', () => {
     const zero = validRaw([waveDef({ spawns: [spawnDef({ hp: [0, 3] })] })]);
     expect(() => parseGameData(zero)).toThrow(/^waves\.json: waves\[0\]\.spawns\[0\]\.hp\[0\]:/);
-    const tooHigh = validRaw([waveDef({ spawns: [spawnDef({ hp: [3, 151] })] })]);
+    const tooHigh = validRaw([waveDef({ spawns: [spawnDef({ hp: [3, 1001] })] })]);
     expect(() => parseGameData(tooHigh)).toThrow(/^waves\.json: waves\[0\]\.spawns\[0\]\.hp\[1\]:/);
   });
 
@@ -186,10 +186,10 @@ describe('waves.json schema', () => {
     );
   });
 
-  it('loads a Boss spawn with hp [100, 150]', () => {
+  it('loads a Boss spawn with hp [1000, 1000]', () => {
     const data = parseGameData(
       validRaw(
-        [waveDef({ spawns: [spawnDef({ robot: 'boss', hp: [100, 150] })] })],
+        [waveDef({ spawns: [spawnDef({ robot: 'boss', lane: 1, hp: [1000, 1000] })] })],
         [
           { id: 'basic', trait: { type: 'none' }, isBoss: false },
           { id: 'boss', trait: { type: 'none' }, isBoss: true },
@@ -199,13 +199,46 @@ describe('waves.json schema', () => {
     const wave = data.waves.waves[0];
     expect(wave && 'spawns' in wave ? wave.spawns[0] : undefined).toEqual({
       turn: 1,
-      lane: 'A',
+      lane: 1,
       robot: 'boss',
-      hp: [100, 150],
+      hp: [1000, 1000],
     });
   });
 
-  it('rejects a basic spawn with hp [100, 120] even though the per-spawn ceiling is 150', () => {
+  it('rejects a Boss spawn on lane 4 (2x2 does not fit)', () => {
+    const raw = validRaw(
+      [waveDef({ spawns: [spawnDef({ robot: 'boss', lane: 4, hp: [1000, 1000] })] })],
+      [
+        { id: 'basic', trait: { type: 'none' }, isBoss: false },
+        { id: 'boss', trait: { type: 'none' }, isBoss: true },
+      ],
+    );
+    expect(() => parseGameData(raw)).toThrow(/Boss 2x2 does not fit on lane 4/);
+  });
+
+  it('rejects a Boss spawn with a letter lane', () => {
+    const raw = validRaw(
+      [waveDef({ spawns: [spawnDef({ robot: 'boss', lane: 'A', hp: [1000, 1000] })] })],
+      [
+        { id: 'basic', trait: { type: 'none' }, isBoss: false },
+        { id: 'boss', trait: { type: 'none' }, isBoss: true },
+      ],
+    );
+    expect(() => parseGameData(raw)).toThrow(/Boss must use a fixed lane/);
+  });
+
+  it('rejects a Boss spawn whose hp max exceeds 1000', () => {
+    const raw = validRaw(
+      [waveDef({ spawns: [spawnDef({ robot: 'boss', lane: 1, hp: [1001, 1001] })] })],
+      [
+        { id: 'basic', trait: { type: 'none' }, isBoss: false },
+        { id: 'boss', trait: { type: 'none' }, isBoss: true },
+      ],
+    );
+    expect(() => parseGameData(raw)).toThrow(/hp/);
+  });
+
+  it('rejects a basic spawn with hp [100, 120] even though the per-spawn ceiling is 1000', () => {
     const raw = validRaw([waveDef({ spawns: [spawnDef({ hp: [100, 120] })] })]);
     expect(() => parseGameData(raw)).toThrow(
       /^waves\.json: waves\[0\]\.spawns\[0\]\.hp: hp max 120 exceeds 99 for non-Boss template "basic"/,

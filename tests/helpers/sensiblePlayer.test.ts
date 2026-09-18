@@ -3,7 +3,7 @@
 // rank the way the real rule does.
 
 import { describe, expect, it } from 'vitest';
-import type { Robot, Trait } from '../../sim/core/types';
+import type { Robot, TileId, Trait } from '../../sim/core/types';
 import {
   arrangementRank,
   bestSequence,
@@ -29,6 +29,17 @@ describe('arrangementRank through resolveImpact', () => {
     expect(betterRank(arrangementRank(robot, 10), arrangementRank(robot, 9))).toBe(true);
     expect(betterRank(arrangementRank(robot, 9), arrangementRank(robot, 13))).toBe(true);
     expect(betterRank(arrangementRank(robot, 9), arrangementRank(robot, 8))).toBe(true);
+  });
+
+  it('ranks a Boss overkill with exact so the 1000 HP finale is removed, not chipped', () => {
+    const boss = probeRobot(1000, { type: 'none' });
+    boss.isBoss = true;
+    expect(rankCategory(boss, 1000)).toBe(2);
+    expect(rankCategory(boss, 540)).toBe(1);
+    expect(rankCategory(boss, 1100)).toBe(2);
+    expect(betterRank(arrangementRank(boss, 1100), arrangementRank(boss, 540))).toBe(true);
+    const basic = probeRobot(10, { type: 'none' });
+    expect(rankCategory(basic, 13)).toBe(0);
   });
 
   it('ranks a Bounce-back overshoot with the overshoots, not the undershoots', () => {
@@ -91,6 +102,66 @@ describe('bestSequence is trait-aware', () => {
     const seq = bestSequence(state, data, ['p1'], robot, 1);
     expect(seq).toEqual([]);
     expect(betterRank(arrangementRank(robot, 7), arrangementRank(robot, 13))).toBe(true);
+  });
+
+  it('finds add-then-mul×mul on a crowded tray against a 1000 HP Boss', () => {
+    // Seed-1-shaped tray: many cheap tiles plus add:9, ×5, ×3. (2+9)×5×3 = 165 beats
+    // the 105 the old DFS-from-piece-id-order found before the arrangement cap.
+    const tiles = [
+      fakeTile({ id: 'add:1', n: 1 }),
+      fakeTile({ id: 'add:5', n: 5 }),
+      fakeTile({ id: 'add:8', n: 8 }),
+      fakeTile({ id: 'add:9', n: 9 }),
+      fakeTile({ id: 'mul:2', kind: 'mul', n: 2, priceCategory: 'mulLow' }),
+      fakeTile({ id: 'mul:3', kind: 'mul', n: 3, priceCategory: 'mulLow' }),
+      fakeTile({ id: 'mul:5', kind: 'mul', n: 5, priceCategory: 'mulHigh' }),
+      fakeTile({ id: 'sub:1', kind: 'sub', n: 1, priceCategory: 'sub', color: 'blue' }),
+      fakeTile({ id: 'sub:6', kind: 'sub', n: 6, priceCategory: 'sub', color: 'blue' }),
+      fakeTile({ id: 'sub:9', kind: 'sub', n: 9, priceCategory: 'sub', color: 'blue' }),
+      fakeTile({ id: 'sub:10', kind: 'sub', n: 10, priceCategory: 'sub', color: 'blue' }),
+    ];
+    const data = fakeGameData({ tiles });
+    const pieces: Record<string, { pieceId: string; tileId: TileId }> = {};
+    const ids: string[] = [];
+    const tray: TileId[] = [
+      'add:1',
+      'add:1',
+      'add:1',
+      'add:5',
+      'add:8',
+      'add:9',
+      'add:9',
+      'mul:2',
+      'mul:3',
+      'mul:3',
+      'mul:3',
+      'mul:5',
+      'sub:1',
+      'sub:1',
+      'sub:1',
+      'sub:10',
+      'sub:6',
+      'sub:9',
+    ];
+    for (let i = 0; i < tray.length; i++) {
+      const pieceId = `p${String(i).padStart(2, '0')}`;
+      pieces[pieceId] = { pieceId, tileId: tray[i]! };
+      ids.push(pieceId);
+    }
+    const state = fakeRunState({ cannonBaseValue: 2, pieces });
+    const robot = probeRobot(1000, { type: 'none' });
+    robot.isBoss = true;
+    const valueOf = (seq: string[]) =>
+      seq.reduce((current, pieceId) => {
+        const tileId = pieces[pieceId]!.tileId;
+        const def = tiles.find((tile) => tile.id === tileId)!;
+        if (def.kind === 'add') return current + def.n;
+        if (def.kind === 'sub') return current - def.n;
+        return current * def.n;
+      }, 2);
+    expect(valueOf(bestSequence(state, data, ids, robot, 3))).toBeGreaterThanOrEqual(165);
+    // Five empty columns in front of a col-6 Boss: (2+9+8)×5×3×3 = 855.
+    expect(valueOf(bestSequence(state, data, ids, robot, 5))).toBeGreaterThanOrEqual(855);
   });
 });
 

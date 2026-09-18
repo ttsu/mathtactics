@@ -109,6 +109,8 @@ export const PIECE_INSET = 8;
 export const PIECE_SIZE = CELL_SIZE - PIECE_INSET * 2;
 /** Robot block: smaller than a tile so the colour of a tile it stands on still shows around it. */
 export const ROBOT_SIZE = 76;
+/** 2×2 Boss body: same outer margin as a 1×1, spanning two cells including the grid line. */
+export const BOSS_SIZE = 2 * CELL_SIZE - (CELL_SIZE - ROBOT_SIZE);
 /** Font sizes in design points. Robot HP must be the largest text on the board (GDD §11.2). */
 export const TILE_LABEL_FONT_SIZE = 40;
 export const ROBOT_HP_FONT_SIZE = 56;
@@ -191,16 +193,18 @@ export function baseStripRect(lane: number): Rect {
 }
 
 /** Design-space centre of one lane's base strip cell — where a detonating robot lurches to and
- * flashes (GDD §7.2, §12.2 step 5). */
-export function baseStripCenter(lane: number): Point {
-  return rectCenter(baseStripRect(lane));
+ * flashes (GDD §7.2, §12.2 step 5). A 2×2 Boss uses the midpoint of its two lanes. */
+export function baseStripCenter(lane: number, isBoss = false): Point {
+  const top = rectCenter(baseStripRect(lane));
+  return isBoss ? { x: top.x, y: top.y + CELL_SIZE / 2 } : top;
 }
 
 /** Design-space centre of a waiting robot's ghost — one cell right of column 7, still inside the
- * board's right margin (GDD §12.2 step 6: "just right of column 7"). */
-export function waitingGhostCenter(lane: number): Point {
+ * board's right margin (GDD §12.2 step 6: "just right of column 7"). A 2×2 Boss ghost sits on
+ * the midpoint of its two lanes. */
+export function waitingGhostCenter(lane: number, isBoss = false): Point {
   const col7 = cellCenter(lane, COLUMN_COUNT - 1);
-  return { x: col7.x + CELL_SIZE, y: col7.y };
+  return { x: col7.x + CELL_SIZE, y: isBoss ? col7.y + CELL_SIZE / 2 : col7.y };
 }
 
 export function rectContains(rect: Rect, point: Point): boolean {
@@ -215,6 +219,14 @@ export function rectContains(rect: Rect, point: Point): boolean {
 /** Design-space centre of a grid cell. */
 export function cellCenter(lane: number, col: number): Point {
   return rectCenter(cellRect(lane, col));
+}
+
+/** Design-space centre of a robot: a 1×1 sits on its cell; a 2×2 Boss sits on the midpoint of
+ * the four cells whose top-front is `(lane, col)`. */
+export function robotCenter(lane: number, col: number, isBoss: boolean): Point {
+  if (!isBoss) return cellCenter(lane, col);
+  const topLeft = cellRect(lane, col);
+  return { x: topLeft.x + CELL_SIZE, y: topLeft.y + CELL_SIZE };
 }
 
 /** The grid cell containing a design point, or `null` outside the grid. */

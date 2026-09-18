@@ -154,9 +154,9 @@ export function fakeTraitSettings() {
   };
 }
 
-/** The `presentation.json` `boss` block (task 26 overflow scale) for fake `GameData`. */
+/** The `presentation.json` `boss` block. `scale` 1 fills the 2×2 with the same outer margin as a 1×1. */
 export function fakeBossSettings() {
-  return { scale: 1.55 };
+  return { scale: 1 };
 }
 
 /** The `presentation.json` `hints` block (task 24) for hand-built fake `GameData` fixtures. */

@@ -1,0 +1,25 @@
+# Dual-lane fire: a 2x2 Boss at lane 1 occupies lanes 1-2, so both cannons hit the same robot.
+name: 2x2 Boss is hit from both occupied lanes
+mode: run
+baseValue: 1
+board:
+  - ". . . . . . . ."
+  - "C . . . . . . ."
+  - "C . . . . . . ."
+  - ". . . . . . . ."
+  - ". . . . . . . ."
+pendingSpawns:
+  - { turn: 1, lane: 1, hp: 1000, robot: boss }
+waves:
+  - id: wave-boss
+    spawns:
+      - { turn: 1, lane: 1, robot: boss, hp: [1000, 1000] }
+commands:
+  - endTurn
+  - endTurn
+expectEvents:
+  - { type: RobotSpawned, isBoss: true, hp: 1000, at: { lane: 1, col: 6 } }
+  - { type: RobotDamaged, damage: 1, hpBefore: 1000, hpAfter: 999 }
+  - { type: RobotDamaged, damage: 1, hpBefore: 999, hpAfter: 998 }
+expectState:
+  phase: planning

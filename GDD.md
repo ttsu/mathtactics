@@ -1,7 +1,7 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.7.1
+**Version:** 0.7.2
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
@@ -10,6 +10,21 @@ of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.7.2
+
+Human request after the M4 Boss shipped: the finale should *feel* like a finale.
+
+- **Boss occupies a 2×2.** `lane`/`col` are the top-front cell; it locks both lanes and both
+  columns for tiles, collision, advance, and hits. Balls in either occupied lane hit the same
+  robot. Spawn front is column 6 so the back sits on 7. Authored on lane 1 (occupies 1–2),
+  matching the starting cannon in lane 2.
+- **Boss HP is 1000** (four digits). The 2×2 body is what keeps that numeral readable. Leaking
+  it is still a loss. Exact-kill-in-3-hits is dropped — this is a multi-turn fight.
+- **Escorts carry traits.** T1 Bounce-back, T7 Odd-only + Even-only. Same light HP as before;
+  they stay a kid-facing trap, not the leftover-HP lever.
+- **Shop after 9 guarantees `×5` as well as `−N`.** A 1000 HP 2×2 detonates in six turns;
+  without a `×5` the weakest trays (only `×2`) leak the Boss.
 
 ## 0. Changes in v0.7.1
 
@@ -56,7 +71,8 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   it teaches subtraction. Remaining robots on those waves stay `basic`.
 - **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
   already follow `waves.json` length. Shop after 7 guarantees `×2` or `×5` (grill A). Shop after
-  8 guarantees nothing (grill A). Shop after 9 guarantees `−N` (grill A) — last trim before the Boss.
+  8 guarantees nothing (grill A). Shop after 9 guarantees `×5` and `−N` — `×5` is the 1000 HP
+  toolkit (a tray of only `×2` cannot chip 1000 before the 2×2 detonates); `−N` is last trim.
 - **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
   wave start on the `wave` stream. Mixed traits, HP inside §6.6. Both waves may spawn `basic`.
   Wave 8 is **3+3** (grill A): T1 three, T8 three — mix traits without four-lane panic.
@@ -66,9 +82,9 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   Wave 8 T1 and T8 use **split pools** (grill A): T1 is n=5 + both parities + bounce + basic;
   T8 introduces weakness-2 and weakness-10. Wave 9 uses **one shared full mix** on every pack
   (grill A).
-- **Wave 10 is authored:** one Boss (**100–150 HP**, range grill A, **no trait**, grill A) plus escort `basic`s
-  at T1 (one) and T7 (two). Leaking the Boss is a loss. The three-digit HP is the puzzle.
-  Exact-killable in ≤ 3 hits with the tiles owned on entering wave 10 (grill A).
+- **Wave 10 is authored:** one Boss (**1000 HP**, **2×2**, **no trait**) plus escort with
+  traits at T1 (Bounce-back) and T7 (Odd-only + Even-only). Leaking the Boss is a loss.
+  The four-digit HP is the puzzle — a multi-turn fight, not a ≤ 3-hit exact kill.
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
   without words (§6.2–6.4). Bounce-back drain-to-zero-then-refill (v0.7.1) and blocked clonk
   already play; further celebration juice stays M5.
@@ -216,7 +232,7 @@ Tuned to 2nd grade as a *ballpark*, not a hard curriculum cap.
   −4 deals 0 damage (§5.4). A player can go negative and climb back out.
 - **Ball value has no cap.** Chaining `×10` tiles is a valid, celebrated strategy.
 - **Zero is even. Negative numbers have ordinary parity** (−3 is odd).
-- **Normal robot HP never exceeds 99** (two digits). Only the Boss uses three digits (§6.6).
+- **Normal robot HP never exceeds 99** (two digits). Only the Boss uses four digits (§6.6).
 - No fractions or non-integers exist in v1.
 
 ---
@@ -229,7 +245,8 @@ Tuned to 2nd grade as a *ballpark*, not a hard curriculum cap.
 - **Column 0 is the cannon slot column.** Each lane has exactly one cannon slot.
 - **Columns 1–7 are tile cells.**
 - The **base** sits to the left of the cannon slot column, spanning all lanes.
-- Robots **spawn at column 7** and advance **right to left**.
+- Robots **spawn at column 7** (a 2×2 Boss spawns with its front at column 6 so the back sits
+  on 7) and advance **right to left**.
 - A robot at column 1 that advances **reaches the base and detonates** (§7.2).
   Robots never enter column 0.
 - Balls travel **left to right** from the cannon slot.
@@ -284,8 +301,9 @@ A **wave** is played over multiple **turns**. Only Go (End Turn) is a required p
 
 ```
 1. SPAWN         Robots scheduled for this turn (and any robots waiting off-board)
-                 enter column 7 of their lane if that cell is free, in schedule order.
-                 A robot whose spawn cell is occupied waits off-board (shown as a ghost).
+                 enter the far-right of their lane if every cell of their footprint is
+                 free (column 7 for a 1×1; columns 6–7 and two lanes for a 2×2 Boss).
+                 A robot whose spawn cells are occupied waits off-board (shown as a ghost).
 2. PLANNING      Untimed. Player drags tiles between tray and cells, moves cannons
                  between empty cannon slots, uses Undo, may Replay the last turn.
 3. FIRE          Player taps Go. Each armed lane resolves independently (§5).
@@ -490,9 +508,10 @@ stacked dots = even blocked ("does everyone have a partner?").
   traits — not ever-larger numbers.
 - Placeholder curve (tuned in data): wave 1 → 1–3, wave 2 → 4–10, wave 5 → ~10–30,
   wave 9 → ~30–99.
-- **Boss** (wave 10 only): one robot, **100–150 HP** (range grill A), **no trait** (grill A), visually much
-  larger (occupies one cell but its sprite overflows it). Arrives with a light escort of
-  normal robots. Detonates for remaining HP like any robot. The three-digit HP is the puzzle.
+- **Boss** (wave 10 only): one robot, **1000 HP**, **no trait**, occupying a **2×2** (top-front
+  authored on lane 1, so it covers lanes 1–2 and two columns). Balls in either occupied lane
+  hit it. Arrives with a light escort of traited robots (T1 Bounce-back, T7 Odd-only and
+  Even-only). Detonates for remaining HP like any robot. The four-digit HP is the puzzle.
 
 ---
 
@@ -667,7 +686,7 @@ shop slots are seeded-random within each rung.
 | 7 | First **Odd-only** robot | at least one `×2` or `×5` (grill A) | Odd and even |
 | 8 | Procedural **3+3** (grill A), HP ~30–65, mixed traits | — (grill A) | Combining; Even-only at T1 |
 | 9 | Procedural **4+4+3** (grill C), one full mix (grill A), HP ~45–99 | at least one `−N` (grill A) | Four lanes and an extra pack |
-| 10 | **Boss** (100–150 HP, range grill A, no trait) + light escort | — (no shop; win) | The big number |
+| 10 | **Boss** (1000 HP, 2×2, no trait) + traited escort | — (no shop; win) | The big number |
 
 No tutorial mode and no text popups: wave design does the teaching.
 
@@ -956,7 +975,7 @@ Task specs are written one milestone at a time; later milestones may change afte
 | Tray | Owned tiles not on the board. |
 | Robot | Enemy unit. |
 | Trait | Weakness, Bounce-back, Odd-only, or Even-only. |
-| Boss | The wave-10 robot, 100–150 HP, no trait. |
+| Boss | The wave-10 robot, 1000 HP, 2×2, no trait. |
 | Base | Player's structure left of the cannon slots. |
 | Detonation | A robot reaching the base; damage = remaining HP. |
 | Locked cell | A cell containing a robot; tiles cannot be placed or removed. |
@@ -1015,11 +1034,11 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Wave 6's first teaching trait is Bounce-back (grill A). The −N shop after 5 is the exam.
 - Shop after wave 7 guarantees `×2` or `×5` (grill A). Heading into the 8–9 mix with a multiply.
 - Shop after wave 8 guarantees nothing (grill A). No second gift one shop later.
-- Shop after wave 9 guarantees `−N` (grill A). Last trim before the Boss.
+- Shop after wave 9 guarantees `×5` and `−N`. `×5` is the 1000 HP toolkit; `−N` is last trim.
 - Waves 4–7 leftover after wave 7: sensible-player min ≥ 80, and not every seed at 100.
 - 10-wave leftover after the Boss: sensible-player min near 40 (still ≥ 40), median 50–70.
-  Chips come from waves 8–9 for a sensible player. Wave 10 escort is T1 one `basic` + T7 two
-  more (kid-facing trap). Leaking the Boss is a loss.
+  Chips come from waves 8–9 for a sensible player. Wave 10 escort is T1 Bounce-back + T7
+  Odd-only and Even-only (kid-facing trap). Leaking the Boss is a loss.
 - The Settings gear on the main menu is labelled *Settings* (one extra word beyond the §11.1
   navigation list). The Hints toggle is icon + one word. No Sound row until M5.
 - Planning hints are off by default (grill A). The player can turn them on in Settings.
@@ -1029,9 +1048,9 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Procedural groups draw distinct lanes with `nextInt` into the remaining lanes, then pick a
   template from the remaining pool **without replacement** (grill B) and roll HP — file order,
   `wave` stream only. `count` ≤ unique `pool` length. The T1 clonk is a lesson, not a lottery.
-- The Boss is untraited (grill A): **100–150 HP** (range grill A), authored in lane 2 (center, matching the
-  starting cannon). Escort is T1 one `basic` plus T7 two more `basic`s (grill B). Exact-killable
-  in ≤ 3 hits with the tiles owned on entering wave 10 (grill A).
+- The Boss is untraited: **1000 HP**, **2×2** occupying lanes 1–2 (starting cannon in lane 2
+  hits it). Escort is T1 Bounce-back plus T7 Odd-only and Even-only. This is a multi-turn
+  fight; the old ≤ 3-hit exact-kill grill does not apply at 1000 HP.
 - A sloppy run can lose on waves 8–9 and never see the Boss. The sensible player always reaches wave 10.
 - Both waves 8 and 9 may spawn `basic`. Wave 8 is 3+3 (grill A). Wave 8 T1 and T8 use split
   pools (grill A): T1 is n=5 + both parities + bounce + basic; T8 introduces 2 and 10.

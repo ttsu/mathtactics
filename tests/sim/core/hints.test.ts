@@ -206,4 +206,20 @@ describe('laneHintValues', () => {
       { col: 3, value: 15 },
     ]);
   });
+
+  it('a 2x2 Boss in lane 1 also stops hints in its second lane', () => {
+    let cells = emptyCells();
+    cells = place(cells, 2, 1, 'p-add');
+    cells = place(cells, 2, 3, 'p-mul');
+    const state = armedLane({
+      cells,
+      pieces: {
+        'p-add': { pieceId: 'p-add', tileId: 'add:4' },
+        'p-mul': { pieceId: 'p-mul', tileId: 'mul:3' },
+      },
+      cannons: [false, false, true, false, false],
+      robots: [robot({ lane: 1, col: 3, isBoss: true, hp: 1000, maxHp: 1000 })],
+    });
+    expect(laneHintValues(state, 2, data)).toEqual([{ col: 1, value: 5 }]);
+  });
 });

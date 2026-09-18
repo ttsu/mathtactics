@@ -5,6 +5,7 @@
 
 import Phaser from 'phaser';
 import type { Lane } from '../../../sim/core/coords';
+import { robotOccupies } from '../../../sim/core/footprint';
 import type { RunState } from '../../../sim/core/types';
 import type { GameData } from '../../../sim/data/schemas';
 import { fillRect, inset } from '../drawBoardBackground';
@@ -61,7 +62,7 @@ export class DangerGlow {
     });
 
     for (const lane of lanes) {
-      const robot = run.board.robots.find((r) => r.lane === lane && r.col === 1);
+      const robot = run.board.robots.find((r) => robotOccupies(r, { lane, col: 1 }));
       const view = robot ? this.renderer.robotView(robot.robotId) : undefined;
       if (view === undefined) continue;
       view.setAngle(-settings.wobbleDeg);

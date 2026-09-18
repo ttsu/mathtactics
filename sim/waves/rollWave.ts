@@ -17,6 +17,7 @@
 // The result is stable-sorted by `turn`, so same-turn entries keep file / draw order.
 
 import { lanes, type Lane } from '../core/coords';
+import { reservedSpawnLanes } from '../core/footprint';
 import { nextInt, type RngState } from '../core/rng';
 import type { SpawnEntry } from '../core/types';
 import type { LaneLetter, WaveDef } from '../data/schemas';
@@ -26,15 +27,23 @@ export interface RolledWave {
   rng: RngState;
 }
 
+function isBossId(robotId: string, robots: readonly { id: string; isBoss: boolean }[]): boolean {
+  return robots.some((robot) => robot.id === robotId && robot.isBoss);
+}
+
 function rollAuthoredWave(
   waveDef: Extract<WaveDef, { spawns: unknown }>,
   rngState: RngState,
+  robots: readonly { id: string; isBoss: boolean }[],
 ): RolledWave {
   let rng = rngState;
 
   const fixedLanes = new Set<Lane>();
   for (const spawn of waveDef.spawns) {
-    if (typeof spawn.lane === 'number') fixedLanes.add(spawn.lane);
+    if (typeof spawn.lane !== 'number') continue;
+    for (const lane of reservedSpawnLanes(spawn.lane, isBossId(spawn.robot, robots))) {
+      fixedLanes.add(lane);
+    }
   }
 
   const letterLanes = new Map<LaneLetter, Lane>();
@@ -98,9 +107,15 @@ function rollProceduralWave(
   return { spawns, rng };
 }
 
-export function rollWave(waveDef: WaveDef, rngState: RngState): RolledWave {
+/** `robots` is the `robots.json` list so a 2×2 Boss can reserve its second lane from letter
+ * assignment. Tests of non-Boss authored waves may omit it. */
+export function rollWave(
+  waveDef: WaveDef,
+  rngState: RngState,
+  robots: readonly { id: string; isBoss: boolean }[] = [],
+): RolledWave {
   if ('spawns' in waveDef) {
-    return rollAuthoredWave(waveDef, rngState);
+    return rollAuthoredWave(waveDef, rngState, robots);
   }
   return rollProceduralWave(waveDef, rngState);
 }

@@ -63,7 +63,8 @@ type Col  = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 interface Cell { lane: Lane; col: Col }
 ```
 
-- `col 0` = cannon slot. `cols 1–7` = tile cells. Robots spawn at `col 7`.
+- `col 0` = cannon slot. `cols 1–7` = tile cells. Robots spawn at `col 7` (a 2×2 Boss
+  spawns with front at `col 6` so the back sits on 7).
 - Board dimensions (`LANES = 5`, `COLS = 8`) are constants in `/sim/core`, not data — changing them
   is a design change, not tuning.
 - Presentation converts `Cell` → pixels. The sim never knows pixels.
@@ -90,12 +91,12 @@ type Trait =
 
 interface Robot {
   robotId: string;
-  lane: Lane;
-  col: Col | null;          // null = waiting off-board
+  lane: Lane;               // top lane of the footprint (Boss occupies lane and lane+1)
+  col: Col | null;          // null = waiting off-board; otherwise the front (left) cell
   hp: number;
   maxHp: number;
   trait: Trait;
-  isBoss: boolean;
+  isBoss: boolean;          // true ⇒ 2×2 footprint
 }
 
 interface Board {
@@ -246,8 +247,9 @@ emits the first turn's spawns.
 - **Continue:** `turn += 1`. **Fast-forward** (GDD §4.4): if `board.robots` is empty and the first
   pending entry's `turn` is later, set `turn` to it.
 - **SPAWN** (group `"spawn"`): first waiting robots (in `board.robots` order), then pending entries
-  with `turn ≤ state.turn` (in order, removed from `pendingSpawns`). Each enters col 7 of its lane if
-  no robot is there (`RobotSpawned`), else waits with `col: null` (`RobotWaiting`, new robots only). A
+  with `turn ≤ state.turn` (in order, removed from `pendingSpawns`). Each enters its spawn column
+  (7 for a 1×1, 6 for a 2×2 Boss) if every cell of its footprint is free (`RobotSpawned`), else
+  waits with `col: null` (`RobotWaiting`, new robots only). A
   waiting robot that enters emits `RobotSpawned` with its existing `robotId`.
 - **Rolling a wave** (`/sim/waves/rollWave.ts`, `wave` stream): authored waves assign letters then
   HP (TR §9). Procedural waves (M4) draw each group's distinct lanes, then per lane a pool template
@@ -351,7 +353,7 @@ fails `npm test`.
 | `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees (below) |
 | `waves.json` | Waves in run order (run length = array length): authored spawn schedules (waves 1–7, 10) and procedural tables (waves 8–9) |
 | `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
-| `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss sprite scale (`boss.scale`, M4) |
+| `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss 2×2 visual scale (`boss.scale`, `1` = fill the 2×2) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.
 
@@ -375,14 +377,15 @@ fails `npm test`.
 Validation: at least one wave; each wave is **either** authored (`spawns`) **or** procedural
 (`procedural`), never both; authored: ≥ 1 spawn and one with `turn: 1`; `lane` is 0–4 or `A`–`E`;
 distinct letters ≤ lanes not fixed in that wave; `hp` is `[min, max]` with `1 ≤ min ≤ max ≤ 99`
-(Boss template may go to 150); `robot` / procedural `pool` ids name a `robots.json` id, and a
-`pool` may not name an `isBoss` template.
+(Boss template may go to 1000); `robot` / procedural `pool` ids name a `robots.json` id, and a
+`pool` may not name an `isBoss` template. A Boss spawn must use a fixed lane that leaves room
+for the 2×2 (not lane 4), and that extra lane is reserved from letter assignment.
 
 The HP ceiling takes **two** stages, because a spawn schema cannot see `robots.json`: the
-per-spawn schema allows up to the Boss maximum (150), and the cross-file pass in
-`GameDataSchema` enforces ≤ 99 for every spawn whose template is not `isBoss` (M4, task 26).
+per-spawn schema allows up to the Boss maximum (1000), and the cross-file pass in
+`GameDataSchema` enforces ≤ 99 for every spawn whose template is not `isBoss`.
 `WavesFileSchema` used standalone — the scenario `waves:` override (§12) — runs the first stage
-only, so a scenario may write a three-digit `basic`; shipped `waves.json` may not.
+only, so a scenario may write a four-digit `basic`; shipped `waves.json` may not.
 
 M2's `reward` key (tile ids granted to the tray on wave clear) was removed in M3 along with its
 validation — the shop is the only tile source.

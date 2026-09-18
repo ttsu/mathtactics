@@ -215,4 +215,10 @@ describe('shipped shop.json', () => {
     expect(data.shop.shops.map((shop) => shop.afterWave)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(data.shop.tileSlots).toBe(3);
   });
+
+  it('shop after 9 guarantees ×5 then −N for the 1000 HP Boss toolkit', () => {
+    const data = parseGameData(loadRawGameData());
+    const after9 = data.shop.shops.find((shop) => shop.afterWave === 9);
+    expect(after9?.guarantees).toEqual([{ tileId: 'mul:5' }, { kind: 'sub' }]);
+  });
 });
