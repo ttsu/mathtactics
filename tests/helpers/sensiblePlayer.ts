@@ -20,7 +20,8 @@ import type {
 import type { GameData } from '../../sim/data/schemas';
 import { resolveImpact } from '../../sim/resolve/impact';
 
-const MAX_ARRANGEMENTS = 3000;
+/** P(24, 3) + P(24, 2) + P(24, 1) + 1 = 13,225; 20k covers a full 9-shop tray. */
+const MAX_ARRANGEMENTS = 20_000;
 const MAX_TILES_PER_LANE = 3;
 
 export function requireOk<T extends { ok: boolean }>(result: T): T & { ok: true } {
@@ -50,6 +51,14 @@ export function ownedTileIds(state: RunState): TileId[] {
 
 function ownsMul(state: RunState): boolean {
   return ownedTileIds(state).some((id) => id.startsWith('mul:'));
+}
+
+/** `×5` is the shop-after-9 toolkit for the 1000 HP Boss. */
+function ownsMulAtLeast(state: RunState, n: number): boolean {
+  return ownedTileIds(state).some((id) => {
+    if (!id.startsWith('mul:')) return false;
+    return Number(id.split(':')[1]) >= n;
+  });
 }
 
 function frontRobotInLane(state: RunState, lane: Lane) {
@@ -91,6 +100,24 @@ function ballValue(base: number, defs: TileDef[]): number {
   return value;
 }
 
+/** Adds (high n) then muls (high n) then subs — DFS finds `(base+add)×mul×mul` before the cap. */
+function searchOrder(state: RunState, pieceIds: string[]): string[] {
+  const rank = (pieceId: string): [number, number, string] => {
+    const tileId = state.pieces[pieceId]?.tileId ?? '';
+    const kind = tileId.split(':')[0];
+    const n = Number(tileId.split(':')[1]) || 0;
+    const kindRank = kind === 'add' ? 0 : kind === 'mul' ? 1 : 2;
+    return [kindRank, -n, pieceId];
+  };
+  return [...pieceIds].sort((a, b) => {
+    const left = rank(a);
+    const right = rank(b);
+    if (left[0] !== right[0]) return left[0] - right[0];
+    if (left[1] !== right[1]) return left[1] - right[1];
+    return left[2].localeCompare(right[2]);
+  });
+}
+
 /** All sequences of up to `kMax` distinct piece ids, bounded so the suite stays fast. */
 function pieceSequences(pieceIds: string[], kMax: number): string[][] {
   const result: string[][] = [[]];
@@ -120,19 +147,31 @@ function pieceSequences(pieceIds: string[], kMax: number): string[][] {
  * Rank a candidate ball through `resolveImpact` (GDD §5.4): exact > undershoot > overshoot >
  * blocked. Bigger raw ball value breaks ties. A wrong-parity blocked ball is strictly worst.
  * Bounce-back overshoot (`bounceBack !== null`, `result === 'survive'`) ranks with overshoots,
- * not undershoots. Category: 2 exact, 1 undershoot, 0 overshoot, -1 blocked.
+ * not undershoots. A Boss overkill ranks with exact — leaking 1000 HP is a loss, so removing
+ * it beats a chip. Category: 2 exact (and Boss kill), 1 undershoot, 0 overshoot, -1 blocked.
  */
 export function arrangementRank(robot: Robot, value: number): [number, number] {
   const outcome = resolveImpact(robot, value);
   if (outcome.kind === 'blocked') return [-1, value];
   if (outcome.result === 'exact') return [2, value];
-  if (outcome.result === 'kill' || outcome.bounceBack !== null) return [0, value];
+  // 1000 HP Boss: overkill still removes it. Prefer that over a chip that leaks.
+  if (outcome.result === 'kill') return robot.isBoss ? [2, value] : [0, value];
+  if (outcome.bounceBack !== null) return [0, value];
   return [1, value];
 }
 
 export function betterRank(a: [number, number], b: [number, number]): boolean {
   if (a[0] !== b[0]) return a[0] > b[0];
   return a[1] > b[1];
+}
+
+function sequenceValue(state: RunState, data: GameData, seq: string[]): number {
+  const defs = seq.map((pieceId) => {
+    const piece = state.pieces[pieceId];
+    if (!piece) throw new Error(`missing piece ${pieceId}`);
+    return tileDef(data, piece.tileId);
+  });
+  return ballValue(state.cannonBaseValue, defs);
 }
 
 export function bestSequence(
@@ -142,21 +181,39 @@ export function bestSequence(
   robot: Robot,
   kMax: number,
 ): string[] {
-  const sequences = pieceSequences(pieceIds, kMax);
+  const ordered = searchOrder(state, pieceIds);
+  const sequences = pieceSequences(ordered, Math.min(MAX_TILES_PER_LANE, kMax));
   let best: string[] = [];
   let bestRank: [number, number] = arrangementRank(robot, state.cannonBaseValue);
   for (const seq of sequences) {
-    const defs = seq.map((pieceId) => {
-      const piece = state.pieces[pieceId];
-      if (!piece) throw new Error(`missing piece ${pieceId}`);
-      return tileDef(data, piece.tileId);
-    });
-    const value = ballValue(state.cannonBaseValue, defs);
-    const rank = arrangementRank(robot, value);
+    const rank = arrangementRank(robot, sequenceValue(state, data, seq));
     if (betterRank(rank, bestRank)) {
       bestRank = rank;
       best = seq;
     }
+  }
+
+  // Enumeration is capped at 3 tiles so the 100-seed ladder stays fast. Extra empty
+  // columns in front of a high-HP robot (the 1000 HP Boss) still fit more tiles — a
+  // kid can place them, so greedily insert remaining pieces while rank improves.
+  while (best.length < kMax) {
+    let nextSeq: string[] | null = null;
+    let nextRank = bestRank;
+    const used = new Set(best);
+    for (const pieceId of ordered) {
+      if (used.has(pieceId)) continue;
+      for (let pos = 0; pos <= best.length; pos++) {
+        const seq = [...best.slice(0, pos), pieceId, ...best.slice(pos)];
+        const rank = arrangementRank(robot, sequenceValue(state, data, seq));
+        if (betterRank(rank, nextRank)) {
+          nextRank = rank;
+          nextSeq = seq;
+        }
+      }
+    }
+    if (nextSeq === null) break;
+    best = nextSeq;
+    bestRank = nextRank;
   }
   return best;
 }
@@ -165,7 +222,7 @@ export function bestSequence(
 export function reachableBallValues(state: RunState, data: GameData): number[] {
   const pieceIds = Object.keys(state.pieces).sort();
   const values = new Set<number>();
-  for (const seq of pieceSequences(pieceIds, MAX_TILES_PER_LANE)) {
+  for (const seq of pieceSequences(searchOrder(state, pieceIds), MAX_TILES_PER_LANE)) {
     const defs = seq.map((pieceId) => tileDef(data, state.pieces[pieceId]!.tileId));
     values.add(ballValue(state.cannonBaseValue, defs));
   }
@@ -288,8 +345,12 @@ function placeForArmedLanes(
   for (const job of jobs) {
     const cols = emptyColsInFront(next, job.lane, job.robot.col!);
     if (cols.length === 0) continue;
-    const available = [...next.tray].sort();
-    const kMax = Math.min(MAX_TILES_PER_LANE, cols.length, available.length);
+    const available = [...next.tray];
+    const kMax = Math.min(
+      job.robot.isBoss ? cols.length : MAX_TILES_PER_LANE,
+      cols.length,
+      available.length,
+    );
     const seq = bestSequence(next, data, available, job.robot, kMax);
     for (let i = 0; i < seq.length; i++) {
       const cmd: Command = {
@@ -305,8 +366,8 @@ function placeForArmedLanes(
   return { state: next, commands };
 }
 
-/** Planning-phase commands (return tiles, maybe move a cannon, place up to 3 tiles per armed
- * lane). Does not include `endTurn`. */
+/** Planning-phase commands (return tiles, maybe move a cannon, place tiles in empty columns
+ * in front of each armed lane's robot). Does not include `endTurn`. */
 export function planningCommands(state: RunState, data: GameData): Command[] {
   if (state.phase !== 'planning') return [];
   const returned = returnBoardTiles(state, data);
@@ -345,17 +406,55 @@ export function nextShopChoice(state: RunState): ShopChoice {
   const tiles = affordable.filter((offer) => offer.kind === 'tile');
   const affordableMul = tiles.some((offer) => offer.kind === 'tile' && offer.tileId.startsWith('mul:'));
   const cannon = affordable.find((offer) => offer.kind === 'cannon');
+  const upgrade = affordable.find((offer) => offer.kind === 'upgrade');
+  const highMul = tiles.filter(
+    (offer) =>
+      offer.kind === 'tile' &&
+      offer.tileId.startsWith('mul:') &&
+      Number(offer.tileId.split(':')[1]) >= 5,
+  );
+
   // Pick up a first ×N before a second cannon when both are on sale — otherwise
   // cannon-first spends the wave-2 ×2 guarantee and wave 4–7 cannot 2-hit.
   if (cannon && cannonCount(state) < 3 && (ownsMul(state) || !affordableMul)) {
     return { kind: 'buy', slot: cannon.slot };
   }
 
+  if (!ownsMul(state) && affordableMul) {
+    const muls = tiles.filter((offer) => offer.kind === 'tile' && offer.tileId.startsWith('mul:'));
+    muls.sort((a, b) => b.price - a.price || a.slot.localeCompare(b.slot));
+    return { kind: 'buy', slot: muls[0]!.slot };
+  }
+
+  if (!ownsMulAtLeast(state, 5) && highMul.length > 0) {
+    return { kind: 'buy', slot: highMul[0]!.slot };
+  }
+
+  const shopMuls = tiles.filter((offer) => offer.kind === 'tile' && offer.tileId.startsWith('mul:'));
+  if (state.shop.afterWave === 9 && shopMuls.length > 0) {
+    shopMuls.sort((a, b) => {
+      const nA = Number(a.tileId.split(':')[1]) || 0;
+      const nB = Number(b.tileId.split(':')[1]) || 0;
+      if (nA !== nB) return nB - nA;
+      return a.slot.localeCompare(b.slot);
+    });
+    return { kind: 'buy', slot: shopMuls[0]!.slot };
+  }
+
+  // Shop after 9: a +1 base beats another −N once ×5 is in the tray. Seed 77's
+  // base-1 tray chips 1000 to 67 and leaks; base 2 kills it. Extra ×N above
+  // still wins over this upgrade (seed 61: ×8 already owned, ×6 on sale).
+  if (
+    upgrade &&
+    state.shop.afterWave === 9 &&
+    ownsMulAtLeast(state, 5) &&
+    state.cannonBaseValue < 3
+  ) {
+    return { kind: 'buy', slot: upgrade.slot };
+  }
+
   if (tiles.length > 0) {
-    const wantMul = !ownsMul(state) && affordableMul;
-    const pool = wantMul
-      ? tiles.filter((offer) => offer.kind === 'tile' && offer.tileId.startsWith('mul:'))
-      : tiles;
+    const pool = [...tiles];
     pool.sort((a, b) => {
       if (a.price !== b.price) return a.price - b.price;
       const kindRank = (offer: ShopOffer) => {
@@ -373,7 +472,6 @@ export function nextShopChoice(state: RunState): ShopChoice {
     return { kind: 'buy', slot: pool[0]!.slot };
   }
 
-  const upgrade = affordable.find((offer) => offer.kind === 'upgrade');
   if (upgrade) return { kind: 'buy', slot: upgrade.slot };
 
   return { kind: 'done' };

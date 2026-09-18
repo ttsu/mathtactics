@@ -23,6 +23,8 @@ Human request after the M4 Boss shipped: the finale should *feel* like a finale.
   it is still a loss. Exact-kill-in-3-hits is dropped — this is a multi-turn fight.
 - **Escorts carry traits.** T1 Bounce-back, T7 Odd-only + Even-only. Same light HP as before;
   they stay a kid-facing trap, not the leftover-HP lever.
+- **Shop after 9 guarantees `×5` as well as `−N`.** A 1000 HP 2×2 detonates in six turns;
+  without a `×5` the weakest trays (only `×2`) leak the Boss.
 
 ## 0. Changes in v0.7.1
 
@@ -69,7 +71,8 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   it teaches subtraction. Remaining robots on those waves stay `basic`.
 - **The run is 10 waves.** Shops after waves 7, 8 and 9. Wave 10 has no shop. HUD wave dots
   already follow `waves.json` length. Shop after 7 guarantees `×2` or `×5` (grill A). Shop after
-  8 guarantees nothing (grill A). Shop after 9 guarantees `−N` (grill A) — last trim before the Boss.
+  8 guarantees nothing (grill A). Shop after 9 guarantees `×5` and `−N` — `×5` is the 1000 HP
+  toolkit (a tray of only `×2` cannot chip 1000 before the 2×2 detonates); `−N` is last trim.
 - **Waves 8–9 are procedural tables** in `waves.json` (not authored spawn lists). Rolled at
   wave start on the `wave` stream. Mixed traits, HP inside §6.6. Both waves may spawn `basic`.
   Wave 8 is **3+3** (grill A): T1 three, T8 three — mix traits without four-lane panic.
@@ -81,8 +84,7 @@ waves 9/10 — a second HP, shown separately, that must be destroyed first.
   (grill A).
 - **Wave 10 is authored:** one Boss (**1000 HP**, **2×2**, **no trait**) plus escort with
   traits at T1 (Bounce-back) and T7 (Odd-only + Even-only). Leaking the Boss is a loss.
-  The four-digit HP is the puzzle.
-  Exact-killable in ≤ 3 hits with the tiles owned on entering wave 10 (grill A).
+  The four-digit HP is the puzzle — a multi-turn fight, not a ≤ 3-hit exact kill.
 - **Trait telegraph is M4; loud juice stays M5.** Planning must show which trait is in play
   without words (§6.2–6.4). Bounce-back drain-to-zero-then-refill (v0.7.1) and blocked clonk
   already play; further celebration juice stays M5.
@@ -1032,7 +1034,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Wave 6's first teaching trait is Bounce-back (grill A). The −N shop after 5 is the exam.
 - Shop after wave 7 guarantees `×2` or `×5` (grill A). Heading into the 8–9 mix with a multiply.
 - Shop after wave 8 guarantees nothing (grill A). No second gift one shop later.
-- Shop after wave 9 guarantees `−N` (grill A). Last trim before the Boss.
+- Shop after wave 9 guarantees `×5` and `−N`. `×5` is the 1000 HP toolkit; `−N` is last trim.
 - Waves 4–7 leftover after wave 7: sensible-player min ≥ 80, and not every seed at 100.
 - 10-wave leftover after the Boss: sensible-player min near 40 (still ≥ 40), median 50–70.
   Chips come from waves 8–9 for a sensible player. Wave 10 escort is T1 Bounce-back + T7

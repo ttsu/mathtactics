@@ -74,7 +74,7 @@
     },
     {
       "afterWave": 9,
-      "guarantees": [{ "kind": "sub" }],
+      "guarantees": [{ "tileId": "mul:5" }, { "kind": "sub" }],
       "table": [
         { "kind": "add", "n": [1, 10], "weight": 3 },
         { "kind": "sub", "n": [1, 10], "weight": 6 },
