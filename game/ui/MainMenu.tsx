@@ -10,6 +10,7 @@ import type { CSSProperties } from 'react';
 import { playFromStart } from '../state/levelFlow';
 import { canContinue, continueRun, startNewRun } from '../state/runFlow';
 import { GearIcon, PlayIcon, RobotPlayIcon, TileChipIcon } from './icons';
+import { SecretLongPress, SecretTap } from './debug';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
 export function MainMenu() {
@@ -24,7 +25,9 @@ export function MainMenu() {
       data-testid="main-menu"
       style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
     >
-      <h1 className="screen-title">Math Tactics</h1>
+      <SecretTap testId="menu-title">
+        <h1 className="screen-title">Math Tactics</h1>
+      </SecretTap>
       <div className="menu-chips" aria-hidden="true">
         <span className="menu-chip menu-chip-ball">1</span>
         <span className="menu-chip" style={{ background: tileColors.green }}>
@@ -84,16 +87,18 @@ export function MainMenu() {
             <TileChipIcon size={56} />
             <span className="button-label button-label-small">Puzzles</span>
           </button>
-          <button
-            type="button"
-            className="small-button pop-in"
-            data-testid="menu-settings"
-            aria-label="Settings"
-            onClick={() => store.getState().setScreen('settings')}
-          >
-            <GearIcon size={56} />
-            <span className="button-label button-label-small">Settings</span>
-          </button>
+          <SecretLongPress>
+            <button
+              type="button"
+              className="small-button pop-in"
+              data-testid="menu-settings"
+              aria-label="Settings"
+              onClick={() => store.getState().setScreen('settings')}
+            >
+              <GearIcon size={56} />
+              <span className="button-label button-label-small">Settings</span>
+            </button>
+          </SecretLongPress>
         </div>
       </div>
     </div>

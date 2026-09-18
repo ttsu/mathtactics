@@ -4,6 +4,7 @@
 import type { CSSProperties } from 'react';
 import { continueToNextLevel, levelPosition, showLevelCleared } from '../state/levelFlow';
 import { PlayIcon, StarIcon } from './icons';
+import { SecretTap } from './debug';
 import { LevelDots } from './LevelDots';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
@@ -24,9 +25,11 @@ export function LevelClearedOverlay() {
       data-testid="level-cleared"
       style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
     >
-      <div className="pop-in">
-        <StarIcon size={260} />
-      </div>
+      <SecretTap testId="level-cleared-star">
+        <div className="pop-in">
+          <StarIcon size={260} />
+        </div>
+      </SecretTap>
       {levelIndex !== null && (
         <LevelDots index={levelIndex} count={levelCount} cleared size="large" />
       )}

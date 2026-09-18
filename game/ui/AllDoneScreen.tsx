@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react';
 import { playFromStart } from '../state/levelFlow';
 import { PlayAgainIcon, StarIcon } from './icons';
+import { SecretTap } from './debug';
 import { LevelDots } from './LevelDots';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
@@ -17,11 +18,13 @@ export function AllDoneScreen() {
       data-testid="all-done"
       style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
     >
-      <div className="all-done-stars pop-in">
-        <StarIcon size={180} />
-        <StarIcon size={240} />
-        <StarIcon size={180} />
-      </div>
+      <SecretTap testId="all-done-stars">
+        <div className="all-done-stars pop-in">
+          <StarIcon size={180} />
+          <StarIcon size={240} />
+          <StarIcon size={180} />
+        </div>
+      </SecretTap>
       <LevelDots index={levelCount - 1} count={levelCount} cleared size="large" />
       <button
         type="button"

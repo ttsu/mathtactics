@@ -6,6 +6,7 @@ import type { CSSProperties } from 'react';
 import { waveCount } from '../state/waveFlow';
 import { ExactKillRow } from './ExactKillRow';
 import { PlayIcon, StarIcon } from './icons';
+import { SecretTap } from './debug';
 import { LevelDots } from './LevelDots';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
@@ -23,20 +24,22 @@ export function WinScreen() {
       data-testid="won"
       style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
     >
-      <div className="win-celebration pop-in" aria-hidden="true">
-        <div className="confetti">
-          {CONFETTI_COLORS.map((color) => (
-            <span key={color} className="confetti-dot" style={{ background: color }} />
-          ))}
+      <SecretTap testId="won-star">
+        <div className="win-celebration pop-in" aria-hidden="true">
+          <div className="confetti">
+            {CONFETTI_COLORS.map((color) => (
+              <span key={color} className="confetti-dot" style={{ background: color }} />
+            ))}
+          </div>
+          <div className="win-stars">
+            <StarIcon size={150} />
+            <StarIcon size={220} />
+            <StarIcon size={300} />
+            <StarIcon size={220} />
+            <StarIcon size={150} />
+          </div>
         </div>
-        <div className="win-stars">
-          <StarIcon size={150} />
-          <StarIcon size={220} />
-          <StarIcon size={300} />
-          <StarIcon size={220} />
-          <StarIcon size={150} />
-        </div>
-      </div>
+      </SecretTap>
       <LevelDots index={count - 1} count={count} cleared size="large" />
       <ExactKillRow count={exactKills} />
       <button

@@ -34,6 +34,7 @@ export {
   createAppStore,
   stubApplyCommand,
   displayFromRun,
+  screenForRun,
   isPlaybackActive,
   canReplay,
   IDLE_PLAYBACK,
