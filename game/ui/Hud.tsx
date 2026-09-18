@@ -13,6 +13,7 @@ import { goHome } from '../state/runFlow';
 import { goButtonClassName, goNudgeAnimationKey, planningLayoutKey } from './goNudge';
 import { hudButtons } from './hudButtons';
 import { PlayIcon } from './icons';
+import { SecretLongPress } from './debug';
 import { LevelDots } from './LevelDots';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
@@ -45,19 +46,21 @@ export function Hud() {
     >
       {/* Hidden, not unmounted: the button keeps its slot so the dots, ♥ and 🪙 never slide
           sideways when playback starts or ends (and ♥ stays where the detonation number flies). */}
-      <button
-        type="button"
-        className="hud-button hud-button-icon hud-button-home"
-        data-testid="home"
-        aria-label="Home"
-        aria-hidden={!canHome}
-        tabIndex={canHome ? undefined : -1}
-        style={{ ...touchTarget, visibility: canHome ? 'visible' : 'hidden' }}
-        disabled={!canHome}
-        onClick={() => goHome(store)}
-      >
-        <HomeIcon />
-      </button>
+      <SecretLongPress>
+        <button
+          type="button"
+          className="hud-button hud-button-icon hud-button-home"
+          data-testid="home"
+          aria-label="Home"
+          aria-hidden={!canHome}
+          tabIndex={canHome ? undefined : -1}
+          style={{ ...touchTarget, visibility: canHome ? 'visible' : 'hidden' }}
+          disabled={!canHome}
+          onClick={() => goHome(store)}
+        >
+          <HomeIcon />
+        </button>
+      </SecretLongPress>
       {levelMode ? (
         levelIndex !== null && <LevelDots index={levelIndex} count={levelCount} />
       ) : (

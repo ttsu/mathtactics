@@ -493,6 +493,7 @@ interface AppActions {
   startReplay(): boolean;            // playback = replaying lastTurn (planning + idle only)
   setSettings(patch: Partial<AppState['settings']>): void;
   setScreen(screen: AppState['screen']): void;  // never touches `run`
+  installRun(run: RunState): void;              // debug menu: install + persist resumable runs
 }
 ```
 
@@ -607,7 +608,7 @@ React interactive elements set `pointer-events: auto`. Everything else passes th
 - **Phaser (`/game/board`):** grid, cannon slots, tray strip, tiles, cannons, robots, balls,
   hints, drag/drop, locked-cell feedback, playback Director, particles.
 - **React (`/game/ui`):** HUD (coins, base HP, wave, Go, Undo, Replay), shop, main menu,
-  settings, win/loss screens, seen-tiles log, rotate-device overlay.
+  settings, win/loss screens, seen-tiles log, rotate-device overlay, hidden debug menu.
 
 ### 11.3.1 Drag pointer recovery
 
@@ -766,6 +767,24 @@ Playwright asserts on structured state. Screenshots are for legibility review on
 `store.setState`, the same as `loadScenario` — neither ever calls `saveRun`/`clearRun`, and
 neither touches `savedRun`. Installing a state this way is invisible to Continue/the `run` save;
 only a real `dispatch` (e.g. `endTurn()`, or `dispatch({ type: 'newRun', seed })`) persists.
+
+### 14.1 Hidden debug menu
+
+A parent/agent overlay in production (not the test handle). It does **not** add sim commands;
+mutations live in `/game/state/debug` and install via `store.installRun`. The React menu is
+`/game/ui/debug`; new options are appended to `DEBUG_PANELS`.
+
+**Openers (recommended first):**
+- **7-tap** the main-menu title (also the shop wallet, win/lose/all-done stars, cleared-wave star).
+- **Long-press** (1.2s) Settings or Home — short tap still does Settings / Home.
+- **Ctrl/Cmd+Shift+D** on a keyboard.
+- **`?debug=1`** or `#debug` opens on load.
+- **Shake** is opt-in inside the menu (iOS needs a motion-permission prompt; a 7-year-old shakes
+  the iPad, so it is off by default).
+
+Panels: Jump (puzzles + waves), Tiles (grant to tray), Enemies (template / lane / HP), Copy
+(JSON snapshot for an agent, plus Load to paste one back). Jumping to a wave persists like a
+real run; jumping to a puzzle does not touch the save.
 
 ---
 

@@ -103,6 +103,9 @@ export interface AppActions {
    * write every offered tile type via `addSeenMany`. Storage is closed over here, not on
    * `AppState`. */
   recordShopVisit(tileIds: readonly TileId[]): void;
+  /** Installs a run directly (debug menu, Continue-style). Persists when `mode: 'run'` and the
+   * run is still resumable; a puzzle never writes the save. Resets playback. */
+  installRun(run: RunState): void;
 }
 
 export type AppStore = AppState & AppActions;
@@ -176,6 +179,15 @@ export function sequenceStart(
  * `loadState`/`loadScenario`. */
 export function displayFromRun(run: RunState): Display {
   return { coins: run.coins, baseHp: Math.max(0, run.baseHp), waveIndex: run.waveIndex };
+}
+
+/** Screen that belongs to an installed run (debug `installRun`, Continue). Overlays such as
+ * wave-cleared stay on `'game'` and are derived from `run.phase`. */
+export function screenForRun(run: RunState): Screen {
+  if (run.phase === 'shop') return 'shop';
+  if (run.phase === 'won') return 'won';
+  if (run.phase === 'lost') return 'lost';
+  return 'game';
 }
 
 /** `display` derived from `data.economy` before any run exists (task 05 decision: satisfies the
@@ -353,6 +365,30 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
       }
       addSeenMany(storage, basePath, tileIds);
       set({ shopNew: fresh.length === 0 ? NO_SHOP_NEW : fresh });
+    },
+
+    installRun(run) {
+      const persists = run.mode === 'run' && !isFinishedRun(run);
+      if (persists) {
+        saveRun(storage, basePath, run, now());
+      } else if (run.mode === 'run' && isFinishedRun(run)) {
+        clearRun(storage, basePath);
+      }
+      const previous = get();
+      const savedRun = persists
+        ? run
+        : run.mode === 'run' && isFinishedRun(run)
+          ? null
+          : previous.savedRun;
+      set({
+        run,
+        savedRun,
+        display: displayFromRun(run),
+        playback: { ...IDLE_PLAYBACK },
+        lastTurn: null,
+        shopNew: NO_SHOP_NEW,
+        screen: screenForRun(run),
+      });
     },
   }));
 }

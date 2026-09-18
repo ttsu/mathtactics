@@ -1,4 +1,5 @@
 import { AllDoneScreen } from './AllDoneScreen';
+import { DebugHost } from './debug';
 import { Hud } from './Hud';
 import { LevelClearedOverlay } from './LevelClearedOverlay';
 import { LoseScreen } from './LoseScreen';
@@ -16,7 +17,7 @@ export function App() {
   const screen = useAppStore((state) => state.screen);
 
   return (
-    <>
+    <DebugHost>
       {screen === 'menu' && <MainMenu />}
       {screen === 'game' && (
         <>
@@ -32,6 +33,6 @@ export function App() {
       {screen === 'lost' && <LoseScreen />}
       <RotateOverlay />
       <UpdateBanner />
-    </>
+    </DebugHost>
   );
 }

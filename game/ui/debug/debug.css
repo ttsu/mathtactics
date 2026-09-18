@@ -1,0 +1,211 @@
+/* Hidden parent debug menu. Distinct from the kid-facing screens so an accidental open is
+   obvious, and so the overlay can scroll/select on an iPad whose document forbids both. */
+
+.debug-secret-target {
+  display: contents;
+}
+
+.debug-wash {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: rgba(8, 12, 20, 0.72);
+  pointer-events: auto;
+  touch-action: pan-y;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.debug-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 980px;
+  height: 100%;
+  max-height: 760px;
+  box-sizing: border-box;
+  padding: 20px 24px 16px;
+  border-radius: 24px;
+  background: #1b2433;
+  color: #f4f7fb;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.debug-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.debug-title {
+  margin: 0;
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.debug-lede {
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.debug-close {
+  pointer-events: auto;
+  border: none;
+  border-radius: 16px;
+  background: #3a475c;
+  color: #ffffff;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.debug-tabs {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.debug-tab,
+.debug-chip,
+.debug-tile,
+.debug-action {
+  pointer-events: auto;
+  box-sizing: border-box;
+  min-height: 60px;
+  min-width: 60px;
+  border: none;
+  border-radius: 14px;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+}
+
+.debug-tab {
+  flex: 1;
+  padding: 0 12px;
+  background: #2f3e57;
+  font-size: 22px;
+}
+
+.debug-tab.is-selected,
+.debug-chip.is-selected {
+  background: #ff8c42;
+}
+
+.debug-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 16px;
+  touch-action: pan-y;
+}
+
+.debug-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.debug-note,
+.debug-status {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  opacity: 0.8;
+}
+
+.debug-heading {
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.debug-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.debug-chip {
+  padding: 0 16px;
+  background: #3a475c;
+  font-size: 20px;
+  text-transform: capitalize;
+}
+
+.debug-chip[aria-current='true'] {
+  box-shadow: inset 0 0 0 3px #ffd166;
+}
+
+.debug-grid-tiles .debug-tile {
+  font-size: 24px;
+}
+
+.debug-tile {
+  width: 72px;
+  background: #4caf50;
+}
+
+.debug-action {
+  padding: 0 20px;
+  background: #3f9e8f;
+  font-size: 22px;
+}
+
+.debug-action-secondary {
+  background: #4f86c6;
+}
+
+.debug-row {
+  display: flex;
+  gap: 10px;
+}
+
+.debug-snapshot {
+  width: 100%;
+  min-height: 240px;
+  box-sizing: border-box;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #0f1622;
+  color: #d7e3f4;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  resize: none;
+  touch-action: pan-y;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.debug-shake {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  pointer-events: auto;
+}
+
+.debug-shake input {
+  width: 28px;
+  height: 28px;
+}

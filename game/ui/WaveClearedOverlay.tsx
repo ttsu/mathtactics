@@ -6,6 +6,7 @@ import { openShopScreen } from '../state/shopFlow';
 import { showWaveCleared, waveClearCoins, waveCount } from '../state/waveFlow';
 import { CoinStack } from './CoinStack';
 import { PlayIcon, StarIcon } from './icons';
+import { SecretTap } from './debug';
 import { LevelDots } from './LevelDots';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
@@ -27,9 +28,11 @@ export function WaveClearedOverlay() {
       data-testid="wave-cleared"
       style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
     >
-      <div className="pop-in">
-        <StarIcon size={260} />
-      </div>
+      <SecretTap testId="wave-cleared-star">
+        <div className="pop-in">
+          <StarIcon size={260} />
+        </div>
+      </SecretTap>
       <LevelDots index={waveIndex} count={count} cleared size="large" />
       <div className="wave-wallet" data-testid="wave-wallet">
         <span className="hud-stat shop-wallet-inline">

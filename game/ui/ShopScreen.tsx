@@ -9,6 +9,7 @@ import { buyOffer, leaveShopToNextWave, shopOffers } from '../state/shopFlow';
 import { tileFace } from '../state/tileFace';
 import { CoinStack } from './CoinStack';
 import { CannonIcon, CheckIcon, PlayIcon } from './icons';
+import { SecretTap } from './debug';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 import { TileFaceChip } from './TileFaceChip';
 
@@ -36,7 +37,11 @@ function useCountingNumber(value: number, durationMs: number): number {
   return shown;
 }
 
-function ownedTileIds(tray: string[], cells: (string | null)[][], pieces: Record<string, { tileId: TileId }>): TileId[] {
+function ownedTileIds(
+  tray: string[],
+  cells: (string | null)[][],
+  pieces: Record<string, { tileId: TileId }>,
+): TileId[] {
   const ids: TileId[] = [];
   for (const pieceId of tray) {
     const piece = pieces[pieceId];
@@ -212,10 +217,12 @@ export function ShopScreen() {
         } as CSSProperties
       }
     >
-      <div className="shop-wallet" data-testid="shop-wallet">
-        <span className="shop-wallet-n">{shownCoins}</span>
-        <CoinStack size={56} />
-      </div>
+      <SecretTap>
+        <div className="shop-wallet" data-testid="shop-wallet">
+          <span className="shop-wallet-n">{shownCoins}</span>
+          <CoinStack size={56} />
+        </div>
+      </SecretTap>
       <div className="shop-cards">
         {offers.map((offer, index) => (
           <ShopOfferCard

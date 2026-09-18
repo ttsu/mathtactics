@@ -6,6 +6,7 @@
 import type { CSSProperties } from 'react';
 import { waveCount } from '../state/waveFlow';
 import { DancingRobotIcon, PlayIcon, SmileIcon } from './icons';
+import { SecretTap } from './debug';
 import { ExactKillRow } from './ExactKillRow';
 import { LevelDots } from './LevelDots';
 import { useAppStore, useAppStoreApi } from './StoreContext';
@@ -27,26 +28,28 @@ export function LoseScreen() {
       data-testid="lost"
       style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
     >
-      <div className="lose-cheer pop-in" aria-hidden="true">
-        <SmileIcon size={200} />
-        <div className="lose-robots">
-          {ROBOT_COLORS.map((color, i) => (
-            <span
-              key={color}
-              className="dancing-robot"
-              style={
-                {
-                  color,
-                  '--dance-ms': `${danceMs}ms`,
-                  animationDelay: `${i * danceStaggerMs}ms`,
-                } as CSSProperties
-              }
-            >
-              <DancingRobotIcon size={80} />
-            </span>
-          ))}
+      <SecretTap testId="lost-cheer">
+        <div className="lose-cheer pop-in" aria-hidden="true">
+          <SmileIcon size={200} />
+          <div className="lose-robots">
+            {ROBOT_COLORS.map((color, i) => (
+              <span
+                key={color}
+                className="dancing-robot"
+                style={
+                  {
+                    color,
+                    '--dance-ms': `${danceMs}ms`,
+                    animationDelay: `${i * danceStaggerMs}ms`,
+                  } as CSSProperties
+                }
+              >
+                <DancingRobotIcon size={80} />
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      </SecretTap>
       <LevelDots index={waveIndex} count={count} size="large" />
       <ExactKillRow count={exactKills} />
       <button
