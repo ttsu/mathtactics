@@ -401,7 +401,8 @@ validation — the shop is the only tile source.
         "turn": 1,
         "count": 3,
         "hp": [30, 50],
-        "pool": ["weakness-5", "bounce-back", "odd-only", "even-only", "basic"]
+        "pool": ["weakness-5", "bounce-back", "odd-only", "even-only", "basic"],
+        "hpByRobot": { "odd-only": [18, 26], "even-only": [18, 26] }
       }
     ]
   }
@@ -411,9 +412,10 @@ validation — the shop is the only tile source.
 `rollWave` draw order for a procedural group (normative, `wave` stream only): pick `count`
 distinct lanes by `nextInt` into the remaining lanes (ascending, same as letter assignment),
 then for each drawn lane in that order: `nextInt` into the **remaining** pool (**without
-replacement**, grill B) and `nextInt` HP in `[min, max]`. Groups in file order. Same-turn
-groups are forbidden (`turn` values unique within a wave). `count` is 1–5; `pool` non-empty
-with unique ids; **`count` ≤ `pool.length`**.
+replacement**, grill B) and `nextInt` HP in that template's range. The group's `hp` is the
+default; optional `hpByRobot` overrides named pool ids (keys must be in `pool`). Groups in
+file order. Same-turn groups are forbidden (`turn` values unique within a wave). `count` is
+1–5; `pool` non-empty with unique ids; **`count` ≤ `pool.length`**.
 
 `shop.json` (M3, task 18). `afterWave` is **1-based** — the number of the wave just cleared, which
 is `waveIndex + 1`; every other wave reference in the codebase is 0-based, so conversions are

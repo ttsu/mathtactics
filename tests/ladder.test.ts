@@ -143,9 +143,9 @@ describe('authored ladder waves 4–7 (task 22)', () => {
       if (wave.id === 'wave-10') {
         expect(wave.spawns).toEqual([
           { turn: 1, lane: 1, robot: 'boss', hp: [1000, 1000] },
-          { turn: 1, lane: 'A', robot: 'bounce-back', hp: [20, 40] },
-          { turn: 7, lane: 'B', robot: 'odd-only', hp: [30, 50] },
-          { turn: 7, lane: 'C', robot: 'even-only', hp: [30, 50] },
+          { turn: 1, lane: 'A', robot: 'bounce-back', hp: [16, 28] },
+          { turn: 7, lane: 'B', robot: 'odd-only', hp: [16, 24] },
+          { turn: 7, lane: 'C', robot: 'even-only', hp: [16, 24] },
         ]);
         continue;
       }
@@ -183,8 +183,20 @@ describe('authored ladder waves 4–7 (task 22)', () => {
     expect(wave8 && 'procedural' in wave8).toBe(true);
     if (wave8 && 'procedural' in wave8) {
       expect(wave8.procedural.groups).toEqual([
-        { turn: 1, count: 3, hp: [42, 58], pool: WAVE_8_T1_POOL },
-        { turn: 8, count: 3, hp: [55, 75], pool: WAVE_8_T8_POOL },
+        {
+          turn: 1,
+          count: 3,
+          hp: [34, 46],
+          pool: WAVE_8_T1_POOL,
+          hpByRobot: { 'odd-only': [18, 26], 'even-only': [18, 26] },
+        },
+        {
+          turn: 8,
+          count: 3,
+          hp: [42, 56],
+          pool: WAVE_8_T8_POOL,
+          hpByRobot: { 'even-only': [20, 28] },
+        },
       ]);
       expect(WAVE_8_T1_POOL).toContain('even-only');
       expect(WAVE_8_T1_POOL).not.toEqual(WAVE_8_T8_POOL);
@@ -194,9 +206,27 @@ describe('authored ladder waves 4–7 (task 22)', () => {
     expect(wave9 && 'procedural' in wave9).toBe(true);
     if (wave9 && 'procedural' in wave9) {
       expect(wave9.procedural.groups).toEqual([
-        { turn: 1, count: 4, hp: [55, 72], pool: WAVE_9_POOL },
-        { turn: 8, count: 4, hp: [68, 88], pool: WAVE_9_POOL },
-        { turn: 15, count: 3, hp: [78, 95], pool: WAVE_9_POOL },
+        {
+          turn: 1,
+          count: 4,
+          hp: [42, 54],
+          pool: WAVE_9_POOL,
+          hpByRobot: { 'odd-only': [20, 28], 'even-only': [20, 28] },
+        },
+        {
+          turn: 8,
+          count: 4,
+          hp: [48, 60],
+          pool: WAVE_9_POOL,
+          hpByRobot: { 'odd-only': [22, 30], 'even-only': [22, 30] },
+        },
+        {
+          turn: 15,
+          count: 3,
+          hp: [52, 64],
+          pool: WAVE_9_POOL,
+          hpByRobot: { 'odd-only': [24, 32], 'even-only': [24, 32] },
+        },
       ]);
     }
 
@@ -212,6 +242,27 @@ describe('authored ladder waves 4–7 (task 22)', () => {
       }
       expect(wave.procedural.groups.every((group) => group.count <= 4)).toBe(true);
       expect(wave.procedural.groups.every((group) => group.hp[1] <= 99)).toBe(true);
+    }
+  });
+
+  it('keeps Odd-only / Even-only HP in a leak-survivable band (max 32)', () => {
+    const parity = new Set(['odd-only', 'even-only']);
+    const maxParityHp = 32;
+    for (const wave of data.waves.waves) {
+      if ('spawns' in wave) {
+        for (const spawn of wave.spawns) {
+          if (!parity.has(spawn.robot)) continue;
+          expect(spawn.hp[1], `${wave.id} ${spawn.robot}`).toBeLessThanOrEqual(maxParityHp);
+        }
+        continue;
+      }
+      for (const group of wave.procedural.groups) {
+        for (const id of group.pool) {
+          if (!parity.has(id)) continue;
+          const range = group.hpByRobot?.[id] ?? group.hp;
+          expect(range[1], `${wave.id} T${group.turn} ${id}`).toBeLessThanOrEqual(maxParityHp);
+        }
+      }
     }
   });
 
