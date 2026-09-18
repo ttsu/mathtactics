@@ -20,7 +20,7 @@ export function buildNextWave(
     throw new Error(`nextWave: no wave at index ${waveIndex} in waves.json`);
   }
 
-  const rolled = rollWave(waveDef, state.rng.wave);
+  const rolled = rollWave(waveDef, state.rng.wave, data.robots);
 
   const nextState: RunState = {
     ...state,

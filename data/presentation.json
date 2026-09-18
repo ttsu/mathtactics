@@ -146,7 +146,7 @@
     "bounceBackBodyColor": "#ef6c00"
   },
   "boss": {
-    "scale": 1.55
+    "scale": 1
   },
   "drag": {
     "liftScale": 1.15,

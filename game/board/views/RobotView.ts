@@ -1,7 +1,7 @@
 // A robot (task 09 req. 2): simple silhouette block with HP as the largest text on the board
 // (GDD §11.2), and an HP bar under it (task 10: bounce-back visibly refills it). Trait chrome
-// is the planning-phase telegraph (task 23 / GDD v0.7.1); Boss overflow scale hangs off the same
-// `setChrome` seam in task 26.
+// is the planning-phase telegraph (task 23 / GDD v0.7.1); a 2×2 Boss hangs off the same
+// `setChrome` seam (GDD v0.7.2).
 //
 // Playback (task 10) drives the HP text and bar separately while a hit animates (`showHpText`,
 // `setBarFill`); `setHp` puts both back in step. The parity shield is a child of this Container
@@ -13,10 +13,10 @@ import {
   CORNER_RADIUS,
   HP_BAR_GAP,
   HP_BAR_HEIGHT,
-  HP_BAR_WIDTH,
   ROBOT_ANTENNA_SPREAD,
   ROBOT_HP_FONT_SIZE,
   ROBOT_SIZE,
+  BOSS_SIZE,
   SHIELD_DOT_RADIUS,
   SHIELD_DOT_SPREAD,
   SHIELD_HEIGHT,
@@ -27,6 +27,8 @@ import {
   WEAKNESS_MARK_OFFSET_Y,
   WEAKNESS_N_GAP,
   designToWorld,
+  robotCenter,
+  waitingGhostCenter,
 } from '../layout';
 import { formatNumber } from '../pieces';
 import { DARK_STROKE_COLOR, FONT_FAMILY, LIGHT_TEXT_COLOR, PLACEHOLDER } from './palette';
@@ -62,6 +64,9 @@ export class RobotView extends Phaser.GameObjects.Container {
   private appearanceKey: string | null = null;
   private chrome: TraitChrome;
   private bodyScale = 1;
+  private _isBoss = false;
+  private anchorLane = 0;
+  private anchorCol: number | null = 0;
 
   constructor(
     scene: Phaser.Scene,
@@ -92,6 +97,24 @@ export class RobotView extends Phaser.GameObjects.Container {
     return this.max;
   }
 
+  get isBoss(): boolean {
+    return this._isBoss;
+  }
+
+  /** Top-front cell this view is drawn for (`col: null` = waiting ghost). */
+  setAnchor(lane: number, col: number | null): void {
+    this.anchorLane = lane;
+    this.anchorCol = col;
+  }
+
+  /** Design-space centre matching the current anchor and 1×1 / 2×2 footprint. */
+  homeDesign(): { x: number; y: number } {
+    if (this.anchorCol === null) {
+      return waitingGhostCenter(this.anchorLane, this._isBoss);
+    }
+    return robotCenter(this.anchorLane, this.anchorCol, this._isBoss);
+  }
+
   /** The HP number currently on the robot (mid-animation, this may differ from its state). */
   get displayedHp(): number {
     return this.shownHp;
@@ -112,16 +135,17 @@ export class RobotView extends Phaser.GameObjects.Container {
     this.shield?.setPosition(this.shieldRestX, 0);
   }
 
-  /** Idempotent chrome entry point. Rebuilds only when `trait` / `isBoss` change. Boss overflow
-   * scale is applied by redrawing the silhouette (and any chrome drawn on it) larger, never by
-   * scaling this Container — playback and `BoardRenderer.place` reset Container scale to 1.
-   * HP text and bar stay inside the original `ROBOT_SIZE` box. */
+  /** Idempotent chrome entry point. Rebuilds only when `trait` / `isBoss` change. A Boss is
+   * drawn at `BOSS_SIZE` (2×2 with the same outer margin as a 1×1), then multiplied by
+   * `presentation.boss.scale` (1 = exact fill). Never scale this Container — playback and
+   * `BoardRenderer.place` reset Container scale to 1. HP text and bar track the body size. */
   setChrome({ trait, isBoss }: RobotAppearance): void {
     const key = appearanceKey(trait, isBoss);
     if (key === this.appearanceKey) return;
     this.appearanceKey = key;
+    this._isBoss = isBoss;
     this.chrome = traitChrome(trait, this.colours);
-    this.bodyScale = isBoss ? this.bossScale : 1;
+    this.bodyScale = isBoss ? this.bossScale * (BOSS_SIZE / ROBOT_SIZE) : 1;
     this.paintBody(this.chrome);
     this.syncShield(this.chrome);
     this.syncMark(this.chrome);
@@ -157,8 +181,9 @@ export class RobotView extends Phaser.GameObjects.Container {
     const text = formatNumber(hp);
     if (this.hp.text === text) return;
     this.hp.setText(text);
-    // Three-digit HP shrinks to fit the block rather than spilling out of it.
-    const maxWidth = designToWorld(ROBOT_SIZE - 6);
+    // Shrink only when the numeral would spill out of the body (three-digit on a 1×1; 1000
+    // fits a 2×2 at full HP font size).
+    const maxWidth = designToWorld(ROBOT_SIZE * this.bodyScale - 6);
     this.hp.setScale(Math.min(1, maxWidth / this.hp.width));
   }
 
@@ -173,10 +198,11 @@ export class RobotView extends Phaser.GameObjects.Container {
     const fill = Phaser.Math.Clamp(fraction, 0, max);
     if (fill === this.fill) return;
     this.fill = fill;
-    const width = designToWorld(HP_BAR_WIDTH);
+    const size = designToWorld(ROBOT_SIZE) * this.bodyScale;
+    const width = size - designToWorld(8);
     const height = designToWorld(HP_BAR_HEIGHT);
     const x = -width / 2;
-    const y = designToWorld(ROBOT_SIZE / 2 + HP_BAR_GAP);
+    const y = size / 2 + designToWorld(HP_BAR_GAP);
     const g = this.bar;
     g.clear();
     g.fillStyle(PLACEHOLDER.hpBarBack);

@@ -45,7 +45,7 @@ function rollShippedWave(seed: string, waveIndex: number) {
   let rng = createStreams(seed).wave;
   let spawns: ReturnType<typeof rollWave>['spawns'] = [];
   for (let i = 0; i <= waveIndex; i++) {
-    const rolled = rollWave(data.waves.waves[i]!, rng);
+    const rolled = rollWave(data.waves.waves[i]!, rng, data.robots);
     rng = rolled.rng;
     spawns = rolled.spawns;
   }
@@ -141,14 +141,11 @@ describe('authored ladder waves 4–7 (task 22)', () => {
     for (const [index, wave] of data.waves.waves.entries()) {
       if (!('spawns' in wave)) continue;
       if (wave.id === 'wave-10') {
-        // GDD grill A is [100, 150]. Seed 77's mul-poor tray (max ball 54) cannot
-        // exact-kill 145/146/148/149 in ≤3 hits; cap at 140 so the 3-hit grill holds
-        // without a shop-policy rewrite. Still three-digit.
         expect(wave.spawns).toEqual([
-          { turn: 1, lane: 2, robot: 'boss', hp: [100, 140] },
-          { turn: 1, lane: 'A', robot: 'basic', hp: [20, 40] },
-          { turn: 7, lane: 'B', robot: 'basic', hp: [30, 50] },
-          { turn: 7, lane: 'C', robot: 'basic', hp: [30, 50] },
+          { turn: 1, lane: 1, robot: 'boss', hp: [1000, 1000] },
+          { turn: 1, lane: 'A', robot: 'bounce-back', hp: [20, 40] },
+          { turn: 7, lane: 'B', robot: 'odd-only', hp: [30, 50] },
+          { turn: 7, lane: 'C', robot: 'even-only', hp: [30, 50] },
         ]);
         continue;
       }
@@ -243,15 +240,15 @@ describe('authored ladder waves 4–7 (task 22)', () => {
     }
   });
 
-  it('rollWave of shipped wave 10 is one Boss in lane 2 plus basic escort', () => {
+  it('rollWave of shipped wave 10 is one 2x2 Boss in lane 1 plus traited escort', () => {
     const samples = SEEDS.slice(0, 20);
+    const escortIds = new Set(['bounce-back', 'odd-only', 'even-only']);
     for (const seed of samples) {
       const spawns = rollShippedWave(seed, 9);
       const bosses = spawns.filter((spawn) => spawn.robotTemplateId === 'boss');
       expect(bosses, `seed ${seed} exactly one Boss`).toHaveLength(1);
-      expect(bosses[0]?.lane, `seed ${seed} Boss lane`).toBe(2);
-      expect(bosses[0]?.hp, `seed ${seed} Boss HP`).toBeGreaterThanOrEqual(100);
-      expect(bosses[0]?.hp, `seed ${seed} Boss HP`).toBeLessThanOrEqual(140);
+      expect(bosses[0]?.lane, `seed ${seed} Boss lane`).toBe(1);
+      expect(bosses[0]?.hp, `seed ${seed} Boss HP`).toBe(1000);
       expect(
         data.robots.find((robot) => robot.id === bosses[0]?.robotTemplateId)?.isBoss,
         `seed ${seed} Boss isBoss`,
@@ -259,8 +256,13 @@ describe('authored ladder waves 4–7 (task 22)', () => {
       const escort = spawns.filter((spawn) => spawn.robotTemplateId !== 'boss');
       expect(escort).toHaveLength(3);
       expect(
-        escort.every((spawn) => spawn.robotTemplateId === 'basic'),
-        `seed ${seed} escort basic`,
+        escort.every((spawn) => escortIds.has(spawn.robotTemplateId)),
+        `seed ${seed} escort traits`,
+      ).toBe(true);
+      expect(new Set(escort.map((spawn) => spawn.robotTemplateId)).size).toBe(3);
+      expect(
+        escort.every((spawn) => spawn.lane !== 1 && spawn.lane !== 2),
+        `seed ${seed} escort off the Boss 2x2`,
       ).toBe(true);
       expect(
         escort.every((spawn) => spawn.hp <= 99),
@@ -282,7 +284,7 @@ describe('sensible-player bot clears wave 1 with zero detonations (task 17 requi
 
 describe('10-wave ladder balance (task 27)', () => {
   it(
-    'sensible player wins seeds 1–100; leftover min ≥ 40; shops are live; Boss exact-killable in ≤ 3 hits; End-Turn-only loses',
+    'sensible player wins seeds 1–100; leftover min ≥ 40; shops are live; Boss is 1000 HP; End-Turn-only loses',
     { timeout: LADDER_TIMEOUT_MS },
     () => {
       const records: SensibleRunStats[] = [];
@@ -318,12 +320,8 @@ describe('10-wave ladder balance (task 27)', () => {
         expect(wave10, `seed ${seed} missing wave-10 entry`).toBeDefined();
         const bosses = wave10!.robots.filter((robot) => robot.isBoss);
         expect(bosses, `seed ${seed} wave 10 Boss count`).toHaveLength(1);
-        // Search bound matches task 21: reachableBallValues of owned tiles (sequences of
-        // ≤ 3 tiles, tiles not consumed). Success is exact only — overkill is not a hit.
-        expect(
-          canExactKillInAtMostNHits(bosses[0]!, wave10!.values, 3),
-          `seed ${seed} Boss HP ${bosses[0]!.hp} not exact-killable in ≤3 hits`,
-        ).toBe(true);
+        expect(bosses[0]?.hp, `seed ${seed} Boss HP`).toBe(1000);
+        expect(bosses[0]?.isBoss, `seed ${seed} Boss isBoss`).toBe(true);
 
         const careless = playEndTurnOnlyRun(seed, data);
         expect(careless.phase, `seed ${seed} End-Turn-only`).toBe('lost');

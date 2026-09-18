@@ -4,6 +4,7 @@
 
 import type { Col, Lane } from './coords';
 import { COLS } from './coords';
+import { robotFootprint } from './footprint';
 import type { GameData } from '../data/schemas';
 import { applyTile } from './tiles';
 import type { RunState } from './types';
@@ -18,8 +19,10 @@ export interface LaneHintValue {
 function frontOnBoardRobotCol(state: RunState, lane: Lane): Col | null {
   let front: Col | null = null;
   for (const robot of state.board.robots) {
-    if (robot.lane !== lane || robot.col === null) continue;
-    if (front === null || robot.col < front) front = robot.col;
+    for (const cell of robotFootprint(robot)) {
+      if (cell.lane !== lane) continue;
+      if (front === null || cell.col < front) front = cell.col;
+    }
   }
   return front;
 }

@@ -33,7 +33,7 @@ function runState(overrides: Parameters<typeof fakeRunState>[0] = {}) {
 }
 
 describe('spawn', () => {
-  it('enters a due robot at col 7 when the cell is free, taking its id from nextIds', () => {
+  it('enters a due Boss at col 6 (2x2 front) when the footprint is free', () => {
     const state = runState({
       pendingSpawns: [entry({ lane: 3, hp: 8, robotTemplateId: 'boss' })],
       nextIds: { robot: 4, piece: 0, ball: 0 },
@@ -45,7 +45,7 @@ describe('spawn', () => {
       {
         robotId: 'robot:4',
         lane: 3,
-        col: 7,
+        col: 6,
         hp: 8,
         maxHp: 8,
         trait: { type: 'bounceBack' },
@@ -60,7 +60,7 @@ describe('spawn', () => {
         group: 'spawn',
         type: 'RobotSpawned',
         robotId: 'robot:4',
-        at: { lane: 3, col: 7 },
+        at: { lane: 3, col: 6 },
         hp: 8,
         maxHp: 8,
         trait: { type: 'bounceBack' },
@@ -91,6 +91,27 @@ describe('spawn', () => {
         trait: { type: 'none' },
       },
     ]);
+  });
+
+  it('makes a Boss wait when a 1x1 occupies its back cell in the second lane', () => {
+    const state = runState({
+      board: {
+        ...runState().board,
+        robots: [robot({ robotId: 'robot:0', lane: 4, col: 7 })],
+      },
+      pendingSpawns: [entry({ lane: 3, hp: 8, robotTemplateId: 'boss' })],
+      nextIds: { robot: 1, piece: 0, ball: 0 },
+    });
+
+    const result = spawn(state, data);
+
+    expect(result.state.board.robots[1]).toMatchObject({
+      robotId: 'robot:1',
+      lane: 3,
+      col: null,
+      isBoss: true,
+    });
+    expect(result.events).toMatchObject([{ type: 'RobotWaiting', robotId: 'robot:1', lane: 3 }]);
   });
 
   it('only blocks on col 7 of the same lane', () => {

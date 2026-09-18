@@ -6,6 +6,7 @@ import { applyCommand } from '../../sim/commands/applyCommand';
 import { robotAt, tileAt } from '../../sim/commands/boardQueries';
 import type { Col, Lane } from '../../sim/core/coords';
 import { COLS, lanes } from '../../sim/core/coords';
+import { robotFootprint } from '../../sim/core/footprint';
 import { applyTile } from '../../sim/core/tiles';
 import type {
   Command,
@@ -52,10 +53,18 @@ function ownsMul(state: RunState): boolean {
 }
 
 function frontRobotInLane(state: RunState, lane: Lane) {
-  const onBoard = state.board.robots.filter((robot) => robot.lane === lane && robot.col !== null);
-  if (onBoard.length === 0) return null;
-  onBoard.sort((a, b) => a.col! - b.col!);
-  return onBoard[0]!;
+  let best: Robot | null = null;
+  let bestCol: Col | null = null;
+  for (const robot of state.board.robots) {
+    for (const cell of robotFootprint(robot)) {
+      if (cell.lane !== lane) continue;
+      if (bestCol === null || cell.col < bestCol) {
+        best = robot;
+        bestCol = cell.col;
+      }
+    }
+  }
+  return best;
 }
 
 export function frontmostRobotLane(state: RunState): Lane | null {

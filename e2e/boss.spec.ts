@@ -1,13 +1,12 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
-import { ROBOT_HP_FONT_SIZE, cellCenter } from '../game/board/layout';
+import { BOSS_SIZE, ROBOT_HP_FONT_SIZE, robotCenter } from '../game/board/layout';
 
-// Task 26: put the wave-10 Boss on the board through `syncRobots` (`loadState` with `isBoss`)
-// so the oversized silhouette is visible without a FIRE-then-SPAWN turn. Occupies col 6 so
-// overflow into neighbouring cells is obvious; cannon slot (col 0) stays clear.
+// Wave-10 Boss: 2x2 occupancy (top-front lane 1 col 6) with 1000 HP. The silhouette fills
+// the four cells; HP is the largest numeral.
 
 const PLANNING_BOARD = [
-  'name: e2e boss overflow sprite',
+  'name: e2e boss 2x2 sprite',
   'mode: run',
   'baseValue: 1',
   'board:',
@@ -30,7 +29,7 @@ test.beforeAll(async () => {
   await mkdir('/opt/cursor/artifacts', { recursive: true });
 });
 
-test('the Boss overflows the cell and three-digit HP stays the largest numeral', async ({
+test('the Boss fills a 2x2 and four-digit HP stays the largest numeral', async ({
   page,
 }) => {
   await load(page, PLANNING_BOARD);
@@ -45,10 +44,10 @@ test('the Boss overflows the cell and three-digit HP stays the largest numeral',
         robots: [
           {
             robotId: 'robot:boss',
-            lane: 2,
+            lane: 1,
             col: 6,
-            hp: 120,
-            maxHp: 150,
+            hp: 1000,
+            maxHp: 1000,
             trait: { type: 'none' },
             isBoss: true,
           },
@@ -69,14 +68,15 @@ test('the Boss overflows the cell and three-digit HP stays the largest numeral',
     };
   });
 
-  expect(snapshot.robot).toMatchObject({ isBoss: true, hp: 120, lane: 2, col: 6 });
+  expect(snapshot.robot).toMatchObject({ isBoss: true, hp: 1000, lane: 1, col: 6 });
   expect(snapshot.chrome?.hpFontSize).toBe(ROBOT_HP_FONT_SIZE);
   expect(snapshot.chrome?.trait).toBe('none');
   const drawn = snapshot.drawn.robots.find((entry) => entry.robotId === 'robot:boss');
   expect(drawn).toBeDefined();
-  const home = cellCenter(2, 6);
+  const home = robotCenter(1, 6, true);
   expect(Math.abs(drawn!.x - home.x)).toBeLessThan(2);
   expect(Math.abs(drawn!.y - home.y)).toBeLessThan(2);
+  expect(BOSS_SIZE).toBeGreaterThan(100);
 
-  await page.screenshot({ path: '/opt/cursor/artifacts/26-boss.png' });
+  await page.screenshot({ path: '/opt/cursor/artifacts/boss-2x2.png' });
 });

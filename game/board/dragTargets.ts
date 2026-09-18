@@ -8,6 +8,7 @@
 
 import type { Cell, Lane } from '../../sim/core/coords';
 import { COLS, LANES, isTileCell } from '../../sim/core/coords';
+import { robotOccupies } from '../../sim/core/footprint';
 import type { Command, RunState } from '../../sim/core/types';
 import {
   CELL_SIZE,
@@ -37,7 +38,7 @@ export type DropResolution =
   | { kind: 'invalid'; hovered: Cell | null };
 
 function robotOn(run: RunState, cell: Cell): boolean {
-  return run.board.robots.some((robot) => robot.lane === cell.lane && robot.col === cell.col);
+  return run.board.robots.some((robot) => robotOccupies(robot, cell));
 }
 
 function tileOn(run: RunState, cell: Cell): string | null {

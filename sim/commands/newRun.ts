@@ -21,7 +21,7 @@ export function buildNewRun(
 
   // `createStreams` seeds `wave` and `shop` from different derived strings, so they differ.
   const streams = createStreams(seed);
-  const rolled = rollWave(firstWave, streams.wave);
+  const rolled = rollWave(firstWave, streams.wave, data.robots);
 
   const state: RunState = {
     schemaVersion: economy.schemaVersion,

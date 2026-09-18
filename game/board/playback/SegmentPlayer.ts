@@ -32,7 +32,6 @@ import {
   baseStripRect,
   cellCenter,
   designToWorld,
-  waitingGhostCenter,
 } from '../layout';
 import { formatNumber, tileColor, tileLabel } from '../pieces';
 import { BallView } from '../views/BallView';
@@ -149,22 +148,25 @@ export class SegmentPlayer {
         }
         case 'RobotDamaged':
         case 'RobotBouncedBack':
-          this.restRobot(event.robotId, event.at)?.setHp(event.hpAfter);
+          this.restRobot(event.robotId)?.setHp(event.hpAfter);
           break;
         case 'BallBlocked':
-          this.restRobot(event.robotId, event.at);
+          this.restRobot(event.robotId);
           break;
         case 'RobotDefeated':
-          this.restRobot(event.robotId, event.at)?.setVisible(false);
+          this.restRobot(event.robotId)?.setVisible(false);
           break;
         case 'RobotAdvanced':
           this.restRobot(event.robotId, event.to);
           break;
         case 'RobotDetonated':
           if (this.segment.group === 'advance') {
-            this.restRobotAt(event.robotId, worldBaseCenter(event.lane));
+            this.restRobotAt(event.robotId, worldBaseCenter(event.lane, this.isBossView(event.robotId)));
           } else {
-            this.restRobotAt(event.robotId, worldBaseCenter(event.lane))?.setVisible(false);
+            this.restRobotAt(
+              event.robotId,
+              worldBaseCenter(event.lane, this.isBossView(event.robotId)),
+            )?.setVisible(false);
           }
           break;
         case 'BaseDamaged':
@@ -184,9 +186,8 @@ export class SegmentPlayer {
         case 'RobotWaiting': {
           const robot = this.ensureSpawnView(event);
           robot.setHp(event.hp, event.maxHp);
-          this.restRobotAt(event.robotId, worldGhostCenter(event.lane))?.setAlpha(
-            this.settings.spawn.ghostAlpha,
-          );
+          robot.setAnchor(event.lane, null);
+          this.restRobot(event.robotId)?.setAlpha(this.settings.spawn.ghostAlpha);
           break;
         }
         default:
@@ -372,9 +373,10 @@ export class SegmentPlayer {
   private robotDamaged(event: EventOf<'RobotDamaged'>, durationMs: number): void {
     const { impact } = this.settings;
     const robot = this.renderer.robotView(event.robotId);
-    const center = worldCenter(event.at);
-    const ballX = this.ball?.x ?? center.x - designToWorld(BALL_IMPACT_OFFSET);
-    const ballY = this.ball?.y ?? center.y;
+    const hit = worldCenter(event.at);
+    const center = this.robotHomeWorld(event.robotId, event.at);
+    const ballX = this.ball?.x ?? hit.x - designToWorld(BALL_IMPACT_OFFSET);
+    const ballY = this.ball?.y ?? hit.y;
     this.consumeBall(durationMs * this.share.quick);
 
     if (!bouncesBack(this.segment, event)) {
@@ -459,7 +461,7 @@ export class SegmentPlayer {
     if (robot === undefined) return;
     const { maxBarFill, plusCount, plusFloatPt, plusSpreadPt, plusColor, wobbleScale } =
       this.settings.bounceBack;
-    const center = worldCenter(event.at);
+    const center = this.robotHomeWorld(event.robotId, event.at);
     const remainder = this.remainderLabel;
     if (remainder !== null) {
       this.tween({
@@ -520,7 +522,7 @@ export class SegmentPlayer {
   }
 
   private robotDefeated(event: EventOf<'RobotDefeated'>, durationMs: number): void {
-    const center = worldCenter(event.at);
+    const center = this.robotHomeWorld(event.robotId, event.at);
     const puff = this.track(drawRing(this.scene.add.graphics(), PLACEHOLDER.puff, PUFF_RING_WIDTH));
     puff.setPosition(center.x, center.y).setDepth(DEPTH.effects);
     this.tween({
@@ -537,7 +539,7 @@ export class SegmentPlayer {
    * and clearly bigger than a normal kill. */
   private exactKill(event: EventOf<'RobotDefeated'>, durationMs: number): void {
     const { exactKill } = this.settings;
-    const center = worldCenter(event.at);
+    const center = this.robotHomeWorld(event.robotId, event.at);
     this.popAway(event.robotId, exactKill.popScale, durationMs * this.share.half);
 
     const ring = this.track(
@@ -699,7 +701,8 @@ export class SegmentPlayer {
   private robotAdvanced(event: EventOf<'RobotAdvanced'>, durationMs: number): void {
     const robot = this.renderer.robotView(event.robotId);
     if (robot === undefined) return;
-    const target = worldCenter(event.to);
+    robot.setAnchor(event.to.lane, event.to.col);
+    const target = this.robotHomeWorld(event.robotId, event.to);
     this.tween({
       targets: robot,
       x: target.x,
@@ -715,7 +718,7 @@ export class SegmentPlayer {
   private robotLurches(event: EventOf<'RobotDetonated'>, durationMs: number): void {
     const robot = this.renderer.robotView(event.robotId);
     if (robot === undefined) return;
-    const target = worldBaseCenter(event.lane);
+    const target = worldBaseCenter(event.lane, robot.isBoss);
     this.tween({
       targets: robot,
       x: target.x,
@@ -730,7 +733,7 @@ export class SegmentPlayer {
    * is the next beat, `baseDamaged` (this detonation's own `BaseDamaged` event). */
   private robotDetonated(event: EventOf<'RobotDetonated'>, durationMs: number): void {
     const { detonate } = this.settings;
-    const center = worldBaseCenter(event.lane);
+    const center = worldBaseCenter(event.lane, this.isBossView(event.robotId));
 
     const flash = this.track(this.scene.add.graphics()).setDepth(DEPTH.effects);
     fillRect(flash, inset(baseStripRect(event.lane), CELL_INSET), PLACEHOLDER.detonateFlash);
@@ -785,7 +788,8 @@ export class SegmentPlayer {
     const wasGhost = this.renderer.robotView(event.robotId) !== undefined;
     const robot = this.ensureSpawnView(event);
     robot.setHp(event.hp, event.maxHp);
-    const target = worldCenter(event.at);
+    robot.setAnchor(event.at.lane, event.at.col);
+    const target = this.robotHomeWorld(event.robotId, event.at);
     if (wasGhost) {
       this.tween({
         targets: robot,
@@ -816,7 +820,9 @@ export class SegmentPlayer {
     const { spawn } = this.settings;
     const robot = this.ensureSpawnView(event);
     robot.setHp(event.hp, event.maxHp);
-    const target = worldGhostCenter(event.lane);
+    robot.setAnchor(event.lane, null);
+    const home = robot.homeDesign();
+    const target = { x: designToWorld(home.x), y: designToWorld(home.y) };
     robot.setPosition(target.x, target.y).setScale(spawn.ghostPopFromScale).setAlpha(0);
     this.tween({
       targets: robot,
@@ -907,9 +913,28 @@ export class SegmentPlayer {
     return robot.setPosition(point.x, point.y).setScale(1).setAlpha(1).setAngle(0);
   }
 
-  /** A robot back at its cell centre (final state after knockback/pops). */
-  private restRobot(robotId: string, at: Cell): RobotView | undefined {
-    return this.restRobotAt(robotId, worldCenter(at));
+  /** A robot back at its home centre (final state after knockback/pops). Pass `at` to update
+   * the view's anchor (spawn / advance); omit it to keep the current 1×1 / 2×2 home. */
+  private restRobot(robotId: string, at?: Cell): RobotView | undefined {
+    const robot = this.renderer.robotView(robotId);
+    if (robot === undefined) return undefined;
+    if (at !== undefined) robot.setAnchor(at.lane, at.col);
+    return this.restRobotAt(robotId, this.robotHomeWorld(robotId, at));
+  }
+
+  private isBossView(robotId: string): boolean {
+    return this.renderer.robotView(robotId)?.isBoss ?? false;
+  }
+
+  /** World-pixel centre of the robot's 1×1 cell or 2×2 block. */
+  private robotHomeWorld(robotId: string, fallback?: Cell): { x: number; y: number } {
+    const view = this.renderer.robotView(robotId);
+    if (view !== undefined) {
+      const home = view.homeDesign();
+      return { x: designToWorld(home.x), y: designToWorld(home.y) };
+    }
+    if (fallback !== undefined) return worldCenter(fallback);
+    return { x: 0, y: 0 };
   }
 
   private tween(config: Phaser.Types.Tweens.TweenBuilderConfig): Phaser.Tweens.Tween {
@@ -948,13 +973,7 @@ function worldCenter(cell: Cell): { x: number; y: number } {
 
 /** Where a detonating robot lurches to and flashes — the base strip has no `col`, so this isn't a
  * grid `Cell` (task 15). */
-function worldBaseCenter(lane: number): { x: number; y: number } {
-  const { x, y } = baseStripCenter(lane);
-  return { x: designToWorld(x), y: designToWorld(y) };
-}
-
-/** Where a waiting robot's ghost sits, just right of column 7 (task 15). */
-function worldGhostCenter(lane: number): { x: number; y: number } {
-  const { x, y } = waitingGhostCenter(lane);
+function worldBaseCenter(lane: number, isBoss = false): { x: number; y: number } {
+  const { x, y } = baseStripCenter(lane, isBoss);
   return { x: designToWorld(x), y: designToWorld(y) };
 }

@@ -6,8 +6,9 @@
 // `shop.json` (M3, task 18): prices, cannon/upgrade formulas, per-wave tables, ladder guarantees.
 
 import { z } from 'zod';
-import { COLS, LANES } from '../core/coords';
+import { COLS, LANES, isLane } from '../core/coords';
 import type { Col, Lane } from '../core/coords';
+import { reservedSpawnLanes } from '../core/footprint';
 import type { TileId } from '../core/types';
 
 // --- tiles.json (GDD §9.1, all milestones) ---
@@ -285,8 +286,9 @@ const PresentationFileSchema = z.object({
     evenShieldColor: z.string().min(1),
     bounceBackBodyColor: z.string().min(1),
   }),
-  /** Wave-10 Boss overflow scale (task 26, GDD §6.6). Applied to the silhouette inside
-   * `RobotView.setChrome`, never to the Container (playback resets Container scale to 1). */
+  /** Wave-10 Boss visual scale on top of the 2×2 layout size (GDD §6.6). `1` fills the 2×2
+   * with the same outer margin as a 1×1. Applied to the silhouette inside `RobotView.setChrome`,
+   * never to the Container (playback resets Container scale to 1). */
   boss: z.object({
     scale: scale(),
   }),
@@ -651,10 +653,10 @@ export const LANE_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
 export type LaneLetter = (typeof LANE_LETTERS)[number];
 
 /** Highest HP a normal spawn may roll: never exceeds 99 (GDD §2.1 / §6.6). The Boss is the
- * only three-digit robot (task 26); authored spawns may go to 150, and the cross-file pass
- * in `GameDataSchema` keeps non-Boss templates at 99. */
+ * only four-digit robot; authored spawns may go to 1000, and the cross-file pass in
+ * `GameDataSchema` keeps non-Boss templates at 99. */
 const MAX_NORMAL_SPAWN_HP = 99;
-const MAX_BOSS_SPAWN_HP = 150;
+const MAX_BOSS_SPAWN_HP = 1000;
 
 function spawnHpRange(maxHp: number) {
   const hp = z.number().int().min(1).max(maxHp);
@@ -868,6 +870,7 @@ export const GameDataSchema = z
     const tileIds = new Set<string>(data.tiles.map((tile) => tile.id));
     data.waves.waves.forEach((wave, waveIndex) => {
       if ('spawns' in wave) {
+        const reservedLanes = new Set<number>();
         wave.spawns.forEach((spawn, spawnIndex) => {
           if (!robotIds.has(spawn.robot)) {
             ctx.addIssue({
@@ -885,7 +888,54 @@ export const GameDataSchema = z
               message: `hp max ${spawn.hp[1]} exceeds ${MAX_NORMAL_SPAWN_HP} for non-Boss template "${spawn.robot}"`,
             });
           }
+          if (!template?.isBoss) {
+            if (typeof spawn.lane === 'number') reservedLanes.add(spawn.lane);
+            return;
+          }
+          if (typeof spawn.lane !== 'number') {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['waves', 'waves', waveIndex, 'spawns', spawnIndex, 'lane'],
+              message: 'Boss must use a fixed lane (2x2 footprint)',
+            });
+            return;
+          }
+          if (!isLane(spawn.lane + 1)) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['waves', 'waves', waveIndex, 'spawns', spawnIndex, 'lane'],
+              message: `Boss 2x2 does not fit on lane ${spawn.lane}`,
+            });
+            return;
+          }
+          for (const lane of reservedSpawnLanes(spawn.lane, true)) {
+            reservedLanes.add(lane);
+          }
         });
+        const letters = new Set(
+          wave.spawns.map((spawn) => spawn.lane).filter((lane) => typeof lane === 'string'),
+        );
+        const claimed: number[] = [];
+        for (const spawn of wave.spawns) {
+          if (typeof spawn.lane !== 'number') continue;
+          claimed.push(spawn.lane);
+          const template = data.robots.find((robot) => robot.id === spawn.robot);
+          if (template?.isBoss && isLane(spawn.lane + 1)) claimed.push(spawn.lane + 1);
+        }
+        if (new Set(claimed).size !== claimed.length) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['waves', 'waves', waveIndex, 'spawns'],
+            message: 'Boss 2x2 overlaps another fixed lane',
+          });
+        }
+        if (letters.size > LANES - reservedLanes.size) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['waves', 'waves', waveIndex, 'spawns'],
+            message: `${letters.size} lane letters but only ${LANES - reservedLanes.size} lanes are not taken by fixed or Boss 2x2 cells`,
+          });
+        }
         return;
       }
       wave.procedural.groups.forEach((group, groupIndex) => {
