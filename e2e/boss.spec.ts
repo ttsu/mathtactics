@@ -51,12 +51,25 @@ test('the Boss fills a 2x2 and four-digit HP stays the largest numeral', async (
             trait: { type: 'none' },
             isBoss: true,
           },
+          {
+            robotId: 'robot:guard',
+            lane: 4,
+            col: 7,
+            hp: 32,
+            maxHp: 32,
+            trait: { type: 'bounceBack' },
+            isBoss: false,
+          },
         ],
       },
     });
   });
 
   await page.waitForFunction(() => window.__GAME__!.getRobotChrome('robot:boss') !== null);
+  await page.waitForFunction(() => window.__GAME__!.getRobotChrome('robot:guard') !== null);
+  await page.waitForFunction(() => window.__GAME__!.isIdle());
+  // Phaser presents the new Graphics on the next frame; wait so the screenshot is the 2×2.
+  await page.waitForTimeout(250);
 
   const snapshot = await page.evaluate(() => {
     const game = window.__GAME__!;
@@ -64,6 +77,7 @@ test('the Boss fills a 2x2 and four-digit HP stays the largest numeral', async (
     return {
       robot,
       chrome: game.getRobotChrome('robot:boss'),
+      guardChrome: game.getRobotChrome('robot:guard'),
       drawn: game.renderedBoard(),
     };
   });
@@ -71,6 +85,7 @@ test('the Boss fills a 2x2 and four-digit HP stays the largest numeral', async (
   expect(snapshot.robot).toMatchObject({ isBoss: true, hp: 1000, lane: 1, col: 6 });
   expect(snapshot.chrome?.hpFontSize).toBe(ROBOT_HP_FONT_SIZE);
   expect(snapshot.chrome?.trait).toBe('none');
+  expect(snapshot.guardChrome?.coiled).toBe(true);
   const drawn = snapshot.drawn.robots.find((entry) => entry.robotId === 'robot:boss');
   expect(drawn).toBeDefined();
   const home = robotCenter(1, 6, true);
@@ -78,5 +93,7 @@ test('the Boss fills a 2x2 and four-digit HP stays the largest numeral', async (
   expect(Math.abs(drawn!.y - home.y)).toBeLessThan(2);
   expect(BOSS_SIZE).toBeGreaterThan(100);
 
-  await page.screenshot({ path: '/opt/cursor/artifacts/boss-2x2.png' });
+  await page.locator('#board-root canvas').screenshot({
+    path: '/opt/cursor/artifacts/boss-2x2-1000hp.png',
+  });
 });
