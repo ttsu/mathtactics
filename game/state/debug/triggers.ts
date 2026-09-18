@@ -9,7 +9,7 @@
 export const DEBUG_TRIGGERS = {
   /** Rapid taps on a secret target (title, star, wallet). */
   tapCount: 7,
-  tapWindowMs: 2500,
+  tapWindowMs: 3500,
   /** Hold Settings or Home. Short tap still does the normal action. */
   longPressMs: 1200,
   keyboard: { shift: true, key: 'd' },

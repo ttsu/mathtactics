@@ -13,12 +13,25 @@ async function tapTitle(page: Page, times: number) {
   }
 }
 
-test('7-tap the title opens the debug menu; one tap does not', async ({ page }) => {
+/** Fires `pointerdown` in one turn so Playwright's per-tap actionability wait cannot
+ * stretch the burst past the 7-tap window (and so a leftover tap cannot land on the overlay). */
+async function burstTitle(page: Page, times: number) {
+  await page.getByTestId('menu-title').evaluate((el, count) => {
+    for (let i = 0; i < count; i++) {
+      el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    }
+  }, times);
+}
+
+test('one tap on the title does not open the debug menu', async ({ page }) => {
   await openMenu(page);
   await tapTitle(page, 1);
   await expect(page.getByTestId('debug-menu')).toHaveCount(0);
+});
 
-  await tapTitle(page, 7);
+test('7-tap the title opens the debug menu', async ({ page }) => {
+  await openMenu(page);
+  await burstTitle(page, 7);
   await expect(page.getByTestId('debug-menu')).toBeVisible();
   await expect(page.getByTestId('debug-panel-jump')).toBeVisible();
 });
