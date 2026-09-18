@@ -3,7 +3,7 @@
 // rank the way the real rule does.
 
 import { describe, expect, it } from 'vitest';
-import type { Robot, Trait } from '../../sim/core/types';
+import type { Robot, TileId, Trait } from '../../sim/core/types';
 import {
   arrangementRank,
   bestSequence,
@@ -121,9 +121,9 @@ describe('bestSequence is trait-aware', () => {
       fakeTile({ id: 'sub:10', kind: 'sub', n: 10, priceCategory: 'sub', color: 'blue' }),
     ];
     const data = fakeGameData({ tiles });
-    const pieces: Record<string, { pieceId: string; tileId: string }> = {};
+    const pieces: Record<string, { pieceId: string; tileId: TileId }> = {};
     const ids: string[] = [];
-    const tray = [
+    const tray: TileId[] = [
       'add:1',
       'add:1',
       'add:1',
