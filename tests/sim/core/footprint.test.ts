@@ -8,8 +8,8 @@ import {
   robotFootprint,
   robotOccupies,
   spawnColFor,
-} from '../../sim/core/footprint';
-import type { Robot } from '../../sim/core/types';
+} from '../../../sim/core/footprint';
+import type { Robot } from '../../../sim/core/types';
 
 function robot(overrides: Partial<Robot> = {}): Robot {
   return {

@@ -149,14 +149,14 @@ describe('debugAddRobot', () => {
     const result = debugAddRobot(
       start.run,
       realData,
-      { templateId: 'boss', lane: 1, hp: 1000 },
+      { templateId: 'boss', lane: 0, hp: 1000 },
       seed,
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const added = result.run.board.robots.find((robot) => robot.isBoss);
     expect(added).toMatchObject({
-      lane: 1,
+      lane: 0,
       col: 6,
       hp: 1000,
       maxHp: 1000,

@@ -218,7 +218,7 @@ describe('laneHintValues', () => {
         'p-mul': { pieceId: 'p-mul', tileId: 'mul:3' },
       },
       cannons: [false, false, true, false, false],
-      robots: [robot({ lane: 1, col: 4, isBoss: true, hp: 1000, maxHp: 1000 })],
+      robots: [robot({ lane: 1, col: 3, isBoss: true, hp: 1000, maxHp: 1000 })],
     });
     expect(laneHintValues(state, 2, data)).toEqual([{ col: 1, value: 5 }]);
   });

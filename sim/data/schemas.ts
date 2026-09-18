@@ -915,14 +915,25 @@ export const GameDataSchema = z
         const letters = new Set(
           wave.spawns.map((spawn) => spawn.lane).filter((lane) => typeof lane === 'string'),
         );
-        const claimed: number[] = [];
+        const otherFixed = new Set<number>();
+        const bossReserved = new Set<number>();
+        let bossOverlap = false;
         for (const spawn of wave.spawns) {
           if (typeof spawn.lane !== 'number') continue;
-          claimed.push(spawn.lane);
           const template = data.robots.find((robot) => robot.id === spawn.robot);
-          if (template?.isBoss && isLane(spawn.lane + 1)) claimed.push(spawn.lane + 1);
+          if (template?.isBoss) {
+            for (const lane of reservedSpawnLanes(spawn.lane, true)) {
+              if (bossReserved.has(lane)) bossOverlap = true;
+              bossReserved.add(lane);
+            }
+          } else {
+            otherFixed.add(spawn.lane);
+          }
         }
-        if (new Set(claimed).size !== claimed.length) {
+        for (const lane of otherFixed) {
+          if (bossReserved.has(lane)) bossOverlap = true;
+        }
+        if (bossOverlap) {
           ctx.addIssue({
             code: 'custom',
             path: ['waves', 'waves', waveIndex, 'spawns'],
