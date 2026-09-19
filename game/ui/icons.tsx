@@ -1,6 +1,22 @@
 // Bold, text-free SVG glyphs shared by the task 11 screens. SVG rather than font glyphs: iOS draws
 // "▶" as a colour emoji, and thin font glyphs read faintly at a distance.
 
+/** A fat left chevron — Back on the difficulty picker. Same weight as `PlayIcon`. */
+export function BackIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
+      <path
+        d="M30 8 L10 24 L30 40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /** A fat rounded "play" triangle. */
 export function PlayIcon({ size }: { size: number }) {
   return (

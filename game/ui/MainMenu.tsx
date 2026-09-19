@@ -8,7 +8,7 @@
 // means, so a pre-reader can still use the menu by icon and position alone.
 import type { CSSProperties } from 'react';
 import { playFromStart } from '../state/levelFlow';
-import { canContinue, continueRun, startNewRun } from '../state/runFlow';
+import { canContinue, continueRun } from '../state/runFlow';
 import { GearIcon, PlayIcon, RobotPlayIcon, TileChipIcon } from './icons';
 import { SecretLongPress, SecretTap } from './debug';
 import { useAppStore, useAppStoreApi } from './StoreContext';
@@ -58,7 +58,7 @@ export function MainMenu() {
             className="big-button pop-in"
             data-testid="menu-new-run"
             aria-label="New Game"
-            onClick={() => startNewRun(store)}
+            onClick={() => store.getState().setScreen('difficulty')}
           >
             <RobotPlayIcon size={96} />
             <span className="button-label">New Game</span>
@@ -71,7 +71,7 @@ export function MainMenu() {
               className="small-button pop-in"
               data-testid="menu-new-run"
               aria-label="New Game"
-              onClick={() => startNewRun(store)}
+              onClick={() => store.getState().setScreen('difficulty')}
             >
               <RobotPlayIcon size={56} />
               <span className="button-label button-label-small">New Game</span>

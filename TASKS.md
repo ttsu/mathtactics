@@ -100,6 +100,26 @@ detonation `heartTargetX` — both specs carry the fallout list.
 | 27 | [10-wave balance, e2e & Playtest 4 checklist](tasks/27-full-run-and-playtest-4.md) | data / e2e | 23, 24, 25, 26 | Partial (leftover median 99, not 50–70) |
 | H4 | **Human: Playtest 4** — play a complete run with your son; record notes in `playtests/04.md` | human | 27 | Not Started |
 
+## M4.5 — Difficulty modes
+
+Gate: **New Game offers Easy / Normal / Hard**, and each mode's leftover band matches GDD
+§10.7. Specs written after the v0.7.3 HP pass: Playtest 3 was too easy; waves 7–10 with a
+7-year-old were a little too hard. Normal **is** today's `waves.json`. Easy quiets the
+stretch; Hard makes 8–9 louder with more simultaneous traited robots, not bigger numerals.
+
+**Build after H4** unless Easy is needed for the next session — Playtest 4 should measure one
+ladder. 28 first and alone (schema, overlay, `RunState.difficulty`, Normal identity tests).
+Then 29 (picker + Settings) and 30 (leftover bands) in parallel. Shared files to expect
+conflicts in: `data/difficulty.json`, `sim/data/schemas.ts`, `sim/core/types.ts`,
+`tests/ladder.test.ts`, `game/state/storage.ts`. `waves.json` is not copied per mode.
+
+| # | Task | Layer | Depends on | Status |
+|---|---|---|---|---|
+| 28 | [Difficulty data, overlay & RunState](tasks/28-difficulty-data.md) | sim / data | — | Complete |
+| 29 | [New Game picker & Settings](tasks/29-difficulty-picker.md) | ui / state | 28 | Complete (iPad check pending) |
+| 30 | [Per-mode leftover bands](tasks/30-difficulty-balance.md) | data / tests | 28 | Complete |
+| H5 | **Human: Playtest 5** — play Easy and Hard with your son; record notes in `playtests/05.md` | human | 29, 30 | Not Started |
+
 ## M5 — Juice & Art *(specs written after Playtest 4)*
 
 Chain escalation · exact-kill celebration · bounce-back & clonk beats · purchase juice ·

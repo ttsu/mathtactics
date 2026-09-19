@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MIN_TOUCH_TARGET } from '../game/state/designSpace';
+import { startNewGame } from './helpers/newGame';
 
 // Task 14: save/resume, main menu, and ⌂ Home. Asserts on structured state (TR §14); screenshots
 // are for the human legibility check only.
@@ -28,7 +29,7 @@ test('New Run autosaves; reload resumes in planning with no lost progress', asyn
   await expectTouchTarget(page, 'menu-new-run');
   await expectTouchTarget(page, 'menu-puzzles');
 
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   expect(await getScreen(page)).toBe('game');
   await waitIdle(page);
   const afterSpawn = await getState(page);
@@ -55,7 +56,7 @@ test('Puzzles never touches the saved run; Home returns to it without confirmati
   page,
 }) => {
   await openMenu(page);
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   await waitIdle(page);
   const savedRun = await getState(page);
 
@@ -80,7 +81,7 @@ test('reload mid-playback resumes in planning with the resolved state (no reload
   page,
 }) => {
   await openMenu(page);
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   await waitIdle(page);
 
   // Dispatch End Turn but do not skip its animation, then reload immediately — the resolved
@@ -207,7 +208,7 @@ test('every menu and HUD button is at least 60pt in both dimensions', async ({ p
   await expectTouchTarget(page, 'menu-new-run');
   await expectTouchTarget(page, 'menu-puzzles');
 
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   await waitIdle(page);
   for (const testId of ['home', 'replay', 'undo', 'end-turn']) {
     await expectTouchTarget(page, testId);
@@ -223,7 +224,7 @@ test('every menu and HUD button is at least 60pt in both dimensions', async ({ p
 
 test('⌂ Home hides in place during playback, so the HUD row never shifts', async ({ page }) => {
   await openMenu(page);
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   await waitIdle(page);
 
   // Measured inside the page, a couple of frames after `dispatch`, in one go — so the "playback"

@@ -53,6 +53,7 @@ export function buildLevelState(levelDef: LevelDef, data: GameData): RunState {
   return {
     schemaVersion: data.economy.schemaVersion,
     mode: 'level',
+    difficulty: 'normal',
     levelId: levelDef.id,
     seed,
     rng: createStreams(seed),

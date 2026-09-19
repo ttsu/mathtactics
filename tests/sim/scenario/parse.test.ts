@@ -392,6 +392,21 @@ describe('parseScenario — task 13 (mode: run)', () => {
     expect(scenario.commands).toEqual([{ type: 'newRun', seed: 'my-seed' }]);
   });
 
+  it('normalizes "{ newRun: { seed, difficulty } }" (task 28)', () => {
+    const yamlText = [
+      'name: t',
+      'baseValue: 1',
+      'board:',
+      ...blankBoard().map((row) => `  - "${row}"`),
+      'commands:',
+      '  - newRun: { seed: my-seed, difficulty: easy }',
+    ].join('\n');
+    const scenario = parseScenario(yamlText);
+    expect(scenario.commands).toEqual([
+      { type: 'newRun', seed: 'my-seed', difficulty: 'easy' },
+    ]);
+  });
+
   it('parses openShop and buy shorthands plus a pinned shop', () => {
     const yamlText = [
       'name: t',

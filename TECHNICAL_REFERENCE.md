@@ -131,6 +131,7 @@ interface SpawnEntry {                        // rolled at wave start (GDD §10.
 interface RunState {
   schemaVersion: number;
   mode: 'run' | 'level';                      // 'level' = M1 hand-authored puzzles
+  difficulty: 'easy' | 'normal' | 'hard';     // locked at newRun; puzzles store 'normal'
   levelId?: string;
   seed: string;
   rng: { wave: RngState; shop: RngState };
@@ -184,7 +185,7 @@ type Command =
   | { type: 'openShop' }                                    // M3: waveCleared → shop (rolls offers)
   | { type: 'buyOffer'; slot: ShopSlotId }                  // M3
   | { type: 'nextWave' }                                    // M3: shop → next wave's planning
-  | { type: 'newRun'; seed: string }
+  | { type: 'newRun'; seed: string; difficulty?: 'easy' | 'normal' | 'hard' }
   | { type: 'loadLevel'; levelId: string };
 
 type CommandError =
@@ -203,8 +204,10 @@ function applyCommand(state: RunState | null, cmd: Command, data: GameData):
 - `state` is `null` before any run exists; only `newRun` and `loadLevel` accept `null` (others
   return `wrong_phase`). Both also accept any existing state and replace it.
 - `newRun` builds the starting state from `economy.json` (GDD §10.1), seeds both RNG streams from
-  `seed`, starts wave 0 and returns its turn-1 spawn events. The seed is chosen at the edge
-  (`/game/state`), never in `/sim`.
+  `seed`, starts wave 0 and returns its turn-1 spawn events. Optional `difficulty` defaults to
+  `'normal'` and is always written onto `RunState.difficulty`. The wave is overlayed
+  (`applyDifficulty`) **then** `rollWave` — overlay consumes no RNG. The seed is chosen at the
+  edge (`/game/state`), never in `/sim`.
 - `openShop` requires phase `waveCleared`: rolls this visit's offers once (`rollShop`, `shop` stream),
   stores them in `state.shop`, phase `shop`, and returns **no events** — there is nothing for the board
   to play. Rolling once here is what makes a reopened app show the same offers (GDD §8.5).
@@ -212,8 +215,8 @@ function applyCommand(state: RunState | null, cmd: Command, data: GameData):
   the cannon slot at `maxCannons`; `insufficient_coins` below the offer's price. On success it deducts
   coins, marks the slot `bought`, applies the effect (§7), and never advances `rng.shop`.
 - `nextWave` requires phase `shop` (M3; it was `waveCleared` in M2, before the shop sat between them):
-  `shop: null`, `waveIndex += 1`, `turn = 1`, roll the wave, spawn turn 1, phase `planning`, returns the
-  spawn events. Unbought offers vanish with the `ShopState`. `newRun` and `nextWave` set
+  `shop: null`, `waveIndex += 1`, `turn = 1`, overlay + roll the wave, spawn turn 1, phase `planning`,
+  returns the spawn events. Unbought offers vanish with the `ShopState`. `newRun` and `nextWave` set
   `lastTurnEvents: []`, so Replay is off until the wave's first End Turn.
 - **`leaveShop` was removed** (it appeared in the M2 sketch): leaving the shop *is* starting the next
   wave in v1, and two commands for one job drift apart.
@@ -251,10 +254,11 @@ emits the first turn's spawns.
   (7 for a 1×1, 6 for a 2×2 Boss) if every cell of its footprint is free (`RobotSpawned`), else
   waits with `col: null` (`RobotWaiting`, new robots only). A
   waiting robot that enters emits `RobotSpawned` with its existing `robotId`.
-- **Rolling a wave** (`/sim/waves/rollWave.ts`, `wave` stream): authored waves assign letters then
-  HP (TR §9). Procedural waves (M4) draw each group's distinct lanes, then per lane a pool template
-  **without replacement** and HP. Result sorted by `turn` (stable). Exact draw order is normative so
-  saves and scenarios are reproducible.
+- **Rolling a wave**: `applyDifficulty` (task 28) overlays Easy/Hard onto the `waves.json` entry
+  (no RNG), then `/sim/waves/rollWave.ts` draws on the `wave` stream: authored waves assign letters
+  then HP (TR §9). Procedural waves (M4) draw each group's distinct lanes, then per lane a pool
+  template **without replacement** and HP. Result sorted by `turn` (stable). Exact draw order is
+  normative so saves and scenarios are reproducible. Normal overlay is identity.
 
 Impact rules are implemented once in `/sim/resolve/impact.ts` as a pure function
 `resolveImpact(robot, ballValue) → ImpactOutcome`, exactly per GDD §5.4.
@@ -349,9 +353,10 @@ fails `npm test`.
 |---|---|
 | `tiles.json` | 29 tile definitions: id, kind, n, priceCategory, color key |
 | `robots.json` | Robot templates: id, trait, boss flag. M4 ships `basic`, `weakness-2/5/10`, `bounce-back`, `odd-only`, `even-only`, `boss` |
-| `economy.json` | Starting state (base HP, coins, cannon lane, base value), income values, max cannons, schema version (3 from M3) |
+| `economy.json` | Starting state (base HP, coins, cannon lane, base value), income values, max cannons, schema version (4 from M4.5) |
 | `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees (below) |
-| `waves.json` | Waves in run order (run length = array length): authored spawn schedules (waves 1–7, 10) and procedural tables (waves 8–9) |
+| `waves.json` | Waves in run order (run length = array length): authored spawn schedules (waves 1–7, 10) and procedural tables (waves 8–9). Normal source of truth; Easy/Hard overlay this via `difficulty.json` |
+| `difficulty.json` | Easy / Normal / Hard overlays: integer-percent HP bands, procedural `countDelta`, `dropTemplates`. Overlay then existing `rollWave` |
 | `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
 | `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss 2×2 visual scale (`boss.scale`, `1` = fill the 2×2) |
 
@@ -486,9 +491,9 @@ interface AppState {
   };
   lastTurn: { before: RunState; events: GameEvent[] } | null;  // Replay snapshot, memory only
   shopNew: TileId[];             // tile types this shop visit offered for the first time (M3, §13)
-  screen: 'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect' | 'allDone';
+  screen: 'menu' | 'game' | 'shop' | 'settings' | 'difficulty' | 'won' | 'lost' | 'levelSelect' | 'allDone';
   // the wave-cleared overlay is derived (run.phase === 'waveCleared' && playback idle), like level-cleared
-  settings: { hints: boolean; sound: boolean };
+  settings: { hints: boolean; sound: boolean; difficulty: 'easy' | 'normal' | 'hard' };
 }
 
 interface AppActions {
@@ -541,12 +546,16 @@ level, or `'allDone'` after the last. Progress is just `run.levelId` in memory; 
 storage is not resumed by the menu in M1. In level mode the HUD shows level dots instead of wave and
 base HP.
 
-**M2 run flow (task 14, `/game/state/runFlow.ts`):** menu shows ▶ Continue (`canContinue`) when a
-resumable run is saved (mode `run`, phase `planning` or `waveCleared`, `isResumable`), New Run
-(`startNewRun`: `dispatch({ type: 'newRun', seed })` with a seed made at the edge from the clock/
-`crypto`, never in `/sim`), and Puzzles (the level flow above, unchanged). `continueRun` installs
-the saved run as-is — the wave-cleared overlay reappears if it was saved there — with no playback
-and no Replay snapshot.
+**M2 run flow (task 14, `/game/state/runFlow.ts`):** menu shows ▶ Keep Going (`canContinue`) when a
+resumable run is saved (mode `run`, phase `planning` or `waveCleared`, `isResumable`), New Game
+(always `setScreen('difficulty')` — never starts a run itself), and Puzzles (the level flow above,
+unchanged). The picker (`screen: 'difficulty'`, task 29) is three star buttons plus a small ← Back
+at the top left; tapping a star writes `settings.difficulty` then `startNewRun(store, id)` (`dispatch({ type: 'newRun', seed,
+difficulty })` with a seed made at the edge from the clock/`crypto`, never in `/sim`). Keep Going
+never opens the picker. `continueRun` installs the saved run as-is — including its locked
+`run.difficulty` — the wave-cleared overlay reappears if it was saved there — with no playback
+and no Replay snapshot. Settings' three-way writes the next-New-Game default only; it never
+mutates `run` / `savedRun`.
 
 `dispatch` only persists a `mode: 'run'` result (`saveRun`); a level-mode result (Puzzles) never
 writes or removes the `run` key. `AppState.savedRun` is a memory copy of that same key, updated in
@@ -693,7 +702,8 @@ Optional keys: `seed`, `baseHp`, `tray` (list of tile ids), `waiting` (off-board
 `mode: run`, `waveIndex`, `turn`. M2 (task 13) adds `pendingSpawns` (concrete entries:
 `{ turn, lane, hp, robot? }`), `exactKills`, and `waves` (an inline `waves.json` array replacing the
 shipped waves for that scenario, so rule scenarios don't break when ladder content is tuned).
-Commands gain `nextWave` and `{ newRun: <seed> }`.
+Commands gain `nextWave` and `{ newRun: <seed> }` (Normal) or
+`{ newRun: { seed, difficulty } }` (task 28).
 
 M3 (task 19) adds `phase: shop` (a `phase: shop` scenario without `shop:` is an error), an inline `shop:`
 list of `ShopOffer` objects (installed as `RunState.shop = { afterWave: waveIndex + 1, offers }`, pinning
@@ -719,6 +729,9 @@ The parser lives in `/sim/scenario` (pure); the CLI in `/scripts/sim.ts`.
   (and ignored by Continue if the app closed first). Phases `planning`, `waveCleared` and `shop` resume.
 - `seen` = sorted array of `TileId`, additive; unaffected by schema version. Written when a shop opens,
   for its tile offers only (GDD §8.7); read by `/game/state` to decide NEW stickers (§10).
+- `settings` = `{ hints, sound, difficulty }`. `difficulty` is `'easy' | 'normal' | 'hard'` (default
+  `'normal'`). A missing or unknown `difficulty` field falls back to `'normal'` without wiping
+  `hints`/`sound` (pre-M4.5 blobs). Settings never rewrite a saved run's `RunState.difficulty`.
 - All access wrapped in try/catch; storage failure never breaks play.
 
 ---
@@ -767,6 +780,12 @@ window.__GAME__ = {
 ```
 
 Playwright asserts on structured state. Screenshots are for legibility review only.
+
+**Difficulty picker testids (task 29):** screen root `difficulty`; star buttons `difficulty-easy` /
+`difficulty-normal` / `difficulty-hard`; Back `difficulty-back`. Settings three-way:
+`settings-difficulty-easy` / `settings-difficulty-normal` / `settings-difficulty-hard` (plus existing
+`settings` / `settings-hints` / `settings-home`). New Game always opens the picker; Keep Going never
+does. No HUD difficulty badge.
 
 **`loadState` stays storage-free (task 14 req. 6):** it installs `state` directly via
 `store.setState`, the same as `loadScenario` — neither ever calls `saveRun`/`clearRun`, and

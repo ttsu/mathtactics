@@ -4,20 +4,20 @@
 
 import { cols, lanes } from '../core/coords';
 import { createStreams } from '../core/rng';
-import type { GameEvent, RunState } from '../core/types';
+import type { DifficultyId, GameEvent, RunState } from '../core/types';
 import type { GameData } from '../data/schemas';
+import { resolveDifficulty, waveForRun } from '../waves/applyDifficulty';
 import { rollWave } from '../waves/rollWave';
 import { spawn } from '../waves/spawn';
 
 export function buildNewRun(
   seed: string,
   data: GameData,
+  difficulty?: DifficultyId,
 ): { state: RunState; events: GameEvent[] } {
   const { economy } = data;
-  const firstWave = data.waves.waves[0];
-  if (!firstWave) {
-    throw new Error('newRun: waves.json has no waves');
-  }
+  const resolved = resolveDifficulty(difficulty);
+  const firstWave = waveForRun(data, 0, resolved);
 
   // `createStreams` seeds `wave` and `shop` from different derived strings, so they differ.
   const streams = createStreams(seed);
@@ -26,6 +26,7 @@ export function buildNewRun(
   const state: RunState = {
     schemaVersion: economy.schemaVersion,
     mode: 'run',
+    difficulty: resolved,
     seed,
     rng: { wave: rolled.rng, shop: streams.shop },
     phase: 'planning',

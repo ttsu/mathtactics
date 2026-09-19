@@ -22,6 +22,7 @@ describe('applyCommand — newRun', () => {
     expect(state).toMatchObject({
       schemaVersion: economy.schemaVersion,
       mode: 'run',
+      difficulty: 'normal',
       seed: 'start',
       phase: 'planning',
       waveIndex: 0,

@@ -257,9 +257,12 @@ test('New Run after Home never plays over the previous board or HUD', async ({ p
   await page.getByTestId('home').click();
   await expect(page.getByTestId('main-menu')).toBeVisible();
 
-  // Tap New Run and look at the board a frame later, while its spawn is still playing.
+  await page.getByTestId('menu-new-run').click();
+  await expect(page.getByTestId('difficulty')).toBeVisible();
+
+  // Tap Normal and look at the board a frame later, while its spawn is still playing.
   const mid = await page.evaluate(async () => {
-    document.querySelector<HTMLButtonElement>('[data-testid="menu-new-run"]')!.click();
+    document.querySelector<HTMLButtonElement>('[data-testid="difficulty-normal"]')!.click();
     await new Promise((resolve) => requestAnimationFrame(resolve));
     const game = window.__GAME__!;
     return {

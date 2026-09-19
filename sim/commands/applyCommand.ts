@@ -36,7 +36,7 @@ export function applyCommand(
   // `loadLevel` and `newRun` install a state from scratch — they accept `state: null` or any
   // phase (they replace it), unlike every other command (task 06 ruling, TR §5).
   if (cmd.type === 'newRun') {
-    const result = buildNewRun(cmd.seed, data);
+    const result = buildNewRun(cmd.seed, data, cmd.difficulty);
     return { ok: true, state: result.state, events: result.events };
   }
 

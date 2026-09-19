@@ -5,6 +5,7 @@ import type { TileDef } from '../../../sim/core/types';
 import { loadRawGameData } from '../../helpers/loadDataFiles';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
 import { fakeShop } from '../../helpers/shop';
+import { fakeDifficulty } from '../../helpers/difficulty';
 import {
   fakeBossSettings,
   fakeDangerSettings,
@@ -44,6 +45,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
     waves: {
       waves: [{ id: 'wave-1', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] }],
     },
+    difficulty: fakeDifficulty(),
     levels: { levels: [] },
     presentation: {
       pacing: fakePacingSettings(),
@@ -140,7 +142,7 @@ describe('parseGameData on the real /data directory', () => {
   it('matches the economy values from the task spec', () => {
     const data = parseGameData(loadRawGameData());
     expect(data.economy).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       baseHp: 100,
       startCoins: 0,
       startCannonLane: 2,

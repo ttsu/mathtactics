@@ -6,9 +6,10 @@ import { describe, expect, it } from 'vitest';
 import { applyCommand } from '../sim/commands/applyCommand';
 import { parseGameData } from '../sim/data/load';
 import { createStreams } from '../sim/core/rng';
-import type { GameEvent, RunState } from '../sim/core/types';
+import type { DifficultyId, GameEvent, RunState } from '../sim/core/types';
 import type { Lane } from '../sim/core/coords';
 import { rollWave } from '../sim/waves/rollWave';
+import { applyDifficulty } from '../sim/waves/applyDifficulty';
 import { loadRawGameData } from './helpers/loadDataFiles';
 import {
   canExactKillInAtMostNHits,
@@ -433,6 +434,143 @@ describe('10-wave ladder balance (task 27)', () => {
       // (task 25: raising 8–9 HP adds a disaster tail without moving the median).
       // Assert what is true: every seed wins, leftover stays ≥ 40. Median is logged
       // above — do not claim 50–70 here.
+    },
+  );
+});
+
+function spawnedTemplates(seed: string, waveIndex: number, difficulty: DifficultyId): string[] {
+  let rng = createStreams(seed).wave;
+  let templates: string[] = [];
+  for (let i = 0; i <= waveIndex; i++) {
+    const overlaid = applyDifficulty(data.waves.waves[i]!, difficulty, data);
+    const rolled = rollWave(overlaid, rng, data.robots);
+    rng = rolled.rng;
+    templates = rolled.spawns.map((spawn) => spawn.robotTemplateId);
+  }
+  return templates;
+}
+
+function spawnedHp(seed: string, waveIndex: number, difficulty: DifficultyId): number[] {
+  let rng = createStreams(seed).wave;
+  let hps: number[] = [];
+  for (let i = 0; i <= waveIndex; i++) {
+    const overlaid = applyDifficulty(data.waves.waves[i]!, difficulty, data);
+    const rolled = rollWave(overlaid, rng, data.robots);
+    rng = rolled.rng;
+    hps = rolled.spawns.map((spawn) => spawn.hp);
+  }
+  return hps;
+}
+
+describe('cross-mode invariants (task 30)', () => {
+  it('waves 1–7 templates match; Boss HP 1000; HP/count monotonic; shop stream untouched', () => {
+    const samples = SEEDS.slice(0, 20);
+    for (const seed of samples) {
+      for (let waveIndex = 0; waveIndex < 7; waveIndex++) {
+        const easy = spawnedTemplates(seed, waveIndex, 'easy');
+        const normal = spawnedTemplates(seed, waveIndex, 'normal');
+        const hard = spawnedTemplates(seed, waveIndex, 'hard');
+        expect(easy, `seed ${seed} wave ${waveIndex + 1} Easy templates`).toEqual(normal);
+        expect(hard, `seed ${seed} wave ${waveIndex + 1} Hard templates`).toEqual(normal);
+
+        const easyHp = spawnedHp(seed, waveIndex, 'easy');
+        const normalHp = spawnedHp(seed, waveIndex, 'normal');
+        const hardHp = spawnedHp(seed, waveIndex, 'hard');
+        expect(hardHp, `seed ${seed} wave ${waveIndex + 1} Hard HP`).toEqual(normalHp);
+        for (let i = 0; i < easyHp.length; i++) {
+          expect(easyHp[i]!, `seed ${seed} wave ${waveIndex + 1} Easy HP`).toBeLessThanOrEqual(
+            normalHp[i]!,
+          );
+        }
+      }
+
+      const bossHp = (difficulty: DifficultyId) => {
+        const hps = spawnedHp(seed, 9, difficulty);
+        const templates = spawnedTemplates(seed, 9, difficulty);
+        const bossIndex = templates.indexOf('boss');
+        return hps[bossIndex];
+      };
+      expect(bossHp('easy'), `seed ${seed} Easy Boss`).toBe(1000);
+      expect(bossHp('normal'), `seed ${seed} Normal Boss`).toBe(1000);
+      expect(bossHp('hard'), `seed ${seed} Hard Boss`).toBe(1000);
+    }
+
+    const easyCounts = data.waves.waves.flatMap((wave) => {
+      const overlaid = applyDifficulty(wave, 'easy', data);
+      return 'procedural' in overlaid ? overlaid.procedural.groups.map((group) => group.count) : [];
+    });
+    const normalCounts = data.waves.waves.flatMap((wave) => {
+      const overlaid = applyDifficulty(wave, 'normal', data);
+      return 'procedural' in overlaid ? overlaid.procedural.groups.map((group) => group.count) : [];
+    });
+    const hardCounts = data.waves.waves.flatMap((wave) => {
+      const overlaid = applyDifficulty(wave, 'hard', data);
+      return 'procedural' in overlaid ? overlaid.procedural.groups.map((group) => group.count) : [];
+    });
+    expect(easyCounts.length).toBe(normalCounts.length);
+    expect(hardCounts.length).toBe(normalCounts.length);
+    for (let i = 0; i < normalCounts.length; i++) {
+      expect(easyCounts[i]!).toBeLessThanOrEqual(normalCounts[i]!);
+      expect(hardCounts[i]!).toBeGreaterThanOrEqual(normalCounts[i]!);
+    }
+
+    for (const wave of data.waves.waves.filter((candidate) => 'procedural' in candidate)) {
+      const hard = applyDifficulty(wave, 'hard', data);
+      if ('procedural' in hard) {
+        for (const group of hard.procedural.groups) {
+          expect(group.pool).not.toContain('basic');
+        }
+      }
+    }
+  });
+});
+
+describe('per-mode leftover bands (task 30)', () => {
+  it(
+    'Easy: leftover min ≥ 80; 100/100 wins and reaches wave 10; End-Turn-only loses',
+    { timeout: 180_000 },
+    () => {
+      const leftovers: number[] = [];
+      for (const seed of SEEDS) {
+        const rec = playSensibleRun(seed, data, 'easy');
+        leftovers.push(rec.baseHp);
+        expect(rec.phase, `seed ${seed} Easy phase`).toBe('won');
+        expect(
+          rec.waveEntries.some((entry) => entry.waveIndex === 9),
+          `seed ${seed} Easy reached wave 10`,
+        ).toBe(true);
+        expect(rec.minBaseHp, `seed ${seed} Easy min HP`).toBeGreaterThanOrEqual(80);
+        expect(playEndTurnOnlyRun(seed, data, 'easy').phase, `seed ${seed} Easy End-Turn-only`).toBe(
+          'lost',
+        );
+      }
+      const leftover = summarize(leftovers);
+      console.log(`EASY_LEFTOVER ${JSON.stringify(leftover)}`);
+      expect(leftover.min, 'Easy leftover min').toBeGreaterThanOrEqual(80);
+    },
+  );
+
+  it(
+    'Hard: leftover min ≥ 40; 100/100 wins and reaches wave 10; End-Turn-only loses',
+    { timeout: 180_000 },
+    () => {
+      const leftovers: number[] = [];
+      for (const seed of SEEDS) {
+        const rec = playSensibleRun(seed, data, 'hard');
+        leftovers.push(rec.baseHp);
+        expect(rec.phase, `seed ${seed} Hard phase`).toBe('won');
+        expect(
+          rec.waveEntries.some((entry) => entry.waveIndex === 9),
+          `seed ${seed} Hard reached wave 10`,
+        ).toBe(true);
+        expect(rec.minBaseHp, `seed ${seed} Hard min HP`).toBeGreaterThanOrEqual(40);
+        expect(playEndTurnOnlyRun(seed, data, 'hard').phase, `seed ${seed} Hard End-Turn-only`).toBe(
+          'lost',
+        );
+      }
+      const leftover = summarize(leftovers);
+      console.log(`HARD_LEFTOVER ${JSON.stringify(leftover)}`);
+      expect(leftover.min, 'Hard leftover min').toBeGreaterThanOrEqual(40);
     },
   );
 });

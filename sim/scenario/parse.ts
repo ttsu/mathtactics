@@ -30,6 +30,7 @@ import type {
 } from '../core/types';
 import { WavesFileSchema, type WaveDef } from '../data/schemas';
 import type { ExpectedEvent } from './match';
+import type { DifficultyId } from '../core/types';
 
 // --- Trait shorthand (board tokens and `waiting` entries share this) ---
 
@@ -119,6 +120,11 @@ const CommandObjectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('openShop') }),
   z.object({ type: z.literal('nextWave') }),
   z.object({ type: z.literal('buyOffer'), slot: ShopSlotIdSchema }),
+  z.object({
+    type: z.literal('newRun'),
+    seed: z.string().min(1),
+    difficulty: z.enum(['easy', 'normal', 'hard']).optional(),
+  }),
 ]);
 
 const TileOfferSchema = z.object({
@@ -158,9 +164,17 @@ const ShopOfferSchema = z.discriminatedUnion('kind', [
   UpgradeOfferSchema,
 ]);
 
-/** Object shorthand for `newRun` (task 13 requirement 5): `{ newRun: <seed> }` instead of the
- * full `{ type: 'newRun', seed: <seed> }` command object. */
-const NewRunShorthandSchema = z.object({ newRun: z.string().min(1) });
+/** Object shorthand for `newRun` (task 13 requirement 5, task 28): `{ newRun: <seed> }`
+ * (Normal) or `{ newRun: { seed, difficulty } }`. */
+const NewRunShorthandSchema = z.union([
+  z.object({ newRun: z.string().min(1) }),
+  z.object({
+    newRun: z.object({
+      seed: z.string().min(1),
+      difficulty: z.enum(['easy', 'normal', 'hard']).optional(),
+    }),
+  }),
+]);
 
 /** `{ buy: "tile:0" }` / `{ buy: "cannon" }` / `{ buy: "upgrade" }` (task 19). */
 const BuyShorthandSchema = z.object({ buy: ShopSlotIdSchema });
@@ -484,7 +498,18 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
     if (command === 'undo') return { type: 'undo' };
     if (command === 'nextWave') return { type: 'nextWave' };
     if (command === 'openShop') return { type: 'openShop' };
-    if ('newRun' in command) return { type: 'newRun', seed: command.newRun };
+    if ('newRun' in command) {
+      if (typeof command.newRun === 'string') {
+        return { type: 'newRun', seed: command.newRun };
+      }
+      return {
+        type: 'newRun',
+        seed: command.newRun.seed,
+        ...(command.newRun.difficulty !== undefined
+          ? { difficulty: command.newRun.difficulty as DifficultyId }
+          : {}),
+      };
+    }
     if ('buy' in command) return { type: 'buyOffer', slot: command.buy };
     return command as Command;
   });

@@ -8,7 +8,7 @@
 // report for why this was chosen over reading storage directly here.
 
 import type { StoreApi } from 'zustand/vanilla';
-import type { RunState } from '../../sim/core/types';
+import type { DifficultyId, RunState } from '../../sim/core/types';
 import {
   displayFromRun,
   IDLE_PLAYBACK,
@@ -58,11 +58,14 @@ function newRunSeed(): string {
   return `run:${Date.now()}:${random}`;
 }
 
-/** ▶ New Run: replaces any saved run (`dispatch` persists the fresh one, since its `mode` is
- * `'run'`) and shows the game screen. The wave-1 spawn events returned by `newRun` play back like
- * any other resolution; `dispatch` keeps Replay off for them (task 14 req. 2). */
-export function startNewRun(store: StoreApi<AppStore>): void {
-  store.getState().dispatch({ type: 'newRun', seed: newRunSeed() });
+/** ▶ New Game: replaces any saved run (`dispatch` persists the fresh one, since its `mode` is
+ * `'run'`) and shows the game screen. Difficulty comes from the picker tap, or from the Settings
+ * default when the helper is called without one (unit tests, debug). The wave-1 spawn events
+ * returned by `newRun` play back like any other resolution; `dispatch` keeps Replay off for them
+ * (task 14 req. 2). */
+export function startNewRun(store: StoreApi<AppStore>, difficulty?: DifficultyId): void {
+  const chosen = difficulty ?? store.getState().settings.difficulty;
+  store.getState().dispatch({ type: 'newRun', seed: newRunSeed(), difficulty: chosen });
   store.getState().setScreen('game');
 }
 

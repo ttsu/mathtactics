@@ -38,6 +38,7 @@ describe('isResumable', () => {
   const base: RunState = {
     schemaVersion: realData.economy.schemaVersion,
     mode: 'run',
+    difficulty: 'normal',
     seed: 'seed',
     rng: { wave: [1, 2, 3, 4], shop: [5, 6, 7, 8] },
     phase: 'planning',
@@ -108,6 +109,44 @@ describe('New Run', () => {
 
     expect(second.seed).not.toBe(first.seed);
     expect(store.getState().savedRun).toEqual(second);
+  });
+
+  it('writes the chosen difficulty onto the run (task 29)', () => {
+    const store = createStore();
+    startNewRun(store, 'easy');
+    expect(store.getState().run?.difficulty).toBe('easy');
+    expect(store.getState().run?.mode).toBe('run');
+    // Wave-1 Easy band is 75% of [1, 3] → [1, 2]; overlay actually applied.
+    const hps = [
+      ...(store.getState().run?.board.robots.map((robot) => robot.hp) ?? []),
+      ...(store.getState().run?.pendingSpawns.map((spawn) => spawn.hp) ?? []),
+    ];
+    expect(hps.length).toBeGreaterThan(0);
+    expect(hps.every((hp) => hp <= 2)).toBe(true);
+  });
+
+  it('uses settings.difficulty when startNewRun is called without an argument', () => {
+    const store = createStore();
+    store.getState().setSettings({ difficulty: 'hard' });
+    startNewRun(store);
+    expect(store.getState().run?.difficulty).toBe('hard');
+  });
+
+  it('Settings difficulty does not retcon a saved Easy run', () => {
+    const store = createStore();
+    startNewRun(store, 'easy');
+    store.getState().finishPlayback();
+    const saved = store.getState().savedRun!;
+    expect(saved.difficulty).toBe('easy');
+
+    store.getState().setSettings({ difficulty: 'hard' });
+    expect(store.getState().run?.difficulty).toBe('easy');
+    expect(store.getState().savedRun?.difficulty).toBe('easy');
+
+    goHome(store);
+    continueRun(store);
+    expect(store.getState().run?.difficulty).toBe('easy');
+    expect(store.getState().run?.seed).toBe(saved.seed);
   });
 });
 

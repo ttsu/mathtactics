@@ -63,6 +63,7 @@ function fakeRunState(overrides: Partial<RunState> = {}): RunState {
   return {
     schemaVersion: 1,
     mode: 'level',
+    difficulty: 'normal',
     seed: 'seed',
     rng: { wave: [1, 2, 3, 4], shop: [5, 6, 7, 8] },
     phase: 'planning',

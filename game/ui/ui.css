@@ -322,6 +322,64 @@
   box-shadow: 0 2px 0 #c8621f;
 }
 
+.difficulty-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.difficulty-row .big-button {
+  width: 220px;
+  background: #4f86c6;
+  box-shadow: 0 10px 0 #35618f;
+}
+
+.difficulty-row .big-button.is-pressed {
+  background: #ff8c42;
+  box-shadow: 0 10px 0 #c8621f;
+}
+
+.difficulty-row .small-button {
+  width: 160px;
+}
+
+/* Top-left Back on the difficulty picker — same purple as HUD ⌂ Home, compact so the three
+   star buttons stay the only large targets. */
+.difficulty-back {
+  position: absolute;
+  top: 10px;
+  left: 24px;
+  pointer-events: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 88px;
+  height: 80px;
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  background: #6b5b95;
+  color: #ffffff;
+  box-shadow: 0 6px 0 #4a3d6b;
+}
+
+.difficulty-back:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #4a3d6b;
+}
+
+.difficulty-stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 36px;
+}
+
 /* --- Task 14: main menu ▶ Continue / New Run / Puzzles --- */
 
 .menu-buttons {

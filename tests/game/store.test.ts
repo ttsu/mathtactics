@@ -73,6 +73,7 @@ function fakeRunState(overrides: Partial<RunState> = {}): RunState {
   return {
     schemaVersion: 1,
     mode: 'level',
+    difficulty: 'normal',
     seed: 'seed',
     rng: { wave: [1, 2, 3, 4], shop: [5, 6, 7, 8] },
     phase: 'planning',
@@ -154,7 +155,7 @@ describe('createAppStore — initial state', () => {
       basePath: '/',
     });
     expect(store.getState().playback).toEqual({ status: 'idle', events: [], cursor: 0 });
-    expect(store.getState().settings).toEqual({ hints: false, sound: true });
+    expect(store.getState().settings).toEqual({ hints: false, sound: true, difficulty: 'normal' });
   });
 });
 
@@ -812,11 +813,30 @@ describe('setSettings', () => {
 
     store.getState().setSettings({ hints: true });
 
-    expect(store.getState().settings).toEqual({ hints: true, sound: true });
+    expect(store.getState().settings).toEqual({ hints: true, sound: true, difficulty: 'normal' });
     expect(JSON.parse(storage.getItem(scopedKey('/', 'settings')) ?? 'null')).toEqual({
       hints: true,
       sound: true,
+      difficulty: 'normal',
     });
+  });
+
+  it('writes difficulty without mutating an in-progress run', () => {
+    const storage = createMemoryStorage();
+    const run = fakeRunState({ mode: 'run', difficulty: 'easy' });
+    const store = createAppStore({
+      data: fakeGameData(),
+      applyCommand: stubApplyCommand,
+      storage,
+      basePath: '/',
+    });
+    store.setState({ run, savedRun: run });
+
+    store.getState().setSettings({ difficulty: 'hard' });
+
+    expect(store.getState().settings.difficulty).toBe('hard');
+    expect(store.getState().run?.difficulty).toBe('easy');
+    expect(store.getState().savedRun?.difficulty).toBe('easy');
   });
 });
 
@@ -965,12 +985,12 @@ describe('shop-phase dispatch (task 19)', () => {
     expect(store.getState().lastTurn).toBe(lastTurn);
   });
 
-  it('discards a schema-version-2 save when economy is version 3', () => {
+  it('discards a schema-version-3 save when economy is version 4', () => {
     const storage = createMemoryStorage();
-    const saved = fakeRunState({ schemaVersion: 2, mode: 'run' });
+    const saved = fakeRunState({ schemaVersion: 3, mode: 'run' });
     storage.setItem(
       scopedKey('/', 'run'),
-      JSON.stringify({ schemaVersion: 2, savedAt: 1, state: saved }),
+      JSON.stringify({ schemaVersion: 3, savedAt: 1, state: saved }),
     );
     const store = createAppStore({
       data: realData,
@@ -978,7 +998,7 @@ describe('shop-phase dispatch (task 19)', () => {
       storage,
       basePath: '/',
     });
-    expect(realData.economy.schemaVersion).toBe(3);
+    expect(realData.economy.schemaVersion).toBe(4);
     expect(store.getState().run).toBeNull();
   });
 });

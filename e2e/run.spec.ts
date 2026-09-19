@@ -4,6 +4,7 @@ import type { Lane } from '../sim/core/coords';
 import type { Command, RunState, ShopOffer } from '../sim/core/types';
 import { loadRawGameData } from '../tests/helpers/loadDataFiles';
 import { nextShopChoice, planningCommands } from '../tests/helpers/sensiblePlayer';
+import { startNewGame } from './helpers/newGame';
 
 // Task 27: a full 10-wave run through the real menus, screens and shop. Planning turns use the
 // sensible-player policy via `dispatch` plus `skipAnimation`. Shop visits tap a real affordable
@@ -121,7 +122,7 @@ test('a full run plays through the real menus and screens: New Game -> 10 waves 
   await page.waitForFunction(() => window.__GAME__ !== undefined);
   await expect(page.getByTestId('main-menu')).toBeVisible();
 
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   expect(await getScreen(page)).toBe('game');
   await waitIdle(page);
 
@@ -154,7 +155,7 @@ test('reloading inside the shop after wave 8 resumes the same offers and the run
   test.setTimeout(180_000);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__ !== undefined);
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   await waitIdle(page);
 
   await playUntilWon(page, 0, 8);
@@ -181,7 +182,7 @@ test('menu → Settings → Hints on → Home → New Game → place a tile → 
   await page.getByTestId('settings-home').click();
   expect(await getScreen(page)).toBe('menu');
 
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   expect(await getScreen(page)).toBe('game');
   await waitIdle(page);
 

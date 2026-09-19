@@ -44,6 +44,7 @@ function fakeRunState(overrides: Partial<RunState> = {}): RunState {
   return {
     schemaVersion: 1,
     mode: 'level',
+    difficulty: 'normal',
     seed: 'seed',
     rng: {
       wave: [1, 2, 3, 4],
@@ -171,20 +172,28 @@ describe('addSeenMany', () => {
 });
 
 describe('loadSettings / saveSettings', () => {
-  it('defaults to hints off, sound on (GDD §11.8)', () => {
+  it('defaults to hints off, sound on, difficulty Normal (GDD §11.8 / §10.7)', () => {
     const storage = createMemoryStorage();
-    expect(loadSettings(storage, '/')).toEqual({ hints: false, sound: true });
+    expect(loadSettings(storage, '/')).toEqual({ hints: false, sound: true, difficulty: 'normal' });
   });
 
   it('round-trips saved settings', () => {
     const storage = createMemoryStorage();
-    saveSettings(storage, '/', { hints: true, sound: false });
-    expect(loadSettings(storage, '/')).toEqual({ hints: true, sound: false });
+    saveSettings(storage, '/', { hints: true, sound: false, difficulty: 'easy' });
+    expect(loadSettings(storage, '/')).toEqual({ hints: true, sound: false, difficulty: 'easy' });
+  });
+
+  it('preserves hints from a pre-M4.5 settings blob and defaults difficulty to Normal', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(scopedKey('/', 'settings'), JSON.stringify({ hints: true, sound: false }));
+    expect(loadSettings(storage, '/')).toEqual({ hints: true, sound: false, difficulty: 'normal' });
   });
 
   it('does not throw when the underlying storage throws', () => {
     const storage = throwingStorage();
-    expect(() => saveSettings(storage, '/', { hints: true, sound: true })).not.toThrow();
-    expect(loadSettings(storage, '/')).toEqual({ hints: false, sound: true });
+    expect(() =>
+      saveSettings(storage, '/', { hints: true, sound: true, difficulty: 'hard' }),
+    ).not.toThrow();
+    expect(loadSettings(storage, '/')).toEqual({ hints: false, sound: true, difficulty: 'normal' });
   });
 });

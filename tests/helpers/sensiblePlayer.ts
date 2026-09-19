@@ -10,6 +10,7 @@ import { robotFootprint } from '../../sim/core/footprint';
 import { applyTile } from '../../sim/core/tiles';
 import type {
   Command,
+  DifficultyId,
   Robot,
   RunState,
   ShopOffer,
@@ -534,8 +535,12 @@ export interface SensibleRunStats {
  * headroom so a bot that hits the cap throws rather than reporting a false loss. */
 const MAX_END_TURNS = 400;
 
-export function playSensibleRun(seed: string, data: GameData): SensibleRunStats {
-  let state = applyOk(null, { type: 'newRun', seed }, data);
+export function playSensibleRun(
+  seed: string,
+  data: GameData,
+  difficulty: DifficultyId = 'normal',
+): SensibleRunStats {
+  let state = applyOk(null, { type: 'newRun', seed, difficulty }, data);
   let minBaseHp = state.baseHp;
   let endTurns = 0;
   let coinsAfterLastShop = 0;
@@ -632,8 +637,12 @@ export function playSensibleRun(seed: string, data: GameData): SensibleRunStats 
   };
 }
 
-export function playEndTurnOnlyRun(seed: string, data: GameData): RunState {
-  let state = applyOk(null, { type: 'newRun', seed }, data);
+export function playEndTurnOnlyRun(
+  seed: string,
+  data: GameData,
+  difficulty: DifficultyId = 'normal',
+): RunState {
+  let state = applyOk(null, { type: 'newRun', seed, difficulty }, data);
   let endTurns = 0;
   while (state.phase !== 'won' && state.phase !== 'lost') {
     if (endTurns >= MAX_END_TURNS) {

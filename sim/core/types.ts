@@ -63,6 +63,9 @@ export interface Board {
 
 export type Phase = 'planning' | 'waveCleared' | 'shop' | 'won' | 'lost' | 'levelCleared';
 
+/** Easy / Normal / Hard (GDD §10.7). Independent of `RunState.mode` (run vs puzzle). */
+export type DifficultyId = 'easy' | 'normal' | 'hard';
+
 /** One concrete entry of a wave's spawn schedule (GDD §10.3), rolled at wave start by
  * `rollWave`: lane letters are already resolved and the HP range already rolled. */
 export interface SpawnEntry {
@@ -111,6 +114,8 @@ export interface RunState {
   schemaVersion: number;
   /** `'level'` = M1 hand-authored puzzles (TR §4.1). */
   mode: 'run' | 'level';
+  /** Locked at `newRun`. Level-mode states store `'normal'` (puzzles ignore it). */
+  difficulty: DifficultyId;
   levelId?: string;
   seed: string;
   rng: { wave: RngState; shop: RngState };
@@ -238,7 +243,7 @@ export type Command =
   | { type: 'openShop' }
   | { type: 'buyOffer'; slot: ShopSlotId }
   | { type: 'nextWave' }
-  | { type: 'newRun'; seed: string }
+  | { type: 'newRun'; seed: string; difficulty?: DifficultyId }
   | { type: 'loadLevel'; levelId: string };
 
 export type CommandError =
