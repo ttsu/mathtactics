@@ -41,8 +41,9 @@ describe('difficulty.json schema', () => {
   it('rejects a missing normal key', () => {
     const raw = loadRawGameData();
     const difficulty = fakeDifficulty();
-    const { normal: _dropped, ...rest } = difficulty.modes;
-    raw.difficulty = { ...difficulty, modes: rest };
+    const modes = { ...difficulty.modes };
+    delete (modes as { normal?: unknown }).normal;
+    raw.difficulty = { ...difficulty, modes };
     expect(() => parseGameData(raw)).toThrow(/difficulty\.json/);
   });
 
@@ -90,6 +91,23 @@ describe('applyDifficulty', () => {
 
   it('Easy vs Normal, same seed: non-Boss HP ≤ Normal, smaller procedural count, Boss 1000, waves 1–7 templates match', () => {
     const seed = 'compare-easy';
+    const easyRun = newRun(seed, 'easy');
+    const normalRun = newRun(seed, 'normal');
+    expect(easyRun.pendingSpawns.map((spawn) => spawn.robotTemplateId)).toEqual(
+      normalRun.pendingSpawns.map((spawn) => spawn.robotTemplateId),
+    );
+    const easyHps = [
+      ...easyRun.board.robots.map((robot) => robot.hp),
+      ...easyRun.pendingSpawns.map((spawn) => spawn.hp),
+    ];
+    const normalHps = [
+      ...normalRun.board.robots.map((robot) => robot.hp),
+      ...normalRun.pendingSpawns.map((spawn) => spawn.hp),
+    ];
+    for (let i = 0; i < easyHps.length; i += 1) {
+      expect(easyHps[i]!).toBeLessThanOrEqual(normalHps[i]!);
+    }
+
     const easy = applyDifficulty(data.waves.waves[0]!, 'easy', data);
     const normal = applyDifficulty(data.waves.waves[0]!, 'normal', data);
     expect('spawns' in easy && 'spawns' in normal).toBe(true);
