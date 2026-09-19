@@ -1,15 +1,42 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.7.3
+**Version:** 0.8
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
-**Status:** M4 specs written after Playtest 3 (not yet built). This document is the single source
-of truth for *design*.
+**Status:** M4 built, Playtest 4 pending. v0.8 records three difficulty modes (not yet built).
+This document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.8
+
+Three difficulties so one ladder can be both the Playtest 3 "make it harder" request and the
+v0.7.3 "stretch is a little too hard" request. Specs in tasks 28–30. Not built yet.
+
+Playtest 3: **fun but too easy**. v0.7.3: waves 7–10 with a 7-year-old, **a little too hard**.
+The leftover-HP bot still sits near 100 on Normal (tasks 25/27) — HP alone cannot both chip a
+sensible player and keep a sloppy run alive. Modes use the levers §6.6 already named.
+
+- **Easy / Normal / Hard.** Grade-1 labels, 1 / 2 / 3 stars. Cover the text and the stars still
+  work (§11.1). **Normal is today's ladder** — `waves.json` as shipped. Default for a first
+  pick.
+- **Same concept ladder, same shop, same starting kit, same Boss.** Waves 1–7 still teach in
+  the same order. Shop tables, prices, income, 0 coins, 1 cannon, base 100, Boss **1000 HP
+  2×2** do not change with difficulty. Hints stay a separate Settings toggle (off by default).
+- **The stretch is what changes.** Easy: one fewer robot per procedural pack, lower non-Boss
+  HP. Hard: one more robot per pack, `basic` dropped from waves 8–9 so every stretch robot has
+  a trait. Authored teaching spawns are never removed. Normal robots still cap at 99.
+- **New Game always opens a picker.** Three big buttons; last pick is highlighted. Keep Going
+  does not ask — the saved run's difficulty is locked. Changing the Settings default never
+  retcons a run in progress.
+- **Difficulty is simulation.** It changes HP and spawn counts, so it lives in `/sim` and
+  `/data/difficulty.json`, not in Phaser or React. `RunState.mode` is already `'run' | 'level'`;
+  the new field is `RunState.difficulty`.
+- **Build after Playtest 4** unless Easy is needed for the next session. H4 should measure
+  one ladder (Normal). Modes are M4.5, before the M5 juice pass.
 
 ## 0. Changes in v0.7.3
 
@@ -520,7 +547,8 @@ stacked dots = even blocked ("does everyone have a partner?").
 ### 6.6 HP Scaling and the Boss
 
 - **Normal robots: 1–99 HP.** Difficulty comes from robot count, simultaneous lanes, and
-  traits — not ever-larger numbers.
+  traits — not ever-larger numbers. Easy / Normal / Hard (§10.7) only move those three
+  levers, still inside this cap.
 - Placeholder curve (tuned in data): wave 1 → 1–3, wave 2 → 4–10, wave 5 → ~10–30,
   wave 9 basics → ~42–64. Odd-only / Even-only stay in **16–32 HP** so one leaked
   parity robot is a chip, not a run-ending detonation.
@@ -686,6 +714,7 @@ Each owned tile is **one physical piece**. Owning one `+5` means one `+5` on the
 - Base HP ≤ 0 → cheerful loss screen → main menu. No shaming.
 - Target wall-clock: 15–25 minutes.
 - Starting state: **1 cannon (lane 2), no tiles, 0 coins, base 100 HP, cannon base value 1.**
+  Difficulty is chosen on New Game (§10.7); it does not change this kit.
 
 ### 10.2 Concept Ladder (same every run)
 
@@ -705,7 +734,8 @@ shop slots are seeded-random within each rung.
 | 9 | Procedural **4+4+3** (grill C), one full mix (grill A), basics ~42–64, parity ~20–32 | at least one `−N` (grill A) | Four lanes and an extra pack |
 | 10 | **Boss** (1000 HP, 2×2, no trait) + traited escort | — (no shop; win) | The big number |
 
-No tutorial mode and no text popups: wave design does the teaching.
+No tutorial mode and no text popups: wave design does the teaching. Easy / Normal / Hard
+change how loud the stretch is, not which lesson each wave is for.
 
 Waves 4–7 shipped **untraited** in M3. M4 swaps in the first teaching trait on waves 4, 6
 and 7 (wave 5 stays untraited, grill A) and adds the visuals that telegraph them (§6.2–6.4). A robot
@@ -734,7 +764,8 @@ whose trait is invisible reads as a bug, not a puzzle.
   Reopening mid-playback lands in the next planning phase: no lost progress, no reload exploit.
 - Launch screen: big **▶ *Keep Going*** if a run exists; smaller **🤖 *New Game***; smaller
   **🧩 *Puzzles*** (the M1 hand-authored levels). Each is an icon with its label beneath
-  (§11.1). No confirmation dialogs. New Game replaces any saved run.
+  (§11.1). No confirmation dialogs. New Game opens the difficulty picker (§10.7), then
+  replaces any saved run. Keep Going resumes the saved run's difficulty as-is.
 - A small **Home** button in the HUD (hidden during playback) returns to the launch screen with
   no confirmation. A run is already saved; a puzzle session is simply dropped.
 - **Puzzles are never saved** and never overwrite the saved run.
@@ -760,6 +791,45 @@ and the reward chips became the wallet beat above.
 - Both show the run's **exact-kill count** as a row of icons (celebrating the core skill even
   on a loss). `RunState` tracks `exactKills`.
 
+### 10.7 Three Difficulties
+
+A run is Easy, Normal, or Hard. The player picks on **New Game**. Puzzles ignore this.
+
+| | Easy | Normal | Hard |
+|---|---|---|---|
+| Label + icon | *Easy*, 1 star | *Normal*, 2 stars | *Hard*, 3 stars |
+| Identity | Quiet stretch; a leak is a chip | Today's designed ladder | Loud stretch; every 8–9 robot has a trait |
+| Waves 1–7 | Same spawns; HP scaled down | `waves.json` as shipped | Same spawns and HP as Normal |
+| Waves 8–9 | One fewer robot per pack; HP scaled down | 3+3 and 4+4+3 as shipped | One more robot per pack; `basic` dropped from pools |
+| Wave 10 Boss | 1000 HP, 2×2 | 1000 HP, 2×2 | 1000 HP, 2×2 |
+| Escort / parity | Scaled with Easy HP | As shipped (16–32 band) | As shipped |
+| Shop, income, starting kit | Unchanged | Unchanged | Unchanged |
+| Sensible player | Wins; leftover high (min ≥ 80) | Wins; leftover min ≥ 40 | Wins; always reaches wave 10 |
+| End-Turn-only | Still loses | Still loses | Still loses |
+
+**Picker (grill A).** New Game always opens a full-screen picker: three equally large buttons
+in a row (stars + label), last pick pressed. ▶ *Home* back to the menu without starting.
+Tapping a difficulty starts the run and remembers the pick. There is no extra confirm. Cover
+the labels and the star counts still distinguish the three. Settings also shows the same
+three-way control so a parent can change the default without starting a run; that default is
+what the picker highlights next time. It never mutates `RunState` of a run already going.
+
+Keep Going does not show the picker. A saved Easy run stays Easy.
+
+**What difficulty may change:** robot HP (non-Boss, still 1–99) and procedural pack `count`
+(and Hard's 8–9 pool, by dropping `basic`). Integer percent multipliers and a count delta live
+in `data/difficulty.json`. `waves.json` stays the Normal source of truth — do not triplicate
+the ladder.
+
+**What difficulty may not change in v1:** the concept ladder, authored robot templates, shop
+offers/prices/guarantees, starting kit, base 100, Boss occupancy or HP, hints, sound, or
+puzzle levels. No mid-run switch. No "start at wave N" (still §19).
+
+Draft Easy multipliers (tune in task 30, recorded reason required): non-Boss HP **75%** of
+Normal; Odd-only / Even-only **65%** (floor 8) so one leak stays a chip; procedural
+`countDelta` **−1**, `minCount` **2**. Draft Hard: HP **100%**; `countDelta` **+1**,
+`maxCount` **5** and never above the remaining pool; drop `basic` from procedural pools only.
+
 ---
 
 ## 11. UX Requirements for the Target Age
@@ -773,8 +843,8 @@ and the reward chips became the wallet beat above.
    that *navigates* — menu entries, screen buttons — pairs its icon with a short label beneath.
    Rules for that label:
    - One or two words, grade-1 decodable, from the kid's spoken vocabulary
-     (*Keep Going*, *New Game*, *Puzzles*, *Home*, *Next*, *Go*). Never *Continue*, *Resume*,
-     *Proceed*, *Select*.
+     (*Keep Going*, *New Game*, *Puzzles*, *Home*, *Next*, *Go*, *Easy*, *Normal*, *Hard*).
+     Never *Continue*, *Resume*, *Proceed*, *Select*.
    - It **repeats** what the icon already says; it never adds information the icon lacks.
      Cover the text and the screen must still be usable.
    - In-play HUD Undo and Replay stay icon-only — they are used dozens of times a run and are
@@ -791,8 +861,9 @@ and the reward chips became the wallet beat above.
 6. **Big touch targets.** ≥ 60 pt; drag-and-drop tolerates imprecise fingers.
 7. **No Safari interference.** No pinch-zoom, pull-to-refresh, swipe-back, or text-selection
    on long-press during play.
-8. **Settings** (from main menu): planning hints (off by default). Sound on/off ships with
-   M5 audio — M4 Settings has no Sound row.
+8. **Settings** (from main menu): planning hints (off by default); difficulty default
+   (Easy / Normal / Hard, default Normal) once M4.5 ships. Sound on/off ships with M5 audio —
+   M4 Settings has no Sound row.
 
 ---
 
@@ -863,8 +934,9 @@ All tunable content lives in JSON data files validated by schema on load. An age
 never need to edit code to change a number.
 
 Data-defined: tile definitions, robot templates and traits, wave spawn schedules and
-procedural tables, HP ranges, shop pricing and offer tables, ladder guarantees, economy
-values, starting state, presentation pacing. File list in `TECHNICAL_REFERENCE.md`.
+procedural tables, HP ranges, difficulty overlays (Easy / Hard multipliers and pack deltas),
+shop pricing and offer tables, ladder guarantees, economy values, starting state, presentation
+pacing. File list in `TECHNICAL_REFERENCE.md`.
 
 ---
 
@@ -975,6 +1047,7 @@ Work is tracked in `TASKS.md` with one spec per task in `tasks/`.
 | **M2 A run** | Waves & spawn schedules, advance, base HP & detonation, wave rewards (shop stand-in), win/lose, save/resume, main menu, ladder waves 1–3 | Playtest 2 — does a run hold together? |
 | **M3 Economy** | Shop, coins, cannons & upgrades, seen-tiles log, ladder waves 1–7 | Playtest 3 |
 | **M4 Traits & finale** | Trait telegraph, ladder swap on 4/6/7, waves 8–10 + Boss, hints toggle, settings | Playtest 4 — complete v1 run |
+| **M4.5 Difficulty modes** | Easy / Normal / Hard overlays, New Game picker, leftover bands per mode | A parent can pick a stretch that fits |
 | **M5 Juice & art** | Escalation, celebrations, sound, AI art pass | v1 |
 
 Task specs are written one milestone at a time; later milestones may change after playtests.
@@ -1004,6 +1077,10 @@ Task specs are written one milestone at a time; later milestones may change afte
 | Overkill | Damage exceeding remaining HP. |
 | Blocked | A wrong-parity ball; 0 damage, consumed. |
 | Hint | Optional running-total numbers under tiles during planning. |
+| Difficulty | Easy, Normal, or Hard. Chosen on New Game; locked for the run. |
+| Easy | Quiet stretch: fewer simultaneous robots, lower HP. |
+| Normal | The designed ladder (`waves.json` as shipped). |
+| Hard | Loud stretch: more simultaneous robots, no `basic` on 8–9. |
 | Playback | Presentation performing a resolved event list. |
 | Go | HUD fire control (green ▶). Tapping it dispatches End Turn. |
 | End Turn | The command that starts FIRE. The HUD label is Go. |
@@ -1026,6 +1103,8 @@ questions**, not blockers for M0/M1:
 | Browsable seen-tiles gallery | M5, with the art pass (§8.7) |
 | Sound sourcing (library vs generated) | M5 |
 | Kid-facing title and art style | M5 |
+| Easy / Hard leftover bands | Task 30 tunes `difficulty.json` percents and count deltas; Normal leftover median 50–70 is still unmet (tasks 25/27) |
+| Ship M4.5 before or after Playtest 4 | Grill A: after H4, so Playtest 4 measures one ladder. Build 28–29 first if the next session needs Easy |
 | v1.1 direction: path tiles/loops vs Splitter/division | After v1 playtesting |
 
 ### 18.1 Minor calls made while writing v0.3 (review)
@@ -1074,6 +1153,29 @@ These were not explicitly discussed and were chosen as the simplest consistent o
   Wave 9 has more robots overall **and** four at once plus an extra pack (grill C). Wave 9
   uses one shared full mix on every pack (grill A).
 
+### 18.3 Minor calls made while writing v0.8
+
+- Labels are *Easy* / *Normal* / *Hard* with 1 / 2 / 3 stars (grill A). Not Gentle/Tough, not
+  a numeric 1–3 without words.
+- Default and first highlight: **Normal** (grill A). The designed ladder stays the unmarked
+  game.
+- New Game **always** opens the picker (grill A). Settings stores the last pick. Keep Going
+  does not re-ask.
+- `RunState.difficulty` is `'easy' | 'normal' | 'hard'`. Do not reuse `RunState.mode`
+  (`'run' | 'level'`).
+- Overlay, not three `waves.json` copies (grill A). Normal is identity: multipliers 100,
+  countDelta 0, no pool drops — `rollWave` on Normal is byte-identical to today.
+- Easy scales **all** non-Boss HP, including waves 1–3 (they barely move). Hard does **not**
+  scale HP; it only adds stretch pressure.
+- Shop, economy, starting kit, Boss 1000 / 2×2 are mode-invariant (grill A).
+- Hints stay independent. Easy does not auto-enable them.
+- Hard's sensible player still always wins and always reaches wave 10 (grill A). Hard is more
+  to think about, not a brick wall.
+- Easy's End-Turn-only player still loses. Easy is quieter, not unlosable.
+- schemaVersion bumps (4) so a pre-mode save is discarded, not migrated.
+- HUD does not show the current difficulty during play (numbers stay the largest element).
+- Implement after Playtest 4 (grill A) unless the next session needs Easy.
+
 ---
 
 ## 19. Deferred to v1.1+
@@ -1092,6 +1194,8 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 | **Next-wave preview in the shop** | Showing the incoming robots would make purchases more purposeful, but it is new design and needs its own legibility pass. |
 | **Tuned iPhone layout** | 4×6 grid or panning camera. |
 | **"Start at wave N"** | If replaying early ladder waves gets boring. |
+| **Per-mode shop tables / income** | v0.8 keeps one shop. Revisit if Easy still feels poor or Hard still feels rich. |
+| **Mid-run difficulty change** | Locked at New Game. A second save slot per difficulty would be a new product. |
 | **Base HP shop item** | Data-only fix if base HP proves too punishing. |
 | **Emergent physics** | Contrary to §14.1; would move physics into `/sim`. |
 | **Save migrations** | v1 discards mismatched saves. |
