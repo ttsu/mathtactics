@@ -370,6 +370,57 @@ describe('waves.json schema', () => {
     );
   });
 
+  it('accepts hpByRobot overrides for ids in the pool', () => {
+    const data = parseGameData(
+      validRaw(
+        [
+          procWave({
+            procedural: {
+              groups: [
+                procGroup({
+                  count: 2,
+                  hp: [40, 50],
+                  pool: ['basic', 'odd-only'],
+                  hpByRobot: { 'odd-only': [18, 26] },
+                }),
+              ],
+            },
+          }),
+        ],
+        ALL_ROBOTS,
+      ),
+    );
+    const wave = data.waves.waves[0];
+    expect(wave && 'procedural' in wave ? wave.procedural.groups[0] : undefined).toEqual({
+      turn: 1,
+      count: 2,
+      hp: [40, 50],
+      pool: ['basic', 'odd-only'],
+      hpByRobot: { 'odd-only': [18, 26] },
+    });
+  });
+
+  it('rejects an hpByRobot key that is not in the pool', () => {
+    const raw = validRaw(
+      [
+        procWave({
+          procedural: {
+            groups: [
+              procGroup({
+                pool: ['basic'],
+                hpByRobot: { 'odd-only': [18, 26] },
+              }),
+            ],
+          },
+        }),
+      ],
+      ALL_ROBOTS,
+    );
+    expect(() => parseGameData(raw)).toThrow(
+      /^waves\.json: waves\[0\]\.procedural\.groups\[0\]\.hpByRobot\.odd-only: hpByRobot key "odd-only" is not in this group's pool/,
+    );
+  });
+
   it('rejects a procedural group whose hp exceeds 99', () => {
     const raw = validRaw([
       procWave({ procedural: { groups: [procGroup({ hp: [100, 100] })] } }),

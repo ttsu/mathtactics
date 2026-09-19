@@ -234,6 +234,25 @@ describe('rollWave — procedural', () => {
     }
   });
 
+  it('uses hpByRobot for named templates and the group hp otherwise', () => {
+    const group = procGroup({
+      turn: 1,
+      count: 2,
+      hp: [40, 40],
+      pool: ['basic', 'odd-only'],
+      hpByRobot: { 'odd-only': [7, 7] },
+    });
+    const wave = procWave([group]);
+    for (const seed of SEEDS) {
+      const { spawns } = rollWave(wave, seedRng(seed));
+      expect(spawns).toHaveLength(2);
+      for (const spawn of spawns) {
+        if (spawn.robotTemplateId === 'odd-only') expect(spawn.hp).toBe(7);
+        if (spawn.robotTemplateId === 'basic') expect(spawn.hp).toBe(40);
+      }
+    }
+  });
+
   it('sorts groups by turn', () => {
     const wave = procWave([
       procGroup({ turn: 8, count: 1, hp: [4, 4], pool: ['basic'] }),

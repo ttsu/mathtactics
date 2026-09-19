@@ -12,7 +12,7 @@
 //   1. pick `count` distinct lanes by `nextInt` into the remaining lanes (ascending, same as
 //      letter assignment);
 //   2. for each drawn lane in that order: `nextInt` into the remaining pool (without replacement)
-//      and `nextInt` HP in `[min, max]`.
+//      and `nextInt` HP in that template's range (`hpByRobot[id]` or the group's `hp`).
 //
 // The result is stable-sorted by `turn`, so same-turn entries keep file / draw order.
 
@@ -96,7 +96,7 @@ function rollProceduralWave(
       const [poolIndex, afterPool] = nextInt(rng, 0, remainingPool.length - 1);
       rng = afterPool;
       const robotTemplateId = remainingPool.splice(poolIndex, 1)[0]!;
-      const [min, max] = group.hp;
+      const [min, max] = group.hpByRobot?.[robotTemplateId] ?? group.hp;
       const [hp, afterHp] = nextInt(rng, min, max);
       rng = afterHp;
       spawns.push({ turn: group.turn, lane, robotTemplateId, hp });

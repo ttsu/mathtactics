@@ -727,6 +727,8 @@ const ProceduralGroupSchema = z
     hp: NormalSpawnHpRangeSchema,
     /** Distinct `robots.json` ids drawn without replacement (grill B). */
     pool: z.array(z.string().min(1)).min(1),
+    /** Optional per-template HP override. Missing ids keep `hp`. Keys must be in `pool`. */
+    hpByRobot: z.record(z.string().min(1), NormalSpawnHpRangeSchema).optional(),
   })
   .superRefine((group, ctx) => {
     const seen = new Set<string>();
@@ -746,6 +748,17 @@ const ProceduralGroupSchema = z
         path: ['count'],
         message: `count ${group.count} exceeds pool.length ${group.pool.length}`,
       });
+    }
+    if (group.hpByRobot) {
+      for (const id of Object.keys(group.hpByRobot)) {
+        if (!seen.has(id)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['hpByRobot', id],
+            message: `hpByRobot key "${id}" is not in this group's pool`,
+          });
+        }
+      }
     }
   });
 

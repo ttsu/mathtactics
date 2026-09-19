@@ -1,7 +1,7 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.7.2
+**Version:** 0.7.3
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
@@ -10,6 +10,21 @@ of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.7.3
+
+Human request after playing waves 7–10 with a 7-year-old: the stretch is a little too hard,
+and leaking one Odd-only / Even-only robot should be a chip, not a loss.
+
+- **Waves 7–9 HP comes down a notch.** Wave 7 basics sit around 30–44 (was 36–50). Wave 8
+  group HP is ~34–56 (was 42–75). Wave 9 group HP is ~42–64 (was 55–95). Waves 1–5 are
+  unchanged. Wave 6's Bounce-back teaching robot drops to 40–50 (was 54–64).
+- **Parity robots use a lower HP band.** Authored and procedural Odd-only / Even-only stay
+  in **16–32 HP**. One leaked parity robot from typical leftover HP is survivable; two or
+  more leaks can still end a run. Procedural groups keep a default `hp` for basics /
+  weakness / bounce-back and override parity via `hpByRobot`.
+- **Wave 10 escort stays a trap, not a tax.** T1 Bounce-back is 16–28; T7 Odd-only and
+  Even-only are 16–24. The Boss remains 1000 HP.
 
 ## 0. Changes in v0.7.2
 
@@ -507,7 +522,8 @@ stacked dots = even blocked ("does everyone have a partner?").
 - **Normal robots: 1–99 HP.** Difficulty comes from robot count, simultaneous lanes, and
   traits — not ever-larger numbers.
 - Placeholder curve (tuned in data): wave 1 → 1–3, wave 2 → 4–10, wave 5 → ~10–30,
-  wave 9 → ~30–99.
+  wave 9 basics → ~42–64. Odd-only / Even-only stay in **16–32 HP** so one leaked
+  parity robot is a chip, not a run-ending detonation.
 - **Boss** (wave 10 only): one robot, **1000 HP**, **no trait**, occupying a **2×2** (top-front
   authored on lane 1, so it covers lanes 1–2 and two columns). Balls in either occupied lane
   hit it. Arrives with a light escort of traited robots (T1 Bounce-back, T7 Odd-only and
@@ -523,7 +539,8 @@ stacked dots = even blocked ("does everyone have a partner?").
 ### 7.1 Why 100
 
 Round and legible; tracking "how much is left" is itself arithmetic practice. With the
-99 HP cap, a single leaked normal robot can never end a run from full health.
+99 HP cap, a single leaked normal robot can never end a run from full health. Parity
+robots stay in a 16–32 HP band so one missed Odd-only / Even-only is a chip, not a loss.
 
 ### 7.2 Detonation
 
@@ -682,10 +699,10 @@ shop slots are seeded-random within each rung.
 | 3 | Two lanes threatened at once | — (the cannon offer is always present; income should make a 2nd cannon affordable around here) | Lane choice; shop tradeoffs |
 | 4 | First **Weakness** robot | at least one `×N` | Multiples |
 | 5 | All **basic**, larger HP (~10–30) | at least one `−N` | Subtraction as a tool |
-| 6 | First **Bounce-back** robot (grill A) | — | Trimming to exact |
-| 7 | First **Odd-only** robot | at least one `×2` or `×5` (grill A) | Odd and even |
-| 8 | Procedural **3+3** (grill A), HP ~30–65, mixed traits | — (grill A) | Combining; Even-only at T1 |
-| 9 | Procedural **4+4+3** (grill C), one full mix (grill A), HP ~45–99 | at least one `−N` (grill A) | Four lanes and an extra pack |
+| 6 | First **Bounce-back** robot (grill A), HP 40–50 | — | Trimming to exact |
+| 7 | First **Odd-only** robot (HP 20–28); basics ~30–44 | at least one `×2` or `×5` (grill A) | Odd and even |
+| 8 | Procedural **3+3** (grill A), basics ~34–56, parity ~18–28 | — (grill A) | Combining; Even-only at T1 |
+| 9 | Procedural **4+4+3** (grill C), one full mix (grill A), basics ~42–64, parity ~20–32 | at least one `−N` (grill A) | Four lanes and an extra pack |
 | 10 | **Boss** (1000 HP, 2×2, no trait) + traited escort | — (no shop; win) | The big number |
 
 No tutorial mode and no text popups: wave design does the teaching.
