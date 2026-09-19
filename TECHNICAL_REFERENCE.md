@@ -815,9 +815,10 @@ real run; jumping to a puzzle does not touch the save.
 ## 15. Web Shell (validate in M0)
 
 - `index.html`: `viewport` = `width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover`;
-  `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `apple-touch-icon`, theme color.
+  `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `apple-touch-icon` (180×180 PNG), theme color.
 - `manifest.webmanifest` with **relative** `start_url: "./"` and `scope: "./"`, `display: "standalone"`,
-  `orientation: "landscape"`.
+  `orientation: "landscape"`, icons at 192×192 and 512×512. Source art is `scripts/icon-source.jpg`;
+  regenerate with `npx tsx scripts/generate-icons.ts`.
 - CSS: `html, body { position: fixed; inset: 0; overflow: clip; overscroll-behavior: none; touch-action: none;
   -webkit-user-select: none; -webkit-touch-callout: none; }`.
 - Rotate overlay: React component shown when `innerHeight > innerWidth`.

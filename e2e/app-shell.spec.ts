@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { BOARD_AREA, WORLD_HEIGHT, WORLD_WIDTH } from '../game/board/layout';
 import { DESIGN_HEIGHT, DESIGN_WIDTH, MIN_TOUCH_TARGET } from '../game/state/designSpace';
+import { pngSize } from '../tests/helpers/pngSize';
 
 // Task 03: Phaser/React layering, scaling and web shell. Runs before the test handle exists
 // (task 05), so Phaser positions are derived from the canvas's client rect + layout constants.
@@ -206,6 +207,7 @@ test('web shell metas and manifest are present, with relative start_url and scop
   const touchIconHref = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
   const touchIcon = await page.request.get(new URL(touchIconHref ?? '', page.url()).href);
   expect(touchIcon.status()).toBe(200);
+  expect(pngSize(Buffer.from(await touchIcon.body()))).toEqual({ width: 180, height: 180 });
 
   const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
   const manifestUrl = new URL(manifestHref ?? '', page.url()).href;
@@ -228,6 +230,12 @@ test('web shell metas and manifest are present, with relative start_url and scop
   for (const icon of manifest.icons) {
     const response = await page.request.get(new URL(icon.src, manifestUrl).href);
     expect(response.status()).toBe(200);
+    const match = /^(\d+)x(\d+)$/.exec(icon.sizes);
+    expect(match).not.toBeNull();
+    expect(pngSize(Buffer.from(await response.body()))).toEqual({
+      width: Number(match?.[1]),
+      height: Number(match?.[2]),
+    });
   }
 
   const shellCss = await page.evaluate(() => {
