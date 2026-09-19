@@ -99,3 +99,46 @@ Per-mode shop. Confirm dialogs.
 - [ ] Full-run e2e still plays Normal via the picker
 - [ ] `npm test`, `typecheck`, `lint`, targeted e2e pass
 - [ ] iPad preview check (new screen) — awaiting human
+
+## Completion Notes
+
+**Status:** Complete (iPad check pending)
+**Completed:** 2026-09-19
+**PR:** #54 · Preview: https://mathtactics.timtsu.com/pr/pr-54/
+**Branch:** `cursor/plan-difficulty-modes-ca27` (not `task/29-difficulty-picker`)
+
+**Acceptance criteria:**
+- [x] New Game always opens the picker; three star buttons; Home cancels — Met (`DifficultyScreen.tsx`, `e2e/difficulty.spec.ts`)
+- [x] Tapping a difficulty starts that run and remembers the pick — Met
+- [x] Keep Going never asks; Settings three-way is default-only — Met
+- [x] Pre-M4.5 settings blobs still load (hints preserved, difficulty Normal) — Met (`storage.test.ts`)
+- [x] Full-run e2e still plays Normal via the picker — Met (`e2e/run.spec.ts` uses `startNewGame`)
+- [x] `npm test`, `typecheck`, `lint`, targeted e2e pass — Met
+- [ ] iPad preview check (new screen) — awaiting human check on preview
+
+**Verification:** npm test ✔ (816) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (`e2e/difficulty.spec.ts` 5, `e2e/settings.spec.ts` 4, `e2e/run-flow.spec.ts` 7, `e2e/run.spec.ts` 3, `e2e/run-playback.spec.ts` 7)
+
+**Deviations from spec:**
+- **Branch name** is `cursor/plan-difficulty-modes-ca27`, not `task/29-difficulty-picker`.
+- **Picker unpressed buttons are blue, pressed is orange.** Big-button default is orange, so unpressed had to change colour or the last pick would be invisible.
+
+**Architectural decisions made:**
+- Screen id is `'difficulty'` (not `'mode'`).
+- Labels and star counts come from `data.difficulty.modes` — not hardcoded strings.
+- `startNewRun(store, difficulty?)` uses the argument, else `settings.difficulty`. The picker writes settings then passes the id.
+- Settings three-way writes `setSettings({ difficulty })` only; it never dispatches `newRun` or mutates `run`/`savedRun`.
+
+**Design questions raised:**
+- None.
+
+**Known issues / follow-up:**
+- iPad preview check of the new picker (star counts still distinguish the three with labels covered).
+- No HUD difficulty badge (GDD §18.3).
+
+**Files created:** `game/ui/DifficultyScreen.tsx`, `e2e/difficulty.spec.ts`, `e2e/helpers/newGame.ts`
+
+**Files modified:** `game/ui/{App,MainMenu,SettingsScreen,ui.css}`, `game/state/{runFlow,storage,store}.ts`, `e2e/{run,run-flow,run-playback,settings}.spec.ts`, `tests/game/{runFlow,storage,store}.test.ts`, `TECHNICAL_REFERENCE.md`
+
+**Notes for next agent:**
+- New Game always `setScreen('difficulty')`. Any e2e that taps `menu-new-run` must then tap a star (`startNewGame` in `e2e/helpers/newGame.ts`). Keep Going never shows the picker.
+

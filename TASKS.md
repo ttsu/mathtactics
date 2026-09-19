@@ -115,9 +115,9 @@ conflicts in: `data/difficulty.json`, `sim/data/schemas.ts`, `sim/core/types.ts`
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
-| 28 | [Difficulty data, overlay & RunState](tasks/28-difficulty-data.md) | sim / data | — | In Progress |
-| 29 | [New Game picker & Settings](tasks/29-difficulty-picker.md) | ui / state | 28 | In Progress |
-| 30 | [Per-mode leftover bands](tasks/30-difficulty-balance.md) | data / tests | 28 | In Progress |
+| 28 | [Difficulty data, overlay & RunState](tasks/28-difficulty-data.md) | sim / data | — | Complete |
+| 29 | [New Game picker & Settings](tasks/29-difficulty-picker.md) | ui / state | 28 | Complete (iPad check pending) |
+| 30 | [Per-mode leftover bands](tasks/30-difficulty-balance.md) | data / tests | 28 | Complete |
 | H5 | **Human: Playtest 5** — play Easy and Hard with your son; record notes in `playtests/05.md` | human | 29, 30 | Not Started |
 
 ## M5 — Juice & Art *(specs written after Playtest 4)*

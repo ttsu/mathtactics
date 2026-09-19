@@ -175,3 +175,46 @@ shop. Mid-run switch. Auto-enabling hints on Easy.
 - [ ] `schemaVersion` 4; old saves discard
 - [ ] Existing scenarios and Normal ladder tests still pass
 - [ ] `npm test`, `typecheck`, `lint` pass
+
+## Completion Notes
+
+**Status:** Complete
+**Completed:** 2026-09-19
+**PR:** #54 · Preview: https://mathtactics.timtsu.com/pr/pr-54/
+**Branch:** `cursor/plan-difficulty-modes-ca27` (not `task/28-difficulty-data`; 28–30 shipped together)
+
+**Acceptance criteria:**
+- [x] `data/difficulty.json` loads; Normal overlay is identity on every shipped wave — Met
+- [x] Easy lowers non-Boss HP and procedural counts; Hard raises counts and drops `basic` on 8–9 — Met
+- [x] Boss HP 1000 on all three; waves 1–7 teaching templates unchanged — Met
+- [x] `newRun` without `difficulty` is Normal; `RunState.difficulty` always set on a run — Met
+- [x] `schemaVersion` 4; old saves discard — Met (`store.test.ts` discards schemaVersion 3 vs economy 4)
+- [x] Existing scenarios and Normal ladder tests still pass — Met
+- [x] `npm test`, `typecheck`, `lint` pass — Met
+
+**Verification:** npm test ✔ (816) · typecheck ✔ · lint ✔ · build ✔
+
+**Deviations from spec:**
+- **Branch name** is `cursor/plan-difficulty-modes-ca27`, not `task/28-difficulty-data`. Tasks 28–30 landed on the plan PR.
+- **`Math.round` half-toward-+∞.** HP values are positive, so that is also half away from 0.
+
+**Architectural decisions made:**
+- Overlay is `applyDifficulty` then existing `rollWave` (`sim/waves/applyDifficulty.ts`). Overlay consumes no RNG.
+- Level-mode states store `difficulty: 'normal'` (puzzles ignore it).
+- Scenario shorthand `{ newRun: <seed> }` stays Normal; `{ newRun: { seed, difficulty } }` is the Easy/Hard form. Existing scenario files were not edited.
+- `waveForRun(data, waveIndex, difficulty)` is the single lookup used by `newRun` / `nextWave` / debug jump.
+
+**Design questions raised:**
+- None.
+
+**Known issues / follow-up:**
+- None for this task. Task 30 owns leftover-band retune; it did not change the formula.
+
+**Files created:** `data/difficulty.json`, `sim/waves/applyDifficulty.ts`, `tests/helpers/difficulty.ts`, `tests/sim/waves/applyDifficulty.test.ts`
+
+**Files modified:** `data/economy.json`, `sim/{commands,core,data,scenario,waves}`, `game/state/gameData.ts`, `game/state/debug/actions.ts`, `TECHNICAL_REFERENCE.md`, fixtures under `tests/`
+
+**Notes for next agent:**
+- `RunState.mode` is still `'run' | 'level'`. Difficulty is `RunState.difficulty`. Do not reuse `mode`.
+- Normal overlay must stay identity on shipped `waves.json`. Do not triplicate waves.
+

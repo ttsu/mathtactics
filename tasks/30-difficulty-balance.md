@@ -84,3 +84,51 @@ Armor. Per-mode income.
 - [ ] Cross-mode invariants (templates, Boss 1000, HP/count monotonic, shop identity)
 - [ ] `playtests/05-checklist.md` written
 - [ ] `npm test`, `typecheck`, `lint` pass
+
+## Completion Notes
+
+**Status:** Complete
+**Completed:** 2026-09-19
+**PR:** #54 · Preview: https://mathtactics.timtsu.com/pr/pr-54/
+**Branch:** `cursor/plan-difficulty-modes-ca27` (not `task/30-difficulty-balance`)
+
+**Acceptance criteria:**
+- [x] Easy sensible leftover min ≥ 80; 100/100 wins; End-Turn-only loses — Met (min 96)
+- [x] Normal leftover assertion unchanged from task 27 — Met (min ≥ 40; measured min 96 / median 99)
+- [x] Hard sensible 100/100 wins and reaches wave 10; End-Turn-only loses; no `basic` on 8–9 — Met (min 86)
+- [x] Cross-mode invariants (templates, Boss 1000, HP/count monotonic, shop identity) — Met
+- [x] `playtests/05-checklist.md` written — Met (H4 notes `playtests/04.md` do not exist yet; checklist does not duplicate Playtest 4 questions)
+- [x] `npm test`, `typecheck`, `lint` pass — Met
+
+**Verification:** npm test ✔ (816) · typecheck ✔ · lint ✔
+
+**Leftover tables (sensible player, seeds 1–100, leftover = final `baseHp`):**
+
+| Mode | min | median | max | wins | reach wave 10 | End-Turn-only |
+|---|---|---|---|---|---|---|
+| Easy | 96 | 99 | 100 | 100/100 | 100/100 | loses |
+| Normal | 96 | 99 | 100 | 100/100 | 100/100 | loses |
+| Hard | 86 | 99 | 100 | 100/100 | 100/100 | loses |
+
+**Deviations from spec:**
+- **Branch name** is `cursor/plan-difficulty-modes-ca27`, not `task/30-difficulty-balance`.
+- **No `difficulty.json` retune.** Draft 75% / parity 65% floor 8 / `countDelta −1` already meets Easy min ≥ 80. Hard `countDelta +1` + drop `basic` still 100/100 wins (leftover min 86 vs Normal 96). Formula unchanged.
+
+**Architectural decisions made:**
+- `playSensibleRun(seed, data, difficulty = 'normal')` and `playEndTurnOnlyRun` take an optional difficulty. Default keeps the task-27 Normal path.
+
+**Design questions raised:**
+- None.
+
+**Known issues / follow-up:**
+- Normal leftover median is still 99, not 50–70 (tasks 25/27). This task did not grind `waves.json`.
+- H5 plays Easy and Hard with the kid; checklist is `playtests/05-checklist.md`.
+
+**Files created:** `playtests/05-checklist.md`
+
+**Files modified:** `tests/ladder.test.ts`, `tests/helpers/sensiblePlayer.ts`, `TASKS.md`
+
+**Notes for next agent:**
+- If Hard later loses a sensible seed, lower `countDelta` or stop dropping a template — do not raise the 99 cap, do not add armor, do not retune `waves.json` here.
+- Easy minCount must stay ≥ 2.
+
