@@ -808,11 +808,12 @@ A run is Easy, Normal, or Hard. The player picks on **New Game**. Puzzles ignore
 | End-Turn-only | Still loses | Still loses | Still loses |
 
 **Picker (grill A).** New Game always opens a full-screen picker: three equally large buttons
-in a row (stars + label), last pick pressed. ▶ *Home* back to the menu without starting.
-Tapping a difficulty starts the run and remembers the pick. There is no extra confirm. Cover
-the labels and the star counts still distinguish the three. Settings also shows the same
-three-way control so a parent can change the default without starting a run; that default is
-what the picker highlights next time. It never mutates `RunState` of a run already going.
+in a row (stars + label), last pick pressed. A small ← *Back* at the top left returns to the
+menu without starting. Tapping a difficulty starts the run and remembers the pick. There is
+no extra confirm. Cover the labels and the star counts still distinguish the three. Settings
+also shows the same three-way control so a parent can change the default without starting a
+run; that default is what the picker highlights next time. It never mutates `RunState` of a
+run already going.
 
 Keep Going does not show the picker. A saved Easy run stays Easy.
 
@@ -843,7 +844,7 @@ Normal; Odd-only / Even-only **65%** (floor 8) so one leak stays a chip; procedu
    that *navigates* — menu entries, screen buttons — pairs its icon with a short label beneath.
    Rules for that label:
    - One or two words, grade-1 decodable, from the kid's spoken vocabulary
-     (*Keep Going*, *New Game*, *Puzzles*, *Home*, *Next*, *Go*, *Easy*, *Normal*, *Hard*).
+     (*Keep Going*, *New Game*, *Puzzles*, *Home*, *Back*, *Next*, *Go*, *Easy*, *Normal*, *Hard*).
      Never *Continue*, *Resume*, *Proceed*, *Select*.
    - It **repeats** what the icon already says; it never adds information the icon lacks.
      Cover the text and the screen must still be usable.

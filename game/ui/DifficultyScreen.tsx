@@ -1,9 +1,11 @@
 // New Game difficulty picker (GDD §10.7, task 29). Three equally large star buttons; last pick
-// is pressed. Tapping a star writes the Settings default and starts that run. Home cancels.
+// is pressed. Tapping a star writes the Settings default and starts that run. A small Back at
+// the top left cancels without starting.
 import type { CSSProperties } from 'react';
 import type { DifficultyId } from '../../sim/core/types';
+import { MIN_TOUCH_TARGET } from '../state/designSpace';
 import { startNewRun } from '../state/runFlow';
-import { PlayIcon, StarIcon } from './icons';
+import { BackIcon, StarIcon } from './icons';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
 export function DifficultyScreen() {
@@ -23,6 +25,17 @@ export function DifficultyScreen() {
       data-testid="difficulty"
       style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
     >
+      <button
+        type="button"
+        className="difficulty-back pop-in"
+        data-testid="difficulty-back"
+        aria-label="Back"
+        style={{ minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET }}
+        onClick={() => store.getState().setScreen('menu')}
+      >
+        <BackIcon size={32} />
+        <span className="button-label button-label-small">Back</span>
+      </button>
       <div className="difficulty-row">
         {(['easy', 'normal', 'hard'] as const).map((id) => {
           const mode = modes[id];
@@ -47,16 +60,6 @@ export function DifficultyScreen() {
           );
         })}
       </div>
-      <button
-        type="button"
-        className="big-button pop-in"
-        data-testid="difficulty-home"
-        aria-label="Home"
-        onClick={() => store.getState().setScreen('menu')}
-      >
-        <PlayIcon size={96} />
-        <span className="button-label">Home</span>
-      </button>
     </div>
   );
 }

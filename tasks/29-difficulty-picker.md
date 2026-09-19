@@ -121,6 +121,7 @@ Per-mode shop. Confirm dialogs.
 **Deviations from spec:**
 - **Branch name** is `cursor/plan-difficulty-modes-ca27`, not `task/29-difficulty-picker`.
 - **Picker unpressed buttons are blue, pressed is orange.** Big-button default is orange, so unpressed had to change colour or the last pick would be invisible.
+- **Cancel control is a small ← *Back* at the top left** (`difficulty-back`), not a big ▶ *Home*. Human request after the picker shipped; GDD §10.7 and §11.1 updated. Same cancel behavior (menu, no run started).
 
 **Architectural decisions made:**
 - Screen id is `'difficulty'` (not `'mode'`).

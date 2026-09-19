@@ -35,7 +35,11 @@ test('New Game always opens the picker; Normal is pressed on a fresh profile', a
   await expectTouchTarget(page, 'difficulty-easy');
   await expectTouchTarget(page, 'difficulty-normal');
   await expectTouchTarget(page, 'difficulty-hard');
-  await expectTouchTarget(page, 'difficulty-home');
+  await expectTouchTarget(page, 'difficulty-back');
+  const backBox = await page.getByTestId('difficulty-back').boundingBox();
+  const easyBox = await page.getByTestId('difficulty-easy').boundingBox();
+  expect(backBox!.x, 'Back sits on the left').toBeLessThan(easyBox!.x);
+  expect(backBox!.y, 'Back sits above the stars').toBeLessThan(easyBox!.y);
 });
 
 test('tapping Easy starts that run, remembers the pick, and applies the overlay', async ({
@@ -60,7 +64,7 @@ test('tapping Easy starts that run, remembers the pick, and applies the overlay'
   await expect(page.getByTestId('difficulty-easy')).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('Home from the picker does not replace a saved run or the last pick', async ({ page }) => {
+test('Back from the picker does not replace a saved run or the last pick', async ({ page }) => {
   await openMenu(page);
   await startNewGame(page, 'normal');
   await waitIdle(page);
@@ -71,7 +75,7 @@ test('Home from the picker does not replace a saved run or the last pick', async
   await expect(page.getByTestId('menu-continue')).toBeVisible();
   await page.getByTestId('menu-new-run').click();
   await expect(page.getByTestId('difficulty')).toBeVisible();
-  await page.getByTestId('difficulty-home').click();
+  await page.getByTestId('difficulty-back').click();
 
   expect(await getScreen(page)).toBe('menu');
   await expect(page.getByTestId('menu-continue')).toBeVisible();

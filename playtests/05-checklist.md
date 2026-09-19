@@ -37,7 +37,7 @@ Tick or jot a word next to each as it happens.
 - [ ] Does he **pick a star on his own**, without being told what they mean?
 - [ ] Does he notice **Normal is the middle one** (two stars)?
 - [ ] Cover the labels: do the **star counts** still distinguish the three?
-- [ ] Does he tap ▶ **Home** from the picker by accident? Does he understand nothing started?
+- [ ] Does he tap ← **Back** (top left) from the picker by accident? Does he understand nothing started?
 
 **Easy session**
 - [ ] Waves 8–9: relief, boredom, or still a stretch?

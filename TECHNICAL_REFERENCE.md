@@ -549,8 +549,8 @@ base HP.
 **M2 run flow (task 14, `/game/state/runFlow.ts`):** menu shows ▶ Keep Going (`canContinue`) when a
 resumable run is saved (mode `run`, phase `planning` or `waveCleared`, `isResumable`), New Game
 (always `setScreen('difficulty')` — never starts a run itself), and Puzzles (the level flow above,
-unchanged). The picker (`screen: 'difficulty'`, task 29) is three star buttons plus ▶ Home; tapping
-a star writes `settings.difficulty` then `startNewRun(store, id)` (`dispatch({ type: 'newRun', seed,
+unchanged). The picker (`screen: 'difficulty'`, task 29) is three star buttons plus a small ← Back
+at the top left; tapping a star writes `settings.difficulty` then `startNewRun(store, id)` (`dispatch({ type: 'newRun', seed,
 difficulty })` with a seed made at the edge from the clock/`crypto`, never in `/sim`). Keep Going
 never opens the picker. `continueRun` installs the saved run as-is — including its locked
 `run.difficulty` — the wave-cleared overlay reappears if it was saved there — with no playback
@@ -782,7 +782,7 @@ window.__GAME__ = {
 Playwright asserts on structured state. Screenshots are for legibility review only.
 
 **Difficulty picker testids (task 29):** screen root `difficulty`; star buttons `difficulty-easy` /
-`difficulty-normal` / `difficulty-hard`; Home `difficulty-home`. Settings three-way:
+`difficulty-normal` / `difficulty-hard`; Back `difficulty-back`. Settings three-way:
 `settings-difficulty-easy` / `settings-difficulty-normal` / `settings-difficulty-hard` (plus existing
 `settings` / `settings-hints` / `settings-home`). New Game always opens the picker; Keep Going never
 does. No HUD difficulty badge.
