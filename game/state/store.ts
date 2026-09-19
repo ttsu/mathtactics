@@ -42,7 +42,15 @@ export interface Display {
 
 /** `allDone` = every M1 puzzle level cleared (task 11). */
 export type Screen =
-  'menu' | 'game' | 'shop' | 'settings' | 'won' | 'lost' | 'levelSelect' | 'allDone';
+  | 'menu'
+  | 'game'
+  | 'shop'
+  | 'settings'
+  | 'difficulty'
+  | 'won'
+  | 'lost'
+  | 'levelSelect'
+  | 'allDone';
 
 export interface Playback {
   /** `playing` = a just-resolved turn; `replaying` = the Replay button re-showing the last turn

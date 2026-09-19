@@ -322,6 +322,36 @@
   box-shadow: 0 2px 0 #c8621f;
 }
 
+.difficulty-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.difficulty-row .big-button {
+  width: 220px;
+  background: #4f86c6;
+  box-shadow: 0 10px 0 #35618f;
+}
+
+.difficulty-row .big-button.is-pressed {
+  background: #ff8c42;
+  box-shadow: 0 10px 0 #c8621f;
+}
+
+.difficulty-row .small-button {
+  width: 160px;
+}
+
+.difficulty-stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 36px;
+}
+
 /* --- Task 14: main menu ▶ Continue / New Run / Puzzles --- */
 
 .menu-buttons {

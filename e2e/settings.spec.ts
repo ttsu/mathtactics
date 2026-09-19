@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MIN_TOUCH_TARGET } from '../game/state/designSpace';
+import { startNewGame } from './helpers/newGame';
 import { parseGameData } from '../sim/data/load';
 import { laneHintValues } from '../sim/core/hints';
 import type { Lane } from '../sim/core/coords';
@@ -64,13 +65,20 @@ test('Settings is on the menu with or without a resumable run; no Sound row', as
   await expect(page.getByTestId('settings')).toBeVisible();
   await expect(page.getByTestId('settings-hints')).toBeVisible();
   await expect(page.getByTestId('settings-home')).toBeVisible();
+  await expect(page.getByTestId('settings-difficulty-easy')).toBeVisible();
+  await expect(page.getByTestId('settings-difficulty-normal')).toBeVisible();
+  await expect(page.getByTestId('settings-difficulty-hard')).toBeVisible();
   await expect(page.getByTestId('settings-hints')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByTestId('settings-difficulty-normal')).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await expect(page.locator('[data-testid="settings"]')).not.toContainText(/sound/i);
   await expectTouchTarget(page, 'settings-hints');
   await expectTouchTarget(page, 'settings-home');
 
   await page.getByTestId('settings-home').click();
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   await waitIdle(page);
   await page.getByTestId('home').click();
   await expect(page.getByTestId('menu-continue')).toBeVisible();
@@ -83,7 +91,7 @@ test('Menu → Settings → Hints on → Home → New Game → place a tile → 
   await openMenu(page);
   await turnHintsOnFromMenu(page);
 
-  await page.getByTestId('menu-new-run').click();
+  await startNewGame(page);
   expect(await getScreen(page)).toBe('game');
   await waitIdle(page);
 

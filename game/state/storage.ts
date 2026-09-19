@@ -7,7 +7,7 @@
 // All access is try/catch-guarded: a storage failure (quota, privacy mode, corrupt JSON) must
 // never break play (TR §13) — every helper below fails soft (no-op write, `null`/default read).
 
-import type { RunState, TileId } from '../../sim/core/types';
+import type { DifficultyId, RunState, TileId } from '../../sim/core/types';
 
 /** The subset of the DOM `Storage` interface these helpers need. */
 export interface StorageLike {
@@ -19,10 +19,17 @@ export interface StorageLike {
 export interface Settings {
   hints: boolean;
   sound: boolean;
+  difficulty: DifficultyId;
 }
 
-/** GDD §11.8: hints off by default; sound on by default (see task 05 Completion Notes). */
-export const DEFAULT_SETTINGS: Settings = { hints: false, sound: true };
+const DIFFICULTY_IDS: readonly DifficultyId[] = ['easy', 'normal', 'hard'];
+
+function parseDifficulty(value: unknown): DifficultyId {
+  return DIFFICULTY_IDS.includes(value as DifficultyId) ? (value as DifficultyId) : 'normal';
+}
+
+/** GDD §11.8: hints off by default; sound on by default; difficulty Normal (GDD §10.7). */
+export const DEFAULT_SETTINGS: Settings = { hints: false, sound: true, difficulty: 'normal' };
 
 interface SavedRun {
   schemaVersion: number;
@@ -143,6 +150,7 @@ export function loadSettings(storage: StorageLike, basePath: string): Settings {
     return {
       hints: typeof candidate.hints === 'boolean' ? candidate.hints : DEFAULT_SETTINGS.hints,
       sound: typeof candidate.sound === 'boolean' ? candidate.sound : DEFAULT_SETTINGS.sound,
+      difficulty: parseDifficulty(candidate.difficulty),
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

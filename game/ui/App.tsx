@@ -1,4 +1,5 @@
 import { AllDoneScreen } from './AllDoneScreen';
+import { DifficultyScreen } from './DifficultyScreen';
 import { DebugHost } from './debug';
 import { Hud } from './Hud';
 import { LevelClearedOverlay } from './LevelClearedOverlay';
@@ -28,6 +29,7 @@ export function App() {
       )}
       {screen === 'shop' && <ShopScreen />}
       {screen === 'settings' && <SettingsScreen />}
+      {screen === 'difficulty' && <DifficultyScreen />}
       {screen === 'allDone' && <AllDoneScreen />}
       {screen === 'won' && <WinScreen />}
       {screen === 'lost' && <LoseScreen />}
