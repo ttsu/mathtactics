@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseGameData } from '../../../sim/data/load';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
 import { fakeShop } from '../../helpers/shop';
+import { fakeDifficulty } from '../../helpers/difficulty';
 import {
   fakeDangerSettings,
   fakeHintsSettings,
@@ -41,6 +42,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
     waves: {
       waves: [{ id: 'wave-1', spawns: [{ turn: 1, lane: 0, robot: 'basic', hp: [1, 1] }] }],
     },
+    difficulty: fakeDifficulty(),
     levels: { levels: [] },
     presentation: {
       pacing: fakePacingSettings(),

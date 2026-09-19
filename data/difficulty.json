@@ -1,0 +1,44 @@
+{
+  "default": "normal",
+  "modes": {
+    "easy": {
+      "label": "Easy",
+      "stars": 1,
+      "hp": {
+        "nonBoss": { "mul": 75, "min": 1, "max": 99 },
+        "parity": { "mul": 65, "min": 8, "max": 99 },
+        "boss": { "mul": 100, "min": 1, "max": 1000 }
+      },
+      "countDelta": -1,
+      "minCount": 2,
+      "maxCount": 5,
+      "dropTemplates": []
+    },
+    "normal": {
+      "label": "Normal",
+      "stars": 2,
+      "hp": {
+        "nonBoss": { "mul": 100, "min": 1, "max": 99 },
+        "parity": { "mul": 100, "min": 1, "max": 99 },
+        "boss": { "mul": 100, "min": 1, "max": 1000 }
+      },
+      "countDelta": 0,
+      "minCount": 1,
+      "maxCount": 5,
+      "dropTemplates": []
+    },
+    "hard": {
+      "label": "Hard",
+      "stars": 3,
+      "hp": {
+        "nonBoss": { "mul": 100, "min": 1, "max": 99 },
+        "parity": { "mul": 100, "min": 1, "max": 99 },
+        "boss": { "mul": 100, "min": 1, "max": 1000 }
+      },
+      "countDelta": 1,
+      "minCount": 1,
+      "maxCount": 5,
+      "dropTemplates": ["basic"]
+    }
+  }
+}

@@ -16,6 +16,7 @@ const DATA_FILE_KEYS = [
   'economy',
   'shop',
   'waves',
+  'difficulty',
   'levels',
   'presentation',
 ] as const;

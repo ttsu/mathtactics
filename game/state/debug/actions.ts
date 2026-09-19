@@ -66,7 +66,7 @@ export function debugJumpToWave(
   if (run?.mode === 'run' && run.waveIndex <= waveIndex) {
     current = run;
   } else {
-    current = buildNewRun(seedToUse, data).state;
+    current = buildNewRun(seedToUse, data, run?.mode === 'run' ? run.difficulty : undefined).state;
   }
 
   while (current.waveIndex < waveIndex) {

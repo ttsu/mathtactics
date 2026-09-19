@@ -12,6 +12,7 @@ import {
   fakeBossSettings,
 } from '../../helpers/playbackSettings';
 import { fakeShop } from '../../helpers/shop';
+import { fakeDifficulty } from '../../helpers/difficulty';
 
 function validTile(overrides: Record<string, unknown> = {}) {
   return {
@@ -79,6 +80,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       ],
     }),
     waves: twoWaves(),
+    difficulty: fakeDifficulty(),
     levels: { levels: [] },
     presentation: {
       pacing: fakePacingSettings(),

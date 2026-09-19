@@ -6,6 +6,7 @@ import type { GameData, LevelDef } from '../../../sim/data/schemas';
 import type { RunState } from '../../../sim/core/types';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
 import { fakeShop } from '../../helpers/shop';
+import { fakeDifficulty } from '../../helpers/difficulty';
 import {
   fakeDangerSettings,
   fakeHintsSettings,
@@ -54,6 +55,7 @@ export function fakeGameData(overrides: Partial<GameData> = {}): GameData {
     },
     shop: fakeShop(),
     waves: { waves: [] },
+    difficulty: fakeDifficulty(),
     levels: { levels: [] },
     presentation: {
       pacing: fakePacingSettings(),
@@ -75,6 +77,7 @@ export function fakeRunState(overrides: Partial<RunState> = {}): RunState {
   return {
     schemaVersion: 1,
     mode: 'level',
+    difficulty: 'normal',
     levelId: 'test-level',
     seed: 'seed',
     rng: { wave: [1, 2, 3, 4], shop: [5, 6, 7, 8] },

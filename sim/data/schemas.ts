@@ -864,6 +864,128 @@ export const WavesFileSchema = z.strictObject({
     }),
 });
 
+export type WavesFile = z.infer<typeof WavesFileSchema>;
+
+// --- difficulty.json (GDD §10.7, task 28) ---
+
+export const DifficultyIdSchema = z.enum(['easy', 'normal', 'hard']);
+
+const HpBandSchema = z
+  .strictObject({
+    /** Integer percent; 100 = unchanged. */
+    mul: z.number().int().positive(),
+    min: z.number().int().min(1),
+    max: z.number().int().min(1),
+  })
+  .superRefine((band, ctx) => {
+    if (band.min > band.max) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['min'],
+        message: `min ${band.min} exceeds max ${band.max}`,
+      });
+    }
+  });
+
+const DifficultyModeSchema = z.strictObject({
+  label: z.string().min(1),
+  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  hp: z.strictObject({
+    nonBoss: HpBandSchema,
+    parity: HpBandSchema,
+    boss: HpBandSchema,
+  }),
+  countDelta: z.number().int(),
+  minCount: z.number().int().min(1).max(5),
+  maxCount: z.number().int().min(1).max(5),
+  dropTemplates: z.array(z.string().min(1)),
+});
+
+export const DifficultyFileSchema = z
+  .strictObject({
+    default: DifficultyIdSchema,
+    modes: z.strictObject({
+      easy: DifficultyModeSchema,
+      normal: DifficultyModeSchema,
+      hard: DifficultyModeSchema,
+    }),
+  })
+  .superRefine((file, ctx) => {
+    if (file.default !== 'normal') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['default'],
+        message: 'default must be "normal"',
+      });
+    }
+    const expectedLabels: Record<'easy' | 'normal' | 'hard', string> = {
+      easy: 'Easy',
+      normal: 'Normal',
+      hard: 'Hard',
+    };
+    const starSeen = new Set<number>();
+    for (const id of DifficultyIdSchema.options) {
+      const mode = file.modes[id];
+      if (mode.label !== expectedLabels[id]) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['modes', id, 'label'],
+          message: `label must be "${expectedLabels[id]}"`,
+        });
+      }
+      if (starSeen.has(mode.stars)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['modes', id, 'stars'],
+          message: `duplicate stars ${mode.stars}`,
+        });
+      }
+      starSeen.add(mode.stars);
+      if (mode.minCount > mode.maxCount) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['modes', id, 'minCount'],
+          message: `minCount ${mode.minCount} exceeds maxCount ${mode.maxCount}`,
+        });
+      }
+      if (mode.hp.nonBoss.max > MAX_NORMAL_SPAWN_HP) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['modes', id, 'hp', 'nonBoss', 'max'],
+          message: `nonBoss max ${mode.hp.nonBoss.max} exceeds ${MAX_NORMAL_SPAWN_HP}`,
+        });
+      }
+      if (mode.hp.parity.max > MAX_NORMAL_SPAWN_HP) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['modes', id, 'hp', 'parity', 'max'],
+          message: `parity max ${mode.hp.parity.max} exceeds ${MAX_NORMAL_SPAWN_HP}`,
+        });
+      }
+      if (mode.hp.boss.max > MAX_BOSS_SPAWN_HP) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['modes', id, 'hp', 'boss', 'max'],
+          message: `boss max ${mode.hp.boss.max} exceeds ${MAX_BOSS_SPAWN_HP}`,
+        });
+      }
+      const drops = new Set<string>();
+      mode.dropTemplates.forEach((idDrop, index) => {
+        if (drops.has(idDrop)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['modes', id, 'dropTemplates', index],
+            message: `duplicate dropTemplates id "${idDrop}"`,
+          });
+        }
+        drops.add(idDrop);
+      });
+    }
+  });
+
+export type DifficultyFile = z.infer<typeof DifficultyFileSchema>;
+export type DifficultyMode = z.infer<typeof DifficultyModeSchema>;
+
 // --- Combined ---
 
 export const GameDataSchema = z
@@ -873,6 +995,7 @@ export const GameDataSchema = z
     economy: EconomyFileSchema,
     shop: ShopFileSchema,
     waves: WavesFileSchema,
+    difficulty: DifficultyFileSchema,
     levels: LevelsFileSchema,
     presentation: PresentationFileSchema,
   })
@@ -881,6 +1004,26 @@ export const GameDataSchema = z
   .superRefine((data, ctx) => {
     const robotIds = new Set(data.robots.map((robot) => robot.id));
     const tileIds = new Set<string>(data.tiles.map((tile) => tile.id));
+    for (const id of DifficultyIdSchema.options) {
+      data.difficulty.modes[id].dropTemplates.forEach((dropId, dropIndex) => {
+        if (!robotIds.has(dropId)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['difficulty', 'modes', id, 'dropTemplates', dropIndex],
+            message: `unknown robot id "${dropId}"`,
+          });
+          return;
+        }
+        const template = data.robots.find((robot) => robot.id === dropId);
+        if (template?.isBoss) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['difficulty', 'modes', id, 'dropTemplates', dropIndex],
+            message: `dropTemplates may not name a Boss template "${dropId}"`,
+          });
+        }
+      });
+    }
     data.waves.waves.forEach((wave, waveIndex) => {
       if ('spawns' in wave) {
         const reservedLanes = new Set<number>();

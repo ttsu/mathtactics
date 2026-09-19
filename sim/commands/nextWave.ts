@@ -7,6 +7,7 @@
 
 import type { GameEvent, RunState } from '../core/types';
 import type { GameData } from '../data/schemas';
+import { waveForRun } from '../waves/applyDifficulty';
 import { rollWave } from '../waves/rollWave';
 import { spawn } from '../waves/spawn';
 
@@ -15,11 +16,7 @@ export function buildNextWave(
   data: GameData,
 ): { state: RunState; events: GameEvent[] } {
   const waveIndex = state.waveIndex + 1;
-  const waveDef = data.waves.waves[waveIndex];
-  if (!waveDef) {
-    throw new Error(`nextWave: no wave at index ${waveIndex} in waves.json`);
-  }
-
+  const waveDef = waveForRun(data, waveIndex, state.difficulty);
   const rolled = rollWave(waveDef, state.rng.wave, data.robots);
 
   const nextState: RunState = {

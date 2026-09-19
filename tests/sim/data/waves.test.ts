@@ -4,6 +4,7 @@ import { WavesFileSchema } from '../../../sim/data/schemas';
 import { loadRawGameData } from '../../helpers/loadDataFiles';
 import { fakeDragSettings, fakeScreenSettings } from '../../helpers/dragSettings';
 import { fakeShop } from '../../helpers/shop';
+import { fakeDifficulty } from '../../helpers/difficulty';
 import {
   fakeDangerSettings,
   fakeHintsSettings,
@@ -69,6 +70,7 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
     },
     shop: shopForWaves(waves.length),
     waves: { waves },
+    difficulty: fakeDifficulty(),
     levels: { levels: [] },
     presentation: {
       pacing: fakePacingSettings(),
