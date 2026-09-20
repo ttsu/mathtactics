@@ -289,7 +289,7 @@ Sample files. Debug sounds. Changing leftover HP. Difficulty overlay behaviour.
 - [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass — Met
 - [ ] iPad preview check (first-gesture sound, mute, exact kill, clonk, bounce-back, shop nope) — awaiting human check on preview
 
-**Verification:** npm test ✔ (829) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (95, including Settings Sound row, preview cue, New Game `uiTap`, existing settings/difficulty/run specs)
+**Verification:** npm test ✔ (835) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (95, including Settings Sound row, preview cue, New Game `uiTap`, existing settings/difficulty/run specs)
 
 **Deviations from spec:**
 - **Branch name** is `cursor/31-web-audio-and-sound-cfef` (cloud-agent prefix), not `task/31-web-audio-and-sound`.
