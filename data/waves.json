@@ -28,30 +28,30 @@
     {
       "id": "wave-4",
       "spawns": [
-        { "turn": 1, "lane": "A", "robot": "weakness-5", "hp": [30, 40] },
-        { "turn": 1, "lane": "B", "robot": "basic", "hp": [18, 18] },
-        { "turn": 6, "lane": "A", "robot": "basic", "hp": [18, 18] },
-        { "turn": 6, "lane": "C", "robot": "basic", "hp": [18, 18] },
-        { "turn": 11, "lane": "B", "robot": "basic", "hp": [18, 18] }
+        { "turn": 1, "lane": "A", "robot": "weakness-5", "hp": [28, 36] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [16, 16] },
+        { "turn": 6, "lane": "A", "robot": "basic", "hp": [16, 16] },
+        { "turn": 6, "lane": "C", "robot": "basic", "hp": [16, 16] },
+        { "turn": 11, "lane": "B", "robot": "basic", "hp": [16, 16] }
       ]
     },
     {
       "id": "wave-5",
       "spawns": [
-        { "turn": 1, "lane": "A", "robot": "basic", "hp": [36, 48] },
-        { "turn": 1, "lane": "B", "robot": "basic", "hp": [36, 48] },
-        { "turn": 7, "lane": "A", "robot": "basic", "hp": [42, 52] },
-        { "turn": 7, "lane": "C", "robot": "basic", "hp": [42, 52] }
+        { "turn": 1, "lane": "A", "robot": "basic", "hp": [32, 44] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [32, 44] },
+        { "turn": 7, "lane": "A", "robot": "basic", "hp": [38, 48] },
+        { "turn": 7, "lane": "C", "robot": "basic", "hp": [38, 48] }
       ]
     },
     {
       "id": "wave-6",
       "spawns": [
-        { "turn": 1, "lane": "A", "robot": "bounce-back", "hp": [44, 54] },
-        { "turn": 1, "lane": "B", "robot": "basic", "hp": [36, 48] },
-        { "turn": 1, "lane": "C", "robot": "basic", "hp": [36, 48] },
-        { "turn": 8, "lane": "A", "robot": "basic", "hp": [42, 52] },
-        { "turn": 8, "lane": "B", "robot": "basic", "hp": [42, 52] }
+        { "turn": 1, "lane": "A", "robot": "bounce-back", "hp": [40, 50] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [32, 44] },
+        { "turn": 1, "lane": "C", "robot": "basic", "hp": [32, 44] },
+        { "turn": 8, "lane": "A", "robot": "basic", "hp": [38, 48] },
+        { "turn": 8, "lane": "B", "robot": "basic", "hp": [38, 48] }
       ]
     },
     {

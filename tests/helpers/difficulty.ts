@@ -25,6 +25,7 @@ export function fakeDifficulty(overrides: Partial<DifficultyFile> = {}): Difficu
         minCount: 2,
         maxCount: 5,
         dropTemplates: [],
+        hpApplies: 'all',
       },
       normal: {
         label: 'Normal',
@@ -34,6 +35,7 @@ export function fakeDifficulty(overrides: Partial<DifficultyFile> = {}): Difficu
         minCount: 1,
         maxCount: 5,
         dropTemplates: [],
+        hpApplies: 'all',
       },
       hard: {
         label: 'Hard',
@@ -47,6 +49,7 @@ export function fakeDifficulty(overrides: Partial<DifficultyFile> = {}): Difficu
         minCount: 1,
         maxCount: 5,
         dropTemplates: ['basic'],
+        hpApplies: 'procedural',
       },
     },
     ...overrides,

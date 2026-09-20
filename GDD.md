@@ -19,13 +19,13 @@ This document is the single source of truth for *design*.
 
 Human request: Normal should be slightly harder; Hard should be moderately harder.
 
-- **Normal HP ticks up on waves 4–9.** The designed ladder in `waves.json` moves about
-  10–12% on the mid-run and stretch rungs. Waves 1–3 stay the teaching opener. Wave 10
-  Boss stays 1000 / 2×2; the escort stays the light trap (not the leftover lever).
-  Odd-only / Even-only stay in the **16–32** chip band.
-- **Hard also scales non-Boss HP to 120%.** Parity stays **100%** so one leaked Odd-only /
-  Even-only is still a chip. `countDelta +1` and dropping `basic` on 8–9 stay. Waves 1–7
-  still spawn the same templates as Normal; their non-Boss numerals are larger.
+- **Normal HP ticks up on waves 7–9.** The designed ladder in `waves.json` moves about
+  10–12% on the stretch rungs. Waves 1–6 stay the teaching mid-run (raising 4–6 HP
+  leaked a sensible seed). Wave 10 Boss stays 1000 / 2×2; the escort stays the light
+  trap. Odd-only / Even-only stay in the **16–32** chip band.
+- **Hard scales stretch non-Boss HP to 120%.** `hpApplies: procedural` leaves waves 1–7
+  and the wave 10 escort at Normal HP. Parity stays **100%** so one leaked Odd-only /
+  Even-only is still a chip. `countDelta +1` and dropping `basic` on 8–9 stay.
 - **Easy overlay is unchanged** (75% / 65% / `countDelta −1`). It stays the quiet stretch
   relative to the new Normal.
 
@@ -801,7 +801,7 @@ shop slots are seeded-random within each rung.
 | 3 | Two lanes threatened at once | — (the cannon offer is always present; income should make a 2nd cannon affordable around here) | Lane choice; shop tradeoffs |
 | 4 | First **Weakness** robot | at least one `×N` | Multiples |
 | 5 | All **basic**, larger HP (~10–30) | at least one `−N` | Subtraction as a tool |
-| 6 | First **Bounce-back** robot (grill A), HP 44–54 | — | Trimming to exact |
+| 6 | First **Bounce-back** robot (grill A), HP 40–50 | — | Trimming to exact |
 | 7 | First **Odd-only** robot (HP 22–30); basics ~34–48 | at least one `×2` or `×5` (grill A) | Odd and even |
 | 8 | Procedural **3+3** (grill A), basics ~38–60, parity ~20–30 | — (grill A) | Combining; Even-only at T1 |
 | 9 | Procedural **4+4+3** (grill C), one full mix (grill A), basics ~46–70, parity ~22–32 | at least one `−N` (grill A) | Four lanes and an extra pack |
@@ -873,10 +873,10 @@ A run is Easy, Normal, or Hard. The player picks on **New Game**. Puzzles ignore
 |---|---|---|---|
 | Label + icon | *Easy*, 1 star | *Normal*, 2 stars | *Hard*, 3 stars |
 | Identity | Quiet stretch; a leak is a chip | Today's designed ladder | Loud stretch; every 8–9 robot has a trait |
-| Waves 1–7 | Same spawns; HP scaled down | `waves.json` as shipped | Same spawns; non-Boss HP scaled up |
+| Waves 1–7 | Same spawns; HP scaled down | `waves.json` as shipped | Same spawns and HP as Normal |
 | Waves 8–9 | One fewer robot per pack; HP scaled down | 3+3 and 4+4+3 as shipped | One more robot per pack; `basic` dropped; non-Boss HP scaled up |
 | Wave 10 Boss | 1000 HP, 2×2 | 1000 HP, 2×2 | 1000 HP, 2×2 |
-| Escort / parity | Scaled with Easy HP | As shipped (16–32 band) | Escort non-Boss scaled; parity as shipped |
+| Escort / parity | Scaled with Easy HP | As shipped (16–32 band) | As shipped |
 | Shop, income, starting kit | Unchanged | Unchanged | Unchanged |
 | Sensible player | Wins; leftover high (min ≥ 80) | Wins; leftover min ≥ 40 | Wins; always reaches wave 10 |
 | End-Turn-only | Still loses | Still loses | Still loses |
@@ -902,9 +902,9 @@ puzzle levels. No mid-run switch. No "start at wave N" (still §19).
 
 Draft Easy multipliers (tune in task 30, recorded reason required): non-Boss HP **75%** of
 Normal; Odd-only / Even-only **65%** (floor 8) so one leak stays a chip; procedural
-`countDelta` **−1**, `minCount` **2**. Hard (v0.9.4): non-Boss HP **120%**; parity **100%**
-so one leak stays a chip; `countDelta` **+1**, `maxCount` **5** and never above the remaining
-pool; drop `basic` from procedural pools only.
+`countDelta` **−1**, `minCount` **2**. Hard (v0.9.4): stretch non-Boss HP **120%**
+(`hpApplies: procedural`); parity **100%** so one leak stays a chip; `countDelta` **+1**,
+`maxCount` **5** and never above the remaining pool; drop `basic` from procedural pools only.
 
 ---
 
@@ -1260,8 +1260,9 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - Overlay, not three `waves.json` copies (grill A). Normal is identity: multipliers 100,
   countDelta 0, no pool drops — `rollWave` on Normal is byte-identical to today.
 - Easy scales **all** non-Boss HP, including waves 1–3 (they barely move). Hard (v0.9.4)
-  scales non-Boss HP to **120%** and still adds stretch pressure (`countDelta +1`, drop
-  `basic`). Parity stays 100%.
+  scales **procedural** non-Boss HP to **120%** and still adds stretch pressure
+  (`countDelta +1`, drop `basic`). Authored waves 1–7 / 10 stay at Normal HP. Parity
+  stays 100%.
 - Shop, economy, starting kit, Boss 1000 / 2×2 are mode-invariant (grill A).
 - Hints stay independent. Easy does not auto-enable them.
 - Hard's sensible player still always wins and always reaches wave 10 (grill A). Hard is more
@@ -1291,14 +1292,14 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 
 ### 18.5 Minor calls made while writing v0.9.4 (difficulty tweak)
 
-- Normal hardness is a `waves.json` HP tick on waves 4–9, not a Normal overlay mul — identity
-  stays (100 / countDelta 0 / no drops).
-- Hard's extra notch is non-Boss **120%**. Parity stays 100% so the 16–32 chip band still
-  holds after overlay. Waves 1–7 templates still match Normal.
+- Normal hardness is a `waves.json` HP tick on waves 7–9, not a Normal overlay mul — identity
+  stays (100 / countDelta 0 / no drops). Waves 4–6 stay put: raising them leaked seed 14
+  on the sensible player (wave 5 lost 59).
+- Hard's extra notch is stretch non-Boss **120%** via `hpApplies: procedural`. Parity stays
+  100% so the 16–32 chip band still holds. Waves 1–7 templates and HP still match Normal.
 - Easy percents and `countDelta` stay at the task-30 draft. Do not quiet Easy further unless
   a playtest asks.
-- Wave 10 escort and Boss HP stay as shipped on Normal; Hard's 120% applies to the
-  Bounce-back escort only.
+- Wave 10 escort and Boss HP stay as shipped on all modes that do not scale authored HP.
 
 ---
 

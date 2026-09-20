@@ -476,14 +476,9 @@ describe('cross-mode invariants (task 30)', () => {
         const easyHp = spawnedHp(seed, waveIndex, 'easy');
         const normalHp = spawnedHp(seed, waveIndex, 'normal');
         const hardHp = spawnedHp(seed, waveIndex, 'hard');
-        expect(hardHp.length, `seed ${seed} wave ${waveIndex + 1} Hard HP count`).toBe(
-          normalHp.length,
-        );
+        expect(hardHp, `seed ${seed} wave ${waveIndex + 1} Hard HP`).toEqual(normalHp);
         for (let i = 0; i < easyHp.length; i++) {
           expect(easyHp[i]!, `seed ${seed} wave ${waveIndex + 1} Easy HP`).toBeLessThanOrEqual(
-            normalHp[i]!,
-          );
-          expect(hardHp[i]!, `seed ${seed} wave ${waveIndex + 1} Hard HP`).toBeGreaterThanOrEqual(
             normalHp[i]!,
           );
         }

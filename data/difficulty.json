@@ -12,7 +12,8 @@
       "countDelta": -1,
       "minCount": 2,
       "maxCount": 5,
-      "dropTemplates": []
+      "dropTemplates": [],
+      "hpApplies": "all"
     },
     "normal": {
       "label": "Normal",
@@ -25,7 +26,8 @@
       "countDelta": 0,
       "minCount": 1,
       "maxCount": 5,
-      "dropTemplates": []
+      "dropTemplates": [],
+      "hpApplies": "all"
     },
     "hard": {
       "label": "Hard",
@@ -38,7 +40,8 @@
       "countDelta": 1,
       "minCount": 1,
       "maxCount": 5,
-      "dropTemplates": ["basic"]
+      "dropTemplates": ["basic"],
+      "hpApplies": "procedural"
     }
   }
 }

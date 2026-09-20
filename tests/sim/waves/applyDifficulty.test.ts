@@ -38,6 +38,7 @@ describe('difficulty.json schema', () => {
     expect(data.difficulty.modes.hard.dropTemplates).toEqual(['basic']);
     expect(data.difficulty.modes.hard.hp.nonBoss.mul).toBe(120);
     expect(data.difficulty.modes.hard.hp.parity.mul).toBe(100);
+    expect(data.difficulty.modes.hard.hpApplies).toBe('procedural');
   });
 
   it('rejects a missing normal key', () => {
@@ -141,34 +142,33 @@ describe('applyDifficulty', () => {
     }
   });
 
-  it('Hard vs Normal, same seed: larger procedural count, no basic on 8–9, waves 1–7 templates match, Hard non-Boss HP ≥ Normal', () => {
+  it('Hard vs Normal, same seed: larger procedural count and HP, no basic on 8–9, waves 1–7 templates and HP match', () => {
     const hardCounts = overlayCounts('hard');
     const normalCounts = overlayCounts('normal');
     expect(hardCounts.some((count, i) => count > normalCounts[i]!)).toBe(true);
 
+    let sawHigherHp = false;
     for (const wave of data.waves.waves.filter((w) => 'procedural' in w)) {
-      const overlaid = applyDifficulty(wave, 'hard', data);
-      if ('procedural' in overlaid) {
-        for (const group of overlaid.procedural.groups) {
-          expect(group.pool).not.toContain('basic');
+      const hard = applyDifficulty(wave, 'hard', data);
+      const normal = applyDifficulty(wave, 'normal', data);
+      if ('procedural' in hard && 'procedural' in normal) {
+        for (let i = 0; i < hard.procedural.groups.length; i += 1) {
+          const hardGroup = hard.procedural.groups[i]!;
+          const normalGroup = normal.procedural.groups[i]!;
+          expect(hardGroup.pool).not.toContain('basic');
+          expect(hardGroup.hp[0]).toBeGreaterThanOrEqual(normalGroup.hp[0]);
+          expect(hardGroup.hp[1]).toBeGreaterThanOrEqual(normalGroup.hp[1]);
+          if (hardGroup.hp[1] > normalGroup.hp[1]) sawHigherHp = true;
         }
       }
     }
+    expect(sawHigherHp, 'Hard stretch HP should exceed Normal').toBe(true);
 
-    let sawHigherHp = false;
     for (let i = 0; i < 7; i += 1) {
       const h = applyDifficulty(data.waves.waves[i]!, 'hard', data);
       const n = applyDifficulty(data.waves.waves[i]!, 'normal', data);
-      if ('spawns' in h && 'spawns' in n) {
-        expect(h.spawns.map((s) => s.robot)).toEqual(n.spawns.map((s) => s.robot));
-        for (let j = 0; j < h.spawns.length; j += 1) {
-          expect(h.spawns[j]!.hp[0]).toBeGreaterThanOrEqual(n.spawns[j]!.hp[0]);
-          expect(h.spawns[j]!.hp[1]).toBeGreaterThanOrEqual(n.spawns[j]!.hp[1]);
-          if (h.spawns[j]!.hp[1] > n.spawns[j]!.hp[1]) sawHigherHp = true;
-        }
-      }
+      expect(h).toEqual(n);
     }
-    expect(sawHigherHp, 'Hard non-Boss HP should exceed Normal on waves 1–7').toBe(true);
   });
 
   it('is deterministic: same seed + difficulty → identical pendingSpawns', () => {
