@@ -12,6 +12,8 @@ import type { GameEvent } from '../../../sim/core/types';
 import type { GameData } from '../../../sim/data/schemas';
 import type { StoreApi } from 'zustand/vanilla';
 import type { AppStore } from '../../state/store';
+import { playCue, stopAllCues } from '../../state/audio';
+import { cueForEvent } from '../../state/cues';
 import { DEPTH, type BoardRenderer } from '../BoardRenderer';
 import { fillRect, inset } from '../drawBoardBackground';
 import {
@@ -77,6 +79,8 @@ export class SegmentPlayer {
   }
 
   play({ event, durationMs }: TimedBeat): void {
+    const cue = cueForEvent(event);
+    if (cue !== null) playCue(cue.name, cue.params);
     switch (event.type) {
       case 'LaneStarted':
         return this.laneStarted(event, durationMs);
@@ -125,6 +129,7 @@ export class SegmentPlayer {
    * events not yet played are committed too (skip / natural end); without it (the sequence was
    * abandoned because the store already moved on) nothing is reported to the store. */
   finish({ commit }: { commit: boolean }): void {
+    stopAllCues();
     for (const tween of this.tweens) tween.remove();
     this.tweens.length = 0;
     this.ballPop = null;

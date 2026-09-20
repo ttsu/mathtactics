@@ -159,9 +159,52 @@ export function fakeBossSettings() {
   return { scale: 1 };
 }
 
-/** The `presentation.json` `hints` block (task 24) for hand-built fake `GameData` fixtures. */
+/** Planning-hint numerals under tiles (task 24, GDD §5.7). Presentation only. */
 export function fakeHintsSettings() {
   return {
     color: '#2f3e57',
+  };
+}
+
+/** The `presentation.json` `audio` block (task 31) for hand-built fake `GameData` fixtures. */
+export function fakeAudioSettings() {
+  return {
+    maxVoices: 8,
+    impactDoubledGain: 1.3,
+    tilePop: {
+      depthRatio: 1.122462048309373,
+      add: { baseHz: 500, offsetSemitones: 2 },
+      sub: { baseHz: 400, offsetSemitones: -2 },
+      mul: { baseHz: 600, offsetSemitones: 4 },
+    },
+    foley: {
+      theme: 'mechanical' as const,
+      volume: 0.7,
+      space: 0.04,
+      cues: {
+        uiTap: { name: 'tap' as const },
+        preview: { name: 'on' as const },
+        pickupTile: { name: 'tap' as const },
+        pickupCannon: { name: 'tap' as const, pitch: -7 },
+        dropTile: { name: 'thock' as const },
+        dropCannon: { name: 'thock' as const, pitch: -5 },
+        snapBack: { name: 'denied' as const },
+        trayTick: { name: 'tick' as const, volume: 0.45 },
+        cannonThump: { name: 'press' as const, pitch: -10 },
+        tilePop: { name: 'success' as const, theme: 'glass' as const },
+        impact: { name: 'press' as const },
+        kill: { name: 'pop' as const, volume: 0.55 },
+        exactKill: { name: 'sparkle' as const },
+        bounceBack: { name: 'rise' as const },
+        clonk: { name: 'thock' as const, pitch: -8 },
+        detonate: { name: 'drop' as const, pitch: -12 },
+        spawn: { name: 'drop' as const },
+        buy: { name: 'success' as const },
+        nope: { name: 'error' as const },
+        waveCleared: { name: 'complete' as const, volume: 0.45 },
+        win: { name: 'chime' as const },
+        lose: { name: 'off' as const },
+      },
+    },
   };
 }

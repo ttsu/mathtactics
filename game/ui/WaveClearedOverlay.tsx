@@ -2,6 +2,7 @@
 // filled, the wallet with the wave-clear bonus popping in, and a big ▶ that opens the shop
 // (GDD §10.5). Reward tiles are gone — the shop is the only way tiles enter a run.
 import type { CSSProperties } from 'react';
+import { playUiTap } from '../state/audio';
 import { openShopScreen } from '../state/shopFlow';
 import { showWaveCleared, waveClearCoins, waveCount } from '../state/waveFlow';
 import { CoinStack } from './CoinStack';
@@ -55,7 +56,10 @@ export function WaveClearedOverlay() {
         className="big-button pop-in"
         data-testid="wave-next"
         aria-label="Next"
-        onClick={() => openShopScreen(store)}
+        onClick={() => {
+          playUiTap();
+          openShopScreen(store);
+        }}
       >
         <PlayIcon size={96} />
       </button>

@@ -102,7 +102,7 @@ test('Settings three-way persists across reload and does not retcon a saved Easy
   await page.getByTestId('menu-settings').click();
   await expect(page.getByTestId('settings')).toBeVisible();
   await expect(page.getByTestId('settings-difficulty-normal')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('[data-testid="settings"]')).not.toContainText(/sound/i);
+  await expect(page.getByTestId('settings-sound')).toBeVisible();
   await expectTouchTarget(page, 'settings-difficulty-easy');
   await expectTouchTarget(page, 'settings-difficulty-normal');
   await expectTouchTarget(page, 'settings-difficulty-hard');

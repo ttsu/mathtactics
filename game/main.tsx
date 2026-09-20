@@ -6,7 +6,7 @@ import { applyCommand } from '../sim/commands';
 import { cellToClient, createBoardGame, designToClient } from './board';
 import { safeStorage } from './safeStorage';
 import { gameData } from './state/gameData';
-import { getAudioContext, installAudioUnlock } from './state/audio';
+import { bindAudio, getAudioContext, installAudioUnlock } from './state/audio';
 import { FRAME_BACKDROP_COLOR, frameBackdropPlacement } from './state/frameBackdrop';
 import { DESIGN_HEIGHT, DESIGN_WIDTH, placementOverCanvas } from './state/designSpace';
 import { isIOS } from './state/platform';
@@ -71,6 +71,10 @@ const store = createAppStore({
   // boot into a blank screen (TR §13).
   storage: safeStorage(),
   basePath,
+});
+bindAudio({
+  soundEnabled: () => store.getState().settings.sound,
+  audio: () => store.getState().data.presentation.audio,
 });
 
 const board = createBoardGame({

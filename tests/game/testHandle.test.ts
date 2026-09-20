@@ -14,6 +14,7 @@ import {
   fakeTraitSettings,
   fakeBossSettings,
   fakeHintsSettings,
+  fakeAudioSettings,
 } from '../helpers/playbackSettings';
 
 function createMemoryStorage(): StorageLike {
@@ -55,6 +56,7 @@ function fakeGameData(): GameData {
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
+      audio: fakeAudioSettings(),
     },
   } as unknown as GameData;
 }
@@ -390,5 +392,12 @@ describe('createTestHandle', () => {
     store.setState({ lastTurn: { before: fakeRunState(), events: [] } });
     handle.loadState(fakeRunState());
     expect(store.getState().lastTurn).toBeNull();
+  });
+
+  it('exposes getLastCues / clearLastCues', () => {
+    const { handle } = buildHandle();
+    expect(handle.getLastCues()).toEqual([]);
+    handle.clearLastCues();
+    expect(handle.getLastCues()).toEqual([]);
   });
 });

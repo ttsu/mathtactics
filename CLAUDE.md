@@ -63,6 +63,7 @@ differ. Check Phaser 4 docs/types in `node_modules/phaser` before using an API f
 | @playwright/test | 1.63.0 |
 | zod | 4.6.5 |
 | zustand | 5.0.15 |
+| @foleyjs/core | 2.9.0 |
 
 Changing a pinned version requires updating this table and noting why in Completion Notes.
 

@@ -169,6 +169,29 @@ export function GearIcon({ size }: { size: number }) {
   );
 }
 
+/** A speaker with two sound waves — Settings Sound toggle (task 31, GDD §11.8). */
+export function SpeakerIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
+      <path d="M8 18 H18 L30 8 V40 L18 30 H8 Z" fill="currentColor" />
+      <path
+        d="M36 18 C40 21 40 27 36 30"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M40 12 C48 18 48 30 40 36"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 /** A tile with a running total under it — the Hints toggle (task 24, GDD §5.7). */
 export function HintsIcon({ size }: { size: number }) {
   return (

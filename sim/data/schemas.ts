@@ -138,6 +138,110 @@ const TransformStrengthSchema = z.object({
   shake: shakeIntensity(),
 });
 
+const TilePopKindSchema = z
+  .object({
+    baseHz: z.number().positive(),
+    offsetSemitones: z.number(),
+  })
+  .strict();
+
+/** Foley (`@foleyjs/core`) cue ids. Every locked game cue maps to one of these. */
+const FoleyCueIdSchema = z.enum([
+  'tick',
+  'hover',
+  'glide',
+  'pop',
+  'press',
+  'release',
+  'tap',
+  'thock',
+  'on',
+  'off',
+  'switch',
+  'latch',
+  'success',
+  'error',
+  'warning',
+  'denied',
+  'chime',
+  'ping',
+  'bell',
+  'bubble',
+  'swoosh',
+  'whoosh',
+  'drop',
+  'rise',
+  'loading',
+  'ready',
+  'complete',
+  'sparkle',
+]);
+
+const FoleyPlaySchema = z
+  .object({
+    name: FoleyCueIdSchema,
+    /** Extra transpose for this play only, in semitones. */
+    pitch: z.number().optional(),
+    /** Level multiplier for this play only, 0–1. */
+    volume: z.number().min(0).max(1).optional(),
+    /** Overrides the global Foley theme for this cue only (e.g. a glass-theme tile pop). */
+    theme: z.enum(['default', 'soft', 'mechanical', 'glass']).optional(),
+  })
+  .strict();
+
+const FoleySettingsSchema = z
+  .object({
+    theme: z.enum(['default', 'soft', 'mechanical', 'glass']),
+    volume: z.number().min(0).max(1),
+    /** Foley reverb send (0–1). Keep small — GDD §12.4 forbids long reverb. */
+    space: z.number().min(0).max(1),
+    cues: z
+      .object({
+        uiTap: FoleyPlaySchema,
+        preview: FoleyPlaySchema,
+        pickupTile: FoleyPlaySchema,
+        pickupCannon: FoleyPlaySchema,
+        dropTile: FoleyPlaySchema,
+        dropCannon: FoleyPlaySchema,
+        snapBack: FoleyPlaySchema,
+        trayTick: FoleyPlaySchema,
+        cannonThump: FoleyPlaySchema,
+        tilePop: FoleyPlaySchema,
+        impact: FoleyPlaySchema,
+        kill: FoleyPlaySchema,
+        exactKill: FoleyPlaySchema,
+        bounceBack: FoleyPlaySchema,
+        clonk: FoleyPlaySchema,
+        detonate: FoleyPlaySchema,
+        spawn: FoleyPlaySchema,
+        buy: FoleyPlaySchema,
+        nope: FoleyPlaySchema,
+        waveCleared: FoleyPlaySchema,
+        win: FoleyPlaySchema,
+        lose: FoleyPlaySchema,
+      })
+      .strict(),
+  })
+  .strict();
+
+const AudioSettingsSchema = z
+  .object({
+    maxVoices: z.number().int().positive(),
+    /** Multiplies `impact` Foley volume when `RobotDamaged.doubled`. */
+    impactDoubledGain: z.number().positive(),
+    tilePop: z
+      .object({
+        depthRatio: z.number().positive(),
+        add: TilePopKindSchema,
+        sub: TilePopKindSchema,
+        mul: TilePopKindSchema,
+      })
+      .strict(),
+    /** Every locked cue name plays through Foley `play()`. */
+    foley: FoleySettingsSchema,
+  })
+  .strict();
+
 const PresentationFileSchema = z.object({
   pacing: z.object({
     ballCellDurationMs: z.number().positive(),
@@ -358,6 +462,8 @@ const PresentationFileSchema = z.object({
   hints: z.object({
     color: z.string().min(1),
   }),
+  /** Generated Web Audio recipes (task 31, GDD §12.4). No Hz/gain/duration in code. */
+  audio: AudioSettingsSchema,
 });
 
 /** References an existing tile definition by id (e.g. `"add:5"`) — used by shop guarantees,

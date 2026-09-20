@@ -3,6 +3,7 @@
 // unaffordable tap shakes and flashes the price. NEW stickers come from `AppState.shopNew`.
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { ShopOffer, TileId } from '../../sim/core/types';
+import { playCue, playUiTap } from '../state/audio';
 import { MIN_TOUCH_TARGET } from '../state/designSpace';
 import { shopCardStatus } from '../state/shopCard';
 import { buyOffer, leaveShopToNextWave, shopOffers } from '../state/shopFlow';
@@ -86,6 +87,13 @@ function ShopOfferCard({
 
   const onTap = () => {
     if (inert) return;
+    if (status === 'unaffordable') {
+      playCue('nope');
+      const result = buyOffer(store, offer.slot);
+      if (!result.ok && result.error === 'insufficient_coins') setRefusing(true);
+      return;
+    }
+    playCue('buy');
     const result = buyOffer(store, offer.slot);
     if (!result.ok) {
       if (result.error === 'insufficient_coins') setRefusing(true);
@@ -249,7 +257,10 @@ export function ShopScreen() {
         className="big-button pop-in shop-next"
         data-testid="shop-next"
         aria-label="Next wave"
-        onClick={() => leaveShopToNextWave(store)}
+        onClick={() => {
+          playUiTap();
+          leaveShopToNextWave(store);
+        }}
       >
         <PlayIcon size={72} />
         <span className="button-label">Next wave</span>

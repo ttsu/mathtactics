@@ -15,6 +15,7 @@ import {
   fakePlaybackSettings,
   fakeTraitSettings,
   fakeBossSettings,
+  fakeAudioSettings,
 } from '../../helpers/playbackSettings';
 
 type TileDataDef = GameData['tiles'][number];
@@ -68,6 +69,7 @@ export function fakeGameData(overrides: Partial<GameData> = {}): GameData {
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
+      audio: fakeAudioSettings(),
     },
     ...overrides,
   };

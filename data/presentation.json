@@ -184,5 +184,44 @@
   },
   "hints": {
     "color": "#2f3e57"
+  },
+  "audio": {
+    "maxVoices": 12,
+    "impactDoubledGain": 1.35,
+    "tilePop": {
+      "depthRatio": 1.122462048309373,
+      "add": { "baseHz": 523.25, "offsetSemitones": 2 },
+      "sub": { "baseHz": 392, "offsetSemitones": -2 },
+      "mul": { "baseHz": 659.25, "offsetSemitones": 4 }
+    },
+    "foley": {
+      "theme": "mechanical",
+      "volume": 0.7,
+      "space": 0.04,
+      "cues": {
+        "uiTap": { "name": "tap" },
+        "preview": { "name": "on" },
+        "pickupTile": { "name": "tap" },
+        "pickupCannon": { "name": "tap", "pitch": -7 },
+        "dropTile": { "name": "thock" },
+        "dropCannon": { "name": "thock", "pitch": -5 },
+        "snapBack": { "name": "denied" },
+        "trayTick": { "name": "tick", "volume": 0.45 },
+        "cannonThump": { "name": "press", "pitch": -10 },
+        "tilePop": { "name": "success", "theme": "glass" },
+        "impact": { "name": "press" },
+        "kill": { "name": "pop", "volume": 0.55 },
+        "exactKill": { "name": "sparkle" },
+        "bounceBack": { "name": "rise" },
+        "clonk": { "name": "thock", "pitch": -8 },
+        "detonate": { "name": "drop", "pitch": -12 },
+        "spawn": { "name": "drop" },
+        "buy": { "name": "success" },
+        "nope": { "name": "error" },
+        "waveCleared": { "name": "complete", "volume": 0.45 },
+        "win": { "name": "chime" },
+        "lose": { "name": "off" }
+      }
+    }
   }
 }

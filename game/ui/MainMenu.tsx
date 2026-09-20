@@ -7,6 +7,7 @@
 // ambiguous — nothing said what ▶ versus 🤖 would do. The labels only repeat what the icon
 // means, so a pre-reader can still use the menu by icon and position alone.
 import type { CSSProperties } from 'react';
+import { playUiTap } from '../state/audio';
 import { playFromStart } from '../state/levelFlow';
 import { canContinue, continueRun } from '../state/runFlow';
 import { GearIcon, PlayIcon, RobotPlayIcon, TileChipIcon } from './icons';
@@ -47,7 +48,10 @@ export function MainMenu() {
             className="big-button pop-in"
             data-testid="menu-continue"
             aria-label="Keep Going"
-            onClick={() => continueRun(store)}
+            onClick={() => {
+              playUiTap();
+              continueRun(store);
+            }}
           >
             <PlayIcon size={96} />
             <span className="button-label">Keep Going</span>
@@ -58,7 +62,10 @@ export function MainMenu() {
             className="big-button pop-in"
             data-testid="menu-new-run"
             aria-label="New Game"
-            onClick={() => store.getState().setScreen('difficulty')}
+            onClick={() => {
+              playUiTap();
+              store.getState().setScreen('difficulty');
+            }}
           >
             <RobotPlayIcon size={96} />
             <span className="button-label">New Game</span>
@@ -71,7 +78,10 @@ export function MainMenu() {
               className="small-button pop-in"
               data-testid="menu-new-run"
               aria-label="New Game"
-              onClick={() => store.getState().setScreen('difficulty')}
+              onClick={() => {
+                playUiTap();
+                store.getState().setScreen('difficulty');
+              }}
             >
               <RobotPlayIcon size={56} />
               <span className="button-label button-label-small">New Game</span>
@@ -82,7 +92,10 @@ export function MainMenu() {
             className="small-button pop-in"
             data-testid="menu-puzzles"
             aria-label="Puzzles"
-            onClick={() => playFromStart(store)}
+            onClick={() => {
+              playUiTap();
+              playFromStart(store);
+            }}
           >
             <TileChipIcon size={56} />
             <span className="button-label button-label-small">Puzzles</span>
@@ -93,7 +106,10 @@ export function MainMenu() {
               className="small-button pop-in"
               data-testid="menu-settings"
               aria-label="Settings"
-              onClick={() => store.getState().setScreen('settings')}
+              onClick={() => {
+                playUiTap();
+                store.getState().setScreen('settings');
+              }}
             >
               <GearIcon size={56} />
               <span className="button-label button-label-small">Settings</span>

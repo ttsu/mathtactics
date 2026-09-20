@@ -14,6 +14,7 @@ import {
   fakePacingSettings,
   fakePlaybackSettings,
   fakeTraitSettings,
+  fakeAudioSettings,
 } from '../../helpers/playbackSettings';
 
 function validTile(overrides: Record<string, unknown> = {}) {
@@ -58,6 +59,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
+      audio: fakeAudioSettings(),
     },
     ...overrides,
   };
@@ -150,6 +152,52 @@ describe('parseGameData on the real /data directory', () => {
       maxCannons: 5,
       income: { kill: 1, exactKill: 2, waveCleared: 3 },
     });
+  });
+
+  it('has every locked audio cue name mapped through Foley', () => {
+    const data = parseGameData(loadRawGameData());
+    expect(Object.keys(data.presentation.audio.foley.cues).sort()).toEqual(
+      [
+        'bounceBack',
+        'buy',
+        'cannonThump',
+        'clonk',
+        'detonate',
+        'dropCannon',
+        'dropTile',
+        'exactKill',
+        'impact',
+        'kill',
+        'lose',
+        'nope',
+        'pickupCannon',
+        'pickupTile',
+        'preview',
+        'snapBack',
+        'spawn',
+        'tilePop',
+        'trayTick',
+        'uiTap',
+        'waveCleared',
+        'win',
+      ].sort(),
+    );
+  });
+
+  it('maps buttons to tap, tile pickup/drop to tap/thock, and a mechanical theme', () => {
+    const data = parseGameData(loadRawGameData());
+    const { foley } = data.presentation.audio;
+    expect(foley.theme).toBe('mechanical');
+    expect(foley.cues.uiTap.name).toBe('tap');
+    expect(foley.cues.preview.name).toBe('on');
+    expect(foley.cues.pickupTile.name).toBe('tap');
+    expect(foley.cues.dropTile.name).toBe('thock');
+    expect(foley.cues.snapBack.name).toBe('denied');
+    expect(foley.cues.trayTick.name).toBe('tick');
+    expect(foley.cues.pickupCannon).toEqual({ name: 'tap', pitch: -7 });
+    expect(foley.cues.dropCannon).toEqual({ name: 'thock', pitch: -5 });
+    expect(foley.cues.tilePop).toEqual({ name: 'success', theme: 'glass' });
+    expect(foley.cues.exactKill.name).toBe('sparkle');
   });
 
   // Type-level guard for the schema-inferred `id: TileId` narrowing (not just `string`) — this

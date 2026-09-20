@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { playUiTap } from '../state/audio';
 import {
   createUpdateChecker,
   shouldCheckForUpdates,
@@ -50,7 +51,10 @@ export function UpdateBanner() {
         type="button"
         className="update-banner-button"
         data-testid="update-reload"
-        onClick={() => location.reload()}
+        onClick={() => {
+          playUiTap();
+          location.reload();
+        }}
       >
         Reload
       </button>
@@ -59,7 +63,10 @@ export function UpdateBanner() {
         className="update-banner-dismiss"
         data-testid="update-dismiss"
         aria-label="Dismiss"
-        onClick={() => setShowBanner(false)}
+        onClick={() => {
+          playUiTap();
+          setShowBanner(false);
+        }}
       >
         ×
       </button>

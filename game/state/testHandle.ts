@@ -6,6 +6,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import type { Cell } from '../../sim/core/coords';
 import type { Command, CommandError, GameEvent, RunState, Trait } from '../../sim/core/types';
 import type { GameData } from '../../sim/data/schemas';
+import { clearLastCues, getLastCues, type LastCue } from './audio';
 import { buildScenarioState, effectiveData, parseScenario } from '../../sim/scenario';
 import type { AppStore, Display, Screen } from './store';
 import { displayFromRun, IDLE_PLAYBACK, isPlaybackActive, NO_SHOP_NEW } from './store';
@@ -37,6 +38,9 @@ export interface TestHandle {
   /** Planning-hint numerals currently drawn (task 24). Empty when hints are off. Describes
    * what the board is drawing now — never a re-derivation from `run`. */
   getHints(): DrawnHint[];
+  /** Cues that actually started voices (task 31). Mute does not append. */
+  getLastCues(): LastCue[];
+  clearLastCues(): void;
 }
 
 export interface RenderedBoard {
@@ -143,6 +147,8 @@ export function createTestHandle(store: StoreApi<AppStore>, board?: TestHandleBo
       if (!board) throw new Error('getHints: no board mounted');
       return board.getHints();
     },
+    getLastCues,
+    clearLastCues,
   };
 }
 
