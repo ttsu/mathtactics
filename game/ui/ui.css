@@ -334,6 +334,14 @@
   gap: 8px;
 }
 
+.menu-title-math {
+  margin-right: -22px;
+}
+
+.menu-title-robots {
+  margin-left: -22px;
+}
+
 .menu-title-vs-slot {
   position: relative;
   z-index: 0;

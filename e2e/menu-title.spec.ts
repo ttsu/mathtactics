@@ -56,5 +56,6 @@ test('main menu title is MATH VS ROBOTS with tiles, a slammed VS, and robots', a
   if (!vs) return;
   const gapMid = mathLast.x + mathLast.width + gap / 2;
   const vsMid = vs.x + vs.width / 2;
-  expect(Math.abs(vsMid - gapMid)).toBeLessThan(40);
+  expect(mathLast.x + mathLast.width).toBeGreaterThan(vs.x);
+  expect(robotsFirst.x).toBeLessThan(vs.x + vs.width);
 });
