@@ -15,7 +15,7 @@ describe('titleEntrance', () => {
     expect(TITLE_MATH.join('')).toBe('MATH');
     expect(TITLE_ROBOTS.join('')).toBe('ROBOTS');
     expect(TITLE_VS).toBe('VS');
-    expect(TITLE_NAME).toBe('MATH VS ROBOTS');
+    expect(TITLE_NAME).toBe('Math vs. Robots');
     expect(TITLE_MATH.map((_, i) => titleTileFace(i))).toEqual([
       { letter: 'M', glyph: '+', colorKey: 'green' },
       { letter: 'A', glyph: '×', colorKey: 'orange' },

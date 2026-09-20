@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Idempotent dependency setup for the Math Tactics Cloud Agent environment.
+# Idempotent dependency setup for the Math vs. Robots Cloud Agent environment.
 # Runs after the repository is checked out. Must terminate and be safe to re-run.
 set -euo pipefail
 

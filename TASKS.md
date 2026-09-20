@@ -1,4 +1,4 @@
-# Math Tactics — Tasks
+# Math vs. Robots — Tasks
 
 Status values: `Not Started` · `In Progress` · `Partial` · `Complete` · `Blocked`.
 Each task has a spec in `tasks/`. Start with `/start <NN>`; close with `/finish-task`.

@@ -1,4 +1,4 @@
-# Math Tactics — Technical Reference
+# Math vs. Robots — Technical Reference
 
 Architecture source of truth. Design rules live in `GDD.md`; agent conventions in `CLAUDE.md`.
 Where this document and the GDD disagree on *game rules*, the GDD wins — raise the conflict.

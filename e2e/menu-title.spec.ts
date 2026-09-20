@@ -6,7 +6,18 @@ test('main menu title is MATH VS ROBOTS with tiles, a slammed VS, and robots', a
   await expect(page.getByTestId('main-menu')).toBeVisible();
 
   const title = page.getByTestId('menu-title');
-  await expect(title).toHaveAccessibleName('MATH VS ROBOTS');
+  await expect(page).toHaveTitle('Math vs. Robots');
+  await expect(title).toHaveAccessibleName('Math vs. Robots');
+  const appleTitle = await page.locator('meta[name="apple-mobile-web-app-title"]').getAttribute('content');
+  expect(appleTitle).toBe('Math vs. Robots');
+  const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
+  expect(manifestHref).toBeTruthy();
+  const manifest = (await (await page.request.get(new URL(manifestHref!, page.url()).href)).json()) as {
+    name: string;
+    short_name: string;
+  };
+  expect(manifest.name).toBe('Math vs. Robots');
+  expect(manifest.short_name).toBe('Math vs. Robots');
   await expect(page.getByTestId('menu-title-tile')).toHaveCount(4);
   await expect(page.getByTestId('menu-title-robot')).toHaveCount(6);
   await expect(page.getByTestId('menu-title-vs')).toHaveText('VS');

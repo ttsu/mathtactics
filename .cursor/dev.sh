@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Long-running Vite dev server for the Math Tactics game.
+# Long-running Vite dev server for the Math vs. Robots game.
 # Served at http://localhost:5173 with the test handle enabled.
 set -euo pipefail
 

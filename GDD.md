@@ -1,17 +1,25 @@
-# Math Tactics — Game Design Document
+# Math vs. Robots — Game Design Document
 
-**Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.9.2
+**Title:** Math vs. Robots
+**Version:** 0.9.3
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
 **Status:** M4 and M4.5 built. Playtests 4–5 pending. v0.9 records M5 sound (rest of M5 unspecced).
 v0.9.1 is a launch-screen label/glyph pass after a human review of the home page.
 v0.9.2 drops the formula-strip banner once MATH VS ROBOTS is the launch decoration.
+v0.9.3 renames the game to Math vs. Robots; the hosting URL stays `mathtactics.timtsu.com`.
 This document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.9.3
+
+Human request: the game is *Math vs. Robots*. Hosting, repo, and package names stay `mathtactics`.
+
+- **Title is Math vs. Robots.** Replaces the v1 working title Math Tactics on the document,
+  Home Screen, and docs. The decorative launch letters stay MATH VS ROBOTS.
 
 ## 0. Changes in v0.9.2
 

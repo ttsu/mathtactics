@@ -7,7 +7,7 @@ import type { TileColorKey } from '../state/tileFace';
 export const TITLE_MATH = ['M', 'A', 'T', 'H'] as const;
 export const TITLE_ROBOTS = ['R', 'O', 'B', 'O', 'T', 'S'] as const;
 export const TITLE_VS = 'VS';
-export const TITLE_NAME = 'MATH VS ROBOTS';
+export const TITLE_NAME = 'Math vs. Robots';
 
 const TITLE_TILE_GLYPHS = ['+', '×', '−', '+'] as const;
 const TITLE_TILE_COLORS: readonly TileColorKey[] = ['green', 'orange', 'blue', 'green'];

@@ -1,4 +1,4 @@
-# Math Tactics
+# Math vs. Robots
 
 A turn-based math lane-defense game for young kids (about 2nd grade), built for iPad.
 Cannons fire balls, `+` `−` `×` tiles change their value on the way, and robots fall when the

@@ -1,6 +1,6 @@
 ---
 name: finish-task
-description: Run at the end of a Math Tactics agent session to write Completion Notes into the active task file and update TASKS.md status. Reviews the branch diff, checks acceptance criteria, identifies deviations from spec, and writes notes for the next agent.
+description: Run at the end of a Math vs. Robots agent session to write Completion Notes into the active task file and update TASKS.md status. Reviews the branch diff, checks acceptance criteria, identifies deviations from spec, and writes notes for the next agent.
 ---
 
 # Finish Task
