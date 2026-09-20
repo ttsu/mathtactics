@@ -25,11 +25,11 @@ describe('titleEntrance', () => {
   });
 
   it('plops letters only after VS has started slamming', () => {
-    const plopDelayMs = 400;
+    const plopDelayMs = 560;
     const letterStaggerMs = 50;
     expect(titleLetterPlopDelayMs(0, plopDelayMs, letterStaggerMs)).toBe(plopDelayMs);
-    expect(titleLetterPlopDelayMs(1, plopDelayMs, letterStaggerMs)).toBe(450);
-    expect(titleLetterPlopDelayMs(5, plopDelayMs, letterStaggerMs)).toBe(650);
+    expect(titleLetterPlopDelayMs(1, plopDelayMs, letterStaggerMs)).toBe(610);
+    expect(titleLetterPlopDelayMs(5, plopDelayMs, letterStaggerMs)).toBe(810);
     expect(titleLetterPlopDelayMs(0, plopDelayMs, letterStaggerMs)).toBeGreaterThan(0);
   });
 });

@@ -26,9 +26,9 @@ export function fakeScreenSettings() {
     iconStaggerMs: 90,
     danceMs: 900,
     danceStaggerMs: 150,
-    titleVsSlamMs: 480,
-    titlePlopMs: 520,
-    titlePlopDelayMs: 400,
+    titleVsSlamMs: 640,
+    titlePlopMs: 560,
+    titlePlopDelayMs: 560,
     titleLetterStaggerMs: 50,
     titleReplayMs: 60000,
   };

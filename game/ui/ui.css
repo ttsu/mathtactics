@@ -302,8 +302,9 @@
   position: relative;
   margin: 0;
   width: 100%;
-  height: 268px;
+  height: 300px;
   flex-shrink: 0;
+  overflow: visible;
 }
 
 .menu-title-art {
@@ -311,22 +312,23 @@
   inset: 0;
   display: grid;
   place-items: center;
+  overflow: visible;
 }
 
 .menu-title-vs {
   grid-area: 1 / 1;
   z-index: 0;
   font-family: 'Permanent Marker', cursive;
-  font-size: 268px;
+  font-size: 320px;
   font-weight: 400;
-  line-height: 0.72;
-  letter-spacing: -8px;
+  line-height: 0.7;
+  letter-spacing: 40px;
   color: #f4efe3;
-  text-shadow:
-    0 8px 0 #1a1a1a,
-    0 16px 0 rgba(0, 0, 0, 0.28);
-  transform-origin: 50% 40%;
-  animation: title-slam var(--title-vs-slam-ms, 480ms) cubic-bezier(0.15, 0.8, 0.25, 1) both;
+  -webkit-text-stroke: 10px #1a1a1a;
+  paint-order: stroke fill;
+  text-shadow: 0 14px 0 rgba(0, 0, 0, 0.35);
+  transform-origin: 50% 45%;
+  animation: title-slam var(--title-vs-slam-ms, 640ms) cubic-bezier(0.15, 0.8, 0.25, 1) both;
 }
 
 .menu-title-math,
@@ -341,12 +343,12 @@
 
 .menu-title-math {
   align-self: start;
-  margin-top: 18px;
+  margin-top: 22px;
 }
 
 .menu-title-robots {
   align-self: end;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   gap: 10px;
 }
 
@@ -364,7 +366,7 @@
   line-height: 1;
   box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
   transform-origin: 50% 100%;
-  animation: title-plop var(--title-plop-ms, 520ms) cubic-bezier(0.2, 1.5, 0.4, 1) both;
+  animation: title-plop var(--title-plop-ms, 560ms) cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
 
 .menu-title-tile-glyph {
@@ -382,7 +384,7 @@
   align-items: center;
   width: 84px;
   transform-origin: 50% 100%;
-  animation: title-plop var(--title-plop-ms, 520ms) cubic-bezier(0.2, 1.5, 0.4, 1) both;
+  animation: title-plop var(--title-plop-ms, 560ms) cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
 
 .menu-title-robot-antenna {
@@ -441,18 +443,18 @@
 
 @keyframes title-slam {
   0% {
-    transform: translateY(-420px) scale(1.25, 1.45);
+    transform: translateY(-560px) scale(1.08, 1.22) rotate(-8deg);
     opacity: 0;
   }
   58% {
-    transform: translateY(22px) scale(1.18, 0.78);
+    transform: translateY(26px) scale(1.14, 0.74) rotate(-8deg);
     opacity: 1;
   }
-  76% {
-    transform: translateY(-12px) scale(0.94, 1.1);
+  78% {
+    transform: translateY(-10px) scale(0.96, 1.08) rotate(-8deg);
   }
   100% {
-    transform: translateY(0) scale(1, 1);
+    transform: translateY(0) scale(1, 1) rotate(-8deg);
   }
 }
 
