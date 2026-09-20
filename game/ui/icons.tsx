@@ -56,30 +56,31 @@ export function PlayAgainIcon({ size }: { size: number }) {
 }
 
 /** A counterclockwise circular arrow — New Game: start over from the beginning. Distinct from
- * Continue's ▶ and from Replay/Play-again (circular arrow around a play triangle). */
+ * Continue's ▶ and from Replay/Play-again (circular arrow around a play triangle). Mirrored from
+ * `PlayAgainIcon`'s clockwise arc so the head points left (↺), not like a power-button stem. */
 export function RestartIcon({ size }: { size: number }) {
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
       <path
-        d="M15 12 A15 15 0 1 0 33 12"
+        d="M8 24 A16 16 0 1 0 17 9.6"
         fill="none"
         stroke="currentColor"
         strokeWidth="6"
         strokeLinecap="round"
       />
-      <path d="M22 3 L35 12 L20 20 Z" fill="currentColor" />
+      <path d="M21 2 L8 9 L20 17 Z" fill="currentColor" />
     </svg>
   );
 }
 
-/** A jigsaw piece — Puzzles. Knob on top and right, sockets on bottom and left, so the silhouette
- * still reads as a puzzle when the word is covered (GDD §11.1). */
+/** A jigsaw piece — Puzzles. Square body, knob on top and right, sockets on bottom and left, so
+ * the silhouette still reads as a puzzle when the word is covered (GDD §11.1). */
 export function PuzzlePieceIcon({ size }: { size: number }) {
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
       <path
         fill="currentColor"
-        d="M9 15 H18 A7 7 0 0 1 30 15 H39 V24 A7 7 0 0 1 39 36 V41 H30 A7 7 0 0 0 18 41 H9 V36 A7 7 0 0 0 9 24 Z"
+        d="M8 12 H18 A6 6 0 0 1 30 12 H40 V22 A6 6 0 0 1 40 34 V44 H30 A6 6 0 0 0 18 44 H8 V34 A6 6 0 0 0 8 22 Z"
       />
     </svg>
   );
