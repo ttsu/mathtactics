@@ -55,9 +55,10 @@ export function PlayAgainIcon({ size }: { size: number }) {
   );
 }
 
-/** A counterclockwise circular arrow — New Game: start over from the beginning. Distinct from
- * Continue's ▶ and from Replay/Play-again (circular arrow around a play triangle). Mirrored from
- * `PlayAgainIcon`'s clockwise arc so the head points left (↺), not like a power-button stem. */
+/** A counterclockwise circular arrow — the smaller New Game beside Continue: start over from
+ * the beginning. Distinct from Continue's ▶ (and from the big orange New Game, which is also ▶
+ * when there is nothing to resume). Mirrored from `PlayAgainIcon`'s clockwise arc so the head
+ * points left (↺), not like a power-button stem. */
 export function RestartIcon({ size }: { size: number }) {
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">

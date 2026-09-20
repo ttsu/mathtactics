@@ -1,5 +1,5 @@
 // Main menu (task 11 req. 2, task 14 req. 3, task 24): ▶ Continue (big, only when a run is
-// resumable), New Game (big when there is nothing to continue, smaller otherwise), Puzzles
+// resumable), New Game (big ▶ when there is nothing to continue; smaller ↺ otherwise), Puzzles
 // (always smaller), and Settings (always smaller). The title and the formula strip are
 // decoration only — the strip is a connected preview, not a row of tappable tiles.
 //
@@ -70,7 +70,7 @@ export function MainMenu() {
               store.getState().setScreen('difficulty');
             }}
           >
-            <RestartIcon size={96} />
+            <PlayIcon size={96} />
             <span className="button-label">New Game</span>
           </button>
         )}

@@ -19,8 +19,9 @@ and Puzzles glyphs did not say what they did, and the decorative tiles looked ta
 
 - **Resume label is *Continue*.** One word, fits the button. Replaces *Keep Going*, which
   overflowed as "Keep Go". Still a spoken word, still repeats the ▶ icon.
-- **New Game glyph is a counterclockwise circular arrow** (start over from the beginning), not
-  a robot-and-play composite. Continue stays the plain ▶.
+- **New Game is ▶ when it is the orange button** (nothing to resume — it is just play). The
+  counterclockwise circular arrow is only the smaller New Game beside Continue, where it means
+  start over. Not a robot-and-play composite. Continue stays the plain ▶.
 - **Puzzles glyph is a jigsaw piece**, matching the 🧩 already named in §10.4. The ×-chip looked
   like a tile, not a mode.
 - **Launch decoration is a formula strip, not a row of 3D chips.** Ball → +N → ×N → −N inside
@@ -800,12 +801,12 @@ whose trait is invisible reads as a bug, not a puzzle.
 - The run **autosaves after every command** (placement, move, End Turn, purchase).
 - On End Turn, the resolved result is saved **immediately**, before playback finishes.
   Reopening mid-playback lands in the next planning phase: no lost progress, no reload exploit.
-- Launch screen: big **▶ *Continue*** if a run exists; smaller **↺ *New Game***; smaller
-  **🧩 *Puzzles*** (the M1 hand-authored levels). Each is an icon with its label beneath
-  (§11.1). No confirmation dialogs. New Game opens the difficulty picker (§10.7), then
-  replaces any saved run. Continue resumes the saved run's difficulty as-is.
-  The chips under the title are a non-interactive formula strip (ball → operators), not
-  buttons.
+- Launch screen: big **▶ *Continue*** if a run exists, with smaller **↺ *New Game***; if no
+  run, big **▶ *New Game***. Smaller **🧩 *Puzzles*** (the M1 hand-authored levels). Each is
+  an icon with its label beneath (§11.1). No confirmation dialogs. New Game opens the
+  difficulty picker (§10.7), then replaces any saved run. Continue resumes the saved run's
+  difficulty as-is. The chips under the title are a non-interactive formula strip (ball →
+  operators), not buttons.
 - A small **Home** button in the HUD (hidden during playback) returns to the launch screen with
   no confirmation. A run is already saved; a puzzle session is simply dropped.
 - **Puzzles are never saved** and never overwrite the saved run.

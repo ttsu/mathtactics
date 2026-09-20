@@ -4,8 +4,8 @@
 finale, and does he want to go again?
 
 **Setup:** iPad in landscape, the PR preview (or production) already on the Home Screen, sound
-on. Open the app → big orange ↺ **New Game** (fresh run). If ▶ **Continue** is showing from an
-earlier session, do **not** tap it — tap the smaller **New Game** instead. If a difficulty
+on. Open the app → big orange ▶ **New Game** (fresh run). If ▶ **Continue** is showing from an
+earlier session, do **not** tap it — tap the smaller ↺ **New Game** instead. If a difficulty
 picker has shipped (M4.5), tap **Normal** (2 stars) — Playtest 4 measures the designed ladder.
 
 Why a fresh New Game: a run saved by the M3 build resumes into this 10-wave ladder through
