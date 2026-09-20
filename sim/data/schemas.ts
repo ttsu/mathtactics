@@ -184,7 +184,7 @@ const FoleyPlaySchema = z
     pitch: z.number().optional(),
     /** Level multiplier for this play only, 0–1. */
     volume: z.number().min(0).max(1).optional(),
-    /** Overrides the global Foley theme for this cue only (e.g. a melodic tile pop). */
+    /** Overrides the global Foley theme for this cue only (e.g. a glass-theme tile pop). */
     theme: z.enum(['default', 'soft', 'mechanical', 'glass']).optional(),
   })
   .strict();

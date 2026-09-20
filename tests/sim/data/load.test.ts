@@ -196,7 +196,7 @@ describe('parseGameData on the real /data directory', () => {
     expect(foley.cues.trayTick.name).toBe('tick');
     expect(foley.cues.pickupCannon).toEqual({ name: 'tap', pitch: -7 });
     expect(foley.cues.dropCannon).toEqual({ name: 'thock', pitch: -5 });
-    expect(foley.cues.tilePop).toEqual({ name: 'chime', theme: 'default' });
+    expect(foley.cues.tilePop).toEqual({ name: 'success', theme: 'glass' });
     expect(foley.cues.exactKill.name).toBe('sparkle');
   });
 

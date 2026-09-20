@@ -834,8 +834,8 @@ real run; jumping to a puzzle does not touch the save.
   Phaser's sound manager is unused. Every locked cue name plays through Foley
   (`@foleyjs/core` `play()`, not `bind()` — Phaser drags have no DOM attributes, and mute /
   last-cues stay on `playCue`). Theme is `mechanical` (clicky buttons). Tile pickup is Foley
-  `tap`, drop is `thock`. `tilePop` is Foley `chime` with per-cue theme `default` so operator
-  pops stay melodic. `getAudioContext()` reuses Foley's context (via
+  `tap`, drop is `thock`. `tilePop` is Foley `success` with per-cue theme `glass` so operator
+  pops stay bright and melodic. `getAudioContext()` reuses Foley's context (via
   `getAnalyser().context`). Mappings live in `presentation.json` `audio.foley`. Settings has
   a Sound row (`settings-sound`, default on); mute no-ops `playCue` and Foley
   `set({ muted })`. Turning sound on plays `preview`.
