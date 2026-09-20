@@ -294,23 +294,26 @@ Sample files. Debug sounds. Changing leftover HP. Difficulty overlay behaviour.
 **Deviations from spec:**
 - **Branch name** is `cursor/31-web-audio-and-sound-cfef` (cloud-agent prefix), not `task/31-web-audio-and-sound`.
 - **Pending overflowing-tray tap-up is silent.** Pickup only plays when the gesture becomes `piece`; a pending release calls `release()` with no drop/snap cue (spec: pending → scroll has no pickup and no snap; a tap that never leaves pending is the same family).
+- **Foley for tactile cues** (human override of GDD §12.4 sine/triangle/noise-only recipes). Still generated Web Audio, no sample files. Foley `soft` may use waveforms/room internally; `audio.foley.space` is 0.06 to keep reverb short. Teaching playback (tilePop, impact, exactKill, …) stays on homemade recipes.
 
 **Architectural decisions made:**
 - **`bindAudio({ soundEnabled, audio })`** from `game/main.tsx` instead of importing the store into `audio.ts` (avoids a cycle; tests inject mute + recipes).
 - **`playUiTap()`** is the UI helper (req. 5). Shop cards call `playCue('buy'|'nope')` directly.
 - **Injected `AudioTestSink`** for player unit tests; production uses the shared `AudioContext`. `playCue` still calls `resume()` without awaiting, then starts nodes in the same turn.
 - **Phaser-free drag seam** in `game/state/cues.ts`: `cueForPickup` / `cueForDrop` / `traySlotChanged`.
-- **Extra data keys** (beyond locked cue names), all in `presentation.json` `audio`: `masterGain`, `maxVoices`, `impactDoubledGain`, `tilePop.{depthRatio,add,sub,mul}` with optional `harmonicGain` / `harmonicRatio`, and per-voice `type`/`hz`/`offsetMs`/`attackMs`/`decayMs`/`peakGain`/`filter`.
+- **Extra data keys** (beyond locked cue names), all in `presentation.json` `audio`: `masterGain`, `maxVoices`, `impactDoubledGain`, `tilePop.{depthRatio,add,sub,mul}` with optional `harmonicGain` / `harmonicRatio`, per-voice `type`/`hz`/`offsetMs`/`attackMs`/`decayMs`/`peakGain`/`filter`, and `foley.{theme,volume,space,cues}` mapping tactile names onto Foley `play()`.
+- **Foley for tactile only** (human follow-up): `uiTap`, `preview`, `pickupTile`/`pickupCannon`, `dropTile`/`dropCannon`, `snapBack`, `trayTick` go through `@foleyjs/core` `play()`. Teaching cues stay homemade. Foley `bind()` is unused (Phaser drags have no DOM attributes; mute and last-cues stay on `playCue`). `getAudioContext()` reuses Foley's context via `getAnalyser().context`. Tests inject `setFoleyEngine`; the homemade sink path still covers tactile recipes when a sink is set.
 
 **Design questions raised:**
 - None.
 
 **Known issues / follow-up:**
-- First-gesture / exact-kill / clonk / bounce-back / shop-nope still need an iPad listen on the preview.
+- First-gesture / exact-kill / clonk / bounce-back / shop-nope / Foley tactile feel still need an iPad listen on the preview.
 - Gains are a starting tactile-ASMR set; later juice tasks may retune numbers but must not rename cues.
+- Foley `soft` theme plus `space: 0.06` is a small room send (GDD forbids long reverb). Retune `audio.foley` in data if the iPad listen is too wet or too clicky.
 
 **Files created:** `game/state/cues.ts`, `tests/game/cues.test.ts`
-**Files modified:** `data/presentation.json`, `sim/data/schemas.ts`, `game/state/audio.ts`, `game/state/index.ts`, `game/state/testHandle.ts`, `game/main.tsx`, `game/board/playback/SegmentPlayer.ts`, `game/board/DragController.ts`, `game/ui/{SettingsScreen,MainMenu,DifficultyScreen,Hud,ShopScreen,WaveClearedOverlay,LevelClearedOverlay,WinScreen,LoseScreen,AllDoneScreen,UpdateBanner,icons}.tsx`, `game/ui/ui.css`, `TECHNICAL_REFERENCE.md`, `TASKS.md`, `e2e/{settings,difficulty}.spec.ts`, `tests/helpers/playbackSettings.ts`, fake `GameData` fixtures, `tests/game/{audio,testHandle,store}.test.ts`, `tests/sim/data/load.test.ts`
+**Files modified:** `data/presentation.json`, `sim/data/schemas.ts`, `game/state/audio.ts`, `game/state/index.ts`, `game/state/testHandle.ts`, `game/main.tsx`, `game/board/playback/SegmentPlayer.ts`, `game/board/DragController.ts`, `game/ui/{SettingsScreen,MainMenu,DifficultyScreen,Hud,ShopScreen,WaveClearedOverlay,LevelClearedOverlay,WinScreen,LoseScreen,AllDoneScreen,UpdateBanner,icons}.tsx`, `game/ui/ui.css`, `TECHNICAL_REFERENCE.md`, `TASKS.md`, `CLAUDE.md`, `e2e/{settings,difficulty}.spec.ts`, `tests/helpers/playbackSettings.ts`, fake `GameData` fixtures, `tests/game/{audio,testHandle,store}.test.ts`, `tests/sim/data/load.test.ts`, `package.json`
 
 **Notes for next agent:**
-- Retune sound in `data/presentation.json` `audio` only. Cue names are locked. `playCue` is a no-op until `bindAudio` has run (`game/main.tsx`). Last-cue ring is 32 (`LAST_CUE_RING` in `audio.ts`); mute does not append. Shop purchase sound is UI-fired, not `cueForEvent(OfferBought)`.
+- Retune sound in `data/presentation.json` `audio` only. Cue names are locked. Tactile mapping is `audio.foley.cues`; theme/volume/space are there too. `playCue` is a no-op until `bindAudio` has run (`game/main.tsx`). Last-cue ring is 32 (`LAST_CUE_RING` in `audio.ts`); mute does not append. Shop purchase sound is UI-fired, not `cueForEvent(OfferBought)`. Do not call Foley `bind()` for board drags.

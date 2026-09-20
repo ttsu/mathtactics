@@ -184,6 +184,21 @@ export function fakeAudioSettings() {
       sub: { baseHz: 400, offsetSemitones: -2 },
       mul: { baseHz: 600, offsetSemitones: 4, harmonicGain: 0.04, harmonicRatio: 2 },
     },
+    foley: {
+      theme: 'soft' as const,
+      volume: 0.7,
+      space: 0.06,
+      cues: {
+        uiTap: { name: 'tap' as const },
+        preview: { name: 'on' as const },
+        pickupTile: { name: 'press' as const },
+        pickupCannon: { name: 'press' as const, pitch: -7 },
+        dropTile: { name: 'release' as const },
+        dropCannon: { name: 'drop' as const, pitch: -5 },
+        snapBack: { name: 'denied' as const },
+        trayTick: { name: 'tick' as const, volume: 0.45 },
+      },
+    },
     cues: {
       uiTap: fakeCue(880),
       preview: fakeCue(660),

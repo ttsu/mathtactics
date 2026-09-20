@@ -178,6 +178,69 @@ const TilePopKindSchema = z
   })
   .strict();
 
+/** Foley (`@foleyjs/core`) cue ids — tactile buttons / tile drag only. */
+const FoleyCueIdSchema = z.enum([
+  'tick',
+  'hover',
+  'glide',
+  'pop',
+  'press',
+  'release',
+  'tap',
+  'thock',
+  'on',
+  'off',
+  'switch',
+  'latch',
+  'success',
+  'error',
+  'warning',
+  'denied',
+  'chime',
+  'ping',
+  'bell',
+  'bubble',
+  'swoosh',
+  'whoosh',
+  'drop',
+  'rise',
+  'loading',
+  'ready',
+  'complete',
+  'sparkle',
+]);
+
+const FoleyPlaySchema = z
+  .object({
+    name: FoleyCueIdSchema,
+    /** Extra transpose for this play only, in semitones. */
+    pitch: z.number().optional(),
+    /** Level multiplier for this play only, 0–1. */
+    volume: z.number().min(0).max(1).optional(),
+  })
+  .strict();
+
+const FoleySettingsSchema = z
+  .object({
+    theme: z.enum(['default', 'soft', 'mechanical', 'glass']),
+    volume: z.number().min(0).max(1),
+    /** Foley reverb send (0–1). Keep small — GDD §12.4 forbids long reverb. */
+    space: z.number().min(0).max(1),
+    cues: z
+      .object({
+        uiTap: FoleyPlaySchema,
+        preview: FoleyPlaySchema,
+        pickupTile: FoleyPlaySchema,
+        pickupCannon: FoleyPlaySchema,
+        dropTile: FoleyPlaySchema,
+        dropCannon: FoleyPlaySchema,
+        snapBack: FoleyPlaySchema,
+        trayTick: FoleyPlaySchema,
+      })
+      .strict(),
+  })
+  .strict();
+
 const AudioSettingsSchema = z
   .object({
     masterGain: z.number().positive(),
@@ -192,6 +255,8 @@ const AudioSettingsSchema = z
         mul: TilePopKindSchema,
       })
       .strict(),
+    /** Tactile UI + tile/cannon drag: Foley `play()`, not homemade oscillators. */
+    foley: FoleySettingsSchema,
     cues: z
       .object({
         uiTap: CueRecipeSchema,

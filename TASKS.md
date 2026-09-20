@@ -131,7 +131,8 @@ quieter than win (S4 B); lose distinct but not sad (S5 B). No music. Mute is on/
 
 Task 31 owns `presentation.json` `audio`, `game/state/audio.ts`, `SettingsScreen.tsx`,
 `e2e/settings.spec.ts`, and the playback/drag call sites. Later juice tasks may retune gains;
-they must not replace the player or the cue-name set without a GDD change.
+they must not replace the player or the cue-name set without a GDD change. Tactile buttons and
+tile/cannon drag use Foley (`@foleyjs/core`); teaching playback stays homemade.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|

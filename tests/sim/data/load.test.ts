@@ -184,6 +184,20 @@ describe('parseGameData on the real /data directory', () => {
     );
   });
 
+  it('maps tactile buttons and tile drag through Foley', () => {
+    const data = parseGameData(loadRawGameData());
+    const { foley } = data.presentation.audio;
+    expect(foley.theme).toBe('soft');
+    expect(foley.cues.uiTap.name).toBe('tap');
+    expect(foley.cues.preview.name).toBe('on');
+    expect(foley.cues.pickupTile.name).toBe('press');
+    expect(foley.cues.dropTile.name).toBe('release');
+    expect(foley.cues.snapBack.name).toBe('denied');
+    expect(foley.cues.trayTick.name).toBe('tick');
+    expect(foley.cues.pickupCannon.pitch).toBeLessThan(0);
+    expect(foley.cues.dropCannon.name).toBe('drop');
+  });
+
   // Type-level guard for the schema-inferred `id: TileId` narrowing (not just `string`) — this
   // assignment and `applyTile` call must *typecheck* (TS2345 if the narrowing regresses), not
   // just run. See sim/data/schemas.ts's TileDefSchema `.transform`.

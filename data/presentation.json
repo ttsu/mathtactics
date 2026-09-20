@@ -195,6 +195,21 @@
       "sub": { "baseHz": 392, "offsetSemitones": -2 },
       "mul": { "baseHz": 659.25, "offsetSemitones": 4, "harmonicGain": 0.045, "harmonicRatio": 2 }
     },
+    "foley": {
+      "theme": "soft",
+      "volume": 0.7,
+      "space": 0.06,
+      "cues": {
+        "uiTap": { "name": "tap" },
+        "preview": { "name": "on" },
+        "pickupTile": { "name": "press" },
+        "pickupCannon": { "name": "press", "pitch": -7 },
+        "dropTile": { "name": "release" },
+        "dropCannon": { "name": "drop", "pitch": -5 },
+        "snapBack": { "name": "denied" },
+        "trayTick": { "name": "tick", "volume": 0.45 }
+      }
+    },
     "cues": {
       "uiTap": {
         "voices": [

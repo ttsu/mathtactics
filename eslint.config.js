@@ -9,7 +9,7 @@ import globals from 'globals';
  * Layer boundaries (TECHNICAL_REFERENCE.md §2):
  *
  *   /sim          -> /sim, zod, yaml (scenario parser only)
- *   /game/state   -> /sim, zustand/vanilla
+ *   /game/state   -> /sim, zustand/vanilla, @foleyjs/core (play() only)
  *   /game/board   -> /sim, /game/state, phaser
  *   /game/ui      -> /sim, /game/state, react*
  *
@@ -158,9 +158,9 @@ export default tseslint.config(
     },
   },
   {
-    // /game/state: framework-free store; no Phaser, no React, and it may only reach into /sim
-    // and `zustand/vanilla` — never the React `zustand` entry, and never /game/board or
-    // /game/ui (TR §2).
+    // /game/state: framework-free store; no Phaser, no React, and it may only reach into /sim,
+    // `zustand/vanilla`, and `@foleyjs/core` (programmatic `play()` only) — never the React
+    // `zustand` entry, and never /game/board or /game/ui (TR §2).
     files: ['game/state/**/*.ts'],
     rules: {
       'no-restricted-imports': [

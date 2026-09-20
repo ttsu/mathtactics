@@ -2,8 +2,18 @@
 //
 // Lives in /game/state (framework-free) because both /game/board and /game/ui play sounds
 // and neither may import the other (TR §2). Phaser's sound manager stays unused; one
-// AudioContext is created here and handed to Phaser so the app never holds two.
+// AudioContext is created here (Foley's, reused) and handed to Phaser so the app never holds two.
+// Tactile cues (buttons, tile/cannon drag) play through @foleyjs/core `play()`. Teaching
+// playback cues stay on the homemade oscillator recipes in presentation.json.
 
+import {
+  getAnalyser,
+  play as foleyPlay,
+  set as foleySet,
+  unlock as foleyUnlock,
+  type CueName as FoleyCueName,
+  type ThemeName as FoleyThemeName,
+} from '@foleyjs/core';
 import type { GameData } from '../../sim/data/schemas';
 import type { TileKind } from '../../sim/core/types';
 
@@ -33,6 +43,33 @@ export const CUE_NAMES = [
 ] as const;
 
 export type CueName = (typeof CUE_NAMES)[number];
+
+/** Cue names Foley performs. Teaching playback stays on homemade recipes. */
+export const FOLEY_CUE_NAMES = [
+  'uiTap',
+  'preview',
+  'pickupTile',
+  'pickupCannon',
+  'dropTile',
+  'dropCannon',
+  'snapBack',
+  'trayTick',
+] as const satisfies readonly CueName[];
+
+type FoleyMappedCue = (typeof FOLEY_CUE_NAMES)[number];
+
+export interface FoleyPlayOptions {
+  pitch?: number;
+  volume?: number;
+}
+
+/** Test double / live Foley. `play` names are Foley cue ids (`tap`, `press`, …). */
+export interface FoleyEngine {
+  play(name: string, opts?: FoleyPlayOptions): { stop(): void } | undefined;
+  set(opts: { muted?: boolean; volume?: number; theme?: string; space?: number }): void;
+  unlock(): void;
+  audioContext(): AudioContext | null;
+}
 
 export interface CueParams {
   chainDepth?: number;
@@ -70,11 +107,41 @@ let bindings: AudioBindings | null = null;
 let testSink: AudioTestSink | null | undefined;
 let lastCues: LastCue[] = [];
 let activeVoices: ActiveVoice[] = [];
+let foleyEngine: FoleyEngine = liveFoleyEngine();
+
+function liveFoleyEngine(): FoleyEngine {
+  return {
+    play(name, opts) {
+      return foleyPlay(name as FoleyCueName, opts);
+    },
+    set(opts) {
+      foleySet({
+        muted: opts.muted,
+        volume: opts.volume,
+        space: opts.space,
+        theme: opts.theme as FoleyThemeName | undefined,
+      });
+    },
+    unlock: foleyUnlock,
+    audioContext() {
+      const analyser = getAnalyser();
+      return analyser !== null ? (analyser.context as AudioContext) : null;
+    },
+  };
+}
 
 /**
  * The app's single AudioContext, created lazily. Returns null where Web Audio is unavailable.
+ * Prefers Foley's context so tactile cues, teaching cues, and Phaser share one graph.
  */
 export function getAudioContext(): AudioContext | null {
+  if (shared) return shared;
+  try {
+    foleyEngine.unlock();
+    shared = foleyEngine.audioContext();
+  } catch {
+    shared = null;
+  }
   if (!shared && typeof AudioContext !== 'undefined') {
     shared = new AudioContext();
   }
@@ -104,11 +171,20 @@ export function installAudioUnlock(
 /** Wire the player to the live store (sound flag + recipes). Call once from `game/main.tsx`. */
 export function bindAudio(next: AudioBindings | null): void {
   bindings = next;
+  const audio = next?.audio();
+  if (audio !== undefined) {
+    configureFoley(audio, next !== null && !next.soundEnabled());
+  }
 }
 
 /** Inject a sink for unit tests (`null` = no context). `undefined` restores Web Audio. */
 export function setAudioTestSink(sink: AudioTestSink | null | undefined): void {
   testSink = sink;
+}
+
+/** Inject Foley for unit tests. `undefined` restores `@foleyjs/core`. */
+export function setFoleyEngine(engine: FoleyEngine | undefined): void {
+  foleyEngine = engine ?? liveFoleyEngine();
 }
 
 export function getLastCues(): LastCue[] {
@@ -142,18 +218,28 @@ export function stopAllCues(): void {
   }
 }
 
-/** Test-only: stop voices, clear the ring, unbind store and sink. */
+/** Test-only: stop voices, clear the ring, unbind store, sink, and Foley. */
 export function resetAudioForTests(): void {
   stopAllCues();
   clearLastCues();
   bindings = null;
   testSink = undefined;
+  foleyEngine = liveFoleyEngine();
+  try {
+    foleyEngine.set({ muted: false });
+  } catch {
+    // Foley settings are JS state; ignore if set throws
+  }
 }
 
 function playCueInner(name: CueName, params?: CueParams): void {
-  if (bindings !== null && !bindings.soundEnabled()) return;
   const audio = bindings?.audio();
   if (audio === undefined) return;
+  const muted = bindings !== null && !bindings.soundEnabled();
+  configureFoley(audio, muted);
+  if (muted) return;
+
+  if (testSink === undefined && playFoleyCue(name, audio, params)) return;
 
   const recipe = audio.cues[name];
   const compiled = compileVoices(name, recipe.voices, audio, params);
@@ -390,6 +476,43 @@ function recordCue(name: CueName, params?: CueParams): void {
   if (lastCues.length > LAST_CUE_RING) {
     lastCues.splice(0, lastCues.length - LAST_CUE_RING);
   }
+}
+
+function isFoleyMappedCue(name: CueName): name is FoleyMappedCue {
+  return (FOLEY_CUE_NAMES as readonly CueName[]).includes(name);
+}
+
+function configureFoley(audio: AudioSettings, muted: boolean): void {
+  foleyEngine.set({
+    muted,
+    volume: audio.foley.volume,
+    theme: audio.foley.theme,
+    space: audio.foley.space,
+  });
+}
+
+/**
+ * Production tactile path. Returns true when this cue is a Foley mapping (even if Foley
+ * swallowed the play — cooldown — so we do not also fire the homemade recipe).
+ */
+function playFoleyCue(name: CueName, audio: AudioSettings, params?: CueParams): boolean {
+  if (!isFoleyMappedCue(name)) return false;
+  const mapping = audio.foley.cues[name];
+  const opts: FoleyPlayOptions = {};
+  if (mapping.pitch !== undefined) opts.pitch = mapping.pitch;
+  if (mapping.volume !== undefined) opts.volume = mapping.volume;
+  const playOpts = mapping.pitch === undefined && mapping.volume === undefined ? undefined : opts;
+  let handle: { stop(): void } | undefined;
+  try {
+    handle = foleyEngine.play(mapping.name, playOpts);
+  } catch {
+    return false;
+  }
+  if (handle === undefined) return true;
+  reserveVoiceSlot(audio.maxVoices);
+  trackVoice({ stop: handle.stop });
+  recordCue(name, params);
+  return true;
 }
 
 function recordedParams(params?: CueParams): Record<string, unknown> | undefined {
