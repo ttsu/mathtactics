@@ -334,12 +334,14 @@
   gap: 8px;
 }
 
+/* Inward overlap has to be a transform. Negative margins just grow the flex:1
+   VS-slot under the words and leave MATH / ROBOTS where they were. */
 .menu-title-math {
-  margin-right: -128px;
+  transform: translateX(96px);
 }
 
 .menu-title-robots {
-  margin-left: -128px;
+  transform: translateX(-96px);
 }
 
 .menu-title-vs-slot {

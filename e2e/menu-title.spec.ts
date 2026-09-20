@@ -49,10 +49,12 @@ test('main menu title is MATH VS ROBOTS with tiles, a slammed VS, and robots', a
   const mathFirst = await page.getByTestId('menu-title-tile').first().boundingBox();
   expect(mathFirst, 'M tile').not.toBeNull();
   if (!mathFirst) return;
-  expect(mathFirst.x).toBeLessThan(80);
+  expect(mathFirst.x).toBeLessThan(160);
 
   const vs = await page.getByTestId('menu-title-vs').boundingBox();
   expect(vs, 'VS').not.toBeNull();
   if (!vs) return;
+  expect(mathLast.x + mathLast.width).toBeGreaterThan(vs.x);
+  expect(robotsFirst.x).toBeLessThan(vs.x + vs.width);
   expect(Math.abs(vs.x + vs.width / 2 - (mathLast.x + mathLast.width + gap / 2))).toBeLessThan(40);
 });
