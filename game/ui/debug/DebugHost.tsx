@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { isDebugHotkey, queryWantsDebug, shakeStep, type ShakeState } from '../../state/debug';
 import { DebugUiProvider, useDebugUi } from './DebugContext';
 import { DebugMenu } from './DebugMenu';
 
 function DebugListeners() {
   const { open, setOpen, toggle, shakeEnabled } = useDebugUi();
+  const toggleRef = useRef(toggle);
+  toggleRef.current = toggle;
 
   useEffect(() => {
     if (queryWantsDebug(window.location.search, window.location.hash)) {
@@ -13,15 +14,17 @@ function DebugListeners() {
     }
   }, [setOpen]);
 
-  useEffect(() => {
+  // Layout (not passive): attach before paint so a keydown the moment the menu is
+  // visible is not lost — Playwright's next command can run before useEffect flushes.
+  useLayoutEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (!isDebugHotkey(event)) return;
       event.preventDefault();
-      toggle();
+      toggleRef.current();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [toggle]);
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
 
   useEffect(() => {
     if (!shakeEnabled) return;

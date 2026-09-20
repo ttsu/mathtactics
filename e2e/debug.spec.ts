@@ -27,16 +27,20 @@ async function burstTitle(page: Page, times: number) {
  * Dispatch the same `keydown` DebugHost already listens for on `window`. */
 async function pressDebugHotkey(page: Page) {
   await page.evaluate(() => {
-    window.dispatchEvent(
-      new KeyboardEvent('keydown', {
-        key: 'd',
-        code: 'KeyD',
-        ctrlKey: true,
-        shiftKey: true,
-        bubbles: true,
-        cancelable: true,
-      }),
-    );
+    const event = new KeyboardEvent('keydown', {
+      key: 'd',
+      code: 'KeyD',
+      ctrlKey: true,
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    // Some WebKits ignore constructor modifier flags; pin them on the instance.
+    Object.defineProperties(event, {
+      ctrlKey: { value: true },
+      shiftKey: { value: true },
+    });
+    window.dispatchEvent(event);
   });
 }
 
