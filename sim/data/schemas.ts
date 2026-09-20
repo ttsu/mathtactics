@@ -433,6 +433,16 @@ const PresentationFileSchema = z.object({
     danceMs: ms(),
     /** Delay between each dancing robot's animation start, so they wiggle out of sync. */
     danceStaggerMs: ms(),
+    /** Main-menu title: how long VS takes to slam down. */
+    titleVsSlamMs: ms(),
+    /** Main-menu title: how long each MATH / ROBOTS letter takes to plop in. */
+    titlePlopMs: ms(),
+    /** Delay before MATH / ROBOTS start plopping, so VS slams first. */
+    titlePlopDelayMs: ms(),
+    /** Extra delay per letter so the plops ripple across each row. */
+    titleLetterStaggerMs: ms(),
+    /** How often the title entrance replays while the menu is showing. */
+    titleReplayMs: ms(),
   }),
   /** Planning-phase danger glow (task 15, GDD §12.2 "Planning-phase cues"): a lane whose robot
    * sits on column 1 pulses red at the base strip and that robot wobbles. Derived from `run`

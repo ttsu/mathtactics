@@ -166,7 +166,12 @@
     "shopNewPopMs": 180,
     "iconStaggerMs": 90,
     "danceMs": 900,
-    "danceStaggerMs": 150
+    "danceStaggerMs": 150,
+    "titleVsSlamMs": 480,
+    "titlePlopMs": 520,
+    "titlePlopDelayMs": 400,
+    "titleLetterStaggerMs": 50,
+    "titleReplayMs": 60000
   },
   "danger": {
     "pulseMs": 700,
