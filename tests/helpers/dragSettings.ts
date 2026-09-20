@@ -12,7 +12,8 @@ export function fakeDragSettings() {
 }
 
 /** The `presentation.json` `screens` block (task 11; task 16 adds the wallet/icon staggers and
- * the lose screen's dance timing) for hand-built fake `GameData` fixtures. */
+ * the lose screen's dance timing; the main-menu title entrance adds slam/plop/replay) for
+ * hand-built fake `GameData` fixtures. */
 export function fakeScreenSettings() {
   return {
     popInMs: 450,
@@ -25,5 +26,10 @@ export function fakeScreenSettings() {
     iconStaggerMs: 90,
     danceMs: 900,
     danceStaggerMs: 150,
+    titleVsSlamMs: 640,
+    titlePlopMs: 560,
+    titlePlopDelayMs: 560,
+    titleLetterStaggerMs: 140,
+    titleReplayMs: 60000,
   };
 }

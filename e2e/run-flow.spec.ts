@@ -28,7 +28,7 @@ test('New Run autosaves; reload resumes in planning with no lost progress', asyn
   await expect(page.getByTestId('menu-continue')).toHaveCount(0);
   await expect(page.getByTestId('menu-new-run')).toHaveAttribute('aria-label', 'New Game');
   await expect(page.getByTestId('menu-puzzles')).toHaveAttribute('aria-label', 'Puzzles');
-  await expect(page.getByTestId('menu-hero')).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.getByTestId('menu-hero')).toHaveCount(0);
   await expectTouchTarget(page, 'menu-new-run');
   await expectTouchTarget(page, 'menu-puzzles');
 

@@ -1,7 +1,6 @@
 // Main menu (task 11 req. 2, task 14 req. 3, task 24): ▶ Continue (big, only when a run is
 // resumable), New Game (big ▶ when there is nothing to continue; smaller ↺ otherwise), Puzzles
-// (always smaller), and Settings (always smaller). The title and the formula strip are
-// decoration only — the strip is a connected preview, not a row of tappable tiles.
+// (always smaller), and Settings (always smaller). The MATH VS ROBOTS title is decoration only.
 //
 // Each button carries a short label under its icon (GDD §11.1, v0.5). The icons alone were
 // ambiguous — nothing said what ▶ versus ↺ would do. The labels only repeat what the icon
@@ -10,40 +9,35 @@ import type { CSSProperties } from 'react';
 import { playUiTap } from '../state/audio';
 import { playFromStart } from '../state/levelFlow';
 import { canContinue, continueRun } from '../state/runFlow';
-import { FormulaArrowIcon, GearIcon, PlayIcon, PuzzlePieceIcon, RestartIcon } from './icons';
+import { GearIcon, PlayIcon, PuzzlePieceIcon, RestartIcon } from './icons';
+import { MenuTitle } from './MenuTitle';
 import { SecretLongPress, SecretTap } from './debug';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
 export function MainMenu() {
   const store = useAppStoreApi();
   const tileColors = useAppStore((state) => state.data.presentation.tileColors);
-  const popInMs = useAppStore((state) => state.data.presentation.screens.popInMs);
+  const screens = useAppStore((state) => state.data.presentation.screens);
   const resumable = useAppStore(canContinue);
 
   return (
     <div
-      className="screen"
+      className="screen menu-screen"
       data-testid="main-menu"
-      style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
+      style={{ '--pop-in-ms': `${screens.popInMs}ms` } as CSSProperties}
     >
       <SecretTap testId="menu-title">
-        <h1 className="screen-title">Math Tactics</h1>
+        <MenuTitle
+          tileColors={tileColors}
+          timings={{
+            titleVsSlamMs: screens.titleVsSlamMs,
+            titlePlopMs: screens.titlePlopMs,
+            titlePlopDelayMs: screens.titlePlopDelayMs,
+            titleLetterStaggerMs: screens.titleLetterStaggerMs,
+            titleReplayMs: screens.titleReplayMs,
+          }}
+        />
       </SecretTap>
-      <div className="menu-hero" data-testid="menu-hero" aria-hidden="true">
-        <span className="menu-chip menu-chip-ball">1</span>
-        <FormulaArrowIcon size={28} />
-        <span className="menu-chip" style={{ background: tileColors.green }}>
-          +4
-        </span>
-        <FormulaArrowIcon size={28} />
-        <span className="menu-chip" style={{ background: tileColors.orange }}>
-          ×3
-        </span>
-        <FormulaArrowIcon size={28} />
-        <span className="menu-chip" style={{ background: tileColors.blue }}>
-          −2
-        </span>
-      </div>
       <div className="menu-buttons">
         {resumable ? (
           <button

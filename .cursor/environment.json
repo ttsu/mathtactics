@@ -1,11 +1,11 @@
 {
-  "name": "Math Tactics",
+  "name": "Math vs. Robots",
   "install": "bash .cursor/install.sh",
   "terminals": [
     {
       "name": "dev",
       "command": "bash .cursor/dev.sh",
-      "description": "Vite dev server for the Math Tactics game (http://localhost:5173, test handle enabled). Restart it here to pick up config changes."
+      "description": "Vite dev server for the Math vs. Robots game (http://localhost:5173, test handle enabled). Restart it here to pick up config changes."
     }
   ],
   "ports": [

@@ -274,37 +274,219 @@
   letter-spacing: 2px;
 }
 
-/* Launch-screen formula strip: one muted capsule, flat chips, arrows between them. No 3D
- * button shadow — those made the decoration look like tappable tray tiles. */
-.menu-hero {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 22px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.45);
-  pointer-events: none;
+@font-face {
+  font-family: 'Permanent Marker';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/permanent-marker.woff2') format('woff2');
 }
 
-.menu-chip {
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.menu-screen {
+  gap: 32px;
+}
+
+.menu-title {
+  position: relative;
+  margin: 0;
+  width: 100%;
+  height: 220px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.menu-title-art {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.menu-title-words {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.menu-title-math,
+.menu-title-robots {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+/* Inward overlap has to be a transform. Negative margins just grow the flex:1
+   VS-slot under the words and leave MATH / ROBOTS where they were. */
+.menu-title-math {
+  transform: translateX(96px);
+}
+
+.menu-title-robots {
+  transform: translateX(-96px);
+}
+
+.menu-title-vs-slot {
+  position: relative;
+  z-index: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  min-width: 0;
+}
+
+.menu-title-vs {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 220px;
+  font-weight: 400;
+  line-height: 0.7;
+  letter-spacing: 12px;
+  color: #f4efe3;
+  -webkit-text-stroke: 10px #1a1a1a;
+  paint-order: stroke fill;
+  text-shadow: 0 14px 0 rgba(0, 0, 0, 0.35);
+  transform-origin: 50% 45%;
+  animation: title-slam var(--title-vs-slam-ms, 640ms) cubic-bezier(0.15, 0.8, 0.25, 1) both;
+}
+
+.menu-title-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  color: #1a1a1a;
+  font-size: 46px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+  transform-origin: 50% 100%;
+  animation: title-plop var(--title-plop-ms, 560ms) cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.menu-title-tile-glyph {
+  position: absolute;
+  top: 5px;
+  left: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.menu-title-robot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 72px;
+  transform-origin: 50% 100%;
+  animation: title-plop var(--title-plop-ms, 560ms) cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.menu-title-robot-antenna {
+  width: 6px;
+  height: 12px;
+  background: #1f2229;
+  border-radius: 3px;
+  position: relative;
+}
+
+.menu-title-robot-antenna::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1f2229;
+  transform: translateX(-50%);
+}
+
+.menu-title-robot-body {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 72px;
   height: 72px;
-  border-radius: 16px;
-  font-size: 32px;
-  color: #1a1a1a;
+  border: 3px solid #1f2229;
+  border-radius: 12px;
+  background: #4a4f5c;
+  color: #ffffff;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  -webkit-text-stroke: 3px #000000;
+  paint-order: stroke fill;
 }
 
-.menu-chip-ball {
+.menu-title-robot-bar {
   width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #e63946;
-  color: #ffffff;
-  font-size: 32px;
+  height: 8px;
+  margin-top: 3px;
+  overflow: hidden;
+  background: #1f2229;
+}
+
+.menu-title-robot-bar::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #9be15d;
+}
+
+@keyframes title-slam {
+  0% {
+    transform: translateY(-560px) scale(1.08, 1.22) rotate(-8deg);
+    opacity: 0;
+  }
+  58% {
+    transform: translateY(26px) scale(1.14, 0.74) rotate(-8deg);
+    opacity: 1;
+  }
+  78% {
+    transform: translateY(-10px) scale(0.96, 1.08) rotate(-8deg);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1) rotate(-8deg);
+  }
+}
+
+@keyframes title-plop {
+  0% {
+    transform: translateY(-56px) scale(0.35);
+    opacity: 0;
+  }
+  68% {
+    transform: translateY(10px) scale(1.14, 0.88);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 
 .big-button {

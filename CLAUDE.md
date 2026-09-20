@@ -1,4 +1,4 @@
-# Math Tactics — Agent Guide
+# Math vs. Robots — Agent Guide
 
 A turn-based math lane-defense game for a 7-year-old, played on an iPad. Cannons fire balls;
 `+N` / `−N` / `×N` tiles transform them; damage = ball value on impact; exact kills are the

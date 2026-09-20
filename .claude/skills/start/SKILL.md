@@ -1,6 +1,6 @@
 ---
 name: start
-description: Start a Math Tactics task by number. Usage: /start <number> (e.g. /start 1, /start 07). Reads CLAUDE.md, TECHNICAL_REFERENCE.md, the relevant GDD sections, and the task file, checks dependencies, creates the task branch, then begins implementation.
+description: Start a Math vs. Robots task by number. Usage: /start <number> (e.g. /start 1, /start 07). Reads CLAUDE.md, TECHNICAL_REFERENCE.md, the relevant GDD sections, and the task file, checks dependencies, creates the task branch, then begins implementation.
 ---
 
 The user has invoked `/start` with a task identifier. Follow these steps exactly.
