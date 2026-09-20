@@ -277,7 +277,7 @@ Sample files. Debug sounds. Changing leftover HP. Difficulty overlay behaviour.
 
 **Acceptance criteria:**
 - [x] Generated Web Audio only; no binary sound assets; Phaser Sound unused — Met (`game/state/audio.ts`; Phaser still only receives the shared `audio.context`)
-- [x] All locked cue names exist in data; `tilePop` uses operator + `chainDepth`, never ball value — Met (`presentation.json` `audio.foley.cues` + `audio.tilePop`; Foley `pop` pitch from the GDD Hz curve converted to semitones)
+- [x] All locked cue names exist in data; `tilePop` uses operator + `chainDepth`, never ball value — Met (`presentation.json` `audio.foley.cues` + `audio.tilePop`; Foley `chime` + per-cue theme `default`; pitch from the GDD Hz curve converted to semitones)
 - [x] Exact-kill sting is a fixed figure; bounce-back and clonk are distinct families — Met (Foley `sparkle` / `rise` / `thock` at −8 st — nearest built-ins, retune on iPad)
 - [x] Every enabled kid-facing button in req. 5 sounds; debug does not — Met (`playUiTap()` on those `onClick`s; debug / title secret-tap / Go nudge untouched)
 - [x] Pickup / drop / snap-back / tray tick / cannon thump / spawn play — Met (`DragController` + `cueForEvent` / `SegmentPlayer.play`)
@@ -294,21 +294,21 @@ Sample files. Debug sounds. Changing leftover HP. Difficulty overlay behaviour.
 **Deviations from spec:**
 - **Branch name** is `cursor/31-web-audio-and-sound-cfef` (cloud-agent prefix), not `task/31-web-audio-and-sound`.
 - **Pending overflowing-tray tap-up is silent.** Pickup only plays when the gesture becomes `piece`; a pending release calls `release()` with no drop/snap cue (spec: pending → scroll has no pickup and no snap; a tap that never leaves pending is the same family).
-- **All cues through Foley** (human follow-up). Still generated Web Audio, no sample files. Homemade oscillator recipes and `masterGain` are gone. Theme is `mechanical` (clicky buttons, not a tone). Tile pickup is Foley `tap`, drop is `thock`. Teaching names are nearest Foley built-ins (`pop` / `sparkle` / `rise` / `chime` / …) plus `pitch`/`volume` in data; × no longer mixes an extra homemade harmonic.
+- **All cues through Foley** (human follow-up). Still generated Web Audio, no sample files. Homemade oscillator recipes and `masterGain` are gone. Theme is `mechanical` (clicky buttons, not a tone). Tile pickup is Foley `tap`, drop is `thock`. `tilePop` is Foley `chime` with per-cue theme `default` so operator pops stay melodic under a mechanical global theme. Teaching names are nearest Foley built-ins plus `pitch`/`volume` in data.
 
 **Architectural decisions made:**
 - **`bindAudio({ soundEnabled, audio })`** from `game/main.tsx` instead of importing the store into `audio.ts` (avoids a cycle; tests inject mute + recipes).
 - **`playUiTap()`** is the UI helper (req. 5). Shop cards call `playCue('buy'|'nope')` directly.
 - **Injected `FoleyEngine`** for player unit tests; production uses `@foleyjs/core`.
 - **Phaser-free drag seam** in `game/state/cues.ts`: `cueForPickup` / `cueForDrop` / `traySlotChanged`.
-- **Extra data keys**, all in `presentation.json` `audio`: `maxVoices`, `impactDoubledGain`, `tilePop.{depthRatio,add,sub,mul}`, `foley.{theme,volume,space,cues}` with per-cue Foley `name` / `pitch` / `volume`.
+- **Extra data keys**, all in `presentation.json` `audio`: `maxVoices`, `impactDoubledGain`, `tilePop.{depthRatio,add,sub,mul}`, `foley.{theme,volume,space,cues}` with per-cue Foley `name` / `pitch` / `volume` / optional `theme`.
 - **Foley `play()` only** — not `bind()`. Phaser drags have no DOM attributes; mute and last-cues stay on `playCue`. `getAudioContext()` reuses Foley's context via `getAnalyser().context`. `tilePop` pitch is `12 * log2(hz / add.baseHz)` so operator colour and `chainDepth` still rise, never from ball value.
 
 **Design questions raised:**
 - Teaching Foley names (`exactKill` → `sparkle`, `bounceBack` → `rise`, `lose` → `off`, …) are starting nearest-cue picks. Retune `audio.foley.cues` after the iPad listen if a built-in is the wrong family.
 
 **Known issues / follow-up:**
-- First-gesture / exact-kill / clonk / bounce-back / shop-nope / mechanical tap-thock feel still need an iPad listen on the preview.
+- First-gesture / exact-kill / clonk / bounce-back / shop-nope / mechanical tap-thock / **melodic tilePop vs clicky buttons** still need an iPad listen on the preview. Chain of chiming pops may overlap (~0.7s Foley `chime` decay).
 - Later juice tasks may retune `audio.foley` but must not rename locked game cue names.
 
 **Files created:** `game/state/cues.ts`, `tests/game/cues.test.ts`

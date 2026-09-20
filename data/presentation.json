@@ -208,7 +208,7 @@
         "snapBack": { "name": "denied" },
         "trayTick": { "name": "tick", "volume": 0.45 },
         "cannonThump": { "name": "press", "pitch": -10 },
-        "tilePop": { "name": "pop" },
+        "tilePop": { "name": "chime", "theme": "default" },
         "impact": { "name": "press" },
         "kill": { "name": "pop", "volume": 0.55 },
         "exactKill": { "name": "sparkle" },

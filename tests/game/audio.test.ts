@@ -146,7 +146,7 @@ describe('playCue', () => {
         2 ** (tuning.offsetSemitones / 12);
       return 12 * Math.log2(hz / audio.tilePop.add.baseHz);
     };
-    expect(plays.map((play) => play.name)).toEqual(['pop', 'pop', 'pop', 'pop']);
+    expect(plays.map((play) => play.name)).toEqual(['chime', 'chime', 'chime', 'chime']);
     expect(plays[0]?.opts?.pitch).toBeCloseTo(semitones('add', 1));
     expect(plays[1]?.opts?.pitch).toBeCloseTo(semitones('add', 3));
     expect(plays[1]!.opts!.pitch!).toBeGreaterThan(plays[0]!.opts!.pitch!);
@@ -225,10 +225,16 @@ describe('Foley cues', () => {
     expect(plays.map((play) => play.name)).toEqual(['press', 'sparkle', 'success', 'error']);
   });
 
-  it('configures the mechanical theme', () => {
-    const { engine, sets } = recordingFoley();
+  it('plays tilePop as a default-theme chime, then restores mechanical', () => {
+    const { engine, plays, sets } = recordingFoley();
     setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => fakeAudioSettings() });
-    expect(sets.some((entry) => entry.theme === 'mechanical')).toBe(true);
+    const themesBefore = sets.filter((entry) => entry.theme !== undefined).length;
+    playCue('tilePop', { kind: 'add', chainDepth: 1 });
+    expect(plays.map((play) => play.name)).toEqual(['chime']);
+    const themes = sets.map((entry) => entry.theme).filter((theme) => theme !== undefined);
+    expect(themes[themes.length - 2]).toBe('default');
+    expect(themes[themes.length - 1]).toBe('mechanical');
+    expect(themes.length).toBeGreaterThan(themesBefore);
   });
 });

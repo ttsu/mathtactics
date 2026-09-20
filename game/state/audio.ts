@@ -231,12 +231,24 @@ function configureFoley(audio: AudioSettings, muted: boolean): void {
 
 function playFoleyCue(name: CueName, audio: AudioSettings, params?: CueParams): void {
   const mapping = audio.foley.cues[name];
-  const opts = playOptions(name, audio, mapping, params);
-  const handle = foleyEngine.play(mapping.name, opts);
-  if (handle === undefined) return;
-  reserveVoiceSlot(audio.maxVoices);
-  trackVoice({ stop: handle.stop });
-  recordCue(name, params);
+  const cueTheme = mapping.theme;
+  const restoreTheme =
+    cueTheme !== undefined && cueTheme !== audio.foley.theme ? audio.foley.theme : undefined;
+  if (restoreTheme !== undefined) {
+    foleyEngine.set({ theme: cueTheme });
+  }
+  try {
+    const opts = playOptions(name, audio, mapping, params);
+    const handle = foleyEngine.play(mapping.name, opts);
+    if (handle === undefined) return;
+    reserveVoiceSlot(audio.maxVoices);
+    trackVoice({ stop: handle.stop });
+    recordCue(name, params);
+  } finally {
+    if (restoreTheme !== undefined) {
+      foleyEngine.set({ theme: restoreTheme });
+    }
+  }
 }
 
 function playOptions(

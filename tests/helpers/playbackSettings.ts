@@ -191,7 +191,7 @@ export function fakeAudioSettings() {
         snapBack: { name: 'denied' as const },
         trayTick: { name: 'tick' as const, volume: 0.45 },
         cannonThump: { name: 'press' as const, pitch: -10 },
-        tilePop: { name: 'pop' as const },
+        tilePop: { name: 'chime' as const, theme: 'default' as const },
         impact: { name: 'press' as const },
         kill: { name: 'pop' as const, volume: 0.55 },
         exactKill: { name: 'sparkle' as const },
