@@ -135,4 +135,4 @@ they must not replace the player or the cue-name set without a GDD change.
 
 | # | Task | Layer | Depends on | Status |
 |---|---|---|---|---|
-| 31 | [Web Audio, cue table & Settings Sound row](tasks/31-web-audio-and-sound.md) | state / ui / board | — | In Progress |
+| 31 | [Web Audio, cue table & Settings Sound row](tasks/31-web-audio-and-sound.md) | state / ui / board | — | Complete (iPad check pending) |

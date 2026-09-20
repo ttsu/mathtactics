@@ -270,4 +270,47 @@ Sample files. Debug sounds. Changing leftover HP. Difficulty overlay behaviour.
 
 ## Completion Notes
 
-*(implementing agent fills this)*
+**Status:** Complete (iPad check pending)
+**Completed:** 2026-09-20
+**PR:** #57 · Preview: https://mathtactics.timtsu.com/pr/pr-57/
+**Branch:** `cursor/31-web-audio-and-sound-cfef` (not `task/31-web-audio-and-sound`)
+
+**Acceptance criteria:**
+- [x] Generated Web Audio only; no binary sound assets; Phaser Sound unused — Met (`game/state/audio.ts`; Phaser still only receives the shared `audio.context`)
+- [x] All locked cue names exist in data; `tilePop` uses operator + `chainDepth`, never ball value — Met (`presentation.json` `audio.cues` + `audio.tilePop`; `tests/sim/data/load.test.ts`, `tests/game/audio.test.ts`)
+- [x] Exact-kill sting is a fixed figure; bounce-back and clonk are distinct families — Met (fixed four-note sparkle vs remainder-pop + suck vs bandpassed noise)
+- [x] Every enabled kid-facing button in req. 5 sounds; debug does not — Met (`playUiTap()` on those `onClick`s; debug / title secret-tap / Go nudge untouched)
+- [x] Pickup / drop / snap-back / tray tick / cannon thump / spawn play — Met (`DragController` + `cueForEvent` / `SegmentPlayer.play`)
+- [x] Shop buy / nope do not double with `uiTap`; inert cards silent — Met (`ShopScreen` plays `buy`/`nope` only; disabled bought/unavailable cards never fire)
+- [x] Skip stops voices; Replay plays them; mute no-ops `playCue` — Met (`SegmentPlayer.finish` → `stopAllCues`; Replay still calls `play`; mute skips voices and last-cue append)
+- [x] Settings Sound row: `settings-sound`, default on, persists, preview on enable — Met (e2e `settings.spec.ts`)
+- [x] Existing Settings / difficulty testids unchanged — Met
+- [x] `getLastCues` / `clearLastCues` on the test handle; TR §9, §11.4, §14, §15 updated — Met (ring size **32**)
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass — Met
+- [ ] iPad preview check (first-gesture sound, mute, exact kill, clonk, bounce-back, shop nope) — awaiting human check on preview
+
+**Verification:** npm test ✔ (829) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (95, including Settings Sound row, preview cue, New Game `uiTap`, existing settings/difficulty/run specs)
+
+**Deviations from spec:**
+- **Branch name** is `cursor/31-web-audio-and-sound-cfef` (cloud-agent prefix), not `task/31-web-audio-and-sound`.
+- **Pending overflowing-tray tap-up is silent.** Pickup only plays when the gesture becomes `piece`; a pending release calls `release()` with no drop/snap cue (spec: pending → scroll has no pickup and no snap; a tap that never leaves pending is the same family).
+
+**Architectural decisions made:**
+- **`bindAudio({ soundEnabled, audio })`** from `game/main.tsx` instead of importing the store into `audio.ts` (avoids a cycle; tests inject mute + recipes).
+- **`playUiTap()`** is the UI helper (req. 5). Shop cards call `playCue('buy'|'nope')` directly.
+- **Injected `AudioTestSink`** for player unit tests; production uses the shared `AudioContext`. `playCue` still calls `resume()` without awaiting, then starts nodes in the same turn.
+- **Phaser-free drag seam** in `game/state/cues.ts`: `cueForPickup` / `cueForDrop` / `traySlotChanged`.
+- **Extra data keys** (beyond locked cue names), all in `presentation.json` `audio`: `masterGain`, `maxVoices`, `impactDoubledGain`, `tilePop.{depthRatio,add,sub,mul}` with optional `harmonicGain` / `harmonicRatio`, and per-voice `type`/`hz`/`offsetMs`/`attackMs`/`decayMs`/`peakGain`/`filter`.
+
+**Design questions raised:**
+- None.
+
+**Known issues / follow-up:**
+- First-gesture / exact-kill / clonk / bounce-back / shop-nope still need an iPad listen on the preview.
+- Gains are a starting tactile-ASMR set; later juice tasks may retune numbers but must not rename cues.
+
+**Files created:** `game/state/cues.ts`, `tests/game/cues.test.ts`
+**Files modified:** `data/presentation.json`, `sim/data/schemas.ts`, `game/state/audio.ts`, `game/state/index.ts`, `game/state/testHandle.ts`, `game/main.tsx`, `game/board/playback/SegmentPlayer.ts`, `game/board/DragController.ts`, `game/ui/{SettingsScreen,MainMenu,DifficultyScreen,Hud,ShopScreen,WaveClearedOverlay,LevelClearedOverlay,WinScreen,LoseScreen,AllDoneScreen,UpdateBanner,icons}.tsx`, `game/ui/ui.css`, `TECHNICAL_REFERENCE.md`, `TASKS.md`, `e2e/{settings,difficulty}.spec.ts`, `tests/helpers/playbackSettings.ts`, fake `GameData` fixtures, `tests/game/{audio,testHandle,store}.test.ts`, `tests/sim/data/load.test.ts`
+
+**Notes for next agent:**
+- Retune sound in `data/presentation.json` `audio` only. Cue names are locked. `playCue` is a no-op until `bindAudio` has run (`game/main.tsx`). Last-cue ring is 32 (`LAST_CUE_RING` in `audio.ts`); mute does not append. Shop purchase sound is UI-fired, not `cueForEvent(OfferBought)`.
