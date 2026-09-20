@@ -790,7 +790,7 @@ Playwright asserts on structured state. Screenshots are for legibility review on
 **Difficulty picker testids (task 29):** screen root `difficulty`; star buttons `difficulty-easy` /
 `difficulty-normal` / `difficulty-hard`; Back `difficulty-back`. Settings three-way:
 `settings-difficulty-easy` / `settings-difficulty-normal` / `settings-difficulty-hard` (plus existing
-`settings` / `settings-hints` / `settings-home`). New Game always opens the picker; Continue never
+`settings` / `settings-hints` / `settings-back`). New Game always opens the picker; Continue never
 does. No HUD difficulty badge.
 
 **`loadState` stays storage-free (task 14 req. 6):** it installs `state` directly via
@@ -806,7 +806,7 @@ mutations live in `/game/state/debug` and install via `store.installRun`. The Re
 
 **Openers (recommended first):**
 - **7-tap** the main-menu title (also the shop wallet, win/lose/all-done stars, cleared-wave star).
-- **Long-press** (1.2s) Settings or Home — short tap still does Settings / Home.
+- **Long-press** (1.2s) Settings or Back — short tap still does Settings / Back.
 - **Ctrl/Cmd+Shift+D** on a keyboard.
 - **`?debug=1`** or `#debug` opens on load.
 - **Shake** is opt-in inside the menu (iOS needs a motion-permission prompt; a 7-year-old shakes

@@ -27,6 +27,8 @@ and Puzzles glyphs did not say what they did, and the decorative tiles looked ta
 - **Launch decoration is a formula strip, not a row of 3D chips.** Ball → +N → ×N → −N inside
   one muted capsule, no button shadow, `pointer-events: none`. It previews the game; it is not
   a control.
+- **Settings cancel is ← *Back*** at the top left, the same control as the difficulty picker.
+  Not a big ▶ *Home*.
 
 ## 0. Changes in v0.9
 

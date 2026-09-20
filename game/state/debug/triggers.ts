@@ -2,7 +2,7 @@
 // long-press hold, and shake threshold can be unit-tested with a fake clock. The React layer
 // wires these to pointer / keyboard / DeviceMotion events.
 //
-// Recommended opener on iPad: 7-tap the main-menu title, or long-press Settings / Home.
+// Recommended opener on iPad: 7-tap the main-menu title, or long-press Settings / Back.
 // Shake is opt-in (iOS needs a permission prompt, and a 7-year-old shakes the iPad).
 // Desktop: Ctrl/Cmd+Shift+D, or `?debug=1`.
 
@@ -10,7 +10,7 @@ export const DEBUG_TRIGGERS = {
   /** Rapid taps on a secret target (title, star, wallet). */
   tapCount: 7,
   tapWindowMs: 3500,
-  /** Hold Settings or Home. Short tap still does the normal action. */
+  /** Hold Settings or Back. Short tap still does the normal action. */
   longPressMs: 1200,
   keyboard: { shift: true, key: 'd' },
   queryParam: 'debug',

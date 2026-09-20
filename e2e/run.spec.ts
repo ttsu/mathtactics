@@ -167,7 +167,7 @@ test('reloading inside the shop after wave 8 resumes the same offers and the run
   await expect(page.getByTestId('menu-continue')).toHaveCount(0);
 });
 
-test('menu → Settings → Hints on → Home → New Game → place a tile → getHints() is non-empty', async ({
+test('menu → Settings → Hints on → Back → New Game → place a tile → getHints() is non-empty', async ({
   page,
 }) => {
   await page.goto('/');
@@ -179,7 +179,7 @@ test('menu → Settings → Hints on → Home → New Game → place a tile → 
   await expect(page.getByTestId('settings-hints')).toHaveAttribute('aria-pressed', 'false');
   await page.getByTestId('settings-hints').click();
   await expect(page.getByTestId('settings-hints')).toHaveAttribute('aria-pressed', 'true');
-  await page.getByTestId('settings-home').click();
+  await page.getByTestId('settings-back').click();
   expect(await getScreen(page)).toBe('menu');
 
   await startNewGame(page);
