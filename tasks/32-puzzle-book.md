@@ -27,11 +27,52 @@ tracking, a grid picker, and a fully authored first pack of 12 (including one 5-
 
 ## Acceptance Criteria
 
-- [ ] 50 catalog entries; 12 playable Pack 1 scenarios
-- [ ] Picker + completion + lose Play again
-- [ ] Pack 1 solutions pass; puzzles never overwrite the saved run
-- [ ] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass
+- [x] 50 catalog entries; 12 playable Pack 1 scenarios
+- [x] Picker + completion + lose Play again
+- [x] Pack 1 solutions pass; puzzles never overwrite the saved run
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass
 
 ## Completion Notes
 
-_(filled by `/finish-task`)_
+**Status:** Complete
+**Completed:** 2026-09-20
+**PR:** #62 · Preview: https://mathtactics.timtsu.com/pr/pr-62/
+
+**Acceptance criteria:**
+- [x] 50 catalog entries; 12 playable Pack 1 scenarios — Met
+- [x] Picker + completion + lose Play again — Met
+- [x] Pack 1 solutions pass; puzzles never overwrite the saved run — Met
+- [x] `npm test`, `typecheck`, `lint`, `build`, `test:e2e` pass — Met (101 e2e)
+
+**Verification:** npm test ✔ (883) · typecheck ✔ · lint ✔ · build ✔ · e2e ✔ (101)
+
+**Deviations from spec:**
+- Theme is conceptual, not a catalog field (human: "remove the theme").
+- The old 8 M1 tutorial boards are one 5-wave scenario (`warm-up`), not eight tiles.
+- Unlock is content-lock (`waves` missing), not a skill gate. All 12 Pack 1 tiles are open.
+- `screen: 'levelSelect'` is reused for the book so the FIRE-only harness can keep `allDone`.
+- Occupied allows a robot and a tile to share a cell (schema rejects only duplicate tiles among tiles / robots among robots).
+- Wave 1 `cannons` replace slots; later waves add listed cannons. Tiles persist across waves.
+- Puzzle lose e2e drives Occupied to `lost` by installing `baseHp: 1` (catalog HP is 100; one robot cannot empty the base).
+
+**Architectural decisions made:**
+- New `mode: 'puzzle'` + `loadPuzzle`. `mode: 'level'` stays FIRE-only (`levels.json`).
+- `buildPuzzleState` / `buildPuzzleNextWave` live in `sim/commands/puzzle.ts`. Grants emit `TilesGranted` / `CannonPlaced`.
+- `nextWave` from `waveCleared` when `mode === 'puzzle'`; otherwise shop. Puzzles skip wave-clear coins; last wave uses `sessionWaveCount`.
+- Completion is device-local `mt:<basePath>:puzzles` `{ completed: string[] }`, same shape as seen-tiles. Mid-session is never saved. `isEndedSession` vs `isFinishedRun`: only ladder wins/losses clear the run save.
+- Picker is React (`PuzzleSelectScreen`). 10×5 grid, Back top-left. HUD Home from a puzzle returns to the book.
+
+**Design questions raised:**
+- None open. Lose Play again / catalog-all-50 / no theme / tutorial-as-one-scenario were answered before implementation.
+
+**Known issues / follow-up:**
+- Packs 2–5 are catalog stubs (locked). Author waves when a later pack task starts.
+- iPad landscape feel of the 10×5 grid (name length, star size, lock tap-shake) still wants a human check on the preview.
+- Debug Jump still lists FIRE-only `levels.json` ids, not puzzle-book ids.
+
+**Files created:** `data/puzzles.json`, `sim/commands/puzzle.ts`, `game/state/puzzleFlow.ts`, `game/ui/PuzzleSelectScreen.tsx`, `tasks/32-puzzle-book.md`, `e2e/puzzles.spec.ts`, `tests/puzzleSolutions.test.ts`, `tests/sim/commands/loadPuzzle.test.ts`, `tests/sim/data/puzzles.test.ts`, `tests/game/puzzleFlow.test.ts`, `scenarios/puzzles/01-warm-up.scenario.yaml` … `12-recipe.scenario.yaml`
+
+**Files modified:** `GDD.md`, `TECHNICAL_REFERENCE.md`, `TASKS.md`, `sim/core/types.ts`, `sim/commands/applyCommand.ts`, `sim/commands/index.ts`, `sim/data/schemas.ts`, `sim/data/load.ts`, `sim/resolve/resolveTurn.ts`, `sim/scenario/parse.ts`, `sim/scenario/run.ts`, `game/state/store.ts`, `game/state/storage.ts`, `game/state/runFlow.ts`, `game/state/waveFlow.ts`, `game/state/gameData.ts`, `game/state/index.ts`, `game/ui/App.tsx`, `game/ui/Hud.tsx`, `game/ui/LoseScreen.tsx`, `game/ui/WinScreen.tsx`, `game/ui/WaveClearedOverlay.tsx`, `game/ui/MainMenu.tsx`, `game/ui/icons.tsx`, `game/ui/ui.css`, `e2e/app-shell.spec.ts`, `e2e/levels.spec.ts`, `e2e/run-flow.spec.ts`, `e2e/debug.spec.ts`, `e2e/difficulty.spec.ts`, plus fixtures/`loadDataFiles`/`validRaw` consumers that now require `puzzles`.
+
+**Notes for next agent:**
+- `mode: 'puzzle'` is the player book; `mode: 'level'` is still the FIRE-only harness. Do not fold them. A later pack is authored by adding `waves` to an existing catalog id in `data/puzzles.json` plus a `scenarios/puzzles/` solution — the picker unlocks from `waves` alone.
