@@ -258,7 +258,8 @@ emits the first turn's spawns.
   (no RNG), then `/sim/waves/rollWave.ts` draws on the `wave` stream: authored waves assign letters
   then HP (TR §9). Procedural waves (M4) draw each group's distinct lanes, then per lane a pool
   template **without replacement** and HP. Result sorted by `turn` (stable). Exact draw order is
-  normative so saves and scenarios are reproducible. Normal overlay is identity.
+  normative so saves and scenarios are reproducible. Normal overlay is identity. Hard also
+  scales non-Boss HP (120%); parity and Boss stay 100%.
 
 Impact rules are implemented once in `/sim/resolve/impact.ts` as a pure function
 `resolveImpact(robot, ballValue) → ImpactOutcome`, exactly per GDD §5.4.

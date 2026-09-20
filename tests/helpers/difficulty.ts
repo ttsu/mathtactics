@@ -38,7 +38,11 @@ export function fakeDifficulty(overrides: Partial<DifficultyFile> = {}): Difficu
       hard: {
         label: 'Hard',
         stars: 3,
-        hp: identityHp,
+        hp: {
+          nonBoss: { mul: 120, min: 1, max: 99 },
+          parity: { mul: 100, min: 1, max: 99 },
+          boss: { mul: 100, min: 1, max: 1000 },
+        },
         countDelta: 1,
         minCount: 1,
         maxCount: 5,

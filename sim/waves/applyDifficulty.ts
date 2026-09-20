@@ -1,6 +1,7 @@
 // Difficulty overlay (GDD §10.7, task 28). Pure: maps a `waves.json` wave through
 // `data.difficulty.modes[id]` before `rollWave`. Normal (mul 100, countDelta 0, no drops) is
-// identity on shipped waves. Overlay consumes no RNG — `rollWave` still owns the `wave` stream.
+// identity on shipped waves. Hard scales non-Boss HP (120%) and still adds stretch pressure.
+// Overlay consumes no RNG — `rollWave` still owns the `wave` stream.
 
 import type { DifficultyId } from '../core/types';
 import type { DifficultyMode, GameData, WaveDef } from '../data/schemas';
