@@ -6,7 +6,7 @@ about without becoming mean?
 **Setup:** iPad in landscape, the PR preview (or production) already on the Home Screen. Open
 the app → **New Game**. A full-screen picker with three star buttons should appear (1 / 2 / 3
 stars). Play **Easy** one session and **Hard** another (or the reverse if he asks for harder
-first). Do **not** tap ▶ Keep Going from an earlier Normal run — that resume stays whatever
+first). Do **not** tap ▶ Continue from an earlier Normal run — that resume stays whatever
 difficulty that save already is.
 
 Playtest 4 notes (`playtests/04.md`) were not written yet when this checklist was authored, so
@@ -50,8 +50,8 @@ Tick or jot a word next to each as it happens.
 - [ ] Does he **reach the Boss**, or lose on 8–9?
 - [ ] After: want Easy next, or another Hard?
 
-**Keep Going / Settings (you can demo, not him)**
-- [ ] Mid-run Home → ▶ Keep Going: **no picker**. The run stays the difficulty he started.
+**Continue / Settings (you can demo, not him)**
+- [ ] Mid-run Home → ▶ Continue: **no picker**. The run stays the difficulty he started.
 - [ ] Settings three-way: changing the stars there does **not** change the run already going.
 
 **End-Turn-only lose (you demo, not him)**

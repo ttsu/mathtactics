@@ -9,7 +9,7 @@ import { startNewGame } from './helpers/newGame';
 // Task 27: a full 10-wave run through the real menus, screens and shop. Planning turns use the
 // sensible-player policy via `dispatch` plus `skipAnimation`. Shop visits tap a real affordable
 // card (same buy priority as the balance bot) then ▶ Next wave. A reload inside the shop after
-// wave 8 resumes via ▶ Keep Going with the same offers.
+// wave 8 resumes via ▶ Continue with the same offers.
 //
 // The real New Game button seeds randomly, so `MAX_TURNS` is headroom over the measured
 // sensible-player worst case (task 27: 92 End Turns on 10 waves).

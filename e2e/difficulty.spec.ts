@@ -83,7 +83,7 @@ test('Back from the picker does not replace a saved run or the last pick', async
   expect(await getState(page)).toEqual(saved);
 });
 
-test('Keep Going after Easy New Game does not show the picker', async ({ page }) => {
+test('Continue after Easy New Game does not show the picker', async ({ page }) => {
   await openMenu(page);
   await startNewGame(page, 'easy');
   await waitIdle(page);

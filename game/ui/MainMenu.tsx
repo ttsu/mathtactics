@@ -1,16 +1,16 @@
-// Main menu (task 11 req. 2, task 14 req. 3, task 24): ▶ Keep Going (big, only when a run is
+// Main menu (task 11 req. 2, task 14 req. 3, task 24): ▶ Continue (big, only when a run is
 // resumable), New Game (big when there is nothing to continue, smaller otherwise), Puzzles
-// (always smaller), and Settings (always smaller). The title and the tile chips are decoration
-// only.
+// (always smaller), and Settings (always smaller). The title and the formula strip are
+// decoration only — the strip is a connected preview, not a row of tappable tiles.
 //
 // Each button carries a short label under its icon (GDD §11.1, v0.5). The icons alone were
-// ambiguous — nothing said what ▶ versus 🤖 would do. The labels only repeat what the icon
+// ambiguous — nothing said what ▶ versus ↺ would do. The labels only repeat what the icon
 // means, so a pre-reader can still use the menu by icon and position alone.
 import type { CSSProperties } from 'react';
 import { playUiTap } from '../state/audio';
 import { playFromStart } from '../state/levelFlow';
 import { canContinue, continueRun } from '../state/runFlow';
-import { GearIcon, PlayIcon, RobotPlayIcon, TileChipIcon } from './icons';
+import { FormulaArrowIcon, GearIcon, PlayIcon, PuzzlePieceIcon, RestartIcon } from './icons';
 import { SecretLongPress, SecretTap } from './debug';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
@@ -29,14 +29,17 @@ export function MainMenu() {
       <SecretTap testId="menu-title">
         <h1 className="screen-title">Math Tactics</h1>
       </SecretTap>
-      <div className="menu-chips" aria-hidden="true">
+      <div className="menu-hero" data-testid="menu-hero" aria-hidden="true">
         <span className="menu-chip menu-chip-ball">1</span>
+        <FormulaArrowIcon size={28} />
         <span className="menu-chip" style={{ background: tileColors.green }}>
           +4
         </span>
+        <FormulaArrowIcon size={28} />
         <span className="menu-chip" style={{ background: tileColors.orange }}>
           ×3
         </span>
+        <FormulaArrowIcon size={28} />
         <span className="menu-chip" style={{ background: tileColors.blue }}>
           −2
         </span>
@@ -47,14 +50,14 @@ export function MainMenu() {
             type="button"
             className="big-button pop-in"
             data-testid="menu-continue"
-            aria-label="Keep Going"
+            aria-label="Continue"
             onClick={() => {
               playUiTap();
               continueRun(store);
             }}
           >
             <PlayIcon size={96} />
-            <span className="button-label">Keep Going</span>
+            <span className="button-label">Continue</span>
           </button>
         ) : (
           <button
@@ -67,7 +70,7 @@ export function MainMenu() {
               store.getState().setScreen('difficulty');
             }}
           >
-            <RobotPlayIcon size={96} />
+            <RestartIcon size={96} />
             <span className="button-label">New Game</span>
           </button>
         )}
@@ -83,7 +86,7 @@ export function MainMenu() {
                 store.getState().setScreen('difficulty');
               }}
             >
-              <RobotPlayIcon size={56} />
+              <RestartIcon size={56} />
               <span className="button-label button-label-small">New Game</span>
             </button>
           )}
@@ -97,7 +100,7 @@ export function MainMenu() {
               playFromStart(store);
             }}
           >
-            <TileChipIcon size={56} />
+            <PuzzlePieceIcon size={56} />
             <span className="button-label button-label-small">Puzzles</span>
           </button>
           <SecretLongPress>

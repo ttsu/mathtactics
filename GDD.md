@@ -1,15 +1,31 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.9
+**Version:** 0.9.1
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
 **Status:** M4 and M4.5 built. Playtests 4–5 pending. v0.9 records M5 sound (rest of M5 unspecced).
+v0.9.1 is a launch-screen label/glyph pass after a human review of the home page.
 This document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.9.1
+
+Human request after looking at the launch screen: the resume label was truncated, the New Game
+and Puzzles glyphs did not say what they did, and the decorative tiles looked tappable.
+
+- **Resume label is *Continue*.** One word, fits the button. Replaces *Keep Going*, which
+  overflowed as "Keep Go". Still a spoken word, still repeats the ▶ icon.
+- **New Game glyph is a counterclockwise circular arrow** (start over from the beginning), not
+  a robot-and-play composite. Continue stays the plain ▶.
+- **Puzzles glyph is a jigsaw piece**, matching the 🧩 already named in §10.4. The ×-chip looked
+  like a tile, not a mode.
+- **Launch decoration is a formula strip, not a row of 3D chips.** Ball → +N → ×N → −N inside
+  one muted capsule, no button shadow, `pointer-events: none`. It previews the game; it is not
+  a control.
 
 ## 0. Changes in v0.9
 
@@ -51,7 +67,7 @@ sensible player and keep a sloppy run alive. Modes use the levers §6.6 already 
 - **The stretch is what changes.** Easy: one fewer robot per procedural pack, lower non-Boss
   HP. Hard: one more robot per pack, `basic` dropped from waves 8–9 so every stretch robot has
   a trait. Authored teaching spawns are never removed. Normal robots still cap at 99.
-- **New Game always opens a picker.** Three big buttons; last pick is highlighted. Keep Going
+- **New Game always opens a picker.** Three big buttons; last pick is highlighted. Continue
   does not ask — the saved run's difficulty is locked. Changing the Settings default never
   retcons a run in progress.
 - **Difficulty is simulation.** It changes HP and spawn counts, so it lives in `/sim` and
@@ -784,10 +800,12 @@ whose trait is invisible reads as a bug, not a puzzle.
 - The run **autosaves after every command** (placement, move, End Turn, purchase).
 - On End Turn, the resolved result is saved **immediately**, before playback finishes.
   Reopening mid-playback lands in the next planning phase: no lost progress, no reload exploit.
-- Launch screen: big **▶ *Keep Going*** if a run exists; smaller **🤖 *New Game***; smaller
+- Launch screen: big **▶ *Continue*** if a run exists; smaller **↺ *New Game***; smaller
   **🧩 *Puzzles*** (the M1 hand-authored levels). Each is an icon with its label beneath
   (§11.1). No confirmation dialogs. New Game opens the difficulty picker (§10.7), then
-  replaces any saved run. Keep Going resumes the saved run's difficulty as-is.
+  replaces any saved run. Continue resumes the saved run's difficulty as-is.
+  The chips under the title are a non-interactive formula strip (ball → operators), not
+  buttons.
 - A small **Home** button in the HUD (hidden during playback) returns to the launch screen with
   no confirmation. A run is already saved; a puzzle session is simply dropped.
 - **Puzzles are never saved** and never overwrite the saved run.
@@ -837,7 +855,7 @@ also shows the same three-way control so a parent can change the default without
 run; that default is what the picker highlights next time. It never mutates `RunState` of a
 run already going.
 
-Keep Going does not show the picker. A saved Easy run stays Easy.
+Continue does not show the picker. A saved Easy run stays Easy.
 
 **What difficulty may change:** robot HP (non-Boss, still 1–99) and procedural pack `count`
 (and Hard's 8–9 pool, by dropping `basic`). Integer percent multipliers and a count delta live
@@ -862,12 +880,13 @@ Normal; Odd-only / Even-only **65%** (floor 8) so one leak stays a chip; procedu
    a whole run. Text is supplementary, never load-bearing.
 
    **Short labels are allowed and encouraged on navigation** (v0.5). Icon-only buttons proved
-   ambiguous in practice: nothing on the main menu said what ▶ or 🤖 would do. So any button
+   ambiguous in practice: nothing on the main menu said what ▶ or ↺ would do. So any button
    that *navigates* — menu entries, screen buttons — pairs its icon with a short label beneath.
    Rules for that label:
    - One or two words, grade-1 decodable, from the kid's spoken vocabulary
-     (*Keep Going*, *New Game*, *Puzzles*, *Home*, *Back*, *Next*, *Go*, *Easy*, *Normal*, *Hard*).
-     Never *Continue*, *Resume*, *Proceed*, *Select*.
+     (*Continue*, *New Game*, *Puzzles*, *Home*, *Back*, *Next*, *Go*, *Easy*, *Normal*, *Hard*).
+     Never *Resume*, *Proceed*, *Select*. *Keep Going* overflowed the button; *Continue* is the
+     one-word resume label (v0.9.1).
    - It **repeats** what the icon already says; it never adds information the icon lacks.
      Cover the text and the screen must still be usable.
    - In-play HUD Undo and Replay stay icon-only — they are used dozens of times a run and are
@@ -1199,7 +1218,7 @@ These were not explicitly discussed and were chosen as the simplest consistent o
   a numeric 1–3 without words.
 - Default and first highlight: **Normal** (grill A). The designed ladder stays the unmarked
   game.
-- New Game **always** opens the picker (grill A). Settings stores the last pick. Keep Going
+- New Game **always** opens the picker (grill A). Settings stores the last pick. Continue
   does not re-ask.
 - `RunState.difficulty` is `'easy' | 'normal' | 'hard'`. Do not reuse `RunState.mode`
   (`'run' | 'level'`).
