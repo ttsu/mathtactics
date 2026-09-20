@@ -138,47 +138,14 @@ const TransformStrengthSchema = z.object({
   shake: shakeIntensity(),
 });
 
-const VoiceTypeSchema = z.enum(['sine', 'triangle', 'noise']);
-
-const BandpassFilterSchema = z
-  .object({
-    type: z.literal('bandpass'),
-    frequencyHz: z.number().positive(),
-    Q: z.number().positive(),
-  })
-  .strict();
-
-const CueVoiceSchema = z
-  .object({
-    type: VoiceTypeSchema,
-    /** Oscillator pitch. Omitted for `noise` and for `tilePop` (Hz comes from `audio.tilePop`). */
-    hz: z.number().positive().optional(),
-    offsetMs: z.number().nonnegative().optional(),
-    attackMs: z.number().nonnegative(),
-    decayMs: z.number().positive(),
-    /** Per-voice peak before master. Soft enough that a 3-lane chain does not clip. */
-    peakGain: z.number().positive().max(0.15),
-    filter: BandpassFilterSchema.optional(),
-  })
-  .strict();
-
-const CueRecipeSchema = z
-  .object({
-    voices: z.array(CueVoiceSchema).min(1),
-  })
-  .strict();
-
 const TilePopKindSchema = z
   .object({
     baseHz: z.number().positive(),
     offsetSemitones: z.number(),
-    /** Extra harmonic mixed on `×` pops (GDD §12.4). 0 / omitted = none. */
-    harmonicGain: z.number().nonnegative().max(0.15).optional(),
-    harmonicRatio: z.number().positive().optional(),
   })
   .strict();
 
-/** Foley (`@foleyjs/core`) cue ids — tactile buttons / tile drag only. */
+/** Foley (`@foleyjs/core`) cue ids. Every locked game cue maps to one of these. */
 const FoleyCueIdSchema = z.enum([
   'tick',
   'hover',
@@ -236,6 +203,20 @@ const FoleySettingsSchema = z
         dropCannon: FoleyPlaySchema,
         snapBack: FoleyPlaySchema,
         trayTick: FoleyPlaySchema,
+        cannonThump: FoleyPlaySchema,
+        tilePop: FoleyPlaySchema,
+        impact: FoleyPlaySchema,
+        kill: FoleyPlaySchema,
+        exactKill: FoleyPlaySchema,
+        bounceBack: FoleyPlaySchema,
+        clonk: FoleyPlaySchema,
+        detonate: FoleyPlaySchema,
+        spawn: FoleyPlaySchema,
+        buy: FoleyPlaySchema,
+        nope: FoleyPlaySchema,
+        waveCleared: FoleyPlaySchema,
+        win: FoleyPlaySchema,
+        lose: FoleyPlaySchema,
       })
       .strict(),
   })
@@ -243,9 +224,8 @@ const FoleySettingsSchema = z
 
 const AudioSettingsSchema = z
   .object({
-    masterGain: z.number().positive(),
     maxVoices: z.number().int().positive(),
-    /** Multiplies `impact` peakGain when `RobotDamaged.doubled`. */
+    /** Multiplies `impact` Foley volume when `RobotDamaged.doubled`. */
     impactDoubledGain: z.number().positive(),
     tilePop: z
       .object({
@@ -255,34 +235,8 @@ const AudioSettingsSchema = z
         mul: TilePopKindSchema,
       })
       .strict(),
-    /** Tactile UI + tile/cannon drag: Foley `play()`, not homemade oscillators. */
+    /** Every locked cue name plays through Foley `play()`. */
     foley: FoleySettingsSchema,
-    cues: z
-      .object({
-        uiTap: CueRecipeSchema,
-        preview: CueRecipeSchema,
-        pickupTile: CueRecipeSchema,
-        pickupCannon: CueRecipeSchema,
-        dropTile: CueRecipeSchema,
-        dropCannon: CueRecipeSchema,
-        snapBack: CueRecipeSchema,
-        trayTick: CueRecipeSchema,
-        cannonThump: CueRecipeSchema,
-        tilePop: CueRecipeSchema,
-        impact: CueRecipeSchema,
-        kill: CueRecipeSchema,
-        exactKill: CueRecipeSchema,
-        bounceBack: CueRecipeSchema,
-        clonk: CueRecipeSchema,
-        detonate: CueRecipeSchema,
-        spawn: CueRecipeSchema,
-        buy: CueRecipeSchema,
-        nope: CueRecipeSchema,
-        waveCleared: CueRecipeSchema,
-        win: CueRecipeSchema,
-        lose: CueRecipeSchema,
-      })
-      .strict(),
   })
   .strict();
 

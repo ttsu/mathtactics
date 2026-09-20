@@ -154,9 +154,9 @@ describe('parseGameData on the real /data directory', () => {
     });
   });
 
-  it('has every locked audio cue name (task 31)', () => {
+  it('has every locked audio cue name mapped through Foley', () => {
     const data = parseGameData(loadRawGameData());
-    expect(Object.keys(data.presentation.audio.cues).sort()).toEqual(
+    expect(Object.keys(data.presentation.audio.foley.cues).sort()).toEqual(
       [
         'bounceBack',
         'buy',
@@ -184,18 +184,20 @@ describe('parseGameData on the real /data directory', () => {
     );
   });
 
-  it('maps tactile buttons and tile drag through Foley', () => {
+  it('maps buttons to tap, tile pickup/drop to tap/thock, and a mechanical theme', () => {
     const data = parseGameData(loadRawGameData());
     const { foley } = data.presentation.audio;
-    expect(foley.theme).toBe('soft');
+    expect(foley.theme).toBe('mechanical');
     expect(foley.cues.uiTap.name).toBe('tap');
     expect(foley.cues.preview.name).toBe('on');
-    expect(foley.cues.pickupTile.name).toBe('press');
-    expect(foley.cues.dropTile.name).toBe('release');
+    expect(foley.cues.pickupTile.name).toBe('tap');
+    expect(foley.cues.dropTile.name).toBe('thock');
     expect(foley.cues.snapBack.name).toBe('denied');
     expect(foley.cues.trayTick.name).toBe('tick');
-    expect(foley.cues.pickupCannon.pitch).toBeLessThan(0);
-    expect(foley.cues.dropCannon.name).toBe('drop');
+    expect(foley.cues.pickupCannon).toEqual({ name: 'tap', pitch: -7 });
+    expect(foley.cues.dropCannon).toEqual({ name: 'thock', pitch: -5 });
+    expect(foley.cues.tilePop.name).toBe('pop');
+    expect(foley.cues.exactKill.name).toBe('sparkle');
   });
 
   // Type-level guard for the schema-inferred `id: TileId` narrowing (not just `string`) — this

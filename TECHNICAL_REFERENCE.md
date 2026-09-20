@@ -358,7 +358,7 @@ fails `npm test`.
 | `waves.json` | Waves in run order (run length = array length): authored spawn schedules (waves 1–7, 10) and procedural tables (waves 8–9). Normal source of truth; Easy/Hard overlay this via `difficulty.json` |
 | `difficulty.json` | Easy / Normal / Hard overlays: integer-percent HP bands, procedural `countDelta`, `dropTemplates`. Overlay then existing `rollWave` |
 | `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
-| `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss 2×2 visual scale (`boss.scale`, `1` = fill the 2×2), generated Web Audio recipes and Foley tactile mappings (`audio`, M5) |
+| `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss 2×2 visual scale (`boss.scale`, `1` = fill the 2×2), Foley cue mappings (`audio`, M5) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.
 
@@ -831,14 +831,13 @@ real run; jumping to a puzzle does not touch the save.
 - Audio: create/resume `AudioContext` on first `pointerdown`. One shared context
   (`/game/state/audio.ts`: `getAudioContext()`, `installAudioUnlock()`, `playCue()`,
   `stopAllCues()`), also handed to Phaser via `audio.context` so the app never holds two.
-  Phaser's sound manager is unused. Tactile cues (buttons, tile/cannon drag, tray tick,
-  sound `preview`) play through Foley (`@foleyjs/core` `play()`, not `bind()` — Phaser drags
-  have no DOM attributes, and mute / last-cues stay on `playCue`). Teaching playback cues
-  stay on the homemade oscillator player. `getAudioContext()` reuses Foley's context (via
-  `getAnalyser().context`) so Foley, teaching cues, and Phaser share one context. Recipes
-  and Foley mappings live in `presentation.json` `audio`. Settings has a Sound row
-  (`settings-sound`, default on); mute no-ops `playCue` and Foley `set({ muted })`. Turning
-  sound on plays `preview`.
+  Phaser's sound manager is unused. Every locked cue name plays through Foley
+  (`@foleyjs/core` `play()`, not `bind()` — Phaser drags have no DOM attributes, and mute /
+  last-cues stay on `playCue`). Theme is `mechanical` (clicky buttons). Tile pickup is Foley
+  `tap`, drop is `thock`. `getAudioContext()` reuses Foley's context (via
+  `getAnalyser().context`). Mappings live in `presentation.json` `audio.foley`. Settings has
+  a Sound row (`settings-sound`, default on); mute no-ops `playCue` and Foley
+  `set({ muted })`. Turning sound on plays `preview`.
 - Vite `base: "./"`.
 - **Update detection (production only):** each deploy to `main` stamps `import.meta.env.VITE_BUILD_ID`
   (full `GITHUB_SHA`) and emits `version.json` plus `<meta name="mt-build-id">` in `index.html`.

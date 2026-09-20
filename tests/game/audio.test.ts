@@ -6,10 +6,8 @@ import {
   installAudioUnlock,
   playCue,
   resetAudioForTests,
-  setAudioTestSink,
   setFoleyEngine,
   stopAllCues,
-  type AudioTestSink,
   type FoleyEngine,
 } from '../../game/state/audio';
 import { fakeAudioSettings } from '../helpers/playbackSettings';
@@ -18,20 +16,28 @@ function fakeContext(state: AudioContextState) {
   return { state, resume: vi.fn(() => Promise.resolve()) };
 }
 
-function recordingSink() {
-  const started: { type: string; hz?: number; peakGain: number; stopped: boolean }[] = [];
-  const sink: AudioTestSink = {
-    start(voice) {
-      const record = { ...voice, stopped: false };
-      started.push(record);
+function recordingFoley() {
+  const plays: { name: string; opts?: { pitch?: number; volume?: number } }[] = [];
+  const sets: { muted?: boolean; volume?: number; theme?: string; space?: number }[] = [];
+  let stopped = 0;
+  const engine: FoleyEngine = {
+    play(name, opts) {
+      plays.push(opts === undefined ? { name } : { name, opts });
       return {
         stop() {
-          record.stopped = true;
+          stopped += 1;
         },
       };
     },
+    set(opts) {
+      sets.push(opts);
+    },
+    unlock() {},
+    audioContext() {
+      return null;
+    },
   };
-  return { sink, started };
+  return { engine, plays, sets, stopped: () => stopped };
 }
 
 afterEach(() => {
@@ -82,73 +88,78 @@ describe('installAudioUnlock', () => {
 
 describe('playCue', () => {
   it('starts nothing when muted and does not append last cues', () => {
-    const { sink, started } = recordingSink();
+    const { engine, plays } = recordingFoley();
+    setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => false, audio: () => fakeAudioSettings() });
-    setAudioTestSink(sink);
     playCue('uiTap');
-    expect(started).toEqual([]);
+    expect(plays).toEqual([]);
     expect(getLastCues()).toEqual([]);
   });
 
-  it('does not throw without a context', () => {
+  it('does not throw without a Foley handle', () => {
+    const engine = recordingFoley().engine;
+    engine.play = () => undefined;
+    setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => fakeAudioSettings() });
-    setAudioTestSink(null);
     expect(() => playCue('uiTap')).not.toThrow();
     expect(getLastCues()).toEqual([]);
   });
 
   it('records started cues and stopAllCues stops them', () => {
-    const { sink, started } = recordingSink();
+    const { engine, plays, stopped } = recordingFoley();
+    setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => fakeAudioSettings() });
-    setAudioTestSink(sink);
     playCue('uiTap');
-    expect(started).toHaveLength(1);
+    expect(plays).toEqual([{ name: 'tap' }]);
     expect(getLastCues()).toEqual([{ name: 'uiTap' }]);
+    expect(stopped()).toBe(0);
     stopAllCues();
-    expect(started[0]?.stopped).toBe(true);
+    expect(stopped()).toBe(1);
   });
 
   it('stops the oldest voice when over maxVoices', () => {
-    const { sink, started } = recordingSink();
+    const { engine, plays, stopped } = recordingFoley();
     const audio = { ...fakeAudioSettings(), maxVoices: 2 };
+    setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => audio });
-    setAudioTestSink(sink);
     playCue('uiTap');
     playCue('trayTick');
     playCue('spawn');
-    expect(started).toHaveLength(3);
-    expect(started[0]?.stopped).toBe(true);
-    expect(started[1]?.stopped).toBe(false);
-    expect(started[2]?.stopped).toBe(false);
+    expect(plays.map((play) => play.name)).toEqual(['tap', 'tick', 'drop']);
+    expect(stopped()).toBe(1);
   });
 
   it('pitches tilePop from operator and chainDepth, never from a missing kind defaulting silently off-curve', () => {
-    const { sink, started } = recordingSink();
+    const { engine, plays } = recordingFoley();
     const audio = fakeAudioSettings();
+    setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => audio });
-    setAudioTestSink(sink);
     playCue('tilePop', { kind: 'add', chainDepth: 1 });
     playCue('tilePop', { kind: 'add', chainDepth: 3 });
     playCue('tilePop', { kind: 'sub', chainDepth: 1 });
     playCue('tilePop', { kind: 'mul', chainDepth: 1 });
-    const add1 = audio.tilePop.add.baseHz * 2 ** (audio.tilePop.add.offsetSemitones / 12);
-    const add3 = add1 * audio.tilePop.depthRatio ** 2;
-    const sub1 = audio.tilePop.sub.baseHz * 2 ** (audio.tilePop.sub.offsetSemitones / 12);
-    const mul1 = audio.tilePop.mul.baseHz * 2 ** (audio.tilePop.mul.offsetSemitones / 12);
-    expect(started[0]?.hz).toBeCloseTo(add1);
-    expect(started[1]?.hz).toBeCloseTo(add3);
-    expect(started[1]!.hz!).toBeGreaterThan(started[0]!.hz!);
-    expect(started[2]?.hz).toBeCloseTo(sub1);
-    expect(started[2]!.hz!).toBeLessThan(started[0]!.hz!);
-    expect(started[3]?.hz).toBeCloseTo(mul1);
-    expect(started[4]?.hz).toBeCloseTo(mul1 * (audio.tilePop.mul.harmonicRatio ?? 2));
+    const semitones = (kind: 'add' | 'sub' | 'mul', chainDepth: number) => {
+      const tuning = audio.tilePop[kind];
+      const hz =
+        tuning.baseHz *
+        audio.tilePop.depthRatio ** (chainDepth - 1) *
+        2 ** (tuning.offsetSemitones / 12);
+      return 12 * Math.log2(hz / audio.tilePop.add.baseHz);
+    };
+    expect(plays.map((play) => play.name)).toEqual(['pop', 'pop', 'pop', 'pop']);
+    expect(plays[0]?.opts?.pitch).toBeCloseTo(semitones('add', 1));
+    expect(plays[1]?.opts?.pitch).toBeCloseTo(semitones('add', 3));
+    expect(plays[1]!.opts!.pitch!).toBeGreaterThan(plays[0]!.opts!.pitch!);
+    expect(plays[2]?.opts?.pitch).toBeCloseTo(semitones('sub', 1));
+    expect(plays[2]!.opts!.pitch!).toBeLessThan(plays[0]!.opts!.pitch!);
+    expect(plays[3]?.opts?.pitch).toBeCloseTo(semitones('mul', 1));
     expect(getLastCues().map((cue) => cue.params?.kind)).toEqual(['add', 'add', 'sub', 'mul']);
   });
 
   it('keeps a ring of last cues and clearLastCues empties it', () => {
-    const { sink } = recordingSink();
+    const { engine } = recordingFoley();
+    setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => fakeAudioSettings() });
-    setAudioTestSink(sink);
     playCue('uiTap');
     playCue('preview');
     expect(getLastCues().map((cue) => cue.name)).toEqual(['uiTap', 'preview']);
@@ -157,32 +168,8 @@ describe('playCue', () => {
   });
 });
 
-function recordingFoley() {
-  const plays: { name: string; opts?: { pitch?: number; volume?: number } }[] = [];
-  const sets: { muted?: boolean; volume?: number; theme?: string; space?: number }[] = [];
-  let stopped = 0;
-  const engine: FoleyEngine = {
-    play(name, opts) {
-      plays.push(opts === undefined ? { name } : { name, opts });
-      return {
-        stop() {
-          stopped += 1;
-        },
-      };
-    },
-    set(opts) {
-      sets.push(opts);
-    },
-    unlock() {},
-    audioContext() {
-      return null;
-    },
-  };
-  return { engine, plays, sets, stopped: () => stopped };
-}
-
-describe('Foley tactile cues', () => {
-  it('routes buttons and tile drag through Foley, not homemade voices', () => {
+describe('Foley cues', () => {
+  it('plays buttons as tap and tile pickup/drop as tap/thock', () => {
     const { engine, plays } = recordingFoley();
     setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => fakeAudioSettings() });
@@ -191,7 +178,7 @@ describe('Foley tactile cues', () => {
     playCue('dropTile');
     playCue('snapBack');
     playCue('trayTick');
-    expect(plays.map((play) => play.name)).toEqual(['tap', 'press', 'release', 'denied', 'tick']);
+    expect(plays.map((play) => play.name)).toEqual(['tap', 'tap', 'thock', 'denied', 'tick']);
     expect(getLastCues().map((cue) => cue.name)).toEqual([
       'uiTap',
       'pickupTile',
@@ -201,15 +188,15 @@ describe('Foley tactile cues', () => {
     ]);
   });
 
-  it('pitches cannon pickup/drop as heavier Foley siblings', () => {
+  it('pitches cannon pickup/drop as heavier tap/thock siblings', () => {
     const { engine, plays } = recordingFoley();
     setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => fakeAudioSettings() });
     playCue('pickupCannon');
     playCue('dropCannon');
     expect(plays).toEqual([
-      { name: 'press', opts: { pitch: -7 } },
-      { name: 'drop', opts: { pitch: -5 } },
+      { name: 'tap', opts: { pitch: -7 } },
+      { name: 'thock', opts: { pitch: -5 } },
     ]);
   });
 
@@ -227,23 +214,21 @@ describe('Foley tactile cues', () => {
     expect(plays).toEqual([{ name: 'on' }]);
   });
 
-  it('leaves teaching playback off Foley', () => {
+  it('routes teaching playback through Foley names', () => {
     const { engine, plays } = recordingFoley();
     setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => fakeAudioSettings() });
-    playCue('tilePop', { kind: 'add', chainDepth: 1 });
     playCue('cannonThump');
     playCue('exactKill');
-    expect(plays).toEqual([]);
+    playCue('buy');
+    playCue('nope');
+    expect(plays.map((play) => play.name)).toEqual(['press', 'sparkle', 'success', 'error']);
   });
 
-  it('stopAllCues stops a Foley handle', () => {
-    const { engine, stopped } = recordingFoley();
+  it('configures the mechanical theme', () => {
+    const { engine, sets } = recordingFoley();
     setFoleyEngine(engine);
     bindAudio({ soundEnabled: () => true, audio: () => fakeAudioSettings() });
-    playCue('uiTap');
-    expect(stopped()).toBe(0);
-    stopAllCues();
-    expect(stopped()).toBe(1);
+    expect(sets.some((entry) => entry.theme === 'mechanical')).toBe(true);
   });
 });

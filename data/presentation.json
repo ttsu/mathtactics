@@ -186,192 +186,41 @@
     "color": "#2f3e57"
   },
   "audio": {
-    "masterGain": 0.55,
     "maxVoices": 12,
     "impactDoubledGain": 1.35,
     "tilePop": {
       "depthRatio": 1.122462048309373,
       "add": { "baseHz": 523.25, "offsetSemitones": 2 },
       "sub": { "baseHz": 392, "offsetSemitones": -2 },
-      "mul": { "baseHz": 659.25, "offsetSemitones": 4, "harmonicGain": 0.045, "harmonicRatio": 2 }
+      "mul": { "baseHz": 659.25, "offsetSemitones": 4 }
     },
     "foley": {
-      "theme": "soft",
+      "theme": "mechanical",
       "volume": 0.7,
-      "space": 0.06,
+      "space": 0.04,
       "cues": {
         "uiTap": { "name": "tap" },
         "preview": { "name": "on" },
-        "pickupTile": { "name": "press" },
-        "pickupCannon": { "name": "press", "pitch": -7 },
-        "dropTile": { "name": "release" },
-        "dropCannon": { "name": "drop", "pitch": -5 },
+        "pickupTile": { "name": "tap" },
+        "pickupCannon": { "name": "tap", "pitch": -7 },
+        "dropTile": { "name": "thock" },
+        "dropCannon": { "name": "thock", "pitch": -5 },
         "snapBack": { "name": "denied" },
-        "trayTick": { "name": "tick", "volume": 0.45 }
-      }
-    },
-    "cues": {
-      "uiTap": {
-        "voices": [
-          { "type": "sine", "hz": 980, "attackMs": 6, "decayMs": 70, "peakGain": 0.07 }
-        ]
-      },
-      "preview": {
-        "voices": [
-          { "type": "triangle", "hz": 660, "attackMs": 8, "decayMs": 160, "peakGain": 0.09 },
-          { "type": "sine", "hz": 880, "offsetMs": 90, "attackMs": 8, "decayMs": 220, "peakGain": 0.08 }
-        ]
-      },
-      "pickupTile": {
-        "voices": [
-          { "type": "triangle", "hz": 420, "attackMs": 8, "decayMs": 90, "peakGain": 0.08 }
-        ]
-      },
-      "pickupCannon": {
-        "voices": [
-          { "type": "sine", "hz": 180, "attackMs": 10, "decayMs": 130, "peakGain": 0.1 },
-          {
-            "type": "noise",
-            "attackMs": 6,
-            "decayMs": 80,
-            "peakGain": 0.05,
-            "filter": { "type": "bandpass", "frequencyHz": 160, "Q": 0.9 }
-          }
-        ]
-      },
-      "dropTile": {
-        "voices": [
-          { "type": "sine", "hz": 320, "attackMs": 8, "decayMs": 110, "peakGain": 0.08 }
-        ]
-      },
-      "dropCannon": {
-        "voices": [
-          { "type": "sine", "hz": 140, "attackMs": 10, "decayMs": 160, "peakGain": 0.1 }
-        ]
-      },
-      "snapBack": {
-        "voices": [
-          {
-            "type": "noise",
-            "attackMs": 4,
-            "decayMs": 80,
-            "peakGain": 0.1,
-            "filter": { "type": "bandpass", "frequencyHz": 220, "Q": 0.8 }
-          }
-        ]
-      },
-      "trayTick": {
-        "voices": [
-          { "type": "sine", "hz": 1480, "attackMs": 4, "decayMs": 40, "peakGain": 0.04 }
-        ]
-      },
-      "cannonThump": {
-        "voices": [
-          { "type": "sine", "hz": 90, "attackMs": 8, "decayMs": 180, "peakGain": 0.12 },
-          {
-            "type": "noise",
-            "attackMs": 6,
-            "decayMs": 90,
-            "peakGain": 0.06,
-            "filter": { "type": "bandpass", "frequencyHz": 110, "Q": 1 }
-          }
-        ]
-      },
-      "tilePop": {
-        "voices": [
-          { "type": "sine", "attackMs": 8, "decayMs": 200, "peakGain": 0.1 }
-        ]
-      },
-      "impact": {
-        "voices": [
-          { "type": "triangle", "hz": 220, "attackMs": 6, "decayMs": 140, "peakGain": 0.1 },
-          {
-            "type": "noise",
-            "attackMs": 4,
-            "decayMs": 70,
-            "peakGain": 0.06,
-            "filter": { "type": "bandpass", "frequencyHz": 380, "Q": 1.1 }
-          }
-        ]
-      },
-      "kill": {
-        "voices": [
-          { "type": "sine", "hz": 480, "attackMs": 8, "decayMs": 220, "peakGain": 0.08 }
-        ]
-      },
-      "exactKill": {
-        "voices": [
-          { "type": "sine", "hz": 523.25, "attackMs": 8, "decayMs": 220, "peakGain": 0.08 },
-          { "type": "sine", "hz": 659.25, "offsetMs": 70, "attackMs": 6, "decayMs": 260, "peakGain": 0.07 },
-          { "type": "sine", "hz": 783.99, "offsetMs": 140, "attackMs": 6, "decayMs": 300, "peakGain": 0.07 },
-          { "type": "sine", "hz": 1046.5, "offsetMs": 210, "attackMs": 6, "decayMs": 360, "peakGain": 0.06 }
-        ]
-      },
-      "bounceBack": {
-        "voices": [
-          { "type": "triangle", "hz": 720, "attackMs": 8, "decayMs": 140, "peakGain": 0.1 },
-          { "type": "sine", "hz": 180, "offsetMs": 120, "attackMs": 12, "decayMs": 280, "peakGain": 0.09 }
-        ]
-      },
-      "clonk": {
-        "voices": [
-          {
-            "type": "noise",
-            "attackMs": 4,
-            "decayMs": 90,
-            "peakGain": 0.12,
-            "filter": { "type": "bandpass", "frequencyHz": 400, "Q": 1.4 }
-          }
-        ]
-      },
-      "detonate": {
-        "voices": [
-          { "type": "sine", "hz": 70, "attackMs": 10, "decayMs": 280, "peakGain": 0.13 }
-        ]
-      },
-      "spawn": {
-        "voices": [
-          { "type": "triangle", "hz": 500, "attackMs": 8, "decayMs": 90, "peakGain": 0.08 },
-          { "type": "sine", "hz": 280, "offsetMs": 70, "attackMs": 10, "decayMs": 160, "peakGain": 0.07 }
-        ]
-      },
-      "buy": {
-        "voices": [
-          { "type": "sine", "hz": 880, "attackMs": 8, "decayMs": 120, "peakGain": 0.09 },
-          { "type": "sine", "hz": 1320, "offsetMs": 60, "attackMs": 8, "decayMs": 180, "peakGain": 0.07 }
-        ]
-      },
-      "nope": {
-        "voices": [
-          { "type": "triangle", "hz": 180, "attackMs": 6, "decayMs": 120, "peakGain": 0.09 },
-          {
-            "type": "noise",
-            "attackMs": 4,
-            "decayMs": 80,
-            "peakGain": 0.05,
-            "filter": { "type": "bandpass", "frequencyHz": 240, "Q": 0.9 }
-          }
-        ]
-      },
-      "waveCleared": {
-        "voices": [
-          { "type": "sine", "hz": 523.25, "attackMs": 10, "decayMs": 180, "peakGain": 0.06 },
-          { "type": "sine", "hz": 659.25, "offsetMs": 90, "attackMs": 10, "decayMs": 220, "peakGain": 0.05 }
-        ]
-      },
-      "win": {
-        "voices": [
-          { "type": "sine", "hz": 523.25, "attackMs": 10, "decayMs": 200, "peakGain": 0.1 },
-          { "type": "sine", "hz": 659.25, "offsetMs": 80, "attackMs": 8, "decayMs": 240, "peakGain": 0.09 },
-          { "type": "sine", "hz": 783.99, "offsetMs": 160, "attackMs": 8, "decayMs": 280, "peakGain": 0.08 },
-          { "type": "triangle", "hz": 1046.5, "offsetMs": 240, "attackMs": 8, "decayMs": 340, "peakGain": 0.07 }
-        ]
-      },
-      "lose": {
-        "voices": [
-          { "type": "triangle", "hz": 440, "attackMs": 12, "decayMs": 200, "peakGain": 0.08 },
-          { "type": "sine", "hz": 494, "offsetMs": 140, "attackMs": 12, "decayMs": 280, "peakGain": 0.07 }
-        ]
+        "trayTick": { "name": "tick", "volume": 0.45 },
+        "cannonThump": { "name": "press", "pitch": -10 },
+        "tilePop": { "name": "pop" },
+        "impact": { "name": "press" },
+        "kill": { "name": "pop", "volume": 0.55 },
+        "exactKill": { "name": "sparkle" },
+        "bounceBack": { "name": "rise" },
+        "clonk": { "name": "thock", "pitch": -8 },
+        "detonate": { "name": "drop", "pitch": -12 },
+        "spawn": { "name": "drop" },
+        "buy": { "name": "success" },
+        "nope": { "name": "error" },
+        "waveCleared": { "name": "complete", "volume": 0.45 },
+        "win": { "name": "chime" },
+        "lose": { "name": "off" }
       }
     }
   }
