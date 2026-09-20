@@ -1,10 +1,12 @@
 // Settings (task 24 + 29 + 31): planning-hints toggle (off by default), Easy/Normal/Hard
 // default, and Sound on/off (default on). Icon-led, no sentences. Difficulty writes the next
-// New Game highlight only — it never mutates an in-progress run.
+// New Game highlight only — it never mutates an in-progress run. ← Back at the top left
+// matches the difficulty picker (GDD §11.1).
 import type { CSSProperties } from 'react';
 import type { DifficultyId } from '../../sim/core/types';
+import { MIN_TOUCH_TARGET } from '../state/designSpace';
 import { playCue, playUiTap } from '../state/audio';
-import { HintsIcon, PlayIcon, SpeakerIcon, StarIcon } from './icons';
+import { BackIcon, HintsIcon, SpeakerIcon, StarIcon } from './icons';
 import { SecretLongPress } from './debug';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
@@ -37,6 +39,22 @@ export function SettingsScreen() {
       data-testid="settings"
       style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
     >
+      <SecretLongPress>
+        <button
+          type="button"
+          className="screen-back pop-in"
+          data-testid="settings-back"
+          aria-label="Back"
+          style={{ minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET }}
+          onClick={() => {
+            playUiTap();
+            store.getState().setScreen('menu');
+          }}
+        >
+          <BackIcon size={32} />
+          <span className="button-label button-label-small">Back</span>
+        </button>
+      </SecretLongPress>
       <div className="settings-toggles">
         <button
           type="button"
@@ -88,21 +106,6 @@ export function SettingsScreen() {
           );
         })}
       </div>
-      <SecretLongPress>
-        <button
-          type="button"
-          className="big-button pop-in"
-          data-testid="settings-home"
-          aria-label="Home"
-          onClick={() => {
-            playUiTap();
-            store.getState().setScreen('menu');
-          }}
-        >
-          <PlayIcon size={96} />
-          <span className="button-label">Home</span>
-        </button>
-      </SecretLongPress>
     </div>
   );
 }

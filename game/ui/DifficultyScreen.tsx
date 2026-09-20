@@ -29,7 +29,7 @@ export function DifficultyScreen() {
     >
       <button
         type="button"
-        className="difficulty-back pop-in"
+        className="screen-back pop-in"
         data-testid="difficulty-back"
         aria-label="Back"
         style={{ minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET }}

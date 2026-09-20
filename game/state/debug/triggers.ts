@@ -2,7 +2,7 @@
 // long-press hold, and shake threshold can be unit-tested with a fake clock. The React layer
 // wires these to pointer / keyboard / DeviceMotion events.
 //
-// Recommended opener on iPad: 7-tap the main-menu title, or long-press Settings / Home.
+// Recommended opener on iPad: 7-tap the main-menu title, or long-press Settings / Back.
 // Shake is opt-in (iOS needs a permission prompt, and a 7-year-old shakes the iPad).
 // Desktop: Ctrl/Cmd+Shift+D, or `?debug=1`.
 
@@ -10,7 +10,7 @@ export const DEBUG_TRIGGERS = {
   /** Rapid taps on a secret target (title, star, wallet). */
   tapCount: 7,
   tapWindowMs: 3500,
-  /** Hold Settings or Home. Short tap still does the normal action. */
+  /** Hold Settings or Back. Short tap still does the normal action. */
   longPressMs: 1200,
   keyboard: { shift: true, key: 'd' },
   queryParam: 'debug',
@@ -100,10 +100,13 @@ export function queryWantsDebug(search: string, hash: string): boolean {
 
 export function isDebugHotkey(event: {
   key: string;
+  code?: string;
   shiftKey: boolean;
   ctrlKey: boolean;
   metaKey: boolean;
 }): boolean {
   if (!event.shiftKey || !(event.ctrlKey || event.metaKey)) return false;
-  return event.key.toLowerCase() === DEBUG_TRIGGERS.keyboard.key;
+  if (event.key.toLowerCase() === DEBUG_TRIGGERS.keyboard.key) return true;
+  // Ctrl+D is a control character in some WebKits (`key` becomes `\u0004`); `code` stays KeyD.
+  return event.code?.toLowerCase() === `key${DEBUG_TRIGGERS.keyboard.key}`;
 }
