@@ -23,6 +23,23 @@ async function burstTitle(page: Page, times: number) {
   }, times);
 }
 
+/** iPad WebKit often drops Playwright's Control chord (no physical Control key, page unfocused).
+ * Dispatch the same `keydown` DebugHost already listens for on `window`. */
+async function pressDebugHotkey(page: Page) {
+  await page.evaluate(() => {
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'd',
+        code: 'KeyD',
+        ctrlKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+  });
+}
+
 test('one tap on the title does not open the debug menu', async ({ page }) => {
   await openMenu(page);
   await tapTitle(page, 1);
@@ -38,9 +55,9 @@ test('7-tap the title opens the debug menu', async ({ page }) => {
 
 test('Ctrl+Shift+D toggles the debug menu', async ({ page }) => {
   await openMenu(page);
-  await page.keyboard.press('Control+Shift+D');
+  await pressDebugHotkey(page);
   await expect(page.getByTestId('debug-menu')).toBeVisible();
-  await page.keyboard.press('Control+Shift+D');
+  await pressDebugHotkey(page);
   await expect(page.getByTestId('debug-menu')).toHaveCount(0);
 });
 

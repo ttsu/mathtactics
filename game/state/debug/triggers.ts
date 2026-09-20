@@ -100,10 +100,13 @@ export function queryWantsDebug(search: string, hash: string): boolean {
 
 export function isDebugHotkey(event: {
   key: string;
+  code?: string;
   shiftKey: boolean;
   ctrlKey: boolean;
   metaKey: boolean;
 }): boolean {
   if (!event.shiftKey || !(event.ctrlKey || event.metaKey)) return false;
-  return event.key.toLowerCase() === DEBUG_TRIGGERS.keyboard.key;
+  if (event.key.toLowerCase() === DEBUG_TRIGGERS.keyboard.key) return true;
+  // Ctrl+D is a control character in some WebKits (`key` becomes `\u0004`); `code` stays KeyD.
+  return event.code?.toLowerCase() === `key${DEBUG_TRIGGERS.keyboard.key}`;
 }
