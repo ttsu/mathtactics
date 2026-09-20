@@ -26,6 +26,9 @@ test('New Run autosaves; reload resumes in planning with no lost progress', asyn
   await openMenu(page);
   // Nothing to continue yet: New Run is the big button, Puzzles the small one, no Continue.
   await expect(page.getByTestId('menu-continue')).toHaveCount(0);
+  await expect(page.getByTestId('menu-new-run')).toHaveAttribute('aria-label', 'New Game');
+  await expect(page.getByTestId('menu-puzzles')).toHaveAttribute('aria-label', 'Puzzles');
+  await expect(page.getByTestId('menu-hero')).toHaveAttribute('aria-hidden', 'true');
   await expectTouchTarget(page, 'menu-new-run');
   await expectTouchTarget(page, 'menu-puzzles');
 
@@ -44,6 +47,8 @@ test('New Run autosaves; reload resumes in planning with no lost progress', asyn
   await page.waitForFunction(() => window.__GAME__ !== undefined);
   expect(await getScreen(page)).toBe('menu');
   await expect(page.getByTestId('menu-continue')).toBeVisible();
+  await expect(page.getByTestId('menu-continue')).toHaveAttribute('aria-label', 'Continue');
+  await expect(page.getByTestId('menu-continue')).toContainText('Continue');
   await expectTouchTarget(page, 'menu-continue');
 
   await page.getByTestId('menu-continue').click();

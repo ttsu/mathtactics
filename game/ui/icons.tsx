@@ -55,37 +55,49 @@ export function PlayAgainIcon({ size }: { size: number }) {
   );
 }
 
-/** A play triangle with a small robot head beside it — New Run (task 14 req. 3): starting a run
- * spawns robots to fight, distinguishing it by shape from the plain `PlayIcon` used for Continue. */
-export function RobotPlayIcon({ size }: { size: number }) {
+/** A counterclockwise circular arrow — the smaller New Game beside Continue: start over from
+ * the beginning. Distinct from Continue's ▶ (and from the big orange New Game, which is also ▶
+ * when there is nothing to resume). Mirrored from `PlayAgainIcon`'s clockwise arc so the head
+ * points left (↺), not like a power-button stem. */
+export function RestartIcon({ size }: { size: number }) {
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
       <path
-        d="M4 8 L26 24 L4 40 Z"
-        fill="currentColor"
+        d="M8 24 A16 16 0 1 0 17 9.6"
+        fill="none"
         stroke="currentColor"
-        strokeWidth="5"
-        strokeLinejoin="round"
+        strokeWidth="6"
+        strokeLinecap="round"
       />
-      <rect x="30" y="14" width="16" height="14" rx="4" fill="currentColor" />
-      <rect x="35" y="8" width="6" height="6" rx="2" fill="currentColor" />
-      <circle cx="35" cy="21" r="2.2" fill="#2f3e57" />
-      <circle cx="41" cy="21" r="2.2" fill="#2f3e57" />
+      <path d="M21 2 L8 9 L20 17 Z" fill="currentColor" />
     </svg>
   );
 }
 
-/** A rounded tile chip with a bold "×" — Puzzles (task 14 req. 3): matches the decorative tile
- * chips already on the main menu, distinguishing it by shape from Continue/New Run's triangles. */
-export function TileChipIcon({ size }: { size: number }) {
+/** A jigsaw piece — Puzzles. Square body, knob on top and right, sockets on bottom and left, so
+ * the silhouette still reads as a puzzle when the word is covered (GDD §11.1). */
+export function PuzzlePieceIcon({ size }: { size: number }) {
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
-      <rect x="4" y="4" width="40" height="40" rx="10" fill="currentColor" />
       <path
-        d="M15 15 L33 33 M33 15 L15 33"
-        stroke="#2f3e57"
-        strokeWidth="6"
+        fill="currentColor"
+        d="M8 12 H18 A6 6 0 0 1 30 12 H40 V22 A6 6 0 0 1 40 34 V44 H30 A6 6 0 0 0 18 44 H8 V34 A6 6 0 0 0 8 22 Z"
+      />
+    </svg>
+  );
+}
+
+/** A small chevron used between the launch-screen formula chips. Decoration only. */
+export function FormulaArrowIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+      <path
+        d="M5 12 H16 M12 6 L19 12 L12 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.5"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

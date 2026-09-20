@@ -47,7 +47,7 @@ async function turnHintsOnFromMenu(page: Page) {
   await expect(page.getByTestId('settings-hints')).toHaveAttribute('aria-pressed', 'false');
   await page.getByTestId('settings-hints').click();
   await expect(page.getByTestId('settings-hints')).toHaveAttribute('aria-pressed', 'true');
-  await page.getByTestId('settings-home').click();
+  await page.getByTestId('settings-back').click();
   expect(await getScreen(page)).toBe('menu');
 }
 
@@ -67,7 +67,9 @@ test('Settings is on the menu with or without a resumable run; Sound row is on a
   await expect(page.getByTestId('settings')).toBeVisible();
   await expect(page.getByTestId('settings-hints')).toBeVisible();
   await expect(page.getByTestId('settings-sound')).toBeVisible();
-  await expect(page.getByTestId('settings-home')).toBeVisible();
+  await expect(page.getByTestId('settings-back')).toBeVisible();
+  await expect(page.getByTestId('settings-back')).toHaveAttribute('aria-label', 'Back');
+  await expect(page.getByTestId('settings-back')).toContainText('Back');
   await expect(page.getByTestId('settings-difficulty-easy')).toBeVisible();
   await expect(page.getByTestId('settings-difficulty-normal')).toBeVisible();
   await expect(page.getByTestId('settings-difficulty-hard')).toBeVisible();
@@ -80,9 +82,13 @@ test('Settings is on the menu with or without a resumable run; Sound row is on a
   await expect(page.getByTestId('settings-sound')).toContainText(/sound/i);
   await expectTouchTarget(page, 'settings-hints');
   await expectTouchTarget(page, 'settings-sound');
-  await expectTouchTarget(page, 'settings-home');
+  await expectTouchTarget(page, 'settings-back');
+  const backBox = await page.getByTestId('settings-back').boundingBox();
+  const hintsBox = await page.getByTestId('settings-hints').boundingBox();
+  expect(backBox!.x, 'Back sits on the left').toBeLessThan(hintsBox!.x);
+  expect(backBox!.y, 'Back sits above the toggles').toBeLessThan(hintsBox!.y);
 
-  await page.getByTestId('settings-home').click();
+  await page.getByTestId('settings-back').click();
   await startNewGame(page);
   await waitIdle(page);
   await page.getByTestId('home').click();
@@ -90,7 +96,7 @@ test('Settings is on the menu with or without a resumable run; Sound row is on a
   await expect(page.getByTestId('menu-settings')).toBeVisible();
 });
 
-test('Menu → Settings → Hints on → Home → New Game → place a tile → getHints matches laneHintValues', async ({
+test('Menu → Settings → Hints on → Back → New Game → place a tile → getHints matches laneHintValues', async ({
   page,
 }) => {
   await openMenu(page);

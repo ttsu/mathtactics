@@ -4,12 +4,12 @@
 finale, and does he want to go again?
 
 **Setup:** iPad in landscape, the PR preview (or production) already on the Home Screen, sound
-on. Open the app → big orange ▶ **New Game** (fresh run). If ▶ **Keep Going** is showing from an
-earlier session, do **not** tap it — tap the smaller **New Game** instead. If a difficulty
+on. Open the app → big orange ▶ **New Game** (fresh run). If ▶ **Continue** is showing from an
+earlier session, do **not** tap it — tap the smaller ↺ **New Game** instead. If a difficulty
 picker has shipped (M4.5), tap **Normal** (2 stars) — Playtest 4 measures the designed ladder.
 
 Why a fresh New Game: a run saved by the M3 build resumes into this 10-wave ladder through
-▶ Keep Going (the save schema did not change, so the old run is not discarded). That is not
+▶ Continue (the save schema did not change, so the old run is not discarded). That is not
 what Playtest 4 is measuring. Sound on so a wrong-parity clonk and bounce-back refill are
 audible if he hits them.
 
@@ -68,8 +68,8 @@ Tick or jot a word next to each as it happens; the wave number helps.
 - [ ] Does the **exact-kill row** of icons mean anything to him?
 
 **Continue and Home**
-- [ ] **Keep Going:** close the app (or background it) mid-run — including inside a late shop —
-      and reopen it. Does he find ▶ Keep Going on his own, or tap New Game out of habit?
+- [ ] **Continue:** close the app (or background it) mid-run — including inside a late shop —
+      and reopen it. Does he find ▶ Continue on his own, or tap New Game out of habit?
 - [ ] Does he **tap ⌂ Home** by accident? What does he do when the menu appears?
 
 **Afterwards (ask him)**

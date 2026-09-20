@@ -74,5 +74,23 @@ describe('queryWantsDebug / isDebugHotkey', () => {
     expect(isDebugHotkey({ key: 'd', shiftKey: true, ctrlKey: false, metaKey: true })).toBe(true);
     expect(isDebugHotkey({ key: 'd', shiftKey: true, ctrlKey: false, metaKey: false })).toBe(false);
     expect(isDebugHotkey({ key: 'd', shiftKey: false, ctrlKey: true, metaKey: false })).toBe(false);
+    expect(
+      isDebugHotkey({
+        key: '\u0004',
+        code: 'KeyD',
+        shiftKey: true,
+        ctrlKey: true,
+        metaKey: false,
+      }),
+    ).toBe(true);
+    expect(
+      isDebugHotkey({
+        key: 'x',
+        code: 'KeyX',
+        shiftKey: true,
+        ctrlKey: true,
+        metaKey: false,
+      }),
+    ).toBe(false);
   });
 });

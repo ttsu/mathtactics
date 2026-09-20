@@ -83,7 +83,7 @@ test('Back from the picker does not replace a saved run or the last pick', async
   expect(await getState(page)).toEqual(saved);
 });
 
-test('Keep Going after Easy New Game does not show the picker', async ({ page }) => {
+test('Continue after Easy New Game does not show the picker', async ({ page }) => {
   await openMenu(page);
   await startNewGame(page, 'easy');
   await waitIdle(page);
@@ -107,7 +107,7 @@ test('Settings three-way persists across reload and does not retcon a saved Easy
   await expectTouchTarget(page, 'settings-difficulty-normal');
   await expectTouchTarget(page, 'settings-difficulty-hard');
 
-  await page.getByTestId('settings-home').click();
+  await page.getByTestId('settings-back').click();
   await startNewGame(page, 'easy');
   await waitIdle(page);
   const easySeed = (await getState(page))?.seed;
@@ -117,7 +117,7 @@ test('Settings three-way persists across reload and does not retcon a saved Easy
   await page.getByTestId('menu-settings').click();
   await page.getByTestId('settings-difficulty-hard').click();
   await expect(page.getByTestId('settings-difficulty-hard')).toHaveAttribute('aria-pressed', 'true');
-  await page.getByTestId('settings-home').click();
+  await page.getByTestId('settings-back').click();
 
   await page.getByTestId('menu-continue').click();
   expect(await getScreen(page)).toBe('game');
@@ -129,7 +129,7 @@ test('Settings three-way persists across reload and does not retcon a saved Easy
   await page.getByTestId('menu-settings').click();
   await expect(page.getByTestId('settings-difficulty-hard')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByTestId('settings-difficulty-easy')).toHaveAttribute('aria-pressed', 'false');
-  await page.getByTestId('settings-home').click();
+  await page.getByTestId('settings-back').click();
   await page.getByTestId('menu-continue').click();
   expect((await getState(page))?.difficulty).toBe('easy');
 });
