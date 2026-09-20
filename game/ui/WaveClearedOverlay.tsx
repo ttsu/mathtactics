@@ -3,6 +3,7 @@
 // (GDD §10.5). Reward tiles are gone — the shop is the only way tiles enter a run.
 import type { CSSProperties } from 'react';
 import { playUiTap } from '../state/audio';
+import { continuePuzzleWave } from '../state/puzzleFlow';
 import { openShopScreen } from '../state/shopFlow';
 import { showWaveCleared, waveClearCoins, waveCount } from '../state/waveFlow';
 import { CoinStack } from './CoinStack';
@@ -15,9 +16,10 @@ export function WaveClearedOverlay() {
   const store = useAppStoreApi();
   const visible = useAppStore(showWaveCleared);
   const waveIndex = useAppStore((state) => state.run?.waveIndex ?? 0);
-  const count = useAppStore((state) => waveCount(state.data));
+  const count = useAppStore((state) => waveCount(state.data, state.run));
   const coins = useAppStore((state) => state.display.coins);
   const bonus = useAppStore((state) => waveClearCoins(state.run));
+  const puzzleMode = useAppStore((state) => state.run?.mode === 'puzzle');
   const popInMs = useAppStore((state) => state.data.presentation.screens.popInMs);
   const rewardStaggerMs = useAppStore((state) => state.data.presentation.screens.rewardStaggerMs);
 
@@ -35,22 +37,24 @@ export function WaveClearedOverlay() {
         </div>
       </SecretTap>
       <LevelDots index={waveIndex} count={count} cleared size="large" />
-      <div className="wave-wallet" data-testid="wave-wallet">
-        <span className="hud-stat shop-wallet-inline">
-          {coins}
-          <CoinStack size={40} />
-        </span>
-        {bonus > 0 && (
-          <span
-            className="wave-wallet-bonus pop-in"
-            data-testid="wave-clear-coins"
-            style={{ animationDelay: `${rewardStaggerMs}ms` } as CSSProperties}
-          >
-            +{bonus}
-            <CoinStack size={28} />
+      {!puzzleMode && (
+        <div className="wave-wallet" data-testid="wave-wallet">
+          <span className="hud-stat shop-wallet-inline">
+            {coins}
+            <CoinStack size={40} />
           </span>
-        )}
-      </div>
+          {bonus > 0 && (
+            <span
+              className="wave-wallet-bonus pop-in"
+              data-testid="wave-clear-coins"
+              style={{ animationDelay: `${rewardStaggerMs}ms` } as CSSProperties}
+            >
+              +{bonus}
+              <CoinStack size={28} />
+            </span>
+          )}
+        </div>
+      )}
       <button
         type="button"
         className="big-button pop-in"
@@ -58,7 +62,8 @@ export function WaveClearedOverlay() {
         aria-label="Next"
         onClick={() => {
           playUiTap();
-          openShopScreen(store);
+          if (puzzleMode) continuePuzzleWave(store);
+          else openShopScreen(store);
         }}
       >
         <PlayIcon size={96} />

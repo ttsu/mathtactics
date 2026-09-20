@@ -75,12 +75,17 @@ describe('showWaveCleared', () => {
     expect(showWaveCleared({ run: cleared, playback: playing, screen })).toBe(false);
   });
 
-  it('never shows outside run mode, outside waveCleared, or with no run', () => {
+  it('never shows in level mode, outside waveCleared, or with no run', () => {
     const levelMode = { mode: 'level', phase: 'waveCleared' } as unknown as RunState;
     const planning = { mode: 'run', phase: 'planning' } as RunState;
     expect(showWaveCleared({ run: levelMode, playback: IDLE_PLAYBACK, screen })).toBe(false);
     expect(showWaveCleared({ run: planning, playback: IDLE_PLAYBACK, screen })).toBe(false);
     expect(showWaveCleared({ run: null, playback: IDLE_PLAYBACK, screen })).toBe(false);
+  });
+
+  it('shows for a puzzle wave-cleared session', () => {
+    const puzzle = { mode: 'puzzle', phase: 'waveCleared' } as RunState;
+    expect(showWaveCleared({ run: puzzle, playback: IDLE_PLAYBACK, screen })).toBe(true);
   });
 
   it("never shows outside the game screen, matching showLevelCleared's guard (task 14/16 integration)", () => {

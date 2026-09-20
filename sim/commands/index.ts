@@ -4,3 +4,4 @@ export * from './level';
 export * from './newRun';
 export * from './nextWave';
 export * from './openShop';
+export * from './puzzle';

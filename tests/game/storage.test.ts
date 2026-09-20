@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addCompletedPuzzle,
   addSeen,
   addSeenMany,
+  loadCompletedPuzzles,
   loadRun,
   loadSeen,
   loadSettings,
@@ -168,6 +170,24 @@ describe('addSeenMany', () => {
     const storage = throwingStorage();
     expect(() => addSeenMany(storage, '/', ['add:1', 'sub:2'])).not.toThrow();
     expect(loadSeen(storage, '/')).toEqual([]);
+  });
+});
+
+describe('loadCompletedPuzzles / addCompletedPuzzle', () => {
+  it('starts empty and is additive, sorted, and de-duplicated', () => {
+    const storage = createMemoryStorage();
+    expect(loadCompletedPuzzles(storage, '/')).toEqual([]);
+    addCompletedPuzzle(storage, '/', 'bounce-house');
+    const result = addCompletedPuzzle(storage, '/', 'warm-up');
+    addCompletedPuzzle(storage, '/', 'warm-up');
+    expect(result).toEqual(['bounce-house', 'warm-up']);
+    expect(loadCompletedPuzzles(storage, '/')).toEqual(['bounce-house', 'warm-up']);
+  });
+
+  it('does not throw when the underlying storage throws', () => {
+    const storage = throwingStorage();
+    expect(() => addCompletedPuzzle(storage, '/', 'warm-up')).not.toThrow();
+    expect(loadCompletedPuzzles(storage, '/')).toEqual([]);
   });
 });
 

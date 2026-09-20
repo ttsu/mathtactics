@@ -157,6 +157,36 @@ export function loadSettings(storage: StorageLike, basePath: string): Settings {
   }
 }
 
+/** Sorted, de-duplicated puzzle ids this device has cleared (GDD §10.8). Additive and
+ * unaffected by `schemaVersion` — it survives version bumps like the seen-tiles log. */
+export function loadCompletedPuzzles(storage: StorageLike, basePath: string): string[] {
+  try {
+    const raw = storage.getItem(scopedKey(basePath, 'puzzles'));
+    if (raw === null) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return [];
+    const ids = (parsed as { completed?: unknown }).completed;
+    if (!Array.isArray(ids)) return [];
+    return Array.from(new Set(ids.filter((id): id is string => typeof id === 'string'))).sort();
+  } catch {
+    return [];
+  }
+}
+
+export function addCompletedPuzzle(
+  storage: StorageLike,
+  basePath: string,
+  puzzleId: string,
+): string[] {
+  const next = Array.from(new Set([...loadCompletedPuzzles(storage, basePath), puzzleId])).sort();
+  try {
+    storage.setItem(scopedKey(basePath, 'puzzles'), JSON.stringify({ completed: next }));
+  } catch {
+    // Storage failure must never break play (TR §13).
+  }
+  return next;
+}
+
 export function saveSettings(storage: StorageLike, basePath: string, settings: Settings): void {
   try {
     storage.setItem(scopedKey(basePath, 'settings'), JSON.stringify(settings));

@@ -7,7 +7,7 @@
 // means, so a pre-reader can still use the menu by icon and position alone.
 import type { CSSProperties } from 'react';
 import { playUiTap } from '../state/audio';
-import { playFromStart } from '../state/levelFlow';
+import { openPuzzleBook } from '../state/puzzleFlow';
 import { canContinue, continueRun } from '../state/runFlow';
 import { GearIcon, PlayIcon, PuzzlePieceIcon, RestartIcon } from './icons';
 import { MenuTitle } from './MenuTitle';
@@ -91,7 +91,7 @@ export function MainMenu() {
             aria-label="Puzzles"
             onClick={() => {
               playUiTap();
-              playFromStart(store);
+              openPuzzleBook(store);
             }}
           >
             <PuzzlePieceIcon size={56} />

@@ -14,6 +14,7 @@ import { buyOffer } from './buyOffer';
 import { buildLevelState } from './level';
 import { buildNewRun } from './newRun';
 import { buildNextWave } from './nextWave';
+import { buildPuzzleNextWave, buildPuzzleState, playablePuzzle } from './puzzle';
 import { openShop } from './openShop';
 import { moveCannon, moveTile, placeTile, returnTile, undoCommand } from './planning';
 import type { CommandResult } from './types';
@@ -33,8 +34,8 @@ export function applyCommand(
   cmd: Command,
   data: GameData,
 ): ApplyCommandResult {
-  // `loadLevel` and `newRun` install a state from scratch — they accept `state: null` or any
-  // phase (they replace it), unlike every other command (task 06 ruling, TR §5).
+  // `loadLevel`, `loadPuzzle`, and `newRun` install a state from scratch — they accept
+  // `state: null` or any phase (they replace it), unlike every other command (task 06 ruling, TR §5).
   if (cmd.type === 'newRun') {
     const result = buildNewRun(cmd.seed, data, cmd.difficulty);
     return { ok: true, state: result.state, events: result.events };
@@ -46,6 +47,12 @@ export function applyCommand(
       throw new Error(`loadLevel: unknown levelId "${cmd.levelId}"`);
     }
     return { ok: true, state: buildLevelState(levelDef, data), events: [] };
+  }
+
+  if (cmd.type === 'loadPuzzle') {
+    const puzzle = playablePuzzle(data, cmd.puzzleId);
+    const result = buildPuzzleState(puzzle, data);
+    return { ok: true, state: result.state, events: result.events };
   }
 
   if (state === null) {
@@ -73,6 +80,11 @@ export function applyCommand(
     case 'buyOffer':
       return buyOffer(state, cmd);
     case 'nextWave': {
+      if (state.mode === 'puzzle') {
+        if (state.phase !== 'waveCleared') return { ok: false, error: 'wrong_phase' };
+        const result = buildPuzzleNextWave(state, data);
+        return { ok: true, state: result.state, events: result.events };
+      }
       if (state.phase !== 'shop') return { ok: false, error: 'wrong_phase' };
       const result = buildNextWave(state, data);
       return { ok: true, state: result.state, events: result.events };

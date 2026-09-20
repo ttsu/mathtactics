@@ -22,12 +22,23 @@ export {
 } from './levelFlow';
 export type { LevelPosition } from './levelFlow';
 export {
+  continuePuzzleWave,
+  isPuzzlePlayable,
+  leavePuzzleBook,
+  openPuzzleBook,
+  replayPuzzle,
+  returnToPuzzleBook,
+  startPuzzle,
+} from './puzzleFlow';
+export {
   scopedKey,
   saveRun,
   loadRun,
   loadSeen,
   addSeen,
   addSeenMany,
+  loadCompletedPuzzles,
+  addCompletedPuzzle,
   loadSettings,
   saveSettings,
   DEFAULT_SETTINGS,

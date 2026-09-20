@@ -1,0 +1,19 @@
+name: occupied
+puzzle: occupied
+commands:
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 2, col: 1 } }
+  - { type: placeTile, pieceId: "piece:2", to: { lane: 2, col: 2 } }
+  - { type: placeTile, pieceId: "piece:3", to: { lane: 2, col: 3 } }
+  - endTurn
+  - nextWave
+  - { type: moveCannon, fromLane: 2, toLane: 0 }
+  - { type: placeTile, pieceId: "piece:5", to: { lane: 0, col: 1 } }
+  - endTurn
+expectEvents:
+  - { type: RobotDefeated, exact: true }
+  - { type: WaveCleared, waveIndex: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: RunWon }
+expectState:
+  phase: won
+  puzzleId: occupied

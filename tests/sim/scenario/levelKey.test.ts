@@ -37,7 +37,7 @@ describe('parseScenario — level key', () => {
   it('rejects `level` together with `board`', () => {
     const text = yaml(['name: t', 'level: level-x', 'board:', ...BLANK_BOARD]);
     expect(() => parseScenario(text)).toThrow(
-      'scenario: "level" and "board" cannot be used together',
+      'scenario: "board"/"level" cannot be used together',
     );
   });
 
@@ -48,7 +48,7 @@ describe('parseScenario — level key', () => {
 
   it('rejects a scenario with neither `level` nor `board`', () => {
     expect(() => parseScenario(yaml(['name: t', 'baseValue: 1']))).toThrow(
-      'scenario: needs either "board" (with "baseValue") or "level: <levelId>"',
+      'scenario: needs "board" (with "baseValue"), "level: <levelId>", or "puzzle: <puzzleId>"',
     );
   });
 

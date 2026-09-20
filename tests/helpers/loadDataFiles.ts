@@ -18,6 +18,7 @@ const DATA_FILE_KEYS = [
   'waves',
   'difficulty',
   'levels',
+  'puzzles',
   'presentation',
 ] as const;
 

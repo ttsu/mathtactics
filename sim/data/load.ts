@@ -17,7 +17,7 @@ function formatPath(path: (string | number)[]): string {
 
 /**
  * Validates the combined `/data` content. `raw` is keyed by file base name (`tiles`, `robots`,
- * `economy`, `shop`, `waves`, `difficulty`, `levels`, `presentation`), each value the file's parsed JSON.
+ * `economy`, `shop`, `waves`, `difficulty`, `levels`, `puzzles`, `presentation`), each value the file's parsed JSON.
  *
  * Pure; throws a plain `Error` naming the offending file and the path within it on the first
  * validation failure found, e.g. `tiles.json: [3].n: mul n must be 2-10`.

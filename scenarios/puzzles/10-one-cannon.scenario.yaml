@@ -1,0 +1,28 @@
+name: one cannon
+puzzle: one-cannon
+commands:
+  - endTurn
+  - nextWave
+  - { type: moveCannon, fromLane: 2, toLane: 0 }
+  - { type: placeTile, pieceId: "piece:0", to: { lane: 0, col: 1 } }
+  - endTurn
+  - nextWave
+  - { type: moveCannon, fromLane: 0, toLane: 4 }
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 4, col: 1 } }
+  - endTurn
+  - { type: returnTile, from: { lane: 4, col: 1 } }
+  - { type: moveCannon, fromLane: 4, toLane: 1 }
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 1, col: 1 } }
+  - { type: placeTile, pieceId: "piece:2", to: { lane: 1, col: 2 } }
+  - endTurn
+expectEvents:
+  - { type: RobotDefeated, exact: true }
+  - { type: WaveCleared, waveIndex: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: WaveCleared, waveIndex: 1 }
+  - { type: RobotDefeated, exact: true }
+  - { type: RobotDefeated, exact: true }
+  - { type: RunWon }
+expectState:
+  phase: won
+  puzzleId: one-cannon

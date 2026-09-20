@@ -1,0 +1,21 @@
+name: take away
+puzzle: take-away
+commands:
+  - { type: placeTile, pieceId: "piece:2", to: { lane: 2, col: 1 } }
+  - { type: placeTile, pieceId: "piece:0", to: { lane: 2, col: 2 } }
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 2, col: 3 } }
+  - endTurn
+  - nextWave
+  - { type: returnTile, from: { lane: 2, col: 1 } }
+  - { type: returnTile, from: { lane: 2, col: 3 } }
+  - { type: placeTile, pieceId: "piece:3", to: { lane: 2, col: 1 } }
+  - { type: placeTile, pieceId: "piece:4", to: { lane: 2, col: 3 } }
+  - endTurn
+expectEvents:
+  - { type: RobotDefeated, exact: true }
+  - { type: WaveCleared, waveIndex: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: RunWon }
+expectState:
+  phase: won
+  puzzleId: take-away
