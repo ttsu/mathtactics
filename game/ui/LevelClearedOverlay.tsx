@@ -2,6 +2,7 @@
 // and a big ▶ Next. Shown only once the level is cleared and the final kill has finished playing
 // (`showLevelCleared`). The wash covers the board so nothing else can be dragged or tapped.
 import type { CSSProperties } from 'react';
+import { playUiTap } from '../state/audio';
 import { continueToNextLevel, levelPosition, showLevelCleared } from '../state/levelFlow';
 import { PlayIcon, StarIcon } from './icons';
 import { SecretTap } from './debug';
@@ -38,7 +39,10 @@ export function LevelClearedOverlay() {
         className="big-button pop-in"
         data-testid="level-next"
         aria-label="Next"
-        onClick={() => continueToNextLevel(store)}
+        onClick={() => {
+          playUiTap();
+          continueToNextLevel(store);
+        }}
       >
         <PlayIcon size={96} />
       </button>

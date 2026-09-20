@@ -8,8 +8,8 @@ import { loadRawGameData } from '../tests/helpers/loadDataFiles';
 
 const data = parseGameData(loadRawGameData());
 
-// Task 24: Settings screen (hints only) and planning-hint numerals on the board.
-// Asserts on structured state (TR §14); no Sound row (M5).
+// Task 24: Settings screen (hints + difficulty) and planning-hint numerals on the board.
+// Task 31: Sound row (`settings-sound`), default on, persists, preview on enable.
 
 const getState = (page: Page) => page.evaluate(() => window.__GAME__!.getState());
 const getScreen = (page: Page) => page.evaluate(() => window.__GAME__!.getScreen());
@@ -51,7 +51,9 @@ async function turnHintsOnFromMenu(page: Page) {
   expect(await getScreen(page)).toBe('menu');
 }
 
-test('Settings is on the menu with or without a resumable run; no Sound row', async ({ page }) => {
+test('Settings is on the menu with or without a resumable run; Sound row is on and pressed', async ({
+  page,
+}) => {
   await openMenu(page);
   await expect(page.getByTestId('menu-settings')).toBeVisible();
   await expectTouchTarget(page, 'menu-settings');
@@ -64,17 +66,20 @@ test('Settings is on the menu with or without a resumable run; no Sound row', as
   expect(await getScreen(page)).toBe('settings');
   await expect(page.getByTestId('settings')).toBeVisible();
   await expect(page.getByTestId('settings-hints')).toBeVisible();
+  await expect(page.getByTestId('settings-sound')).toBeVisible();
   await expect(page.getByTestId('settings-home')).toBeVisible();
   await expect(page.getByTestId('settings-difficulty-easy')).toBeVisible();
   await expect(page.getByTestId('settings-difficulty-normal')).toBeVisible();
   await expect(page.getByTestId('settings-difficulty-hard')).toBeVisible();
   await expect(page.getByTestId('settings-hints')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByTestId('settings-sound')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByTestId('settings-difficulty-normal')).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await expect(page.locator('[data-testid="settings"]')).not.toContainText(/sound/i);
+  await expect(page.getByTestId('settings-sound')).toContainText(/sound/i);
   await expectTouchTarget(page, 'settings-hints');
+  await expectTouchTarget(page, 'settings-sound');
   await expectTouchTarget(page, 'settings-home');
 
   await page.getByTestId('settings-home').click();
@@ -155,5 +160,34 @@ test('Hints on survives reload', async ({ page }) => {
   await expect(page.getByTestId('main-menu')).toBeVisible();
   await page.getByTestId('menu-settings').click();
   await expect(page.getByTestId('settings-hints')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('[data-testid="settings"]')).not.toContainText(/sound/i);
+  await expect(page.getByTestId('settings-sound')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('Sound off survives reload; turning it on records preview', async ({ page }) => {
+  await openMenu(page);
+  await page.getByTestId('menu-settings').click();
+  await expect(page.getByTestId('settings-sound')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByTestId('settings-sound').click();
+  await expect(page.getByTestId('settings-sound')).toHaveAttribute('aria-pressed', 'false');
+
+  await page.reload();
+  await page.waitForFunction(() => window.__GAME__ !== undefined);
+  await expect(page.getByTestId('main-menu')).toBeVisible();
+  await page.getByTestId('menu-settings').click();
+  await expect(page.getByTestId('settings-sound')).toHaveAttribute('aria-pressed', 'false');
+
+  await page.evaluate(() => window.__GAME__!.clearLastCues());
+  await page.getByTestId('settings-sound').click();
+  await expect(page.getByTestId('settings-sound')).toHaveAttribute('aria-pressed', 'true');
+  const cues = await page.evaluate(() => window.__GAME__!.getLastCues());
+  expect(cues.some((cue) => cue.name === 'preview')).toBe(true);
+});
+
+test('New Game plays uiTap into getLastCues', async ({ page }) => {
+  await openMenu(page);
+  await page.evaluate(() => window.__GAME__!.clearLastCues());
+  await page.getByTestId('menu-new-run').click();
+  await expect(page.getByTestId('difficulty')).toBeVisible();
+  const cues = await page.evaluate(() => window.__GAME__!.getLastCues());
+  expect(cues.some((cue) => cue.name === 'uiTap')).toBe(true);
 });

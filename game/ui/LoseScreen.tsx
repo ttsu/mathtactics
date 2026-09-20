@@ -4,6 +4,7 @@
 // exact-kill row still celebrates the run's exact kills, and the only button is a big ▶ back to
 // the menu (GDD §10.1: loss returns to the menu, no other options).
 import type { CSSProperties } from 'react';
+import { playUiTap } from '../state/audio';
 import { waveCount } from '../state/waveFlow';
 import { DancingRobotIcon, PlayIcon, SmileIcon } from './icons';
 import { SecretTap } from './debug';
@@ -57,7 +58,10 @@ export function LoseScreen() {
         className="big-button pop-in"
         data-testid="lost-menu"
         aria-label="Menu"
-        onClick={() => store.getState().setScreen('menu')}
+        onClick={() => {
+          playUiTap();
+          store.getState().setScreen('menu');
+        }}
       >
         <PlayIcon size={96} />
       </button>

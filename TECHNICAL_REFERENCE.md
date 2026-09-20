@@ -358,7 +358,7 @@ fails `npm test`.
 | `waves.json` | Waves in run order (run length = array length): authored spawn schedules (waves 1–7, 10) and procedural tables (waves 8–9). Normal source of truth; Easy/Hard overlay this via `difficulty.json` |
 | `difficulty.json` | Easy / Normal / Hard overlays: integer-percent HP bands, procedural `countDelta`, `dropTemplates`. Overlay then existing `rollWave` |
 | `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
-| `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss 2×2 visual scale (`boss.scale`, `1` = fill the 2×2) |
+| `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss 2×2 visual scale (`boss.scale`, `1` = fill the 2×2), generated Web Audio recipes (`audio`, M5) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.
 
@@ -656,7 +656,10 @@ Recovery (rules in Phaser-free `/game/board/pointerSync.ts`, wired from `DragCon
   `playback.status === 'replaying'`. After a reload there is no snapshot, so Replay is disabled.
 - Beat timing is computed Phaser-free in `playback/timeline.ts` (from `presentation.json`
   `pacing` + `playback`); `playback/SegmentPlayer.ts` draws one segment's beats and its final
-  state on skip.
+  state on skip. Each beat starts by mapping the event through `cueForEvent` and calling
+  `playCue` (GDD §12.2: Replay plays sound). `SegmentPlayer.finish()` calls `stopAllCues()`, so
+  tap-to-skip, `skipAll()`, and `Director.stop()` cut remaining voices with the visuals. Canvas
+  skip does not play `uiTap`.
 
 ---
 
@@ -776,6 +779,9 @@ window.__GAME__ = {
                                             // BoardRenderer.drawnHints — what is drawn now, not a
                                             // re-derivation from `run`. Shape matches
                                             // `laneHintValues` plus `lane`.
+  getLastCues(): { name: string; params?: Record<string, unknown> }[];  // task 31
+  clearLastCues(): void;                    // ring of cues that actually started voices.
+                                            // Mute does not append. Ring size 32.
 };
 ```
 
@@ -823,8 +829,11 @@ real run; jumping to a puzzle does not touch the save.
   -webkit-user-select: none; -webkit-touch-callout: none; }`.
 - Rotate overlay: React component shown when `innerHeight > innerWidth`.
 - Audio: create/resume `AudioContext` on first `pointerdown`. One shared context
-  (`/game/state/audio.ts`: `getAudioContext()`, `installAudioUnlock()`), also handed to Phaser via
-  `audio.context` so the app never holds two.
+  (`/game/state/audio.ts`: `getAudioContext()`, `installAudioUnlock()`, `playCue()`,
+  `stopAllCues()`), also handed to Phaser via `audio.context` so the app never holds two.
+  Phaser's sound manager is unused. Recipes live in `presentation.json` `audio`. Settings has
+  a Sound row (`settings-sound`, default on); mute no-ops `playCue`. Turning sound on plays
+  `preview`.
 - Vite `base: "./"`.
 - **Update detection (production only):** each deploy to `main` stamps `import.meta.env.VITE_BUILD_ID`
   (full `GITHUB_SHA`) and emits `version.json` plus `<meta name="mt-build-id">` in `index.html`.

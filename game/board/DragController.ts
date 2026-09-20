@@ -16,6 +16,8 @@
 import type Phaser from 'phaser';
 import type { StoreApi } from 'zustand/vanilla';
 import { isPlaybackActive, type AppStore } from '../state/store';
+import { playCue } from '../state/audio';
+import { cueForDrop, cueForPickup, traySlotChanged } from '../state/cues';
 import type { BoardRenderer } from './BoardRenderer';
 import {
   heldPieceCenter,
@@ -127,6 +129,7 @@ export class DragController {
       source,
     };
     this.renderer.hold(view, this.config.liftScale, this.config.liftDurationMs);
+    if (this.gesture.mode === 'piece') playCue(cueForPickup(source.kind));
     this.follow(point, source);
   }
 
@@ -139,7 +142,10 @@ export class DragController {
     const dx = point.x - gesture.start.x;
 
     if (gesture.mode === 'scroll') {
-      this.renderer.setTrayScroll(scrollAfterDrag(gesture.startScroll, dx, run.tray.length));
+      const previous = this.renderer.trayScroll;
+      const next = scrollAfterDrag(gesture.startScroll, dx, run.tray.length);
+      this.renderer.setTrayScroll(next);
+      if (traySlotChanged(previous, next)) playCue('trayTick');
       return;
     }
 
@@ -152,16 +158,22 @@ export class DragController {
       );
       if (decided === 'scroll') {
         this.renderer.release();
+        const startScroll = this.renderer.trayScroll;
         this.gesture = {
           mode: 'scroll',
           pointerId: gesture.pointerId,
           start: gesture.start,
-          startScroll: this.renderer.trayScroll,
+          startScroll,
         };
-        this.renderer.setTrayScroll(scrollAfterDrag(this.renderer.trayScroll, dx, run.tray.length));
+        const next = scrollAfterDrag(startScroll, dx, run.tray.length);
+        this.renderer.setTrayScroll(next);
+        if (traySlotChanged(startScroll, next)) playCue('trayTick');
         return;
       }
-      if (decided === 'drag') gesture.mode = 'piece';
+      if (decided === 'drag') {
+        gesture.mode = 'piece';
+        playCue(cueForPickup(gesture.source.kind));
+      }
     }
 
     this.follow(point, gesture.source);
@@ -178,11 +190,16 @@ export class DragController {
     }
     this.gesture = null;
     if (gesture.mode === 'scroll') return;
+    if (gesture.mode === 'pending') {
+      this.renderer.release();
+      return;
+    }
 
     const { run, dispatch } = this.store.getState();
     const resolution = run ? this.resolve(designPoint(pointer), gesture.source) : null;
     // Hand the piece back first so the command's store update re-syncs it to its new home.
     this.renderer.release();
+    if (resolution !== null) playCue(cueForDrop(gesture.source.kind, resolution.kind));
     if (resolution?.kind === 'command') {
       dispatch(resolution.command);
     }

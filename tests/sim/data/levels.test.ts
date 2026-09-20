@@ -11,6 +11,7 @@ import {
   fakePlaybackSettings,
   fakeTraitSettings,
   fakeBossSettings,
+  fakeAudioSettings,
 } from '../../helpers/playbackSettings';
 
 function validTile(overrides: Record<string, unknown> = {}) {
@@ -55,6 +56,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
+      audio: fakeAudioSettings(),
     },
     ...overrides,
   };

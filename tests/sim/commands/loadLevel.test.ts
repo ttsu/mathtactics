@@ -15,6 +15,7 @@ import {
   fakePlaybackSettings,
   fakeTraitSettings,
   fakeBossSettings,
+  fakeAudioSettings,
 } from '../../helpers/playbackSettings';
 
 function expectOk(result: ReturnType<typeof applyCommand>): asserts result is {
@@ -210,6 +211,7 @@ describe('applyCommand — loadLevel', () => {
         traits: fakeTraitSettings(),
         boss: fakeBossSettings(),
         hints: fakeHintsSettings(),
+        audio: fakeAudioSettings(),
       },
     };
     const data = parseGameData(raw);

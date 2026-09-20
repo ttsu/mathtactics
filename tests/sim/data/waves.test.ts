@@ -13,6 +13,7 @@ import {
   fakePlaybackSettings,
   fakeTraitSettings,
   fakeBossSettings,
+  fakeAudioSettings,
 } from '../../helpers/playbackSettings';
 
 function spawnDef(overrides: Record<string, unknown> = {}) {
@@ -83,6 +84,7 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
+      audio: fakeAudioSettings(),
     },
   };
 }

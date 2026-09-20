@@ -4,6 +4,7 @@
 import type { CSSProperties } from 'react';
 import type { DifficultyId } from '../../sim/core/types';
 import { MIN_TOUCH_TARGET } from '../state/designSpace';
+import { playUiTap } from '../state/audio';
 import { startNewRun } from '../state/runFlow';
 import { BackIcon, StarIcon } from './icons';
 import { useAppStore, useAppStoreApi } from './StoreContext';
@@ -15,6 +16,7 @@ export function DifficultyScreen() {
   const selected = useAppStore((state) => state.settings.difficulty);
 
   function pick(id: DifficultyId) {
+    playUiTap();
     store.getState().setSettings({ difficulty: id });
     startNewRun(store, id);
   }
@@ -31,7 +33,10 @@ export function DifficultyScreen() {
         data-testid="difficulty-back"
         aria-label="Back"
         style={{ minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET }}
-        onClick={() => store.getState().setScreen('menu')}
+        onClick={() => {
+          playUiTap();
+          store.getState().setScreen('menu');
+        }}
       >
         <BackIcon size={32} />
         <span className="button-label button-label-small">Back</span>

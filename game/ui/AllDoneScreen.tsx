@@ -1,6 +1,7 @@
 // "All done" (task 11 req. 2): shown after the last puzzle level. Three big stars, every level dot
 // filled, and a big ▶ Play again that goes back to the first level.
 import type { CSSProperties } from 'react';
+import { playUiTap } from '../state/audio';
 import { playFromStart } from '../state/levelFlow';
 import { PlayAgainIcon, StarIcon } from './icons';
 import { SecretTap } from './debug';
@@ -31,7 +32,10 @@ export function AllDoneScreen() {
         className="big-button pop-in"
         data-testid="all-done-play-again"
         aria-label="Play again"
-        onClick={() => playFromStart(store)}
+        onClick={() => {
+          playUiTap();
+          playFromStart(store);
+        }}
       >
         <PlayAgainIcon size={104} />
       </button>

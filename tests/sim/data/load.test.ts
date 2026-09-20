@@ -14,6 +14,7 @@ import {
   fakePacingSettings,
   fakePlaybackSettings,
   fakeTraitSettings,
+  fakeAudioSettings,
 } from '../../helpers/playbackSettings';
 
 function validTile(overrides: Record<string, unknown> = {}) {
@@ -58,6 +59,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
       traits: fakeTraitSettings(),
       boss: fakeBossSettings(),
       hints: fakeHintsSettings(),
+      audio: fakeAudioSettings(),
     },
     ...overrides,
   };
@@ -150,6 +152,36 @@ describe('parseGameData on the real /data directory', () => {
       maxCannons: 5,
       income: { kill: 1, exactKill: 2, waveCleared: 3 },
     });
+  });
+
+  it('has every locked audio cue name (task 31)', () => {
+    const data = parseGameData(loadRawGameData());
+    expect(Object.keys(data.presentation.audio.cues).sort()).toEqual(
+      [
+        'bounceBack',
+        'buy',
+        'cannonThump',
+        'clonk',
+        'detonate',
+        'dropCannon',
+        'dropTile',
+        'exactKill',
+        'impact',
+        'kill',
+        'lose',
+        'nope',
+        'pickupCannon',
+        'pickupTile',
+        'preview',
+        'snapBack',
+        'spawn',
+        'tilePop',
+        'trayTick',
+        'uiTap',
+        'waveCleared',
+        'win',
+      ].sort(),
+    );
   });
 
   // Type-level guard for the schema-inferred `id: TileId` narrowing (not just `string`) — this

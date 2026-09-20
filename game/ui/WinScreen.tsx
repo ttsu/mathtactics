@@ -3,6 +3,7 @@
 // exact-kill row, and a big ▶ back to the menu. Task 14 owns switching `screen` to `'won'` and
 // clearing the save; this component only renders once it's there.
 import type { CSSProperties } from 'react';
+import { playUiTap } from '../state/audio';
 import { waveCount } from '../state/waveFlow';
 import { ExactKillRow } from './ExactKillRow';
 import { PlayIcon, StarIcon } from './icons';
@@ -47,7 +48,10 @@ export function WinScreen() {
         className="big-button pop-in"
         data-testid="won-menu"
         aria-label="Menu"
-        onClick={() => store.getState().setScreen('menu')}
+        onClick={() => {
+          playUiTap();
+          store.getState().setScreen('menu');
+        }}
       >
         <PlayIcon size={96} />
       </button>

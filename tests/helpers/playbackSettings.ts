@@ -159,9 +159,81 @@ export function fakeBossSettings() {
   return { scale: 1 };
 }
 
-/** The `presentation.json` `hints` block (task 24) for hand-built fake `GameData` fixtures. */
+/** Planning-hint numerals under tiles (task 24, GDD §5.7). Presentation only. */
 export function fakeHintsSettings() {
   return {
     color: '#2f3e57',
+  };
+}
+
+function fakeCue(hz = 440) {
+  return {
+    voices: [{ type: 'sine' as const, hz, attackMs: 5, decayMs: 40, peakGain: 0.08 }],
+  };
+}
+
+/** The `presentation.json` `audio` block (task 31) for hand-built fake `GameData` fixtures. */
+export function fakeAudioSettings() {
+  return {
+    masterGain: 0.5,
+    maxVoices: 8,
+    impactDoubledGain: 1.3,
+    tilePop: {
+      depthRatio: 1.122462048309373,
+      add: { baseHz: 500, offsetSemitones: 2 },
+      sub: { baseHz: 400, offsetSemitones: -2 },
+      mul: { baseHz: 600, offsetSemitones: 4, harmonicGain: 0.04, harmonicRatio: 2 },
+    },
+    cues: {
+      uiTap: fakeCue(880),
+      preview: fakeCue(660),
+      pickupTile: fakeCue(420),
+      pickupCannon: fakeCue(180),
+      dropTile: fakeCue(320),
+      dropCannon: fakeCue(140),
+      snapBack: {
+        voices: [
+          {
+            type: 'noise' as const,
+            attackMs: 4,
+            decayMs: 40,
+            peakGain: 0.08,
+            filter: { type: 'bandpass' as const, frequencyHz: 220, Q: 0.8 },
+          },
+        ],
+      },
+      trayTick: fakeCue(1400),
+      cannonThump: fakeCue(90),
+      tilePop: {
+        voices: [{ type: 'sine' as const, attackMs: 8, decayMs: 80, peakGain: 0.1 }],
+      },
+      impact: fakeCue(220),
+      kill: fakeCue(480),
+      exactKill: fakeCue(523),
+      bounceBack: {
+        voices: [
+          { type: 'triangle' as const, hz: 720, attackMs: 8, decayMs: 60, peakGain: 0.08 },
+          { type: 'sine' as const, hz: 180, offsetMs: 50, attackMs: 10, decayMs: 80, peakGain: 0.07 },
+        ],
+      },
+      clonk: {
+        voices: [
+          {
+            type: 'noise' as const,
+            attackMs: 4,
+            decayMs: 50,
+            peakGain: 0.1,
+            filter: { type: 'bandpass' as const, frequencyHz: 400, Q: 1.4 },
+          },
+        ],
+      },
+      detonate: fakeCue(70),
+      spawn: fakeCue(280),
+      buy: fakeCue(880),
+      nope: fakeCue(180),
+      waveCleared: fakeCue(523),
+      win: fakeCue(659),
+      lose: fakeCue(440),
+    },
   };
 }

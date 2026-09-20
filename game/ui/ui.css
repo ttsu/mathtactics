@@ -344,6 +344,18 @@
   width: 160px;
 }
 
+.settings-toggles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.settings-toggles .small-button {
+  min-width: 60px;
+  min-height: 60px;
+}
+
 /* Top-left Back on the difficulty picker — same purple as HUD ⌂ Home, compact so the three
    star buttons stay the only large targets. */
 .difficulty-back {

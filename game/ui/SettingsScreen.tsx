@@ -1,9 +1,10 @@
-// Settings (task 24 + 29): planning-hints toggle (off by default) and Easy/Normal/Hard default.
-// Icon-led, no sentences, no Sound row (that waits for M5 audio). Difficulty writes the next
+// Settings (task 24 + 29 + 31): planning-hints toggle (off by default), Easy/Normal/Hard
+// default, and Sound on/off (default on). Icon-led, no sentences. Difficulty writes the next
 // New Game highlight only — it never mutates an in-progress run.
 import type { CSSProperties } from 'react';
 import type { DifficultyId } from '../../sim/core/types';
-import { HintsIcon, PlayIcon, StarIcon } from './icons';
+import { playCue, playUiTap } from '../state/audio';
+import { HintsIcon, PlayIcon, SpeakerIcon, StarIcon } from './icons';
 import { SecretLongPress } from './debug';
 import { useAppStore, useAppStoreApi } from './StoreContext';
 
@@ -11,8 +12,24 @@ export function SettingsScreen() {
   const store = useAppStoreApi();
   const popInMs = useAppStore((state) => state.data.presentation.screens.popInMs);
   const hints = useAppStore((state) => state.settings.hints);
+  const sound = useAppStore((state) => state.settings.sound);
   const difficulty = useAppStore((state) => state.settings.difficulty);
   const modes = useAppStore((state) => state.data.difficulty.modes);
+
+  function toggleHints() {
+    playUiTap();
+    store.getState().setSettings({ hints: !hints });
+  }
+
+  function toggleSound() {
+    if (sound) {
+      playUiTap();
+      store.getState().setSettings({ sound: false });
+      return;
+    }
+    store.getState().setSettings({ sound: true });
+    playCue('preview');
+  }
 
   return (
     <div
@@ -20,17 +37,30 @@ export function SettingsScreen() {
       data-testid="settings"
       style={{ '--pop-in-ms': `${popInMs}ms` } as CSSProperties}
     >
-      <button
-        type="button"
-        className={`small-button pop-in${hints ? ' is-pressed' : ''}`}
-        data-testid="settings-hints"
-        aria-label="Hints"
-        aria-pressed={hints}
-        onClick={() => store.getState().setSettings({ hints: !hints })}
-      >
-        <HintsIcon size={56} />
-        <span className="button-label button-label-small">Hints</span>
-      </button>
+      <div className="settings-toggles">
+        <button
+          type="button"
+          className={`small-button pop-in${hints ? ' is-pressed' : ''}`}
+          data-testid="settings-hints"
+          aria-label="Hints"
+          aria-pressed={hints}
+          onClick={toggleHints}
+        >
+          <HintsIcon size={56} />
+          <span className="button-label button-label-small">Hints</span>
+        </button>
+        <button
+          type="button"
+          className={`small-button pop-in${sound ? ' is-pressed' : ''}`}
+          data-testid="settings-sound"
+          aria-label="Sound"
+          aria-pressed={sound}
+          onClick={toggleSound}
+        >
+          <SpeakerIcon size={56} />
+          <span className="button-label button-label-small">Sound</span>
+        </button>
+      </div>
       <div className="difficulty-row">
         {(['easy', 'normal', 'hard'] as const).map((id: DifficultyId) => {
           const mode = modes[id];
@@ -43,7 +73,10 @@ export function SettingsScreen() {
               data-testid={`settings-difficulty-${id}`}
               aria-label={mode.label}
               aria-pressed={pressed}
-              onClick={() => store.getState().setSettings({ difficulty: id })}
+              onClick={() => {
+                playUiTap();
+                store.getState().setSettings({ difficulty: id });
+              }}
             >
               <span className="difficulty-stars" aria-hidden="true">
                 {Array.from({ length: mode.stars }, (_, i) => (
@@ -61,7 +94,10 @@ export function SettingsScreen() {
           className="big-button pop-in"
           data-testid="settings-home"
           aria-label="Home"
-          onClick={() => store.getState().setScreen('menu')}
+          onClick={() => {
+            playUiTap();
+            store.getState().setScreen('menu');
+          }}
         >
           <PlayIcon size={96} />
           <span className="button-label">Home</span>

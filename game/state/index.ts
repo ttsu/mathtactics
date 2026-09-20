@@ -6,7 +6,10 @@ export {
   placementOverCanvas,
 } from './designSpace';
 export type { Rect, DesignSpacePlacement } from './designSpace';
-export { getAudioContext, installAudioUnlock } from './audio';
+export { getAudioContext, installAudioUnlock, playCue, playUiTap, stopAllCues, bindAudio } from './audio';
+export type { CueName, CueParams, LastCue, AudioBindings } from './audio';
+export { cueForEvent, cueForPickup, cueForDrop, traySlotChanged } from './cues';
+export type { DragPieceKind, DropKind } from './cues';
 export { gameData } from './gameData';
 export {
   continueToNextLevel,

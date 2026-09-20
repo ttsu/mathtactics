@@ -8,6 +8,7 @@
 // continue is obvious; it still dispatches `endTurn`.
 import type { CSSProperties } from 'react';
 import { HUD_BAR, MIN_TOUCH_TARGET } from '../state/designSpace';
+import { playUiTap } from '../state/audio';
 import { levelPosition } from '../state/levelFlow';
 import { goHome } from '../state/runFlow';
 import { goButtonClassName, goNudgeAnimationKey, planningLayoutKey } from './goNudge';
@@ -56,7 +57,10 @@ export function Hud() {
           tabIndex={canHome ? undefined : -1}
           style={{ ...touchTarget, visibility: canHome ? 'visible' : 'hidden' }}
           disabled={!canHome}
-          onClick={() => goHome(store)}
+          onClick={() => {
+            playUiTap();
+            goHome(store);
+          }}
         >
           <HomeIcon />
         </button>
@@ -78,7 +82,10 @@ export function Hud() {
           aria-label="Replay"
           style={touchTarget}
           disabled={!canReplay}
-          onClick={() => startReplay()}
+          onClick={() => {
+            playUiTap();
+            startReplay();
+          }}
         >
           <ReplayIcon />
         </button>
@@ -89,7 +96,10 @@ export function Hud() {
           aria-label="Undo"
           style={touchTarget}
           disabled={!canUndo}
-          onClick={() => dispatch({ type: 'undo' })}
+          onClick={() => {
+            playUiTap();
+            dispatch({ type: 'undo' });
+          }}
         >
           <UndoIcon />
         </button>
@@ -111,7 +121,10 @@ export function Hud() {
           // The playback Director (/game/board/playback) plays the resolved turn and calls
           // `finishPlayback` when it's done. Command is still `endTurn` (GDD §4); the
           // control is labelled Go so tapping to fire is obvious (GDD §11.1).
-          onClick={() => dispatch({ type: 'endTurn' })}
+          onClick={() => {
+            playUiTap();
+            dispatch({ type: 'endTurn' });
+          }}
         >
           <PlayIcon size={36} />
           Go
