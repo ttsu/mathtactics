@@ -1,15 +1,37 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.8
+**Version:** 0.9
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
-**Status:** M4 built, Playtest 4 pending. v0.8 records three difficulty modes (not yet built).
+**Status:** M4 and M4.5 built. Playtests 4–5 pending. v0.9 records M5 sound (rest of M5 unspecced).
 This document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.9
+
+M5 sound, specified before Playtest 4 so the first juice slice can ship on the current
+placeholders. Visual escalation, art, gallery, and title stay unspecced. Task 31.
+
+- **Generated Web Audio only** (grill S1 A). Oscillators and bandpassed noise. No sample
+  library, no `.wav` / `.ogg` in the repo. Phaser's sound manager stays unused; one shared
+  `AudioContext` already unlocked on first `pointerdown` (TR §15).
+- **Tactile, not chiptune.** Cues should feel like ASMR — rubber, wood, felt: short, close,
+  soft attack. Every kid-facing control makes a sound (buttons, picking up and placing tiles
+  and cannons, tray scroll). Debug is silent.
+- **Tile pops are operator-coloured** (grill S2 B) on a `chainDepth` curve, never on ball
+  value. `+` leans up, `−` leans down, `×` is brighter; depth still rises through a subtract.
+- **Planning and playback both speak.** Cannon thump, spawn drop, drop / snap-back, shop
+  buy / nope (grill S3 C). Wave-cleared is a short sting, quieter than win (grill S4 B).
+  Lose is distinct from win and not sad (grill S5 B) — no shaming trombone.
+- **No music in v1.** Planning is quiet so the first pop is the event.
+- **Settings Sound row ships with the audio.** Icon + the word *Sound*, default on. Turning
+  it on plays a preview so the toggle is audible the first time. `settings.sound` already
+  exists in storage.
+- **Replay plays sound.** Skip cuts remaining voices. Mute is on/off, not a slider.
 
 ## 0. Changes in v0.8
 
@@ -863,8 +885,7 @@ Normal; Odd-only / Even-only **65%** (floor 8) so one leak stays a chip; procedu
 7. **No Safari interference.** No pinch-zoom, pull-to-refresh, swipe-back, or text-selection
    on long-press during play.
 8. **Settings** (from main menu): planning hints (off by default); difficulty default
-   (Easy / Normal / Hard, default Normal) once M4.5 ships. Sound on/off ships with M5 audio —
-   M4 Settings has no Sound row.
+   (Easy / Normal / Hard, default Normal); sound on/off (default on) once M5 audio ships.
 
 ---
 
@@ -918,7 +939,9 @@ timed, escalating sequence**. The simulation produces an event list; presentatio
 5. **Blocked (parity) hits** get a distinct "clonk": the shield shakes, the robot does not.
 6. **HUD commits follow playback.** Coins and base HP update only when the matching event plays.
 7. **Skip:** tapping during playback jumps to the end of the current lane; tapping again skips the next.
-8. **Replay:** a HUD button during planning replays the last turn's events (visual only).
+   Remaining scheduled sounds for that lane cut with the visuals.
+8. **Replay:** a HUD button during planning replays the last turn's events. Simulation commits
+   stay no-ops; **sound plays**.
 9. **Pacing lives in data** (`/data/presentation.json`: ball speed, per-tile pause, lane gap).
    Target: ~2–3 s per active lane + ~1 s advance → ~8–10 s for a 3-lane turn.
 
@@ -926,6 +949,22 @@ timed, escalating sequence**. The simulation produces an event list; presentatio
 
 > **Anything that changes a number belongs to the simulation. Anything that only changes how
 > it feels belongs to presentation.** Presentation never reports back to the simulation.
+
+### 12.4 Sound
+
+Sound is a teaching channel, same job as the gold star and the clonk shield. He should hear
+*what happened* without looking up from the number.
+
+- **One player** in `/game/state` (board and UI must not import each other). `playCue(name, params?)`
+  no-ops when `settings.sound` is false or Web Audio is missing. Recipes live in
+  `presentation.json` `audio` — no Hz, gain, or duration in code (GDD §13).
+- **Sparse, bounded, distinct valence.** Pitch tracks **chain depth** (1–7), never ball value.
+  Exact kill sparkles (a fixed figure, even on a 1-tile wave-1 kill). Bounce-back sucks
+  backward. Clonk is dead wood. Those three do not share a family.
+- **Tactile UI.** Enabled buttons, lifting a piece, placing it, snapping it back, and tray
+  ticks all click. The click is satisfying and close, not an arcade bleep.
+- **Skip** stops voices for the skipped segment. **Replay** plays the cues again.
+- **Mute** is a Settings row. Turning sound on plays a preview. No volume slider, no music.
 
 ---
 
@@ -937,7 +976,7 @@ never need to edit code to change a number.
 Data-defined: tile definitions, robot templates and traits, wave spawn schedules and
 procedural tables, HP ranges, difficulty overlays (Easy / Hard multipliers and pack deltas),
 shop pricing and offer tables, ladder guarantees, economy values, starting state, presentation
-pacing. File list in `TECHNICAL_REFERENCE.md`.
+pacing and audio recipes. File list in `TECHNICAL_REFERENCE.md`.
 
 ---
 
@@ -1049,7 +1088,7 @@ Work is tracked in `TASKS.md` with one spec per task in `tasks/`.
 | **M3 Economy** | Shop, coins, cannons & upgrades, seen-tiles log, ladder waves 1–7 | Playtest 3 |
 | **M4 Traits & finale** | Trait telegraph, ladder swap on 4/6/7, waves 8–10 + Boss, hints toggle, settings | Playtest 4 — complete v1 run |
 | **M4.5 Difficulty modes** | Easy / Normal / Hard overlays, New Game picker, leftover bands per mode | A parent can pick a stretch that fits |
-| **M5 Juice & art** | Escalation, celebrations, sound, AI art pass | v1 |
+| **M5 Juice & art** | Sound (task 31); then escalation, celebrations, art, gallery, title | v1 |
 
 Task specs are written one milestone at a time; later milestones may change after playtests.
 
@@ -1102,7 +1141,7 @@ questions**, not blockers for M0/M1:
 | Ladder waves 4–7 authored templates | Drafted untraited in M3 (task 21); first teaching trait swapped in M4 (task 22) |
 | Waves 8–9 procedural table design | Specified in task 25 (`waves.json` `procedural` groups) |
 | Browsable seen-tiles gallery | M5, with the art pass (§8.7) |
-| Sound sourcing (library vs generated) | M5 |
+| Sound sourcing (library vs generated) | **Closed v0.9:** generated Web Audio only (grill S1 A). Task 31 |
 | Kid-facing title and art style | M5 |
 | Easy / Hard leftover bands | Task 30 tunes `difficulty.json` percents and count deltas; Normal leftover median 50–70 is still unmet (tasks 25/27) |
 | Ship M4.5 before or after Playtest 4 | Grill A: after H4, so Playtest 4 measures one ladder. Build 28–29 first if the next session needs Easy |
@@ -1176,6 +1215,24 @@ These were not explicitly discussed and were chosen as the simplest consistent o
 - schemaVersion bumps (4) so a pre-mode save is discarded, not migrated.
 - HUD does not show the current difficulty during play (numbers stay the largest element).
 - Implement after Playtest 4 (grill A) unless the next session needs Easy.
+
+### 18.4 Minor calls made while writing v0.9 (M5 sound)
+
+- Generated oscillators + bandpassed noise. No sample files (grill S1 A).
+- `tilePop` operator colour on the depth curve (grill S2 B): `+` up, `−` down, `×` brighter.
+  Depth still rises through a subtract. Ball value never maps to Hz.
+- Cannon thump, spawn drop, pickup / drop / snap-back, tray tick, every enabled kid-facing
+  button (grill S3 C, plus “all interactions”). Debug is silent.
+- Wave-cleared sting quieter than win (grill S4 B). Puzzle `LevelCleared` uses the same quiet
+  family.
+- Lose sting distinct from win, not sad (grill S5 B).
+- Replay plays sound. Skip cuts voices. Mute is on/off; enabling plays a preview.
+- No music. No volume slider. No Sound row until the player exists (task 31 ships both).
+- Exact-kill sting is a **fixed** figure, not “whatever pitch the chain ended on.”
+- Shop buy / nope replace `uiTap` on those cards (do not double). Inert cards stay silent
+  (GDD §8.6).
+- Aesthetic: soft attack, short decay, sine/triangle + noise. No square, no saw, no long
+  reverb. Numbers in `presentation.json`.
 
 ---
 

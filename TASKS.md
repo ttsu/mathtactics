@@ -120,7 +120,19 @@ conflicts in: `data/difficulty.json`, `sim/data/schemas.ts`, `sim/core/types.ts`
 | 30 | [Per-mode leftover bands](tasks/30-difficulty-balance.md) | data / tests | 28 | Complete |
 | H5 | **Human: Playtest 5** — play Easy and Hard with your son; record notes in `playtests/05.md` | human | 29, 30 | Not Started |
 
-## M5 — Juice & Art *(specs written after Playtest 4)*
+## M5 — Juice & Art
 
-Chain escalation · exact-kill celebration · bounce-back & clonk beats · purchase juice ·
-seen-tiles gallery · sound (Web Audio) · AI-generated art pass · kid-facing title decision · **v1**
+Gate: **v1**. Visual juice, art, gallery, and title stay unspecced until after Playtests 4–5.
+**Sound is specified first** (GDD v0.9) so it can ship on the current placeholder beats.
+
+Grill (sound): generated Web Audio (S1 A); operator-coloured tile pops on `chainDepth` (S2 B);
+cannon thump + spawn + every kid-facing control (S3 C, plus tactile ASMR); wave-cleared sting
+quieter than win (S4 B); lose distinct but not sad (S5 B). No music. Mute is on/off.
+
+Task 31 owns `presentation.json` `audio`, `game/state/audio.ts`, `SettingsScreen.tsx`,
+`e2e/settings.spec.ts`, and the playback/drag call sites. Later juice tasks may retune gains;
+they must not replace the player or the cue-name set without a GDD change.
+
+| # | Task | Layer | Depends on | Status |
+|---|---|---|---|---|
+| 31 | [Web Audio, cue table & Settings Sound row](tasks/31-web-audio-and-sound.md) | state / ui / board | — | Not Started |
