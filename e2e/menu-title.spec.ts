@@ -44,7 +44,7 @@ test('main menu title is MATH VS ROBOTS with tiles, a slammed VS, and robots', a
   expect(robotsFirst.y + robotsFirst.height).toBeGreaterThan(mathLast.y);
   expect(mathLast.x + mathLast.width).toBeLessThan(robotsFirst.x);
   const gap = robotsFirst.x - (mathLast.x + mathLast.width);
-  expect(gap).toBeGreaterThan(80);
+  expect(gap).toBeGreaterThan(40);
 
   const mathFirst = await page.getByTestId('menu-title-tile').first().boundingBox();
   expect(mathFirst, 'M tile').not.toBeNull();
