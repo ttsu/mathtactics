@@ -197,7 +197,7 @@ describe('parseGameData on the real /data directory', () => {
     expect(foley.cues.pickupCannon).toEqual({ name: 'tap', pitch: -7 });
     expect(foley.cues.dropCannon).toEqual({ name: 'thock', pitch: -5 });
     expect(foley.cues.tilePop).toEqual({ name: 'success', theme: 'glass' });
-    expect(foley.cues.exactKill.name).toBe('sparkle');
+    expect(foley.cues.exactKill.name).toBe('complete');
   });
 
   // Type-level guard for the schema-inferred `id: TileId` narrowing (not just `string`) — this

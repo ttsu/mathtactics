@@ -222,7 +222,7 @@ describe('Foley cues', () => {
     playCue('exactKill');
     playCue('buy');
     playCue('nope');
-    expect(plays.map((play) => play.name)).toEqual(['press', 'sparkle', 'success', 'error']);
+    expect(plays.map((play) => play.name)).toEqual(['press', 'complete', 'success', 'error']);
   });
 
   it('plays tilePop as a glass-theme success, then restores mechanical', () => {

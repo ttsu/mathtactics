@@ -211,7 +211,7 @@
         "tilePop": { "name": "success", "theme": "glass" },
         "impact": { "name": "press" },
         "kill": { "name": "pop", "volume": 0.55 },
-        "exactKill": { "name": "sparkle" },
+        "exactKill": { "name": "complete" },
         "bounceBack": { "name": "rise" },
         "clonk": { "name": "thock", "pitch": -8 },
         "detonate": { "name": "drop", "pitch": -12 },

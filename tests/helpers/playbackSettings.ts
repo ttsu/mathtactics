@@ -194,7 +194,7 @@ export function fakeAudioSettings() {
         tilePop: { name: 'success' as const, theme: 'glass' as const },
         impact: { name: 'press' as const },
         kill: { name: 'pop' as const, volume: 0.55 },
-        exactKill: { name: 'sparkle' as const },
+        exactKill: { name: 'complete' as const },
         bounceBack: { name: 'rise' as const },
         clonk: { name: 'thock' as const, pitch: -8 },
         detonate: { name: 'drop' as const, pitch: -12 },
