@@ -87,22 +87,6 @@ export function PuzzlePieceIcon({ size }: { size: number }) {
   );
 }
 
-/** A small chevron used between the launch-screen formula chips. Decoration only. */
-export function FormulaArrowIcon({ size }: { size: number }) {
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
-      <path
-        d="M5 12 H16 M12 6 L19 12 L12 18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 /** A chunky gold five-point star. */
 export function StarIcon({ size }: { size: number }) {
   return (

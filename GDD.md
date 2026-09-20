@@ -1,16 +1,25 @@
 # Math Tactics — Game Design Document
 
 **Title:** Math Tactics (v1 working title; a kid-facing name may come with the M5 art pass)
-**Version:** 0.9.1
+**Version:** 0.9.2
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
 **Status:** M4 and M4.5 built. Playtests 4–5 pending. v0.9 records M5 sound (rest of M5 unspecced).
 v0.9.1 is a launch-screen label/glyph pass after a human review of the home page.
+v0.9.2 drops the formula-strip banner once MATH VS ROBOTS is the launch decoration.
 This document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.9.2
+
+Human request after MATH VS ROBOTS landed on the launch screen: drop the formula-strip banner
+(ball → +N → ×N → −N). The title is the decoration; a second row of tiles was redundant.
+
+- **No formula strip on the launch screen.** MATH VS ROBOTS is the only decoration above the
+  buttons.
 
 ## 0. Changes in v0.9.1
 
@@ -807,8 +816,7 @@ whose trait is invisible reads as a bug, not a puzzle.
   run, big **▶ *New Game***. Smaller **🧩 *Puzzles*** (the M1 hand-authored levels). Each is
   an icon with its label beneath (§11.1). No confirmation dialogs. New Game opens the
   difficulty picker (§10.7), then replaces any saved run. Continue resumes the saved run's
-  difficulty as-is. The chips under the title are a non-interactive formula strip (ball →
-  operators), not buttons.
+  difficulty as-is. The launch screen has no formula-strip banner under the title.
 - A small **Home** button in the HUD (hidden during playback) returns to the launch screen with
   no confirmation. A run is already saved; a puzzle session is simply dropped.
 - **Puzzles are never saved** and never overwrite the saved run.

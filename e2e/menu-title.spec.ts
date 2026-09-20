@@ -10,6 +10,7 @@ test('main menu title is MATH VS ROBOTS with tiles, a slammed VS, and robots', a
   await expect(page.getByTestId('menu-title-tile')).toHaveCount(4);
   await expect(page.getByTestId('menu-title-robot')).toHaveCount(6);
   await expect(page.getByTestId('menu-title-vs')).toHaveText('VS');
+  await expect(page.getByTestId('menu-hero')).toHaveCount(0);
 
   const tileLetters = await page.getByTestId('menu-title-tile').allTextContents();
   expect(tileLetters.map((text) => text.replace(/[^A-Z]/g, '')).join('')).toBe('MATH');
