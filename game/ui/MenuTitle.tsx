@@ -53,9 +53,6 @@ export function MenuTitle({
     >
       <span className="visually-hidden">{TITLE_NAME}</span>
       <span key={play} className="menu-title-art" aria-hidden="true">
-        <span className="menu-title-vs" data-testid="menu-title-vs">
-          {TITLE_VS}
-        </span>
         <span className="menu-title-words">
           <span className="menu-title-math">
             {TITLE_MATH.map((_, index) => {
@@ -76,6 +73,11 @@ export function MenuTitle({
               );
             })}
           </span>
+          <span className="menu-title-vs-slot">
+            <span className="menu-title-vs" data-testid="menu-title-vs">
+              {TITLE_VS}
+            </span>
+          </span>
           <span className="menu-title-robots">
             {TITLE_ROBOTS.map((letter, index) => (
               <span
@@ -83,7 +85,7 @@ export function MenuTitle({
                 className="menu-title-robot"
                 data-testid="menu-title-robot"
                 style={{
-                  animationDelay: `${titleLetterPlopDelayMs(index, timings.titlePlopDelayMs, timings.titleLetterStaggerMs)}ms`,
+                  animationDelay: `${titleLetterPlopDelayMs(TITLE_MATH.length + index, timings.titlePlopDelayMs, timings.titleLetterStaggerMs)}ms`,
                 }}
               >
                 <span className="menu-title-robot-antenna" />

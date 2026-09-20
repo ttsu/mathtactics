@@ -26,10 +26,13 @@ describe('titleEntrance', () => {
 
   it('plops letters only after VS has started slamming', () => {
     const plopDelayMs = 560;
-    const letterStaggerMs = 50;
+    const letterStaggerMs = 140;
     expect(titleLetterPlopDelayMs(0, plopDelayMs, letterStaggerMs)).toBe(plopDelayMs);
-    expect(titleLetterPlopDelayMs(1, plopDelayMs, letterStaggerMs)).toBe(610);
-    expect(titleLetterPlopDelayMs(5, plopDelayMs, letterStaggerMs)).toBe(810);
+    expect(titleLetterPlopDelayMs(1, plopDelayMs, letterStaggerMs)).toBe(700);
+    expect(titleLetterPlopDelayMs(5, plopDelayMs, letterStaggerMs)).toBe(1260);
+    expect(titleLetterPlopDelayMs(TITLE_MATH.length, plopDelayMs, letterStaggerMs)).toBeGreaterThan(
+      titleLetterPlopDelayMs(TITLE_MATH.length - 1, plopDelayMs, letterStaggerMs),
+    );
     expect(titleLetterPlopDelayMs(0, plopDelayMs, letterStaggerMs)).toBeGreaterThan(0);
   });
 });
@@ -41,7 +44,7 @@ describe('presentation.json title entrance', () => {
     expect(screens.titleVsSlamMs).toBeGreaterThan(0);
     expect(screens.titlePlopMs).toBeGreaterThan(0);
     expect(screens.titlePlopDelayMs).toBeGreaterThan(0);
-    expect(screens.titleLetterStaggerMs).toBeGreaterThan(0);
+    expect(screens.titleLetterStaggerMs).toBeGreaterThanOrEqual(120);
     expect(screens.titleReplayMs).toBe(60_000);
     expect(screens.titlePlopDelayMs).toBeGreaterThanOrEqual(screens.titleVsSlamMs * 0.5);
   });

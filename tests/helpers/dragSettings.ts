@@ -29,7 +29,7 @@ export function fakeScreenSettings() {
     titleVsSlamMs: 640,
     titlePlopMs: 560,
     titlePlopDelayMs: 560,
-    titleLetterStaggerMs: 50,
+    titleLetterStaggerMs: 140,
     titleReplayMs: 60000,
   };
 }

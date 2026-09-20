@@ -29,7 +29,8 @@ export function titleTileFace(index: number): TitleTileFace {
   return { letter, glyph, colorKey };
 }
 
-/** VS slams at delay 0. Letters plop after `plopDelayMs`, then ripple by `letterStaggerMs`. */
+/** VS slams at delay 0. Letters plop after `plopDelayMs`, then one-by-one by `letterStaggerMs`
+ * across MATH and then ROBOTS (pass `TITLE_MATH.length + index` for a robot). */
 export function titleLetterPlopDelayMs(
   index: number,
   plopDelayMs: number,

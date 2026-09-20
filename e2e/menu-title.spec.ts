@@ -43,5 +43,18 @@ test('main menu title is MATH VS ROBOTS with tiles, a slammed VS, and robots', a
   expect(mathLast.y + mathLast.height).toBeGreaterThan(robotsFirst.y);
   expect(robotsFirst.y + robotsFirst.height).toBeGreaterThan(mathLast.y);
   expect(mathLast.x + mathLast.width).toBeLessThan(robotsFirst.x);
-  expect(robotsFirst.x - (mathLast.x + mathLast.width)).toBeGreaterThan(80);
+  const gap = robotsFirst.x - (mathLast.x + mathLast.width);
+  expect(gap).toBeGreaterThan(80);
+
+  const mathFirst = await page.getByTestId('menu-title-tile').first().boundingBox();
+  expect(mathFirst, 'M tile').not.toBeNull();
+  if (!mathFirst) return;
+  expect(mathFirst.x).toBeLessThan(80);
+
+  const vs = await page.getByTestId('menu-title-vs').boundingBox();
+  expect(vs, 'VS').not.toBeNull();
+  if (!vs) return;
+  const gapMid = mathLast.x + mathLast.width + gap / 2;
+  const vsMid = vs.x + vs.width / 2;
+  expect(Math.abs(vsMid - gapMid)).toBeLessThan(40);
 });
