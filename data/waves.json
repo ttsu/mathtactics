@@ -57,12 +57,12 @@
     {
       "id": "wave-7",
       "spawns": [
-        { "turn": 1, "lane": "A", "robot": "odd-only", "hp": [20, 28] },
-        { "turn": 1, "lane": "B", "robot": "basic", "hp": [30, 40] },
-        { "turn": 1, "lane": "C", "robot": "basic", "hp": [30, 40] },
-        { "turn": 8, "lane": "A", "robot": "basic", "hp": [36, 44] },
-        { "turn": 8, "lane": "B", "robot": "basic", "hp": [36, 44] },
-        { "turn": 8, "lane": "C", "robot": "basic", "hp": [36, 44] }
+        { "turn": 1, "lane": "A", "robot": "odd-only", "hp": [22, 30] },
+        { "turn": 1, "lane": "B", "robot": "basic", "hp": [34, 44] },
+        { "turn": 1, "lane": "C", "robot": "basic", "hp": [34, 44] },
+        { "turn": 8, "lane": "A", "robot": "basic", "hp": [40, 48] },
+        { "turn": 8, "lane": "B", "robot": "basic", "hp": [40, 48] },
+        { "turn": 8, "lane": "C", "robot": "basic", "hp": [40, 48] }
       ]
     },
     {
@@ -72,20 +72,20 @@
           {
             "turn": 1,
             "count": 3,
-            "hp": [34, 46],
+            "hp": [38, 50],
             "pool": ["weakness-5", "bounce-back", "odd-only", "even-only", "basic"],
             "hpByRobot": {
-              "odd-only": [18, 26],
-              "even-only": [18, 26]
+              "odd-only": [20, 28],
+              "even-only": [20, 28]
             }
           },
           {
             "turn": 8,
             "count": 3,
-            "hp": [42, 56],
+            "hp": [46, 60],
             "pool": ["weakness-2", "weakness-10", "even-only", "bounce-back", "basic"],
             "hpByRobot": {
-              "even-only": [20, 28]
+              "even-only": [22, 30]
             }
           }
         ]
@@ -98,25 +98,7 @@
           {
             "turn": 1,
             "count": 4,
-            "hp": [42, 54],
-            "pool": [
-              "weakness-5",
-              "weakness-2",
-              "weakness-10",
-              "bounce-back",
-              "odd-only",
-              "even-only",
-              "basic"
-            ],
-            "hpByRobot": {
-              "odd-only": [20, 28],
-              "even-only": [20, 28]
-            }
-          },
-          {
-            "turn": 8,
-            "count": 4,
-            "hp": [48, 60],
+            "hp": [46, 58],
             "pool": [
               "weakness-5",
               "weakness-2",
@@ -132,8 +114,8 @@
             }
           },
           {
-            "turn": 15,
-            "count": 3,
+            "turn": 8,
+            "count": 4,
             "hp": [52, 64],
             "pool": [
               "weakness-5",
@@ -147,6 +129,24 @@
             "hpByRobot": {
               "odd-only": [24, 32],
               "even-only": [24, 32]
+            }
+          },
+          {
+            "turn": 15,
+            "count": 3,
+            "hp": [56, 70],
+            "pool": [
+              "weakness-5",
+              "weakness-2",
+              "weakness-10",
+              "bounce-back",
+              "odd-only",
+              "even-only",
+              "basic"
+            ],
+            "hpByRobot": {
+              "odd-only": [26, 32],
+              "even-only": [26, 32]
             }
           }
         ]

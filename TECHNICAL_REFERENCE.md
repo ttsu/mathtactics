@@ -258,7 +258,9 @@ emits the first turn's spawns.
   (no RNG), then `/sim/waves/rollWave.ts` draws on the `wave` stream: authored waves assign letters
   then HP (TR §9). Procedural waves (M4) draw each group's distinct lanes, then per lane a pool
   template **without replacement** and HP. Result sorted by `turn` (stable). Exact draw order is
-  normative so saves and scenarios are reproducible. Normal overlay is identity.
+  normative so saves and scenarios are reproducible. Normal overlay is identity. Hard
+  scales procedural non-Boss HP (120%, `hpApplies: procedural`); authored waves, parity,
+  and Boss stay 100%.
 
 Impact rules are implemented once in `/sim/resolve/impact.ts` as a pure function
 `resolveImpact(robot, ballValue) → ImpactOutcome`, exactly per GDD §5.4.
@@ -356,7 +358,7 @@ fails `npm test`.
 | `economy.json` | Starting state (base HP, coins, cannon lane, base value), income values, max cannons, schema version (4 from M4.5) |
 | `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees (below) |
 | `waves.json` | Waves in run order (run length = array length): authored spawn schedules (waves 1–7, 10) and procedural tables (waves 8–9). Normal source of truth; Easy/Hard overlay this via `difficulty.json` |
-| `difficulty.json` | Easy / Normal / Hard overlays: integer-percent HP bands, procedural `countDelta`, `dropTemplates`. Overlay then existing `rollWave` |
+| `difficulty.json` | Easy / Normal / Hard overlays: integer-percent HP bands, `hpApplies` (`all` / `procedural`), procedural `countDelta`, `dropTemplates`. Overlay then existing `rollWave` |
 | `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
 | `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss 2×2 visual scale (`boss.scale`, `1` = fill the 2×2), Foley cue mappings (`audio`, M5) |
 
