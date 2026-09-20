@@ -12,9 +12,13 @@ async function openMenu(page: Page) {
 }
 
 async function expectTouchTarget(page: Page, testId: string) {
+  await expect
+    .poll(async () => (await page.getByTestId(testId).boundingBox())?.height ?? 0, {
+      timeout: 2_000,
+    })
+    .toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
   const box = await page.getByTestId(testId).boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
-  expect(box?.height).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
 }
 
 test('Puzzles opens the book; Back returns to the menu', async ({ page }) => {
