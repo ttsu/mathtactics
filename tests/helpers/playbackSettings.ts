@@ -201,7 +201,7 @@ export function fakeAudioSettings() {
         spawn: { name: 'drop' as const },
         buy: { name: 'success' as const },
         nope: { name: 'error' as const },
-        waveCleared: { name: 'complete' as const, volume: 0.45 },
+        waveCleared: { name: 'success' as const, theme: 'soft' as const, volume: 0.45 },
         win: { name: 'chime' as const },
         lose: { name: 'off' as const },
       },

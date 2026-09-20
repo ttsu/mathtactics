@@ -222,7 +222,14 @@ describe('Foley cues', () => {
     playCue('exactKill');
     playCue('buy');
     playCue('nope');
-    expect(plays.map((play) => play.name)).toEqual(['press', 'complete', 'success', 'error']);
+    playCue('waveCleared');
+    expect(plays.map((play) => play.name)).toEqual([
+      'press',
+      'complete',
+      'success',
+      'error',
+      'success',
+    ]);
   });
 
   it('plays tilePop as a glass-theme success, then restores mechanical', () => {
@@ -236,5 +243,16 @@ describe('Foley cues', () => {
     expect(themes[themes.length - 2]).toBe('glass');
     expect(themes[themes.length - 1]).toBe('mechanical');
     expect(themes.length).toBeGreaterThan(themesBefore);
+  });
+
+  it('plays waveCleared as a soft-theme success, then restores mechanical', () => {
+    const { engine, plays, sets } = recordingFoley();
+    setFoleyEngine(engine);
+    bindAudio({ soundEnabled: () => true, audio: () => fakeAudioSettings() });
+    playCue('waveCleared');
+    expect(plays).toEqual([{ name: 'success', opts: { volume: 0.45 } }]);
+    const themes = sets.map((entry) => entry.theme).filter((theme) => theme !== undefined);
+    expect(themes[themes.length - 2]).toBe('soft');
+    expect(themes[themes.length - 1]).toBe('mechanical');
   });
 });

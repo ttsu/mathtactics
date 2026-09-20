@@ -306,12 +306,12 @@ Sample files. Debug sounds. Changing leftover HP. Difficulty overlay behaviour.
 - **Foley `play()` only** — not `bind()`. Phaser drags have no DOM attributes; mute and last-cues stay on `playCue`. `getAudioContext()` reuses Foley's context via `getAnalyser().context`. `tilePop` pitch is `12 * log2(hz / add.baseHz)` so operator colour and `chainDepth` still rise, never from ball value.
 
 **Design questions raised:**
-- Teaching Foley names (`exactKill` → `complete`, `bounceBack` → `rise`, `lose` → `off`, …) started as nearest-cue picks. `exactKill` was retuned from `sparkle` to `complete` after the iPad listen (PR #60).
+- Teaching Foley names (`exactKill` → `complete`, `waveCleared` → soft-theme `success`, `bounceBack` → `rise`, `lose` → `off`, …) started as nearest-cue picks. `exactKill` was retuned from `sparkle` to `complete` after the iPad listen (PR #60). `waveCleared` was retuned from `complete` to Foley `success` / theme `soft`.
 
 **Known issues / follow-up:**
 - First-gesture / exact-kill / clonk / bounce-back / shop-nope / mechanical tap-thock / **glass-theme success tilePop vs clicky buttons** still need an iPad listen on the preview. Shop `buy` also maps to Foley `success` but stays on the global mechanical theme.
 - Later juice tasks may retune `audio.foley` but must not rename locked game cue names.
-- `exactKill` and `waveCleared` now share Foley `complete`. Wave-cleared stays quieter (`volume` 0.45); exact kill uses default volume. Confirm on the iPad that the reward still reads louder than the between-wave sting.
+- `exactKill` is Foley `complete`. `waveCleared` is Foley `success` on per-cue theme `soft` at volume 0.45 so it stays quieter than `win`. Confirm both on the iPad.
 
 **Files created:** `game/state/cues.ts`, `tests/game/cues.test.ts`
 **Files modified:** `data/presentation.json`, `sim/data/schemas.ts`, `game/state/audio.ts`, `game/state/index.ts`, `game/state/testHandle.ts`, `game/main.tsx`, `game/board/playback/SegmentPlayer.ts`, `game/board/DragController.ts`, `game/ui/{SettingsScreen,MainMenu,DifficultyScreen,Hud,ShopScreen,WaveClearedOverlay,LevelClearedOverlay,WinScreen,LoseScreen,AllDoneScreen,UpdateBanner,icons}.tsx`, `game/ui/ui.css`, `TECHNICAL_REFERENCE.md`, `TASKS.md`, `CLAUDE.md`, `e2e/{settings,difficulty}.spec.ts`, `tests/helpers/playbackSettings.ts`, fake `GameData` fixtures, `tests/game/{audio,testHandle,store}.test.ts`, `tests/sim/data/load.test.ts`, `package.json`
