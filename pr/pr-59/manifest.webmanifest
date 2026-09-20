@@ -1,6 +1,6 @@
 {
-  "name": "Math Tactics",
-  "short_name": "Math Tactics",
+  "name": "Math vs. Robots",
+  "short_name": "Math vs. Robots",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
