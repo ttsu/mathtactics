@@ -34,4 +34,14 @@ test('main menu title is MATH VS ROBOTS with tiles, a slammed VS, and robots', a
     .getByTestId('menu-title-vs')
     .evaluate((el) => getComputedStyle(el).animationDelay);
   expect(Number.parseFloat(firstTileDelay)).toBeGreaterThan(Number.parseFloat(vsDelay));
+
+  const math = await page.locator('.menu-title-math').boundingBox();
+  const robots = await page.locator('.menu-title-robots').boundingBox();
+  expect(math, 'MATH row').not.toBeNull();
+  expect(robots, 'ROBOTS row').not.toBeNull();
+  if (!math || !robots) return;
+  expect(math.y + math.height).toBeGreaterThan(robots.y);
+  expect(robots.y + robots.height).toBeGreaterThan(math.y);
+  expect(math.x + math.width).toBeLessThan(robots.x);
+  expect(robots.x - (math.x + math.width)).toBeGreaterThan(80);
 });

@@ -1,6 +1,7 @@
-// Kid-facing main-menu title: MATH as number tiles, VS in Permanent Marker, ROBOTS as robots
-// with letters where HP would be. VS slams first; the rows plop in after it. Replays on a
-// timer from `presentation.json` `screens.titleReplayMs`.
+// Kid-facing main-menu title: MATH as number tiles and ROBOTS as robots on one row, with VS
+// in Permanent Marker slammed between them. Letters sit where the numeral / HP would be.
+// VS slams first; MATH and ROBOTS plop in after it. Replays on a timer from
+// `presentation.json` `screens.titleReplayMs`.
 import { useEffect, useState, type CSSProperties, type ComponentProps } from 'react';
 import type { TileColorKey } from '../state/tileFace';
 import {
@@ -55,40 +56,42 @@ export function MenuTitle({
         <span className="menu-title-vs" data-testid="menu-title-vs">
           {TITLE_VS}
         </span>
-        <span className="menu-title-math">
-          {TITLE_MATH.map((_, index) => {
-            const face = titleTileFace(index);
-            return (
+        <span className="menu-title-words">
+          <span className="menu-title-math">
+            {TITLE_MATH.map((_, index) => {
+              const face = titleTileFace(index);
+              return (
+                <span
+                  key={`math-${index}-${face.letter}`}
+                  className="menu-title-tile"
+                  data-testid="menu-title-tile"
+                  style={{
+                    background: tileColors[face.colorKey],
+                    animationDelay: `${titleLetterPlopDelayMs(index, timings.titlePlopDelayMs, timings.titleLetterStaggerMs)}ms`,
+                  }}
+                >
+                  <span className="menu-title-tile-glyph">{face.glyph}</span>
+                  {face.letter}
+                </span>
+              );
+            })}
+          </span>
+          <span className="menu-title-robots">
+            {TITLE_ROBOTS.map((letter, index) => (
               <span
-                key={`math-${index}-${face.letter}`}
-                className="menu-title-tile"
-                data-testid="menu-title-tile"
+                key={`robot-${index}-${letter}`}
+                className="menu-title-robot"
+                data-testid="menu-title-robot"
                 style={{
-                  background: tileColors[face.colorKey],
                   animationDelay: `${titleLetterPlopDelayMs(index, timings.titlePlopDelayMs, timings.titleLetterStaggerMs)}ms`,
                 }}
               >
-                <span className="menu-title-tile-glyph">{face.glyph}</span>
-                {face.letter}
+                <span className="menu-title-robot-antenna" />
+                <span className="menu-title-robot-body">{letter}</span>
+                <span className="menu-title-robot-bar" />
               </span>
-            );
-          })}
-        </span>
-        <span className="menu-title-robots">
-          {TITLE_ROBOTS.map((letter, index) => (
-            <span
-              key={`robot-${index}-${letter}`}
-              className="menu-title-robot"
-              data-testid="menu-title-robot"
-              style={{
-                animationDelay: `${titleLetterPlopDelayMs(index, timings.titlePlopDelayMs, timings.titleLetterStaggerMs)}ms`,
-              }}
-            >
-              <span className="menu-title-robot-antenna" />
-              <span className="menu-title-robot-body">{letter}</span>
-              <span className="menu-title-robot-bar" />
-            </span>
-          ))}
+            ))}
+          </span>
         </span>
       </span>
     </h1>
