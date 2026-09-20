@@ -86,7 +86,7 @@ interface ActiveVoice {
 let shared: AudioContext | null = null;
 let bindings: AudioBindings | null = null;
 let lastCues: LastCue[] = [];
-let activeVoices: ActiveVoice[] = [];
+const activeVoices: ActiveVoice[] = [];
 let foleyEngine: FoleyEngine = liveFoleyEngine();
 
 function liveFoleyEngine(): FoleyEngine {
