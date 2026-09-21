@@ -138,4 +138,4 @@ change. All locked cues play through Foley (`@foleyjs/core`).
 |---|---|---|---|---|
 | 31 | [Web Audio, cue table & Settings Sound row](tasks/31-web-audio-and-sound.md) | state / ui / board | — | Complete (iPad check pending) |
 | 32 | [Puzzle book](tasks/32-puzzle-book.md) | data / sim / state / ui | 31 | Complete (iPad check pending) |
-| 33 | [Puzzle book difficulty](tasks/33-puzzle-difficulty.md) | data / tests | 32 | In Progress |
+| 33 | [Puzzle book difficulty](tasks/33-puzzle-difficulty.md) | data / tests | 32 | Complete |
