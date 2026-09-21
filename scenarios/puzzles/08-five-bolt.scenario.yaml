@@ -3,12 +3,36 @@ puzzle: five-bolt
 commands:
   - { type: placeTile, pieceId: "piece:0", to: { lane: 2, col: 1 } }
   - endTurn
+  - { type: moveCannon, fromLane: 2, toLane: 4 }
+  - { type: moveTile, from: { lane: 2, col: 1 }, to: { lane: 4, col: 1 } }
+  - endTurn
   - nextWave
+  - { type: moveCannon, fromLane: 4, toLane: 2 }
+  - { type: moveTile, from: { lane: 4, col: 1 }, to: { lane: 2, col: 1 } }
   - { type: placeTile, pieceId: "piece:1", to: { lane: 2, col: 2 } }
+  - endTurn
+  - { type: returnTile, from: { lane: 2, col: 2 } }
+  - { type: moveCannon, fromLane: 2, toLane: 0 }
+  - { type: moveTile, from: { lane: 2, col: 1 }, to: { lane: 0, col: 1 } }
+  - endTurn
+  - nextWave
+  - { type: moveCannon, fromLane: 0, toLane: 2 }
+  - { type: moveTile, from: { lane: 0, col: 1 }, to: { lane: 2, col: 1 } }
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 2, col: 2 } }
+  - endTurn
+  - { type: returnTile, from: { lane: 2, col: 2 } }
+  - endTurn
+  - { type: moveCannon, fromLane: 2, toLane: 3 }
+  - { type: moveTile, from: { lane: 2, col: 1 }, to: { lane: 3, col: 1 } }
   - endTurn
 expectEvents:
   - { type: RobotDefeated, exact: true }
+  - { type: RobotDefeated, exact: true }
   - { type: WaveCleared, waveIndex: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: RobotDefeated, exact: true }
+  - { type: WaveCleared, waveIndex: 1 }
+  - { type: RobotDefeated, exact: true }
   - { type: RobotDefeated, exact: true }
   - { type: RunWon }
 expectState:

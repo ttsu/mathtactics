@@ -178,6 +178,7 @@ A playable `puzzles.json` entry installs a short authored run: fixed-HP, fixed-l
 granted tiles/cannons, full turn loop (advance, detonate, lose). `resolveTurn` uses that
 puzzle's wave count for last-wave `RunWon`. `nextWave` is legal from `waveCleared` (no shop).
 `loadPuzzle` accepts a null state. Completion ids live in device storage, not `RunState`.
+`stars` 1–3 are difficulty (GDD §10.8): Pack 1's 3-star `recipe` is bounce-back exact-amount.
 
 ---
 

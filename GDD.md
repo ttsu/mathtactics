@@ -1,7 +1,7 @@
 # Math vs. Robots — Game Design Document
 
 **Title:** Math vs. Robots
-**Version:** 0.9.4
+**Version:** 0.9.5
 **Platform:** Web, iPad landscape primary (iPad 10th gen, 10.9"), installable to Home Screen
 **Stack:** TypeScript · React (UI) · Phaser 4 (board) — see §16 and `TECHNICAL_REFERENCE.md`
 **Audience:** Children, approximately 2nd grade math level (ages 7–8)
@@ -10,10 +10,23 @@ v0.9.1 is a launch-screen label/glyph pass after a human review of the home page
 v0.9.2 drops the formula-strip banner once MATH VS ROBOTS is the launch decoration.
 v0.9.3 renames the game to Math vs. Robots; the hosting URL stays `mathtactics.timtsu.com`.
 v0.9.4 makes Normal slightly harder and Hard moderately harder.
+v0.9.5 retunes the puzzle book: 1-star simple, 2-star moderate, 3-star Recipe is bounce-back exact.
 This document is the single source of truth for *design*.
 `TECHNICAL_REFERENCE.md` is the source of truth for *architecture*.
 
 ---
+
+## 0. Changes in v0.9.5
+
+Human request after Pack 1 shipped: the puzzles are too easy. One star should be simple,
+two stars moderately challenging, three stars genuinely difficult.
+
+- **Star bands.** 1-star is one idea and small numbers (Warm Up stays the tutorial). 2-star
+  uses more robots, more HP, more waves or delayed spawns, and tile rearranging. 3-star
+  must be an exact-amount exam.
+- **Recipe is bounce-back.** Every robot on the one 3-star scenario is Bounce-back, so
+  overkill does not clear it. Five waves, more robots, higher HP. A known exact-kill
+  solution still exists.
 
 ## 0. Changes in v0.9.4
 
@@ -928,6 +941,10 @@ Puzzles is a book of authored scenarios, not the 10-wave ladder.
   wave 1. ← *Back* returns to the book. No check mark.
 - Pack 1 ships playable. Later packs stay in `puzzles.json` but stay off the grid until they
   have waves. The M1 FIRE-only boards in `levels.json` remain a test/debug harness.
+- **Stars are difficulty.** 1 star is simple (one idea, small numbers; Warm Up is the
+  tutorial). 2 stars are moderately challenging (more robots, more HP, more rounds, a trait
+  or a rearrange). 3 stars are genuinely difficult. Pack 1's only 3-star, Recipe, uses
+  Bounce-back on every robot so the player must hit the exact amount.
 
 ---
 
