@@ -3,7 +3,9 @@ import {
   addCompletedPuzzle,
   addSeen,
   addSeenMany,
+  dismissHomeScreen,
   loadCompletedPuzzles,
+  loadHomeScreenDismissed,
   loadRun,
   loadSeen,
   loadSettings,
@@ -215,5 +217,37 @@ describe('loadSettings / saveSettings', () => {
       saveSettings(storage, '/', { hints: true, sound: true, difficulty: 'hard' }),
     ).not.toThrow();
     expect(loadSettings(storage, '/')).toEqual({ hints: false, sound: true, difficulty: 'normal' });
+  });
+});
+
+describe('loadHomeScreenDismissed / dismissHomeScreen', () => {
+  it('starts undismissed', () => {
+    const storage = createMemoryStorage();
+    expect(loadHomeScreenDismissed(storage, '/')).toBe(false);
+  });
+
+  it('stays dismissed once dismissed', () => {
+    const storage = createMemoryStorage();
+    dismissHomeScreen(storage, '/');
+    expect(loadHomeScreenDismissed(storage, '/')).toBe(true);
+  });
+
+  it('is scoped by base path, so a PR preview cannot dismiss production', () => {
+    const storage = createMemoryStorage();
+    dismissHomeScreen(storage, '/pr/pr-34/');
+    expect(loadHomeScreenDismissed(storage, '/pr/pr-34/')).toBe(true);
+    expect(loadHomeScreenDismissed(storage, '/')).toBe(false);
+  });
+
+  it('treats a corrupt value as undismissed', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(scopedKey('/', 'a2hs'), 'not json');
+    expect(loadHomeScreenDismissed(storage, '/')).toBe(false);
+  });
+
+  it('does not throw when the underlying storage throws', () => {
+    const storage = throwingStorage();
+    expect(() => dismissHomeScreen(storage, '/')).not.toThrow();
+    expect(loadHomeScreenDismissed(storage, '/')).toBe(false);
   });
 });

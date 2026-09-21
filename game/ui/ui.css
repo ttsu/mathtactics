@@ -1088,3 +1088,92 @@
   right: 12px;
   color: #7dff9a;
 }
+
+/* --- Task 34: Add-to-Home-Screen hint (main menu, iOS browser tab only) --- */
+
+/* Absolute, so appearing or dismissing never shifts the menu buttons. Aimed at the adult
+   installing the game, so it sits quietly below the buttons rather than competing with them. */
+.home-screen-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 6px 6px 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  overflow: hidden;
+  transform: translateX(-50%);
+}
+
+/* The hint is absolutely positioned, so it reserves no room of its own. Padding on the centred
+   menu column lifts the buttons clear of it instead of letting the two touch. */
+.screen-with-hint {
+  padding-bottom: 96px;
+}
+
+/* A highlight sweeping across the pill, then a long rest — enough to catch an adult's eye
+   without competing with the buttons for the child's. `overflow: hidden` keeps the sweep inside
+   the rounded pill; `pointer-events: none` keeps it clear of the dismiss button. Cycle length is
+   `screens.homeScreenShimmerMs`; the sweep runs in the front 30%, the rest is quiet. */
+.home-screen-hint::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.1) 45%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.1) 55%,
+    transparent 62%
+  );
+  pointer-events: none;
+  animation: home-screen-shimmer var(--home-screen-shimmer-ms, 4200ms) ease-in-out infinite;
+}
+
+@keyframes home-screen-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  30%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.home-screen-hint-text {
+  white-space: nowrap;
+}
+
+.home-screen-hint-text strong {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+/* Sized to MIN_TOUCH_TARGET by an inline style (as the HUD and shop do); the rules here are
+   paint only. */
+.home-screen-hint-dismiss {
+  pointer-events: auto;
+  box-sizing: border-box;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 30px;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.home-screen-hint-dismiss:active {
+  opacity: 1;
+}

@@ -31,5 +31,6 @@ export function fakeScreenSettings() {
     titlePlopDelayMs: 560,
     titleLetterStaggerMs: 140,
     titleReplayMs: 60000,
+    homeScreenShimmerMs: 4200,
   };
 }

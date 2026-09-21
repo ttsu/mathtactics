@@ -433,6 +433,10 @@ const PresentationFileSchema = z.object({
     danceMs: ms(),
     /** Delay between each dancing robot's animation start, so they wiggle out of sync. */
     danceStaggerMs: ms(),
+    /** One full sweep-and-rest cycle of the Add-to-Home-Screen hint's shimmer (task 34). The
+     * sweep occupies the front of the cycle; the rest is quiet, so it catches an adult's eye
+     * without pulling at the child playing. */
+    homeScreenShimmerMs: ms(),
     /** Main-menu title: how long VS takes to slam down. */
     titleVsSlamMs: ms(),
     /** Main-menu title: how long each MATH / ROBOTS letter takes to plop in. */

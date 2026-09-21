@@ -1004,3 +1004,28 @@ describe('shop-phase dispatch (task 19)', () => {
     expect(store.getState().run).toBeNull();
   });
 });
+
+describe('dismissHomeScreenHint (task 34)', () => {
+  it('starts undismissed and persists the dismissal', () => {
+    const storage = createMemoryStorage();
+    const store = createAppStore({
+      data: fakeGameData(),
+      applyCommand: stubApplyCommand,
+      storage,
+      basePath: '/',
+    });
+
+    expect(store.getState().homeScreenDismissed).toBe(false);
+    store.getState().dismissHomeScreenHint();
+    expect(store.getState().homeScreenDismissed).toBe(true);
+
+    // A fresh store on the same storage still reads as dismissed — gone for good, not per-session.
+    const reloaded = createAppStore({
+      data: fakeGameData(),
+      applyCommand: stubApplyCommand,
+      storage,
+      basePath: '/',
+    });
+    expect(reloaded.getState().homeScreenDismissed).toBe(true);
+  });
+});

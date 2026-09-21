@@ -234,3 +234,29 @@ export function CheckIcon({ size }: { size: number }) {
     </svg>
   );
 }
+
+/** iOS's Share glyph: a box with an arrow leaving the top. Drawn rather than set as a font
+ * glyph so it reads at the same weight as the rest of the menu. */
+export function ShareIcon({ size }: { size: number }) {
+  return (
+    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
+      <path
+        d="M16 20 H11 V42 H37 V20 H32"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M24 5 V30" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+      <path
+        d="M15 14 L24 5 L33 14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
