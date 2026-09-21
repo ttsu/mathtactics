@@ -368,7 +368,7 @@ fails `npm test`.
 | `waves.json` | Waves in run order (run length = array length): authored spawn schedules (waves 1–7, 10) and procedural tables (waves 8–9). Normal source of truth; Easy/Hard overlay this via `difficulty.json` |
 | `difficulty.json` | Easy / Normal / Hard overlays: integer-percent HP bands, procedural `countDelta`, `dropTemplates`. Overlay then existing `rollWave` |
 | `levels.json` | M1 FIRE-only boards (task 11); test/debug harness |
-| `puzzles.json` | Puzzle-book catalog (task 32). `waves` present = playable; missing = locked |
+| `puzzles.json` | Puzzle-book catalog (task 32). `waves` present = shown, sorted by stars; missing = hidden |
 | `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss 2×2 visual scale (`boss.scale`, `1` = fill the 2×2), Foley cue mappings (`audio`, M5) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.

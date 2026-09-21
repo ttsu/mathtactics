@@ -898,12 +898,11 @@ Normal; Odd-only / Even-only **65%** (floor 8) so one leak stays a chip; procedu
 
 Puzzles is a book of authored scenarios, not the 10-wave ladder.
 
-- **🧩 Puzzles** opens a full-screen grid of every catalog entry. ← *Back* at the top left
-  returns to the launch screen. Tapping a playable tile starts that scenario. A locked tile
-  (not yet authored) is visible, dimmed, and does nothing besides a short shake.
-- Each tile shows **1–3 stars** (difficulty), a short name, a **check** if this device has
-  cleared it, and a **lock** if it has no waves yet. Cover the name and the stars / check /
-  lock still work (§11.1).
+- **🧩 Puzzles** opens a scrolling grid of authored scenarios, sorted easy → hard (1–3
+  stars). ← *Back* at the top left returns to the launch screen. Tapping a tile starts that
+  scenario. Catalog stubs with no waves yet stay hidden.
+- Each tile shows **1–3 stars** (difficulty), a short name, and a **check** if this device
+  has cleared it. Cover the name and the stars / check still work (§11.1).
 - A scenario is a short authored run: 1–5 waves, full turn loop (fire, advance, detonate).
   HP and lanes are fixed — the same board every play. Tiles and extra cannons are granted on
   a schedule. There is no shop and no coins on the HUD.
@@ -911,8 +910,8 @@ Puzzles is a book of authored scenarios, not the 10-wave ladder.
   writes the check and shows the win screen; its button returns to the book.
 - Leaking to 0 HP shows the lose screen. Big **Play again** restarts that scenario from
   wave 1. ← *Back* returns to the book. No check mark.
-- Pack 1 ships playable. Later packs sit in the catalog as locked tiles until they are
-  authored. The M1 FIRE-only boards in `levels.json` remain a test/debug harness.
+- Pack 1 ships playable. Later packs stay in `puzzles.json` but stay off the grid until they
+  have waves. The M1 FIRE-only boards in `levels.json` remain a test/debug harness.
 
 ---
 

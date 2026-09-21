@@ -30,7 +30,18 @@ test('Puzzles opens the book; Back returns to the menu', async ({ page }) => {
   await expect(page.getByTestId('puzzle-grid')).toBeVisible();
   await expectTouchTarget(page, 'puzzle-select-back');
   await expectTouchTarget(page, 'puzzle-warm-up');
-  await expect(page.getByTestId('puzzle-lock-blue-room')).toBeVisible();
+  await expect(page.getByTestId('puzzle-blue-room')).toHaveCount(0);
+  const ids = await page.locator('.puzzle-tile').evaluateAll((tiles) =>
+    tiles.map((tile) => tile.getAttribute('data-testid')),
+  );
+  expect(ids[0]).toBe('puzzle-warm-up');
+  expect(ids[1]).toBe('puzzle-plus-party');
+  expect(ids[2]).toBe('puzzle-five-bolt');
+  expect(ids.at(-1)).toBe('puzzle-recipe');
+  const overflowY = await page.locator('[data-testid="puzzle-grid"]').evaluate((el) => {
+    return getComputedStyle(el).overflowY;
+  });
+  expect(['auto', 'scroll']).toContain(overflowY);
 
   await page.getByTestId('puzzle-select-back').click();
   expect(await getScreen(page)).toBe('menu');
@@ -81,15 +92,13 @@ test('clearing Plus Party writes a check mark on the book', async ({ page }) => 
   await expect(page.getByTestId('puzzle-check-plus-party')).toBeVisible();
 });
 
-test('a locked tile does not start a session', async ({ page }) => {
+test('catalog stubs stay off the book', async ({ page }) => {
   await openMenu(page);
   await page.getByTestId('menu-puzzles').click();
-  // aria-disabled is intentional (locked catalog stub) but the tile still
-  // accepts a tap so it can shake — Playwright's actionability treats that as
-  // not enabled, so force the tap the way a finger would.
-  await page.getByTestId('puzzle-blue-room').click({ force: true });
-  await expect(page.getByTestId('puzzle-blue-room')).toHaveClass(/is-shaking/);
-  expect(await getScreen(page)).toBe('levelSelect');
+  await expect(page.getByTestId('puzzle-grid')).toBeVisible();
+  await expect(page.getByTestId('puzzle-blue-room')).toHaveCount(0);
+  await expect(page.getByTestId('puzzle-add-it-up')).toHaveCount(0);
+  await expect(page.locator('.puzzle-tile')).toHaveCount(12);
   expect(await page.evaluate(() => window.__GAME__!.getState())).toBeNull();
 });
 

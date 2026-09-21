@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyCommand } from '../../sim/commands';
 import {
   openPuzzleBook,
+  puzzleBookTiles,
   replayPuzzle,
   returnToPuzzleBook,
   startPuzzle,
@@ -63,5 +64,26 @@ describe('puzzleFlow', () => {
     store.getState().finishPlayback();
     returnToPuzzleBook(store);
     expect(store.getState().screen).toBe('levelSelect');
+  });
+
+  it('shows only playable tiles, easy first', () => {
+    const tiles = puzzleBookTiles(realData.puzzles.puzzles);
+    expect(tiles.every((puzzle) => puzzle.waves !== undefined)).toBe(true);
+    expect(tiles).toHaveLength(12);
+    expect(tiles.map((puzzle) => puzzle.id)).toEqual([
+      'warm-up',
+      'plus-party',
+      'five-bolt',
+      'times-table',
+      'take-away',
+      'even-steven',
+      'odd-socks',
+      'bounce-house',
+      'double-trouble',
+      'one-cannon',
+      'occupied',
+      'recipe',
+    ]);
+    expect(tiles.map((puzzle) => puzzle.stars)).toEqual([1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3]);
   });
 });

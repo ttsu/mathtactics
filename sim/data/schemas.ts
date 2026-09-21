@@ -801,7 +801,7 @@ const PuzzleDefSchema = z
     name: z.string().min(1),
     stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     pack: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
-    /** Present = playable. Missing = catalog stub (locked on the grid). */
+    /** Present = playable and shown on the book. Missing = catalog stub (hidden). */
     waves: z.array(PuzzleWaveSchema).min(1).optional(),
   })
   .superRefine((puzzle, ctx) => {
@@ -831,7 +831,7 @@ const PuzzlesFileSchema = z.object({
   }),
 });
 
-/** One puzzle-book entry (GDD §10.8). `waves` missing means the tile is locked. */
+/** One puzzle-book entry (GDD §10.8). `waves` missing means the tile stays hidden. */
 export type PuzzleDef = z.infer<typeof PuzzleDefSchema>;
 export type PuzzleWaveDef = z.infer<typeof PuzzleWaveSchema>;
 

@@ -26,6 +26,7 @@ export {
   isPuzzlePlayable,
   leavePuzzleBook,
   openPuzzleBook,
+  puzzleBookTiles,
   replayPuzzle,
   returnToPuzzleBook,
   startPuzzle,

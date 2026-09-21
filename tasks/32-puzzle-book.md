@@ -50,6 +50,7 @@ tracking, a grid picker, and a fully authored first pack of 12 (including one 5-
 - Theme is conceptual, not a catalog field (human: "remove the theme").
 - The old 8 M1 tutorial boards are one 5-wave scenario (`warm-up`), not eight tiles.
 - Unlock is content-lock (`waves` missing), not a skill gate. All 12 Pack 1 tiles are open.
+- After the first picker, the human asked to hide stubs, sort by stars, use fewer columns, and scroll. The book is a 4-column scrolling grid of playable tiles only (GDD §10.8 updated).
 - `screen: 'levelSelect'` is reused for the book so the FIRE-only harness can keep `allDone`.
 - Occupied allows a robot and a tile to share a cell (schema rejects only duplicate tiles among tiles / robots among robots).
 - Wave 1 `cannons` replace slots; later waves add listed cannons. Tiles persist across waves.
@@ -60,14 +61,14 @@ tracking, a grid picker, and a fully authored first pack of 12 (including one 5-
 - `buildPuzzleState` / `buildPuzzleNextWave` live in `sim/commands/puzzle.ts`. Grants emit `TilesGranted` / `CannonPlaced`.
 - `nextWave` from `waveCleared` when `mode === 'puzzle'`; otherwise shop. Puzzles skip wave-clear coins; last wave uses `sessionWaveCount`.
 - Completion is device-local `mt:<basePath>:puzzles` `{ completed: string[] }`, same shape as seen-tiles. Mid-session is never saved. `isEndedSession` vs `isFinishedRun`: only ladder wins/losses clear the run save.
-- Picker is React (`PuzzleSelectScreen`). 10×5 grid, Back top-left. HUD Home from a puzzle returns to the book.
+- Picker is React (`PuzzleSelectScreen`). 4-column scrolling grid of playable tiles only, easy first. Back top-left. HUD Home from a puzzle returns to the book.
 
 **Design questions raised:**
 - None open. Lose Play again / catalog-all-50 / no theme / tutorial-as-one-scenario were answered before implementation.
 
 **Known issues / follow-up:**
-- Packs 2–5 are catalog stubs (locked). Author waves when a later pack task starts.
-- iPad landscape feel of the 10×5 grid (name length, star size, lock tap-shake) still wants a human check on the preview.
+- Packs 2–5 are catalog stubs and stay hidden until they have `waves`.
+- iPad landscape feel of the 4-column scrolling book (name length, star size, scroll) still wants a human check on the preview.
 - Debug Jump still lists FIRE-only `levels.json` ids, not puzzle-book ids.
 
 **Files created:** `data/puzzles.json`, `sim/commands/puzzle.ts`, `game/state/puzzleFlow.ts`, `game/ui/PuzzleSelectScreen.tsx`, `tasks/32-puzzle-book.md`, `e2e/puzzles.spec.ts`, `tests/puzzleSolutions.test.ts`, `tests/sim/commands/loadPuzzle.test.ts`, `tests/sim/data/puzzles.test.ts`, `tests/game/puzzleFlow.test.ts`, `scenarios/puzzles/01-warm-up.scenario.yaml` … `12-recipe.scenario.yaml`

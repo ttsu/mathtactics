@@ -219,29 +219,6 @@ export function HintsIcon({ size }: { size: number }) {
   );
 }
 
-/** A padlock — locked puzzle-book tiles (catalog stubs). */
-export function LockIcon({ size }: { size: number }) {
-  return (
-    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
-      <rect
-        x="10"
-        y="22"
-        width="28"
-        height="20"
-        rx="4"
-        fill="currentColor"
-      />
-      <path
-        d="M16 22 V16 A8 8 0 0 1 32 16 V22"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 /** A fat tick for a bought shop card. */
 export function CheckIcon({ size }: { size: number }) {
   return (

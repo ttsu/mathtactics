@@ -2,7 +2,7 @@
 // wave-cleared Next that skips the shop, and Home/Back returning to the grid. Framework-free.
 
 import type { StoreApi } from 'zustand/vanilla';
-import type { GameData, PuzzleDef } from '../../sim/data/schemas';
+import type { PuzzleDef } from '../../sim/data/schemas';
 import { isPlaybackActive, type AppStore } from './store';
 
 export function isPuzzlePlayable(puzzle: PuzzleDef): puzzle is PuzzleDef & { waves: NonNullable<PuzzleDef['waves']> } {
@@ -42,6 +42,11 @@ export function replayPuzzle(store: StoreApi<AppStore>): void {
   startPuzzle(store, run.puzzleId);
 }
 
-export function puzzleCatalog(data: GameData): PuzzleDef[] {
-  return data.puzzles.puzzles;
+/** Authored tiles only, easy → hard. Catalog stubs stay hidden until they have waves. */
+export function puzzleBookTiles(puzzles: PuzzleDef[]): PuzzleDef[] {
+  return puzzles
+    .map((puzzle, index) => ({ puzzle, index }))
+    .filter(({ puzzle }) => isPuzzlePlayable(puzzle))
+    .sort((a, b) => a.puzzle.stars - b.puzzle.stars || a.index - b.index)
+    .map(({ puzzle }) => puzzle);
 }
