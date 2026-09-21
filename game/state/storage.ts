@@ -194,3 +194,24 @@ export function saveSettings(storage: StorageLike, basePath: string, settings: S
     // Storage failure must never break play (TR §13).
   }
 }
+
+/** True once the player has dismissed the Add-to-Home-Screen hint. Additive and unaffected by
+ * `schemaVersion` — like the seen-tiles log, it survives version bumps (TR §13). A corrupt or
+ * unreadable value reads as undismissed, so the worst case is showing the hint once more. */
+export function loadHomeScreenDismissed(storage: StorageLike, basePath: string): boolean {
+  try {
+    return storage.getItem(scopedKey(basePath, 'a2hs')) === 'dismissed';
+  } catch {
+    return false;
+  }
+}
+
+/** Dismisses the Add-to-Home-Screen hint for good (task 34). Storage failure just means the hint
+ * returns on the next visit; it must never break the menu (TR §13). */
+export function dismissHomeScreen(storage: StorageLike, basePath: string): void {
+  try {
+    storage.setItem(scopedKey(basePath, 'a2hs'), 'dismissed');
+  } catch {
+    // Storage failure must never break play (TR §13).
+  }
+}

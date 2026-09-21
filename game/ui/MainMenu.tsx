@@ -9,6 +9,7 @@ import type { CSSProperties } from 'react';
 import { playUiTap } from '../state/audio';
 import { openPuzzleBook } from '../state/puzzleFlow';
 import { canContinue, continueRun } from '../state/runFlow';
+import { HomeScreenHint, useOfferHomeScreen } from './HomeScreenHint';
 import { GearIcon, PlayIcon, PuzzlePieceIcon, RestartIcon } from './icons';
 import { MenuTitle } from './MenuTitle';
 import { SecretLongPress, SecretTap } from './debug';
@@ -19,10 +20,11 @@ export function MainMenu() {
   const tileColors = useAppStore((state) => state.data.presentation.tileColors);
   const screens = useAppStore((state) => state.data.presentation.screens);
   const resumable = useAppStore(canContinue);
+  const offerHomeScreen = useOfferHomeScreen();
 
   return (
     <div
-      className="screen menu-screen"
+      className={offerHomeScreen ? 'screen menu-screen screen-with-hint' : 'screen menu-screen'}
       data-testid="main-menu"
       style={{ '--pop-in-ms': `${screens.popInMs}ms` } as CSSProperties}
     >
@@ -114,6 +116,7 @@ export function MainMenu() {
           </SecretLongPress>
         </div>
       </div>
+      {offerHomeScreen && <HomeScreenHint />}
     </div>
   );
 }

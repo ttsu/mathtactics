@@ -12,7 +12,9 @@ import {
   clearRun,
   addCompletedPuzzle,
   addSeenMany,
+  dismissHomeScreen,
   loadCompletedPuzzles,
+  loadHomeScreenDismissed,
   loadRun,
   loadSeen,
   loadSettings,
@@ -96,6 +98,9 @@ export interface AppState {
   settings: Settings;
   /** Puzzle-book ids this device has cleared (GDD §10.8). Device-local, like seen-tiles. */
   completedPuzzles: string[];
+  /** True once the Add-to-Home-Screen hint has been dismissed (task 34). Read from storage on
+   * boot and never reset — the hint is offered once, then gone for good. */
+  homeScreenDismissed: boolean;
 }
 
 export interface AppActions {
@@ -108,6 +113,8 @@ export interface AppActions {
    * Dispatches nothing. */
   startReplay(): boolean;
   setSettings(patch: Partial<Settings>): void;
+  /** Dismisses the Add-to-Home-Screen hint for good, in storage and in memory (task 34). */
+  dismissHomeScreenHint(): void;
   /** Shows `screen`. Screen changes never touch `run` (task 11: the level flow in `levelFlow.ts`
    * pairs this with `dispatch`). */
   setScreen(screen: Screen): void;
@@ -245,6 +252,7 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     screen: 'menu',
     settings: initialSettings,
     completedPuzzles: loadCompletedPuzzles(storage, basePath),
+    homeScreenDismissed: loadHomeScreenDismissed(storage, basePath),
 
     dispatch(cmd) {
       const state = get();
@@ -379,6 +387,11 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
 
     setScreen(screen) {
       set({ screen });
+    },
+
+    dismissHomeScreenHint() {
+      dismissHomeScreen(storage, basePath);
+      set({ homeScreenDismissed: true });
     },
 
     recordShopVisit(tileIds) {

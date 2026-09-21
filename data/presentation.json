@@ -171,7 +171,8 @@
     "titlePlopMs": 560,
     "titlePlopDelayMs": 560,
     "titleLetterStaggerMs": 140,
-    "titleReplayMs": 60000
+    "titleReplayMs": 60000,
+    "homeScreenShimmerMs": 4200
   },
   "danger": {
     "pulseMs": 700,
