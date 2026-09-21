@@ -22,6 +22,27 @@ describe('loadPuzzle', () => {
     expect(result.state.waveIndex).toBe(0);
     expect(result.state.board.cannons[2]).toBe(true);
     expect(result.state.board.robots).toMatchObject([{ lane: 2, hp: 1 }]);
+    expect(result.state.baseHp).toBe(data.economy.baseHp);
+  });
+
+  it('starts Recipe at 1 HP so one leak is a loss', () => {
+    const loaded = applyCommand(null, { type: 'loadPuzzle', puzzleId: 'recipe' }, data);
+    expectOk(loaded);
+    expect(loaded.state.baseHp).toBe(1);
+
+    let state = loaded.state;
+    let lostEvents: (typeof loaded.events) | undefined;
+    for (let i = 0; i < 8; i++) {
+      const next = applyCommand(state, { type: 'endTurn' }, data);
+      expectOk(next);
+      state = next.state;
+      if (state.phase === 'lost') {
+        lostEvents = next.events;
+        break;
+      }
+    }
+    expect(state.phase).toBe('lost');
+    expect(lostEvents?.some((event) => event.type === 'RunLost')).toBe(true);
   });
 
   it('does not use the ladder wave list', () => {

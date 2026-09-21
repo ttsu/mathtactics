@@ -368,6 +368,7 @@
       "name": "Recipe",
       "stars": 3,
       "pack": 1,
+      "baseHp": 1,
       "waves": [
         {
           "cannons": [2],

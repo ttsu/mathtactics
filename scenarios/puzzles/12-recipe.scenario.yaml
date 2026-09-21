@@ -144,3 +144,4 @@ expectEvents:
 expectState:
   phase: won
   puzzleId: recipe
+  baseHp: 1

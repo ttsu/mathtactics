@@ -25,8 +25,8 @@ two stars moderately challenging, three stars genuinely difficult.
   uses more robots, more HP, more waves or delayed spawns, and tile rearranging. 3-star
   must be an exact-amount exam.
 - **Recipe is bounce-back.** Every robot on the one 3-star scenario is Bounce-back, so
-  overkill does not clear it. Five waves, more robots, higher HP. A known exact-kill
-  solution still exists.
+  overkill does not clear it. Five waves, more robots, higher HP. Base HP is **1** —
+  one leak is a loss. A known exact-kill solution still exists.
 
 ## 0. Changes in v0.9.4
 
@@ -944,7 +944,8 @@ Puzzles is a book of authored scenarios, not the 10-wave ladder.
 - **Stars are difficulty.** 1 star is simple (one idea, small numbers; Warm Up is the
   tutorial). 2 stars are moderately challenging (more robots, more HP, more rounds, a trait
   or a rearrange). 3 stars are genuinely difficult. Pack 1's only 3-star, Recipe, uses
-  Bounce-back on every robot so the player must hit the exact amount.
+  Bounce-back on every robot so the player must hit the exact amount, and starts at **1
+  base HP** so one leak is a loss. Optional catalog `baseHp` (else the run's 100).
 
 ---
 
