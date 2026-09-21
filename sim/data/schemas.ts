@@ -1122,6 +1122,8 @@ const DifficultyModeSchema = z.strictObject({
   minCount: z.number().int().min(1).max(5),
   maxCount: z.number().int().min(1).max(5),
   dropTemplates: z.array(z.string().min(1)),
+  /** `procedural` leaves authored waves 1–7 / 10 at Normal HP (Hard stretch only). */
+  hpApplies: z.enum(['all', 'procedural']).default('all'),
 });
 
 export const DifficultyFileSchema = z

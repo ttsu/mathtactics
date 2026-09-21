@@ -1,6 +1,8 @@
 // Difficulty overlay (GDD §10.7, task 28). Pure: maps a `waves.json` wave through
 // `data.difficulty.modes[id]` before `rollWave`. Normal (mul 100, countDelta 0, no drops) is
-// identity on shipped waves. Overlay consumes no RNG — `rollWave` still owns the `wave` stream.
+// identity on shipped waves. Hard scales procedural non-Boss HP (120%) and still adds
+// stretch pressure; authored waves 1–7 / 10 keep Normal HP. Overlay consumes no RNG —
+// `rollWave` still owns the `wave` stream.
 
 import type { DifficultyId } from '../core/types';
 import type { DifficultyMode, GameData, WaveDef } from '../data/schemas';
@@ -32,6 +34,19 @@ function hpBandFor(
   if (template?.isBoss) return mode.hp.boss;
   if (robotId === 'odd-only' || robotId === 'even-only') return mode.hp.parity;
   return mode.hp.nonBoss;
+}
+
+/** Hard's 120% is stretch-only: authored teaching waves keep Normal HP. */
+function modeForWave(mode: DifficultyMode, wave: WaveDef): DifficultyMode {
+  if (mode.hpApplies !== 'procedural' || !('spawns' in wave)) return mode;
+  return {
+    ...mode,
+    hp: {
+      nonBoss: { ...mode.hp.nonBoss, mul: 100 },
+      parity: { ...mode.hp.parity, mul: 100 },
+      boss: mode.hp.boss,
+    },
+  };
 }
 
 function applyAuthored(
@@ -93,7 +108,7 @@ export function applyDifficulty(
   difficulty: DifficultyId,
   data: GameData,
 ): WaveDef {
-  const mode = data.difficulty.modes[difficulty];
+  const mode = modeForWave(data.difficulty.modes[difficulty], wave);
   if ('spawns' in wave) return applyAuthored(wave, mode, data.robots);
   return applyProcedural(wave, mode, data.robots);
 }

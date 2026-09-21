@@ -187,16 +187,16 @@ describe('authored ladder waves 4–7 (task 22)', () => {
         {
           turn: 1,
           count: 3,
-          hp: [34, 46],
+          hp: [38, 50],
           pool: WAVE_8_T1_POOL,
-          hpByRobot: { 'odd-only': [18, 26], 'even-only': [18, 26] },
+          hpByRobot: { 'odd-only': [20, 28], 'even-only': [20, 28] },
         },
         {
           turn: 8,
           count: 3,
-          hp: [42, 56],
+          hp: [46, 60],
           pool: WAVE_8_T8_POOL,
-          hpByRobot: { 'even-only': [20, 28] },
+          hpByRobot: { 'even-only': [22, 30] },
         },
       ]);
       expect(WAVE_8_T1_POOL).toContain('even-only');
@@ -210,23 +210,23 @@ describe('authored ladder waves 4–7 (task 22)', () => {
         {
           turn: 1,
           count: 4,
-          hp: [42, 54],
-          pool: WAVE_9_POOL,
-          hpByRobot: { 'odd-only': [20, 28], 'even-only': [20, 28] },
-        },
-        {
-          turn: 8,
-          count: 4,
-          hp: [48, 60],
+          hp: [46, 58],
           pool: WAVE_9_POOL,
           hpByRobot: { 'odd-only': [22, 30], 'even-only': [22, 30] },
         },
         {
-          turn: 15,
-          count: 3,
+          turn: 8,
+          count: 4,
           hp: [52, 64],
           pool: WAVE_9_POOL,
           hpByRobot: { 'odd-only': [24, 32], 'even-only': [24, 32] },
+        },
+        {
+          turn: 15,
+          count: 3,
+          hp: [56, 70],
+          pool: WAVE_9_POOL,
+          hpByRobot: { 'odd-only': [26, 32], 'even-only': [26, 32] },
         },
       ]);
     }
