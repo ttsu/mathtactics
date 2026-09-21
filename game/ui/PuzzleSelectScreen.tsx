@@ -10,7 +10,10 @@ import { useAppStore, useAppStoreApi } from './StoreContext';
 export function PuzzleSelectScreen() {
   const store = useAppStoreApi();
   const popInMs = useAppStore((state) => state.data.presentation.screens.popInMs);
-  const tiles = useAppStore((state) => puzzleBookTiles(state.data.puzzles.puzzles));
+  // Select the shipped array (stable), then sort in render — a selector that
+  // returns a fresh array would re-render forever.
+  const puzzles = useAppStore((state) => state.data.puzzles.puzzles);
+  const tiles = puzzleBookTiles(puzzles);
   const completed = useAppStore((state) => state.completedPuzzles);
 
   return (
