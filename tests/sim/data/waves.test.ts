@@ -73,6 +73,7 @@ function validRaw(waves: unknown[], robots?: unknown[]) {
     waves: { waves },
     difficulty: fakeDifficulty(),
     levels: { levels: [] },
+    puzzles: { puzzles: [] },
     presentation: {
       pacing: fakePacingSettings(),
       playback: fakePlaybackSettings(),

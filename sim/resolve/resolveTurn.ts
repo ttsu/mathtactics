@@ -4,6 +4,7 @@
 
 import type { GameEvent, RunState } from '../core/types';
 import type { GameData } from '../data/schemas';
+import { sessionWaveCount } from '../commands/puzzle';
 import { spawn } from '../waves/spawn';
 import { advance } from './advance';
 import { detonate } from './detonate';
@@ -71,19 +72,22 @@ export function resolveTurn(state: RunState, data: GameData): ResolveTurnResult 
         waveIndex: nextState.waveIndex,
       });
 
-      const waveCoins = data.economy.income.waveCleared;
-      const coins = nextState.coins + waveCoins;
-      events.push({
-        step: events.length,
-        group: 'end',
-        type: 'CoinsChanged',
-        delta: waveCoins,
-        total: coins,
-        reason: 'waveCleared',
-      });
-      nextState = { ...nextState, coins };
+      const isPuzzle = nextState.mode === 'puzzle';
+      if (!isPuzzle) {
+        const waveCoins = data.economy.income.waveCleared;
+        const coins = nextState.coins + waveCoins;
+        events.push({
+          step: events.length,
+          group: 'end',
+          type: 'CoinsChanged',
+          delta: waveCoins,
+          total: coins,
+          reason: 'waveCleared',
+        });
+        nextState = { ...nextState, coins };
+      }
 
-      const isLastWave = nextState.waveIndex === data.waves.waves.length - 1;
+      const isLastWave = nextState.waveIndex === sessionWaveCount(nextState, data) - 1;
       if (isLastWave) {
         events.push({ step: events.length, group: 'end', type: 'RunWon' });
         nextState = { ...nextState, phase: 'won' };

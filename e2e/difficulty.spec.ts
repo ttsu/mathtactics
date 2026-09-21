@@ -16,9 +16,14 @@ async function openMenu(page: Page) {
 }
 
 async function expectTouchTarget(page: Page, testId: string) {
+  // pop-in scales from 0.3 — wait until the resting box is the 60pt target.
+  await expect
+    .poll(async () => (await page.getByTestId(testId).boundingBox())?.height ?? 0, {
+      timeout: 2_000,
+    })
+    .toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
   const box = await page.getByTestId(testId).boundingBox();
   expect(box?.width, testId).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
-  expect(box?.height, testId).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
 }
 
 test('New Game always opens the picker; Normal is pressed on a fresh profile', async ({ page }) => {

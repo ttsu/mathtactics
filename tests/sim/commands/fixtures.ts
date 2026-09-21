@@ -58,6 +58,7 @@ export function fakeGameData(overrides: Partial<GameData> = {}): GameData {
     waves: { waves: [] },
     difficulty: fakeDifficulty(),
     levels: { levels: [] },
+    puzzles: { puzzles: [] },
     presentation: {
       pacing: fakePacingSettings(),
       playback: fakePlaybackSettings(),

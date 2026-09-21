@@ -10,7 +10,9 @@ import type { Command, CommandError, GameEvent, RunState, TileId } from '../../s
 import type { GameData } from '../../sim/data/schemas';
 import {
   clearRun,
+  addCompletedPuzzle,
   addSeenMany,
+  loadCompletedPuzzles,
   loadRun,
   loadSeen,
   loadSettings,
@@ -40,7 +42,7 @@ export interface Display {
   waveIndex: number;
 }
 
-/** `allDone` = every M1 puzzle level cleared (task 11). */
+/** `levelSelect` = puzzle book (task 32). `allDone` remains for the M1 FIRE-only sequence. */
 export type Screen =
   | 'menu'
   | 'game'
@@ -92,6 +94,8 @@ export interface AppState {
   shopNew: TileId[];
   screen: Screen;
   settings: Settings;
+  /** Puzzle-book ids this device has cleared (GDD §10.8). Device-local, like seen-tiles. */
+  completedPuzzles: string[];
 }
 
 export interface AppActions {
@@ -208,8 +212,12 @@ function displayFromEconomy(data: GameData): Display {
  * cleared once this is true — on boot for a save found already ended, or when playback finishes
  * on this phase (`finishPlayback` below). Level mode never reaches `won`/`lost` (TR §4.1), but
  * the `mode` check is kept for clarity/defence. */
+function isEndedSession(run: RunState): run is RunState & { phase: 'won' | 'lost' } {
+  return run.phase === 'won' || run.phase === 'lost';
+}
+
 function isFinishedRun(run: RunState): run is RunState & { phase: 'won' | 'lost' } {
-  return run.mode === 'run' && (run.phase === 'won' || run.phase === 'lost');
+  return run.mode === 'run' && isEndedSession(run);
 }
 
 export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStore> {
@@ -236,6 +244,7 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     // Task 11/14: the app always opens on the main menu, never auto-resuming a saved run.
     screen: 'menu',
     settings: initialSettings,
+    completedPuzzles: loadCompletedPuzzles(storage, basePath),
 
     dispatch(cmd) {
       const state = get();
@@ -247,7 +256,7 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
         return { ok: false, error: result.error };
       }
 
-      // Task 14 req. 1: only a `mode: 'run'` result is saved — a level-mode dispatch (Puzzles)
+      // Task 14 req. 1: only a `mode: 'run'` result is saved — a level- or puzzle-mode dispatch
       // never writes (or removes) the `run` key, so it can never overwrite a saved run.
       // `savedRun` is the in-memory mirror of that same key (see its doc comment above).
       const persists = result.state.mode === 'run';
@@ -322,16 +331,23 @@ export function createAppStore(options: CreateAppStoreOptions): StoreApi<AppStor
     finishPlayback() {
       set((state) => {
         const { run } = state;
-        if (run && isFinishedRun(run)) {
-          // Task 14 req. 2: the run's playback (the final detonation/base-damage beats) has now
-          // finished on a `won`/`lost` phase — show the matching screen and clear the save. The
-          // actual won/lost screens are task 16's; this only switches `screen`.
-          clearRun(storage, basePath);
+        if (run && isEndedSession(run)) {
+          // Task 14 req. 2: a ladder run's playback finished on `won`/`lost` — show that screen
+          // and clear the save. A puzzle session never writes the run save; a win records the
+          // check mark (GDD §10.8).
+          if (run.mode === 'run') {
+            clearRun(storage, basePath);
+          }
+          const completedPuzzles =
+            run.mode === 'puzzle' && run.phase === 'won' && run.puzzleId
+              ? addCompletedPuzzle(storage, basePath, run.puzzleId)
+              : state.completedPuzzles;
           return {
             display: displayFromRun(run),
             playback: { ...IDLE_PLAYBACK },
             screen: run.phase,
-            savedRun: null,
+            savedRun: run.mode === 'run' ? null : state.savedRun,
+            completedPuzzles,
           };
         }
         return {

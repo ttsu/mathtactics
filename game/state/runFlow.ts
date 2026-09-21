@@ -71,9 +71,14 @@ export function startNewRun(store: StoreApi<AppStore>, difficulty?: DifficultyId
 
 /** ⌂ Home: back to the menu, with no confirmation (GDD §10.4). A run is already saved and a
  * puzzle session is simply dropped, so this never touches `run`/`savedRun` — only refused while
- * playback is active, so a tap can't jump away from an animation still in flight. */
+ * playback is active, so a tap can't jump away from an animation still in flight. From a
+ * puzzle session, Home returns to the puzzle book (GDD §10.8). */
 export function goHome(store: StoreApi<AppStore>): void {
   const state = store.getState();
   if (isPlaybackActive(state)) return;
+  if (state.run?.mode === 'puzzle') {
+    state.setScreen('levelSelect');
+    return;
+  }
   state.setScreen('menu');
 }

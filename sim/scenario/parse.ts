@@ -235,10 +235,13 @@ const CommandErrorSchema = z.enum([
 
 const RawScenarioSchema = z.object({
   name: z.string().min(1),
-  mode: z.enum(['level', 'run']).default('level'),
+  mode: z.enum(['level', 'run', 'puzzle']).default('level'),
   /** A shipped level id from `data/levels.json` (task 11): the initial state is that level, built
    * by `buildLevelState` — mutually exclusive with `board` (checked in `parseScenario`). */
   level: z.string().min(1).optional(),
+  /** A playable puzzle-book id from `data/puzzles.json` (task 32). Mutually exclusive with
+   * `level` and `board`. */
+  puzzle: z.string().min(1).optional(),
   baseValue: z.number().int().optional(),
   coins: z.number().int().optional(),
   seed: z.string().min(1).optional(),
@@ -281,11 +284,13 @@ function formatZodPath(path: (string | number | symbol)[]): string {
 
 export interface Scenario {
   name: string;
-  mode: 'level' | 'run';
+  mode: 'level' | 'run' | 'puzzle';
   /** Set when the scenario starts from a shipped level (`level: <levelId>`, task 11) instead of a
    * `board`. The board fields below (`baseValue`, `cannonLanes`, `boardTiles`, `robots`, `tray`)
    * are then empty — the level supplies them. */
   level?: string;
+  /** Set when the scenario starts from a playable puzzle (`puzzle: <puzzleId>`, task 32). */
+  puzzle?: string;
   /** The id the initial state carries: the shipped level's id when `level` is set, else derived
    * for `buildLevelState` (task 08 ruling) as `scenario:<file-or-name-slug>`. */
   levelId: string;
@@ -354,9 +359,23 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
   }
   const data = parsed.data;
 
-  // A scenario starts from exactly one of: a hand-written `board` (+ `baseValue`, `tray`), or a
-  // shipped `level` (task 11), which supplies all three.
-  if (data.level !== undefined) {
+  // A scenario starts from exactly one of: a hand-written `board` (+ `baseValue`, `tray`), a
+  // shipped `level` (task 11), or a playable `puzzle` (task 32).
+  const starters = (['board', 'level', 'puzzle'] as const).filter((key) => data[key] !== undefined);
+  if (starters.length > 1) {
+    throw new Error(
+      `scenario: "${starters.join('"/"')}" cannot be used together — pick one starting shape`,
+    );
+  }
+  if (data.puzzle !== undefined) {
+    const conflicting = (['baseValue', 'tray'] as const).filter((key) => data[key] !== undefined);
+    if (conflicting.length > 0) {
+      throw new Error(
+        `scenario: "puzzle" and "${conflicting.join('"/"')}" cannot be used together — ` +
+          `a puzzle supplies its own kit`,
+      );
+    }
+  } else if (data.level !== undefined) {
     const conflicting = (['board', 'baseValue', 'tray'] as const).filter(
       (key) => data[key] !== undefined,
     );
@@ -368,7 +387,9 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
     }
   } else {
     if (data.board === undefined) {
-      throw new Error('scenario: needs either "board" (with "baseValue") or "level: <levelId>"');
+      throw new Error(
+        'scenario: needs "board" (with "baseValue"), "level: <levelId>", or "puzzle: <puzzleId>"',
+      );
     }
     if (data.baseValue === undefined) {
       throw new Error('scenario baseValue: required when the scenario has a "board"');
@@ -516,12 +537,13 @@ export function parseScenario(yamlText: string, sourceName?: string): Scenario {
 
   const expectEvents = data.expectEvents as ExpectedEvent[];
 
-  const levelId = data.level ?? `scenario:${slugify(sourceName ?? data.name)}`;
+  const levelId = data.level ?? data.puzzle ?? `scenario:${slugify(sourceName ?? data.name)}`;
 
   return {
     name: data.name,
-    mode: data.mode,
+    mode: data.puzzle !== undefined ? 'puzzle' : data.mode,
     level: data.level,
+    puzzle: data.puzzle,
     levelId,
     baseValue: data.baseValue,
     coins: data.coins,

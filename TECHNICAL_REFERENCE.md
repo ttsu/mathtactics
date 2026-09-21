@@ -130,9 +130,10 @@ interface SpawnEntry {                        // rolled at wave start (GDD §10.
 
 interface RunState {
   schemaVersion: number;
-  mode: 'run' | 'level';                      // 'level' = M1 hand-authored puzzles
-  difficulty: 'easy' | 'normal' | 'hard';     // locked at newRun; puzzles store 'normal'
+  mode: 'run' | 'level' | 'puzzle';           // 'level' = M1 FIRE-only; 'puzzle' = puzzle book
+  difficulty: 'easy' | 'normal' | 'hard';     // locked at newRun; level/puzzle store 'normal'
   levelId?: string;
+  puzzleId?: string;                          // set when mode is 'puzzle'
   seed: string;
   rng: { wave: RngState; shop: RngState };
   phase: Phase;
@@ -167,8 +168,16 @@ tray, cannons, and stationary robots. In `level` mode `resolveTurn` performs FIR
 (no advance, no spawn, no base damage); the phase becomes `levelCleared` when no robots
 remain. M2 adds the full turn for `mode: 'run'`.
 
-**Decided in M2: level mode is kept.** It backs the menu's **Puzzles** button and most scenario
-files. Level-mode state is never persisted (§13).
+**Decided in M2: level mode is kept.** It remains the FIRE-only harness for `/scenarios` and
+debug jump. The menu's **Puzzles** button opens the puzzle book (`mode: 'puzzle'`, GDD §10.8).
+Level- and puzzle-mode state are never persisted as a run save (§13).
+
+### 4.2 Mode `puzzle` (puzzle book)
+
+A playable `puzzles.json` entry installs a short authored run: fixed-HP, fixed-lane waves,
+granted tiles/cannons, full turn loop (advance, detonate, lose). `resolveTurn` uses that
+puzzle's wave count for last-wave `RunWon`. `nextWave` is legal from `waveCleared` (no shop).
+`loadPuzzle` accepts a null state. Completion ids live in device storage, not `RunState`.
 
 ---
 
@@ -186,7 +195,8 @@ type Command =
   | { type: 'buyOffer'; slot: ShopSlotId }                  // M3
   | { type: 'nextWave' }                                    // M3: shop → next wave's planning
   | { type: 'newRun'; seed: string; difficulty?: 'easy' | 'normal' | 'hard' }
-  | { type: 'loadLevel'; levelId: string };
+  | { type: 'loadLevel'; levelId: string }
+  | { type: 'loadPuzzle'; puzzleId: string };
 
 type CommandError =
   | 'wrong_phase' | 'cell_locked' | 'cell_occupied' | 'not_a_tile_cell'
@@ -359,7 +369,8 @@ fails `npm test`.
 | `shop.json` | Price table by category; cannon & upgrade price formulas (base + step); per-wave offer tables (weights, N ranges); ladder guarantees (below) |
 | `waves.json` | Waves in run order (run length = array length): authored spawn schedules (waves 1–7, 10) and procedural tables (waves 8–9). Normal source of truth; Easy/Hard overlay this via `difficulty.json` |
 | `difficulty.json` | Easy / Normal / Hard overlays: integer-percent HP bands, `hpApplies` (`all` / `procedural`), procedural `countDelta`, `dropTemplates`. Overlay then existing `rollWave` |
-| `levels.json` | M1 hand-authored puzzle levels, played in file order (task 11) |
+| `levels.json` | M1 FIRE-only boards (task 11); test/debug harness |
+| `puzzles.json` | Puzzle-book catalog (task 32). `waves` present = shown, sorted by stars; missing = hidden |
 | `presentation.json` | Pacing, escalation, colors, drag feel, React screen pop-in (`screens`), HUD Go colour and idle-nudge (`hud`), trait telegraph colours (`traits`, M4), Boss 2×2 visual scale (`boss.scale`, `1` = fill the 2×2), Foley cue mappings (`audio`, M5) |
 
 `presentation.json` is loaded by `/game`, but its schema still lives with the others for a single validation pass.
@@ -541,17 +552,17 @@ a reload inside the shop loses the NEW stickers; device-local state must not ent
 closed over in `createAppStore`; `openShopScreen` calls store action `recordShopVisit` rather than taking
 a `StorageLike` (task 20).
 
-**M1 level flow (task 11, `/game/state/levelFlow.ts`):** the app opens on `screen: 'menu'`. ▶ Play and
-▶ Play again → `loadLevel` (first level) + `'game'`. The level-cleared overlay shows when
-`run.phase === 'levelCleared'` and playback is idle (`showLevelCleared`); ▶ Next → `loadLevel` the next
-level, or `'allDone'` after the last. Progress is just `run.levelId` in memory; a run restored from
-storage is not resumed by the menu in M1. In level mode the HUD shows level dots instead of wave and
-base HP.
+**M1 level flow (task 11, `/game/state/levelFlow.ts`):** still used by the FIRE-only harness and
+debug jump. ▶ Play again on the leftover all-done screen → `loadLevel` (first level) + `'game'`.
+
+**Puzzle book (task 32, `/game/state/puzzleFlow.ts`):** 🧩 Puzzles → `screen: 'levelSelect'`.
+A playable tile → `loadPuzzle` + `'game'`. HUD Home and the win/lose Back buttons return to
+the book. Wave-cleared Next dispatches `nextWave` (no shop). A win records the id in the
+`puzzles` storage key.
 
 **M2 run flow (task 14, `/game/state/runFlow.ts`):** menu shows ▶ Continue (`canContinue`) when a
 resumable run is saved (mode `run`, phase `planning` or `waveCleared`, `isResumable`), New Game
-(always `setScreen('difficulty')` — never starts a run itself), and Puzzles (the level flow above,
-unchanged). The picker (`screen: 'difficulty'`, task 29) is three star buttons plus a small ← Back
+(always `setScreen('difficulty')` — never starts a run itself), and Puzzles (the puzzle book). The picker (`screen: 'difficulty'`, task 29) is three star buttons plus a small ← Back
 at the top left; tapping a star writes `settings.difficulty` then `startNewRun(store, id)` (`dispatch({ type: 'newRun', seed,
 difficulty })` with a seed made at the edge from the clock/`crypto`, never in `/sim`). Continue
 never opens the picker. `continueRun` installs the saved run as-is — including its locked

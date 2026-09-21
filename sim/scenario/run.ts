@@ -8,6 +8,7 @@ import type { Command, CommandError, GameEvent, Robot, RunState } from '../core/
 import { applyCommand } from '../commands/applyCommand';
 import { allocateRobotId } from '../commands/ids';
 import { buildLevelState } from '../commands/level';
+import { buildPuzzleState, playablePuzzle } from '../commands/puzzle';
 import type { GameData, LevelDef } from '../data/schemas';
 import {
   describeEventSequenceFailure,
@@ -53,6 +54,30 @@ function initialLevelDef(scenario: Scenario, data: GameData): LevelDef {
  * with pinned offers (TR §12).
  */
 export function buildScenarioState(scenario: Scenario, data: GameData): RunState {
+  if (scenario.puzzle !== undefined) {
+    const catalog = data.puzzles.puzzles.find((entry) => entry.id === scenario.puzzle);
+    if (!catalog || catalog.waves === undefined) {
+      throw new Error(
+        `scenario puzzle: unknown puzzle id "${scenario.puzzle}" (not a playable puzzles.json entry)`,
+      );
+    }
+    const puzzle = playablePuzzle(data, scenario.puzzle);
+    const state = buildPuzzleState(puzzle, data).state;
+    const waveIndex = scenario.waveIndex ?? state.waveIndex;
+    return {
+      ...state,
+      coins: scenario.coins ?? state.coins,
+      baseHp: scenario.baseHp ?? state.baseHp,
+      seed: scenario.seed ?? state.seed,
+      rng: scenario.seed !== undefined ? createStreams(scenario.seed) : state.rng,
+      waveIndex,
+      turn: scenario.turn ?? state.turn,
+      exactKills: scenario.exactKills ?? state.exactKills,
+      phase: scenario.phase ?? state.phase,
+      upgradesBought: scenario.upgradesBought ?? state.upgradesBought,
+    };
+  }
+
   let state = buildLevelState(initialLevelDef(scenario, data), data);
 
   const waveIndex = scenario.waveIndex ?? state.waveIndex;

@@ -71,10 +71,10 @@ test('Puzzles never touches the saved run; Home returns to it without confirmati
   await expect(page.getByTestId('menu-continue')).toBeVisible();
 
   await page.getByTestId('menu-puzzles').click();
-  expect(await getScreen(page)).toBe('game');
-  expect((await getState(page))?.mode).toBe('level');
+  expect(await getScreen(page)).toBe('levelSelect');
+  await expect(page.getByTestId('puzzle-select')).toBeVisible();
 
-  await page.getByTestId('home').click();
+  await page.getByTestId('puzzle-select-back').click();
   expect(await getScreen(page)).toBe('menu');
   await expect(page.getByTestId('menu-continue')).toBeVisible();
 

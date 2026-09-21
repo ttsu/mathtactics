@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { BOARD_AREA, WORLD_HEIGHT, WORLD_WIDTH } from '../game/board/layout';
 import { DESIGN_HEIGHT, DESIGN_WIDTH, MIN_TOUCH_TARGET } from '../game/state/designSpace';
 import { pngSize } from '../tests/helpers/pngSize';
+import { startNewGame } from './helpers/newGame';
 
 // Task 03: Phaser/React layering, scaling and web shell. Runs before the test handle exists
 // (task 05), so Phaser positions are derived from the canvas's client rect + layout constants.
@@ -50,10 +51,10 @@ async function gotoApp(page: Page) {
   await expect(page.locator('#ui-root')).toBeVisible();
 }
 
-/** Opens the app and taps ▶ Play on the main menu (task 11), so the HUD and board are showing. */
+/** Opens the app and starts a Normal run so the HUD and board are showing. */
 async function gotoGame(page: Page) {
   await gotoApp(page);
-  await page.getByTestId('menu-puzzles').click();
+  await startNewGame(page);
   await expect(page.getByTestId('hud-bar')).toBeVisible();
 }
 

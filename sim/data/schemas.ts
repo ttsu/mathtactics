@@ -728,6 +728,113 @@ const LevelsFileSchema = z.object({
  * (`sim/commands/level.ts`) and, from task 08, by the scenario runner. */
 export type LevelDef = z.infer<typeof LevelDefSchema>;
 
+// --- puzzles.json — puzzle book catalog (task 32, GDD §10.8) ---
+
+const PuzzleSpawnSchema = z.object({
+  turn: z.number().int().min(1),
+  lane: LaneSchema,
+  robot: z.string().min(1),
+  hp: z.number().int().min(1).max(99),
+});
+
+const PuzzleStartingRobotSchema = z.object({
+  lane: LaneSchema,
+  col: TileColSchema,
+  robot: z.string().min(1),
+  hp: z.number().int().min(1).max(99),
+});
+
+const PuzzleWaveSchema = z
+  .object({
+    /** Starting cannons on wave 1; extra cannons on later waves (empty slots only). */
+    cannons: z.array(LaneSchema).default([]),
+    grantTiles: z.array(TileIdRefSchema).default([]),
+    boardTiles: z.array(LevelTilePlacementSchema).default([]),
+    /** Robots already on the board at the start of the wave (Occupied-style). */
+    robots: z.array(PuzzleStartingRobotSchema).default([]),
+    spawns: z.array(PuzzleSpawnSchema).default([]),
+    /** Optional cannon base-value override for this wave (Blue Room and later packs). */
+    baseValue: z.number().int().positive().optional(),
+  })
+  .superRefine((wave, ctx) => {
+    const seenLanes = new Set<Lane>();
+    wave.cannons.forEach((lane, index) => {
+      if (seenLanes.has(lane)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['cannons', index],
+          message: `duplicate cannon lane ${lane}`,
+        });
+      }
+      seenLanes.add(lane);
+    });
+
+    const seenTiles = new Set<string>();
+    wave.boardTiles.forEach((placement, index) => {
+      const key = `${placement.lane},${placement.col}`;
+      if (seenTiles.has(key)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['boardTiles', index],
+          message: `duplicate tile at lane ${placement.lane} col ${placement.col}`,
+        });
+      }
+      seenTiles.add(key);
+    });
+    const seenRobots = new Set<string>();
+    wave.robots.forEach((robot, index) => {
+      const key = `${robot.lane},${robot.col}`;
+      if (seenRobots.has(key)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['robots', index],
+          message: `duplicate robot at lane ${robot.lane} col ${robot.col}`,
+        });
+      }
+      seenRobots.add(key);
+    });
+  });
+
+const PuzzleDefSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    pack: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
+    /** Present = playable and shown on the book. Missing = catalog stub (hidden). */
+    waves: z.array(PuzzleWaveSchema).min(1).optional(),
+  })
+  .superRefine((puzzle, ctx) => {
+    if (puzzle.waves === undefined) return;
+    if (puzzle.waves[0]!.cannons.length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['waves', 0, 'cannons'],
+        message: 'wave 1 must place at least one cannon',
+      });
+    }
+  });
+
+const PuzzlesFileSchema = z.object({
+  puzzles: z.array(PuzzleDefSchema).superRefine((puzzles, ctx) => {
+    const seen = new Set<string>();
+    puzzles.forEach((puzzle, index) => {
+      if (seen.has(puzzle.id)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'id'],
+          message: `duplicate puzzle id "${puzzle.id}"`,
+        });
+      }
+      seen.add(puzzle.id);
+    });
+  }),
+});
+
+/** One puzzle-book entry (GDD §10.8). `waves` missing means the tile stays hidden. */
+export type PuzzleDef = z.infer<typeof PuzzleDefSchema>;
+export type PuzzleWaveDef = z.infer<typeof PuzzleWaveSchema>;
+
 // --- robots.json (GDD §6.1, TR §9) — M2 ships one template, `basic`; visual keys arrive in M5 ---
 
 const RobotTemplateSchema = z
@@ -1115,6 +1222,7 @@ export const GameDataSchema = z
     waves: WavesFileSchema,
     difficulty: DifficultyFileSchema,
     levels: LevelsFileSchema,
+    puzzles: PuzzlesFileSchema,
     presentation: PresentationFileSchema,
   })
   // Cross-file references: checked here, once every file has parsed on its own. Issue paths
@@ -1251,6 +1359,51 @@ export const GameDataSchema = z
               message: `pool may not name a Boss template "${id}"`,
             });
           }
+        });
+      });
+    });
+
+    data.puzzles.puzzles.forEach((puzzle, puzzleIndex) => {
+      if (puzzle.waves === undefined) return;
+      puzzle.waves.forEach((wave, waveIndex) => {
+        const checkRobot = (id: string, path: (string | number)[]) => {
+          if (!robotIds.has(id)) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['puzzles', 'puzzles', puzzleIndex, 'waves', waveIndex, ...path],
+              message: `unknown robot id "${id}"`,
+            });
+            return;
+          }
+          const template = data.robots.find((robot) => robot.id === id);
+          if (template?.isBoss) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['puzzles', 'puzzles', puzzleIndex, 'waves', waveIndex, ...path],
+              message: `puzzle waves may not name a Boss template "${id}"`,
+            });
+          }
+        };
+        const checkTile = (id: string, path: (string | number)[]) => {
+          if (!tileIds.has(id)) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['puzzles', 'puzzles', puzzleIndex, 'waves', waveIndex, ...path],
+              message: `unknown tile id "${id}"`,
+            });
+          }
+        };
+        wave.spawns.forEach((spawn, spawnIndex) => {
+          checkRobot(spawn.robot, ['spawns', spawnIndex, 'robot']);
+        });
+        wave.robots.forEach((robot, robotIndex) => {
+          checkRobot(robot.robot, ['robots', robotIndex, 'robot']);
+        });
+        wave.grantTiles.forEach((tileId, tileIndex) => {
+          checkTile(tileId, ['grantTiles', tileIndex]);
+        });
+        wave.boardTiles.forEach((placement, tileIndex) => {
+          checkTile(placement.tileId, ['boardTiles', tileIndex, 'tileId']);
         });
       });
     });

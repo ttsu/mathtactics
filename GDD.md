@@ -322,7 +322,8 @@ arrives carrying the right number.
 - No multiplayer, no accounts, no cloud sync.
 - No timed pressure. The planning phase is untimed by design.
 - No word problems, no text-based math prompts, no quizzes.
-- No meta-progression between runs beyond a "seen tiles" collection log.
+- No meta-progression between runs beyond a "seen tiles" collection log and
+  which puzzle-book scenarios this device has cleared (§10.8).
 - No division, splitting, path/redirect tiles, count tiles, or structures (see §19).
 - No tuned iPhone layout (iPhone is scaled and playable, not tuned).
 
@@ -731,8 +732,9 @@ Bigger numbers are not strictly better in this game, so prices are by category, 
 ### 8.7 Seen-Tiles Log and NEW Badge
 
 The game tracks which tile types have ever been **offered** on this device. A never-offered
-type shows a "NEW" sticker in the shop. This log is the only data persisted across runs.
-It is a discovery log, not power progression.
+type shows a "NEW" sticker in the shop. The seen-tiles log and the puzzle-book completion
+list (§10.8) are the only data persisted across runs. Both are discovery logs, not power
+progression.
 
 - A type is logged when the shop **opens**, so a sticker stays put for the whole visit rather than
   vanishing under the player's finger. Only tile offers are logged.
@@ -836,13 +838,15 @@ whose trait is invisible reads as a bug, not a puzzle.
 - On End Turn, the resolved result is saved **immediately**, before playback finishes.
   Reopening mid-playback lands in the next planning phase: no lost progress, no reload exploit.
 - Launch screen: big **▶ *Continue*** if a run exists, with smaller **↺ *New Game***; if no
-  run, big **▶ *New Game***. Smaller **🧩 *Puzzles*** (the M1 hand-authored levels). Each is
+  run, big **▶ *New Game***. Smaller **🧩 *Puzzles*** opens the puzzle book (§10.8). Each is
   an icon with its label beneath (§11.1). No confirmation dialogs. New Game opens the
   difficulty picker (§10.7), then replaces any saved run. Continue resumes the saved run's
   difficulty as-is. The launch screen has no formula-strip banner under the title.
 - A small **Home** button in the HUD (hidden during playback) returns to the launch screen with
-  no confirmation. A run is already saved; a puzzle session is simply dropped.
-- **Puzzles are never saved** and never overwrite the saved run.
+  no confirmation. A run is already saved. Home from a puzzle session returns to the puzzle
+  book and drops the session.
+- **Puzzle sessions are never saved** and never overwrite the saved run. Cleared-scenario
+  ids are stored separately, like seen-tiles.
 - A run that is won or lost is cleared from storage; Continue disappears.
 - Saves carry a schema version. A mismatched save is silently discarded (no migrations in v1).
 - The seen-tiles log is stored separately, is additive, and survives version bumps.
@@ -906,6 +910,25 @@ Normal; Odd-only / Even-only **65%** (floor 8) so one leak stays a chip; procedu
 (`hpApplies: procedural`); parity **100%** so one leak stays a chip; `countDelta` **+1**,
 `maxCount` **5** and never above the remaining pool; drop `basic` from procedural pools only.
 
+### 10.8 Puzzle Book
+
+Puzzles is a book of authored scenarios, not the 10-wave ladder.
+
+- **🧩 Puzzles** opens a scrolling grid of authored scenarios, sorted easy → hard (1–3
+  stars). ← *Back* at the top left returns to the launch screen. Tapping a tile starts that
+  scenario. Catalog stubs with no waves yet stay hidden.
+- Each tile shows **1–3 stars** (difficulty), a short name, and a **check** if this device
+  has cleared it. Cover the name and the stars / check still work (§11.1).
+- A scenario is a short authored run: 1–5 waves, full turn loop (fire, advance, detonate).
+  HP and lanes are fixed — the same board every play. Tiles and extra cannons are granted on
+  a schedule. There is no shop and no coins on the HUD.
+- Wave-cleared **Next** grants the next wave's kit and starts it. Clearing the last wave
+  writes the check and shows the win screen; its button returns to the book.
+- Leaking to 0 HP shows the lose screen. Big **Play again** restarts that scenario from
+  wave 1. ← *Back* returns to the book. No check mark.
+- Pack 1 ships playable. Later packs stay in `puzzles.json` but stay off the grid until they
+  have waves. The M1 FIRE-only boards in `levels.json` remain a test/debug harness.
+
 ---
 
 ## 11. UX Requirements for the Target Age
@@ -919,7 +942,8 @@ Normal; Odd-only / Even-only **65%** (floor 8) so one leak stays a chip; procedu
    that *navigates* — menu entries, screen buttons — pairs its icon with a short label beneath.
    Rules for that label:
    - One or two words, grade-1 decodable, from the kid's spoken vocabulary
-     (*Continue*, *New Game*, *Puzzles*, *Home*, *Back*, *Next*, *Go*, *Easy*, *Normal*, *Hard*).
+     (*Continue*, *New Game*, *Puzzles*, *Home*, *Back*, *Next*, *Go*, *Easy*, *Normal*, *Hard*,
+     *Play again*). Puzzle-book names are 1–2 spoken words on the tiles.
      Never *Resume*, *Proceed*, *Select*. *Keep Going* overflowed the button; *Continue* is the
      one-word resume label (v0.9.1).
    - It **repeats** what the icon already says; it never adds information the icon lacks.
@@ -1172,6 +1196,8 @@ Task specs are written one milestone at a time; later milestones may change afte
 | Blocked | A wrong-parity ball; 0 damage, consumed. |
 | Hint | Optional running-total numbers under tiles during planning. |
 | Difficulty | Easy, Normal, or Hard. Chosen on New Game; locked for the run. |
+| Puzzle book | The Puzzles grid of authored scenarios. |
+| Puzzle scenario | One catalog entry: 1–5 authored waves, granted kit, no shop. |
 | Easy | Quiet stretch: fewer simultaneous robots, lower HP. |
 | Normal | The designed ladder (`waves.json` as shipped). |
 | Hard | Loud stretch: more simultaneous robots, no `basic` on 8–9. |

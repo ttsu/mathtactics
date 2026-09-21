@@ -4,6 +4,7 @@
 // clearing the save; this component only renders once it's there.
 import type { CSSProperties } from 'react';
 import { playUiTap } from '../state/audio';
+import { returnToPuzzleBook } from '../state/puzzleFlow';
 import { waveCount } from '../state/waveFlow';
 import { ExactKillRow } from './ExactKillRow';
 import { PlayIcon, StarIcon } from './icons';
@@ -16,8 +17,9 @@ const CONFETTI_COLORS = ['#ff8c42', '#4caf50', '#2196f3', '#ffd166', '#e63946', 
 export function WinScreen() {
   const store = useAppStoreApi();
   const popInMs = useAppStore((state) => state.data.presentation.screens.popInMs);
-  const count = useAppStore((state) => waveCount(state.data));
+  const count = useAppStore((state) => waveCount(state.data, state.run));
   const exactKills = useAppStore((state) => state.run?.exactKills ?? 0);
+  const puzzleMode = useAppStore((state) => state.run?.mode === 'puzzle');
 
   return (
     <div
@@ -50,7 +52,8 @@ export function WinScreen() {
         aria-label="Menu"
         onClick={() => {
           playUiTap();
-          store.getState().setScreen('menu');
+          if (puzzleMode) returnToPuzzleBook(store);
+          else store.getState().setScreen('menu');
         }}
       >
         <PlayIcon size={96} />

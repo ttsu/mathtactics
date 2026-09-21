@@ -4,12 +4,13 @@
 // wave itself.
 
 import type { RunState } from '../../sim/core/types';
+import { sessionWaveCount } from '../../sim/commands/puzzle';
 import type { GameData } from '../../sim/data/schemas';
 import { isPlaybackActive, type AppState } from './store';
 
-/** The number of waves a run has (GDD §10.1: 10 in v1, 3 during M2) — shipped `waves.json` order,
- * same source `nextWave`/`resolveTurn` use to decide the last wave. */
-export function waveCount(data: Pick<GameData, 'waves'>): number {
+/** The number of waves this session has — the puzzle's waves, or the ladder. */
+export function waveCount(data: GameData, run?: RunState | null): number {
+  if (run) return sessionWaveCount(run, data);
   return data.waves.waves.length;
 }
 
@@ -23,7 +24,7 @@ export function showWaveCleared(state: Pick<AppState, 'run' | 'playback' | 'scre
   return (
     state.screen === 'game' &&
     state.run !== null &&
-    state.run.mode === 'run' &&
+    (state.run.mode === 'run' || state.run.mode === 'puzzle') &&
     state.run.phase === 'waveCleared' &&
     !isPlaybackActive(state)
   );

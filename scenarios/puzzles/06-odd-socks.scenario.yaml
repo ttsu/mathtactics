@@ -1,0 +1,16 @@
+name: odd socks
+puzzle: odd-socks
+commands:
+  - endTurn
+  - nextWave
+  - { type: placeTile, pieceId: "piece:0", to: { lane: 2, col: 1 } }
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 2, col: 2 } }
+  - endTurn
+expectEvents:
+  - { type: RobotDefeated, exact: true }
+  - { type: WaveCleared, waveIndex: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: RunWon }
+expectState:
+  phase: won
+  puzzleId: odd-socks

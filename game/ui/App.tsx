@@ -5,6 +5,7 @@ import { Hud } from './Hud';
 import { LevelClearedOverlay } from './LevelClearedOverlay';
 import { LoseScreen } from './LoseScreen';
 import { MainMenu } from './MainMenu';
+import { PuzzleSelectScreen } from './PuzzleSelectScreen';
 import { RotateOverlay } from './RotateOverlay';
 import { SettingsScreen } from './SettingsScreen';
 import { ShopScreen } from './ShopScreen';
@@ -30,6 +31,7 @@ export function App() {
       {screen === 'shop' && <ShopScreen />}
       {screen === 'settings' && <SettingsScreen />}
       {screen === 'difficulty' && <DifficultyScreen />}
+      {screen === 'levelSelect' && <PuzzleSelectScreen />}
       {screen === 'allDone' && <AllDoneScreen />}
       {screen === 'won' && <WinScreen />}
       {screen === 'lost' && <LoseScreen />}

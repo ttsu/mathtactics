@@ -120,6 +120,8 @@ test('Jump to a puzzle, add a tile, add an enemy, copy a snapshot', async ({ pag
 
   await page.getByTestId('debug-tab-snapshot').tap();
   await expect(page.getByTestId('debug-snapshot')).toBeVisible();
+  // SnapshotPanel fills the textarea in useEffect after mount.
+  await expect(page.getByTestId('debug-snapshot')).toHaveValue(/mathtactics\.debugSnapshot/);
   const blob = await page.getByTestId('debug-snapshot').inputValue();
   expect(blob).toContain('mathtactics.debugSnapshot');
   expect(blob).toContain('level-3');

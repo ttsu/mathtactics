@@ -48,6 +48,7 @@ function validRaw(overrides: Record<string, unknown> = {}) {
     },
     difficulty: fakeDifficulty(),
     levels: { levels: [] },
+    puzzles: { puzzles: [] },
     presentation: {
       pacing: fakePacingSettings(),
       playback: fakePlaybackSettings(),

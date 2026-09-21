@@ -11,6 +11,7 @@ import { HUD_BAR, MIN_TOUCH_TARGET } from '../state/designSpace';
 import { playUiTap } from '../state/audio';
 import { levelPosition } from '../state/levelFlow';
 import { goHome } from '../state/runFlow';
+import { waveCount } from '../state/waveFlow';
 import { goButtonClassName, goNudgeAnimationKey, planningLayoutKey } from './goNudge';
 import { hudButtons } from './hudButtons';
 import { PlayIcon } from './icons';
@@ -30,12 +31,13 @@ export function Hud() {
   const dispatch = useAppStore((state) => state.dispatch);
   const startReplay = useAppStore((state) => state.startReplay);
   const levelMode = useAppStore((state) => state.run?.mode === 'level');
+  const puzzleMode = useAppStore((state) => state.run?.mode === 'puzzle');
   const levelIndex = useAppStore(
     (state) => levelPosition(state.data, state.run?.levelId)?.index ?? null,
   );
   const levelCount = useAppStore((state) => state.data.levels.levels.length);
   const waveIndex = useAppStore((state) => state.run?.waveIndex ?? 0);
-  const waveCount = useAppStore((state) => state.data.waves.waves.length);
+  const waves = useAppStore((state) => waveCount(state.data, state.run));
   const layoutKey = useAppStore((state) => planningLayoutKey(state.run));
   const hud = useAppStore((state) => state.data.presentation.hud);
 
@@ -69,11 +71,11 @@ export function Hud() {
         levelIndex !== null && <LevelDots index={levelIndex} count={levelCount} />
       ) : (
         <>
-          <LevelDots index={waveIndex} count={waveCount} />
+          <LevelDots index={waveIndex} count={waves} />
           <span className="hud-stat">♥ {display.baseHp}</span>
         </>
       )}
-      <span className="hud-stat">🪙 {display.coins}</span>
+      {!puzzleMode && <span className="hud-stat">🪙 {display.coins}</span>}
       <div className="hud-actions">
         <button
           type="button"

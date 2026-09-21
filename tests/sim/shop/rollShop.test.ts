@@ -199,6 +199,7 @@ describe('rollShop', () => {
     }
     const custom = parseGameData({
       ...loadRawGameData(),
+      puzzles: { puzzles: [] },
       tiles,
       shop: fakeShop({
         shops: [

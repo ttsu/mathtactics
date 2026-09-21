@@ -1,0 +1,17 @@
+name: bounce house
+puzzle: bounce-house
+commands:
+  - { type: placeTile, pieceId: "piece:0", to: { lane: 2, col: 1 } }
+  - endTurn
+  - nextWave
+  - { type: placeTile, pieceId: "piece:2", to: { lane: 2, col: 2 } }
+  - { type: placeTile, pieceId: "piece:1", to: { lane: 2, col: 3 } }
+  - endTurn
+expectEvents:
+  - { type: RobotDefeated, exact: true }
+  - { type: WaveCleared, waveIndex: 0 }
+  - { type: RobotDefeated, exact: true }
+  - { type: RunWon }
+expectState:
+  phase: won
+  puzzleId: bounce-house

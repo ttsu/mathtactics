@@ -200,6 +200,7 @@ describe('applyCommand — loadLevel', () => {
           },
         ],
       },
+      puzzles: { puzzles: [] },
       presentation: {
         pacing: fakePacingSettings(),
         playback: fakePlaybackSettings(),

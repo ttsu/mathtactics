@@ -3,6 +3,7 @@
 // equivalent (for tests/CLIs) is `/tests/helpers/loadDataFiles.ts`.
 
 import levels from '../../data/levels.json';
+import puzzles from '../../data/puzzles.json';
 import difficulty from '../../data/difficulty.json';
 import economy from '../../data/economy.json';
 import presentation from '../../data/presentation.json';
@@ -23,5 +24,6 @@ export const gameData: GameData = parseGameData({
   waves,
   difficulty,
   levels,
+  puzzles,
   presentation,
 });
