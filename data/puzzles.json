@@ -44,7 +44,17 @@
         },
         {
           "grantTiles": ["add:4", "add:5"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "basic", "hp": 15 }]
+          "spawns": [
+            { "turn": 1, "lane": 1, "robot": "basic", "hp": 5 },
+            { "turn": 1, "lane": 3, "robot": "basic", "hp": 15 }
+          ]
+        },
+        {
+          "grantTiles": ["add:6", "add:1"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "basic", "hp": 7 },
+            { "turn": 2, "lane": 4, "robot": "basic", "hp": 12 }
+          ]
         }
       ]
     },
@@ -60,12 +70,26 @@
           "spawns": [{ "turn": 1, "lane": 2, "robot": "basic", "hp": 2 }]
         },
         {
-          "grantTiles": ["mul:2"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "basic", "hp": 4 }]
+          "grantTiles": ["mul:3"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "basic", "hp": 6 },
+            { "turn": 1, "lane": 4, "robot": "basic", "hp": 3 }
+          ]
         },
         {
           "grantTiles": ["mul:5"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "basic", "hp": 20 }]
+          "spawns": [
+            { "turn": 1, "lane": 1, "robot": "basic", "hp": 30 },
+            { "turn": 1, "lane": 3, "robot": "basic", "hp": 15 },
+            { "turn": 2, "lane": 0, "robot": "basic", "hp": 10 }
+          ]
+        },
+        {
+          "grantTiles": ["mul:2"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "basic", "hp": 60 },
+            { "turn": 1, "lane": 4, "robot": "basic", "hp": 12 }
+          ]
         }
       ]
     },
@@ -82,7 +106,18 @@
         },
         {
           "grantTiles": ["add:4", "sub:1"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "basic", "hp": 24 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "basic", "hp": 24 },
+            { "turn": 1, "lane": 4, "robot": "basic", "hp": 9 }
+          ]
+        },
+        {
+          "grantTiles": ["add:6", "mul:2"],
+          "spawns": [
+            { "turn": 1, "lane": 1, "robot": "basic", "hp": 36 },
+            { "turn": 1, "lane": 3, "robot": "basic", "hp": 14 },
+            { "turn": 3, "lane": 0, "robot": "basic", "hp": 8 }
+          ]
         }
       ]
     },
@@ -95,11 +130,25 @@
         {
           "cannons": [2],
           "grantTiles": ["add:1"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "even-only", "hp": 2 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "even-only", "hp": 2 },
+            { "turn": 1, "lane": 0, "robot": "even-only", "hp": 2 }
+          ]
         },
         {
-          "grantTiles": ["mul:2"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "even-only", "hp": 4 }]
+          "grantTiles": ["mul:2", "add:3"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "even-only", "hp": 4 },
+            { "turn": 1, "lane": 4, "robot": "even-only", "hp": 8 }
+          ]
+        },
+        {
+          "grantTiles": ["add:5", "add:4"],
+          "spawns": [
+            { "turn": 1, "lane": 1, "robot": "even-only", "hp": 6 },
+            { "turn": 1, "lane": 3, "robot": "even-only", "hp": 10 },
+            { "turn": 2, "lane": 2, "robot": "even-only", "hp": 12 }
+          ]
         }
       ]
     },
@@ -111,11 +160,31 @@
       "waves": [
         {
           "cannons": [2],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "odd-only", "hp": 1 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "odd-only", "hp": 1 },
+            { "turn": 1, "lane": 4, "robot": "odd-only", "hp": 1 }
+          ]
         },
         {
           "grantTiles": ["add:2", "mul:3"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "odd-only", "hp": 9 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "odd-only", "hp": 9 },
+            { "turn": 1, "lane": 0, "robot": "odd-only", "hp": 3 }
+          ]
+        },
+        {
+          "grantTiles": ["add:4"],
+          "spawns": [
+            { "turn": 1, "lane": 1, "robot": "odd-only", "hp": 15 },
+            { "turn": 1, "lane": 3, "robot": "odd-only", "hp": 7 }
+          ]
+        },
+        {
+          "grantTiles": ["mul:5"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "odd-only", "hp": 35 },
+            { "turn": 1, "lane": 4, "robot": "odd-only", "hp": 21 }
+          ]
         }
       ]
     },
@@ -132,7 +201,26 @@
         },
         {
           "grantTiles": ["mul:2", "sub:1"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "bounce-back", "hp": 8 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "bounce-back", "hp": 8 },
+            { "turn": 1, "lane": 4, "robot": "bounce-back", "hp": 4 }
+          ]
+        },
+        {
+          "grantTiles": ["add:5", "mul:3"],
+          "spawns": [
+            { "turn": 1, "lane": 1, "robot": "bounce-back", "hp": 15 },
+            { "turn": 1, "lane": 3, "robot": "bounce-back", "hp": 10 },
+            { "turn": 2, "lane": 0, "robot": "bounce-back", "hp": 18 }
+          ]
+        },
+        {
+          "grantTiles": ["sub:2"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "bounce-back", "hp": 13 },
+            { "turn": 1, "lane": 4, "robot": "bounce-back", "hp": 16 },
+            { "turn": 3, "lane": 1, "robot": "bounce-back", "hp": 9 }
+          ]
         }
       ]
     },
@@ -145,11 +233,24 @@
         {
           "cannons": [2],
           "grantTiles": ["add:4"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "weakness-5", "hp": 10 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "weakness-5", "hp": 10 },
+            { "turn": 1, "lane": 4, "robot": "weakness-5", "hp": 10 }
+          ]
         },
         {
           "grantTiles": ["mul:2"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "weakness-5", "hp": 20 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "weakness-5", "hp": 20 },
+            { "turn": 1, "lane": 0, "robot": "weakness-5", "hp": 10 }
+          ]
+        },
+        {
+          "grantTiles": ["add:5"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "weakness-5", "hp": 30 },
+            { "turn": 2, "lane": 3, "robot": "weakness-5", "hp": 10 }
+          ]
         }
       ]
     },
@@ -166,11 +267,25 @@
         },
         {
           "grantTiles": ["mul:2"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "weakness-2", "hp": 8 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "weakness-2", "hp": 8 },
+            { "turn": 1, "lane": 4, "robot": "weakness-2", "hp": 4 }
+          ]
         },
         {
           "grantTiles": ["add:3"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "weakness-2", "hp": 16 }]
+          "spawns": [
+            { "turn": 1, "lane": 1, "robot": "weakness-2", "hp": 16 },
+            { "turn": 1, "lane": 3, "robot": "weakness-2", "hp": 8 }
+          ]
+        },
+        {
+          "grantTiles": ["add:5"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "weakness-2", "hp": 32 },
+            { "turn": 1, "lane": 0, "robot": "weakness-2", "hp": 12 },
+            { "turn": 2, "lane": 4, "robot": "weakness-2", "hp": 20 }
+          ]
         }
       ]
     },
@@ -192,7 +307,16 @@
           "grantTiles": ["add:5", "mul:2"],
           "spawns": [
             { "turn": 1, "lane": 4, "robot": "basic", "hp": 6 },
-            { "turn": 1, "lane": 1, "robot": "basic", "hp": 12 }
+            { "turn": 1, "lane": 1, "robot": "basic", "hp": 12 },
+            { "turn": 2, "lane": 3, "robot": "basic", "hp": 8 }
+          ]
+        },
+        {
+          "grantTiles": ["add:7", "mul:3"],
+          "spawns": [
+            { "turn": 1, "lane": 0, "robot": "basic", "hp": 24 },
+            { "turn": 1, "lane": 2, "robot": "basic", "hp": 18 },
+            { "turn": 1, "lane": 4, "robot": "basic", "hp": 12 }
           ]
         }
       ]
@@ -206,13 +330,36 @@
         {
           "cannons": [2],
           "grantTiles": ["add:1", "add:2", "mul:2"],
-          "boardTiles": [{ "lane": 2, "col": 4, "tileId": "mul:3" }],
-          "robots": [{ "lane": 2, "col": 4, "robot": "basic", "hp": 8 }]
+          "boardTiles": [
+            { "lane": 2, "col": 4, "tileId": "mul:3" },
+            { "lane": 0, "col": 4, "tileId": "mul:5" }
+          ],
+          "robots": [
+            { "lane": 2, "col": 4, "robot": "basic", "hp": 8 },
+            { "lane": 0, "col": 4, "robot": "basic", "hp": 4 }
+          ]
         },
         {
           "grantTiles": ["add:5"],
-          "boardTiles": [{ "lane": 0, "col": 4, "tileId": "mul:2" }],
-          "robots": [{ "lane": 0, "col": 4, "robot": "basic", "hp": 6 }]
+          "boardTiles": [
+            { "lane": 1, "col": 4, "tileId": "mul:2" },
+            { "lane": 3, "col": 5, "tileId": "add:3" }
+          ],
+          "robots": [
+            { "lane": 1, "col": 4, "robot": "basic", "hp": 6 },
+            { "lane": 3, "col": 5, "robot": "basic", "hp": 8 }
+          ]
+        },
+        {
+          "grantTiles": ["mul:5"],
+          "boardTiles": [
+            { "lane": 2, "col": 4, "tileId": "mul:3" },
+            { "lane": 4, "col": 5, "tileId": "add:4" }
+          ],
+          "robots": [
+            { "lane": 2, "col": 4, "robot": "basic", "hp": 20 },
+            { "lane": 4, "col": 5, "robot": "basic", "hp": 12 }
+          ]
         }
       ]
     },
@@ -221,19 +368,49 @@
       "name": "Recipe",
       "stars": 3,
       "pack": 1,
+      "baseHp": 1,
       "waves": [
         {
           "cannons": [2],
           "grantTiles": ["add:4", "mul:3", "sub:1"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "basic", "hp": 14 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "bounce-back", "hp": 14 },
+            { "turn": 1, "lane": 4, "robot": "bounce-back", "hp": 5 }
+          ]
         },
         {
           "grantTiles": ["add:2"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "basic", "hp": 20 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "bounce-back", "hp": 20 },
+            { "turn": 1, "lane": 1, "robot": "bounce-back", "hp": 12 },
+            { "turn": 3, "lane": 3, "robot": "bounce-back", "hp": 6 }
+          ]
         },
         {
           "grantTiles": ["mul:2"],
-          "spawns": [{ "turn": 1, "lane": 2, "robot": "basic", "hp": 36 }]
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "bounce-back", "hp": 36 },
+            { "turn": 1, "lane": 0, "robot": "bounce-back", "hp": 18 },
+            { "turn": 1, "lane": 4, "robot": "bounce-back", "hp": 8 }
+          ]
+        },
+        {
+          "grantTiles": ["add:5", "sub:2"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "bounce-back", "hp": 40 },
+            { "turn": 1, "lane": 0, "robot": "bounce-back", "hp": 16 },
+            { "turn": 2, "lane": 4, "robot": "bounce-back", "hp": 24 }
+          ]
+        },
+        {
+          "grantTiles": ["mul:5"],
+          "spawns": [
+            { "turn": 1, "lane": 2, "robot": "bounce-back", "hp": 48 },
+            { "turn": 1, "lane": 0, "robot": "bounce-back", "hp": 45 },
+            { "turn": 1, "lane": 4, "robot": "bounce-back", "hp": 30 },
+            { "turn": 2, "lane": 1, "robot": "bounce-back", "hp": 20 },
+            { "turn": 3, "lane": 3, "robot": "bounce-back", "hp": 9 }
+          ]
         }
       ]
     },

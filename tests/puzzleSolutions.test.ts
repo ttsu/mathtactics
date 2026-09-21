@@ -63,6 +63,7 @@ describe('playable puzzles', () => {
       expect(defeats.every((event) => event.exact)).toBe(true);
       expect(result.state.phase).toBe('won');
       expect(result.state.mode).toBe('puzzle');
+      expect(result.state.baseHp).toBe(puzzle.baseHp ?? data.economy.baseHp);
     });
   }
 });

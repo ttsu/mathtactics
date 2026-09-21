@@ -37,4 +37,17 @@ describe('puzzles.json', () => {
     raw.puzzles = puzzles;
     expect(() => parseGameData(raw)).toThrow(/puzzles\.json/);
   });
+
+  it('makes Recipe a bounce-back exact-amount exam at 1 HP', () => {
+    const recipe = data.puzzles.puzzles.find((puzzle) => puzzle.id === 'recipe');
+    expect(recipe?.stars).toBe(3);
+    expect(recipe?.baseHp).toBe(1);
+    expect(recipe?.waves).toHaveLength(5);
+    const robots = (recipe?.waves ?? []).flatMap((wave) => [
+      ...wave.spawns.map((spawn) => spawn.robot),
+      ...wave.robots.map((robot) => robot.robot),
+    ]);
+    expect(robots.length).toBeGreaterThanOrEqual(10);
+    expect(robots.every((id) => id === 'bounce-back')).toBe(true);
+  });
 });
