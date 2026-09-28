@@ -1,7 +1,7 @@
 // Builds and advances puzzle-book sessions (GDD §10.8, TR §4.2). Pure: `buildPuzzleState` and
 // `buildPuzzleNextWave` read `data.puzzles` and return a new `RunState`. Puzzle waves use
 // fixed HP and fixed lanes (no `rollWave`); tiles and extra cannons are granted on each wave.
-// Optional catalog `baseHp` overrides economy (Recipe is 1).
+// Catalog `baseHp` is the session HP (10; Recipe is 1). Omitted falls back to economy.
 
 import { cols, lanes, type Lane } from '../core/coords';
 import { createStreams } from '../core/rng';

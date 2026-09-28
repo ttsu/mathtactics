@@ -22,7 +22,7 @@ describe('loadPuzzle', () => {
     expect(result.state.waveIndex).toBe(0);
     expect(result.state.board.cannons[2]).toBe(true);
     expect(result.state.board.robots).toMatchObject([{ lane: 2, hp: 1 }]);
-    expect(result.state.baseHp).toBe(data.economy.baseHp);
+    expect(result.state.baseHp).toBe(10);
   });
 
   it('starts Recipe at 1 HP so one leak is a loss', () => {

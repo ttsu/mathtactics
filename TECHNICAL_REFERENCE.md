@@ -179,8 +179,8 @@ granted tiles/cannons, full turn loop (advance, detonate, lose). `resolveTurn` u
 puzzle's wave count for last-wave `RunWon`. `nextWave` is legal from `waveCleared` (no shop).
 `loadPuzzle` accepts a null state. Completion ids live in device storage, not `RunState`.
 `stars` 1–3 are difficulty (GDD §10.8): Pack 1's 3-star `recipe` is bounce-back exact-amount
-with authored `baseHp: 1` (one leak is a loss). Other puzzles omit `baseHp` and use the
-economy 100.
+with authored `baseHp: 1` (one leak is a loss). Every other catalog entry sets
+`baseHp: 10`. Omitted `baseHp` still falls back to `economy.baseHp`.
 
 ---
 
