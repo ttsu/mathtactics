@@ -38,6 +38,12 @@ describe('puzzles.json', () => {
     expect(() => parseGameData(raw)).toThrow(/puzzles\.json/);
   });
 
+  it('starts every puzzle at 10 HP except Recipe at 1', () => {
+    for (const puzzle of data.puzzles.puzzles) {
+      expect(puzzle.baseHp, puzzle.id).toBe(puzzle.id === 'recipe' ? 1 : 10);
+    }
+  });
+
   it('makes Recipe a bounce-back exact-amount exam at 1 HP', () => {
     const recipe = data.puzzles.puzzles.find((puzzle) => puzzle.id === 'recipe');
     expect(recipe?.stars).toBe(3);

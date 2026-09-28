@@ -5,6 +5,7 @@
       "name": "Warm Up",
       "stars": 1,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -36,6 +37,7 @@
       "name": "Plus Party",
       "stars": 1,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -63,6 +65,7 @@
       "name": "Times Table",
       "stars": 2,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -98,6 +101,7 @@
       "name": "Take Away",
       "stars": 2,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -126,6 +130,7 @@
       "name": "Even Steven",
       "stars": 2,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -157,6 +162,7 @@
       "name": "Odd Socks",
       "stars": 2,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -193,6 +199,7 @@
       "name": "Bounce House",
       "stars": 2,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -229,6 +236,7 @@
       "name": "Five Bolt",
       "stars": 1,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -259,6 +267,7 @@
       "name": "Double Trouble",
       "stars": 2,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -294,6 +303,7 @@
       "name": "One Cannon",
       "stars": 2,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -326,6 +336,7 @@
       "name": "Occupied",
       "stars": 2,
       "pack": 1,
+      "baseHp": 10,
       "waves": [
         {
           "cannons": [2],
@@ -414,43 +425,43 @@
         }
       ]
     },
-    { "id": "add-it-up", "name": "Add It Up", "stars": 1, "pack": 2 },
-    { "id": "plus-train", "name": "Plus Train", "stars": 1, "pack": 2 },
-    { "id": "green-machine", "name": "Green Machine", "stars": 2, "pack": 2 },
-    { "id": "tiny-plus", "name": "Tiny Plus", "stars": 3, "pack": 2 },
-    { "id": "ten-spot", "name": "Ten Spot", "stars": 1, "pack": 2 },
-    { "id": "trim-team", "name": "Trim Team", "stars": 2, "pack": 2 },
-    { "id": "blue-room", "name": "Blue Room", "stars": 3, "pack": 2 },
-    { "id": "fives", "name": "Fives", "stars": 1, "pack": 2 },
-    { "id": "orange-crush", "name": "Orange Crush", "stars": 2, "pack": 2 },
-    { "id": "times-tight", "name": "Times Tight", "stars": 3, "pack": 2 },
-    { "id": "pair-day", "name": "Pair Day", "stars": 2, "pack": 3 },
-    { "id": "odd-squad", "name": "Odd Squad", "stars": 2, "pack": 3 },
-    { "id": "mixed-signals", "name": "Mixed Signals", "stars": 3, "pack": 3 },
-    { "id": "shield-wall", "name": "Shield Wall", "stars": 3, "pack": 3 },
-    { "id": "zero-even", "name": "Zero Even", "stars": 2, "pack": 3 },
-    { "id": "odd-ones", "name": "Odd Ones", "stars": 2, "pack": 3 },
-    { "id": "springy", "name": "Springy", "stars": 1, "pack": 4 },
-    { "id": "boing", "name": "Boing", "stars": 2, "pack": 4 },
-    { "id": "overshoot", "name": "Overshoot", "stars": 2, "pack": 4 },
-    { "id": "soft-landing", "name": "Soft Landing", "stars": 3, "pack": 4 },
-    { "id": "skip-two", "name": "Skip Two", "stars": 2, "pack": 4 },
-    { "id": "ten-strike", "name": "Ten Strike", "stars": 2, "pack": 4 },
-    { "id": "weak-spot", "name": "Weak Spot", "stars": 3, "pack": 4 },
-    { "id": "crowded", "name": "Crowded", "stars": 2, "pack": 4 },
-    { "id": "cannon-swap", "name": "Cannon Swap", "stars": 3, "pack": 5 },
-    { "id": "full-house", "name": "Full House", "stars": 3, "pack": 5 },
-    { "id": "no-minus", "name": "No Minus", "stars": 2, "pack": 5 },
-    { "id": "big-times", "name": "Big Times", "stars": 3, "pack": 5 },
-    { "id": "the-mix", "name": "The Mix", "stars": 3, "pack": 5 },
-    { "id": "lane-jam", "name": "Lane Jam", "stars": 3, "pack": 5 },
-    { "id": "last-trim", "name": "Last Trim", "stars": 3, "pack": 5 },
-    { "id": "final-exam", "name": "Final Exam", "stars": 3, "pack": 5 },
-    { "id": "times-three", "name": "Times Three", "stars": 1, "pack": 5 },
-    { "id": "tens", "name": "Tens", "stars": 2, "pack": 5 },
-    { "id": "odd-ball", "name": "Odd Ball", "stars": 1, "pack": 5 },
-    { "id": "partner-up", "name": "Partner Up", "stars": 1, "pack": 5 },
-    { "id": "no-plus", "name": "No Plus", "stars": 3, "pack": 5 },
-    { "id": "two-step", "name": "Two Step", "stars": 2, "pack": 5 }
+    { "id": "add-it-up", "name": "Add It Up", "stars": 1, "pack": 2, "baseHp": 10 },
+    { "id": "plus-train", "name": "Plus Train", "stars": 1, "pack": 2, "baseHp": 10 },
+    { "id": "green-machine", "name": "Green Machine", "stars": 2, "pack": 2, "baseHp": 10 },
+    { "id": "tiny-plus", "name": "Tiny Plus", "stars": 3, "pack": 2, "baseHp": 10 },
+    { "id": "ten-spot", "name": "Ten Spot", "stars": 1, "pack": 2, "baseHp": 10 },
+    { "id": "trim-team", "name": "Trim Team", "stars": 2, "pack": 2, "baseHp": 10 },
+    { "id": "blue-room", "name": "Blue Room", "stars": 3, "pack": 2, "baseHp": 10 },
+    { "id": "fives", "name": "Fives", "stars": 1, "pack": 2, "baseHp": 10 },
+    { "id": "orange-crush", "name": "Orange Crush", "stars": 2, "pack": 2, "baseHp": 10 },
+    { "id": "times-tight", "name": "Times Tight", "stars": 3, "pack": 2, "baseHp": 10 },
+    { "id": "pair-day", "name": "Pair Day", "stars": 2, "pack": 3, "baseHp": 10 },
+    { "id": "odd-squad", "name": "Odd Squad", "stars": 2, "pack": 3, "baseHp": 10 },
+    { "id": "mixed-signals", "name": "Mixed Signals", "stars": 3, "pack": 3, "baseHp": 10 },
+    { "id": "shield-wall", "name": "Shield Wall", "stars": 3, "pack": 3, "baseHp": 10 },
+    { "id": "zero-even", "name": "Zero Even", "stars": 2, "pack": 3, "baseHp": 10 },
+    { "id": "odd-ones", "name": "Odd Ones", "stars": 2, "pack": 3, "baseHp": 10 },
+    { "id": "springy", "name": "Springy", "stars": 1, "pack": 4, "baseHp": 10 },
+    { "id": "boing", "name": "Boing", "stars": 2, "pack": 4, "baseHp": 10 },
+    { "id": "overshoot", "name": "Overshoot", "stars": 2, "pack": 4, "baseHp": 10 },
+    { "id": "soft-landing", "name": "Soft Landing", "stars": 3, "pack": 4, "baseHp": 10 },
+    { "id": "skip-two", "name": "Skip Two", "stars": 2, "pack": 4, "baseHp": 10 },
+    { "id": "ten-strike", "name": "Ten Strike", "stars": 2, "pack": 4, "baseHp": 10 },
+    { "id": "weak-spot", "name": "Weak Spot", "stars": 3, "pack": 4, "baseHp": 10 },
+    { "id": "crowded", "name": "Crowded", "stars": 2, "pack": 4, "baseHp": 10 },
+    { "id": "cannon-swap", "name": "Cannon Swap", "stars": 3, "pack": 5, "baseHp": 10 },
+    { "id": "full-house", "name": "Full House", "stars": 3, "pack": 5, "baseHp": 10 },
+    { "id": "no-minus", "name": "No Minus", "stars": 2, "pack": 5, "baseHp": 10 },
+    { "id": "big-times", "name": "Big Times", "stars": 3, "pack": 5, "baseHp": 10 },
+    { "id": "the-mix", "name": "The Mix", "stars": 3, "pack": 5, "baseHp": 10 },
+    { "id": "lane-jam", "name": "Lane Jam", "stars": 3, "pack": 5, "baseHp": 10 },
+    { "id": "last-trim", "name": "Last Trim", "stars": 3, "pack": 5, "baseHp": 10 },
+    { "id": "final-exam", "name": "Final Exam", "stars": 3, "pack": 5, "baseHp": 10 },
+    { "id": "times-three", "name": "Times Three", "stars": 1, "pack": 5, "baseHp": 10 },
+    { "id": "tens", "name": "Tens", "stars": 2, "pack": 5, "baseHp": 10 },
+    { "id": "odd-ball", "name": "Odd Ball", "stars": 1, "pack": 5, "baseHp": 10 },
+    { "id": "partner-up", "name": "Partner Up", "stars": 1, "pack": 5, "baseHp": 10 },
+    { "id": "no-plus", "name": "No Plus", "stars": 3, "pack": 5, "baseHp": 10 },
+    { "id": "two-step", "name": "Two Step", "stars": 2, "pack": 5, "baseHp": 10 }
   ]
 }

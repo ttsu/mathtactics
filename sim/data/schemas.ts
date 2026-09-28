@@ -805,7 +805,7 @@ const PuzzleDefSchema = z
     name: z.string().min(1),
     stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     pack: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
-    /** Session base HP. Omitted = `economy.baseHp` (100). Recipe is 1 so one leak is a loss. */
+    /** Session base HP. Catalog entries are 10; Recipe is 1 so one leak is a loss. Omitted = `economy.baseHp`. */
     baseHp: z.number().int().min(1).max(100).optional(),
     /** Present = playable and shown on the book. Missing = catalog stub (hidden). */
     waves: z.array(PuzzleWaveSchema).min(1).optional(),

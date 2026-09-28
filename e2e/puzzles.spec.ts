@@ -55,7 +55,8 @@ test('tapping Warm Up starts it; Go wins wave 1 then the book shows a check', as
   expect((await getState(page)).mode).toBe('puzzle');
   expect((await getState(page)).puzzleId).toBe('warm-up');
   const hud = page.getByTestId('hud-bar');
-  await expect(hud).toContainText('♥');
+  await expect(hud).toContainText('♥ 10');
+  expect((await getState(page)).baseHp).toBe(10);
   await expect(hud).not.toContainText('🪙');
 
   await page.getByTestId('end-turn').click();

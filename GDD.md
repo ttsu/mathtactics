@@ -945,7 +945,7 @@ Puzzles is a book of authored scenarios, not the 10-wave ladder.
   tutorial). 2 stars are moderately challenging (more robots, more HP, more rounds, a trait
   or a rearrange). 3 stars are genuinely difficult. Pack 1's only 3-star, Recipe, uses
   Bounce-back on every robot so the player must hit the exact amount, and starts at **1
-  base HP** so one leak is a loss. Optional catalog `baseHp` (else the run's 100).
+  base HP** so one leak is a loss. Every other puzzle starts at **10 base HP**.
 
 ---
 
